@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!-- 全域參數 -->
+    <settings>
+        <!-- 使全域的映射器啟用或禁用暫存 -->
+        <setting name="cacheEnabled" value="true"/>
+        <!-- 允許JDBC 支援自動產生主鍵 -->
+        <setting name="useGeneratedKeys" value="true"/>
+        <!-- 設定預設的執行器.SIMPLE就是普通執行器;REUSE執行器會重用預處理語句(prepared statements);BATCH執行器將重用語句並執行批次更新 -->
+        <setting name="defaultExecutorType" value="SIMPLE"/>
+        <!-- 指定 MyBatis 所用日誌的具體實現 -->
+        <setting name="logImpl" value="SLF4J"/>
+        <!-- 使用駝峰命名法轉換欄位 -->
+        <!-- <setting name="mapUnderscoreToCamelCase" value="true"/> -->
+    </settings>
+</configuration>

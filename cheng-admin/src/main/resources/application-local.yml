@@ -1,0 +1,84 @@
+# 資料來源配置
+spring:
+  data:
+    # redis 設定
+    redis:
+      # 地址
+      host: localhost
+      # 埠號，預設為6379
+      port: 6379
+      # 資料庫索引
+      database: 0
+      # 密碼
+      password:
+      # 連線逾時時間
+      timeout: 10s
+      lettuce:
+        pool:
+          # 連線池中的最小閒置連線
+          min-idle: 0
+          # 連線池中的最大閒置連線
+          max-idle: 8
+          # 連線池的最大資料庫連線數
+          max-active: 8
+          # 連線池最大阻塞等待時間（使用負值表示沒有限制）
+          max-wait: -1ms
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    druid:
+      # 主庫資料來源
+      master:
+        url: jdbc:mysql://localhost:23506/cool-apps?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+        username: root
+        password: root
+      # 從庫資料來源
+      slave:
+        # 從資料來源開關/預設關閉
+        enabled: false
+        url:
+        username:
+        password:
+      # 初始連線數
+      initialSize: 5
+      # 最小連線池數量
+      minIdle: 10
+      # 最大連線池數量
+      maxActive: 20
+      # 配置取得連線等待逾時的時間
+      maxWait: 60000
+      # 配置連線逾時時間
+      connectTimeout: 30000
+      # 配置網路逾時時間
+      socketTimeout: 60000
+      # 配置間隔多久才進行一次檢測，檢測需要關閉的閒置連線，單位是毫秒
+      timeBetweenEvictionRunsMillis: 60000
+      # 配置一個連線在池中最小生存的時間，單位是毫秒
+      minEvictableIdleTimeMillis: 300000
+      # 配置一個連線在池中最大生存的時間，單位是毫秒
+      maxEvictableIdleTimeMillis: 900000
+      # 配置檢測連線是否有效
+      validationQuery: SELECT 1 FROM DUAL
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      webStatFilter:
+        enabled: true
+      statViewServlet:
+        enabled: true
+        # 設定白名單，不填則允許所有訪問
+        allow:
+        url-pattern: /druid/*
+        # 控制台管理使用者名和密碼
+        login-username: cheng
+        login-password: 123456
+      filter:
+        stat:
+          enabled: true
+          # 慢SQL記錄
+          log-slow-sql: true
+          slow-sql-millis: 1000
+          merge-sql: true
+        wall:
+          config:
+            multi-statement-allow: true

@@ -1,0 +1,12 @@
+# 程式碼產生
+gen:
+  # 作者
+  author: cheng
+  # 預設產生包路徑 system 需改成自己的模組名稱 如 system monitor tool
+  packageName: com.cheng.system
+  # 自動清除表前綴，預設是false
+  autoRemovePre: false
+  # 表前綴（產生類名不會包含表前綴，多個用逗號分隔）
+  tablePrefix: sys_
+  # 是否允許產生文件覆蓋到本機（自定義路徑），預設不允許
+  allowOverwrite: false

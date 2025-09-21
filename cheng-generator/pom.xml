@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>cheng</artifactId>
+        <groupId>com.cheng</groupId>
+        <version>3.9.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>cheng-generator</artifactId>
+
+    <description>
+        generator程式碼產生
+    </description>
+
+    <dependencies>
+
+        <!-- velocity程式碼產生使用模板 -->
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity-engine-core</artifactId>
+        </dependency>
+
+        <!-- 共用工具-->
+        <dependency>
+            <groupId>com.cheng</groupId>
+            <artifactId>cheng-common</artifactId>
+        </dependency>
+
+        <!-- 阿里資料庫連線池 -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-3-starter</artifactId>
+        </dependency>
+
+    </dependencies>
+
+</project>

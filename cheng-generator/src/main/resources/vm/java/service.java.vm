@@ -1,0 +1,61 @@
+package ${packageName}.service;
+
+import java.util.List;
+import ${packageName}.domain.${ClassName};
+
+/**
+ * ${functionName}Service介面
+ * 
+ * @author ${author}
+ * @date ${datetime}
+ */
+public interface I${ClassName}Service 
+{
+    /**
+     * 查詢${functionName}
+     *
+     * @param ${pkColumn.javaField} ${functionName}主鍵
+     * @return ${functionName}
+     */
+    public ${ClassName} select${ClassName}By${pkColumn.capJavaField}(${pkColumn.javaType} ${pkColumn.javaField});
+
+    /**
+     * 查詢${functionName}列表
+     * 
+     * @param ${className} ${functionName}
+     * @return ${functionName}集合
+     */
+    public List<${ClassName}> select${ClassName}List(${ClassName} ${className});
+
+    /**
+     * 新增${functionName}
+     * 
+     * @param ${className} ${functionName}
+     * @return 結果
+     */
+    public int insert${ClassName}(${ClassName} ${className});
+
+    /**
+     * 修改${functionName}
+     * 
+     * @param ${className} ${functionName}
+     * @return 結果
+     */
+    public int update${ClassName}(${ClassName} ${className});
+
+    /**
+     * 批量刪除${functionName}
+     *
+     * @param ${pkColumn.javaField}s 需要刪除的${functionName}主鍵集合
+     * @return 結果
+     */
+    public int delete${ClassName}By${pkColumn.capJavaField}s(${pkColumn.javaType}[] ${pkColumn.javaField}s);
+
+    /**
+     * 刪除${functionName}訊息
+     *
+     * @param ${pkColumn.javaField} ${functionName}主鍵
+     * @return 結果
+     */
+    public int delete${ClassName}By${pkColumn.capJavaField}(${pkColumn.javaType} ${pkColumn.javaField});
+}

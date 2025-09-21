@@ -1,0 +1,22 @@
+# 告訴EditorConfig套件，這是根文件，不用繼續往上尋找
+root = true
+
+# 匹配全部文件
+[*]
+# 設定字串集
+charset = utf-8
+# 縮進風格，可選space、tab
+indent_style = space
+# 縮進的空格數
+indent_size = 2
+# 結尾換行符，可選lf、cr、crlf
+end_of_line = lf
+# 在文件結尾新增新行
+insert_final_newline = true
+# 刪除一行中的前後空格
+trim_trailing_whitespace = true
+
+# 匹配md結尾的文件
+[*.md]
+insert_final_newline = false
+trim_trailing_whitespace = false
