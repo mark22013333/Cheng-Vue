@@ -78,16 +78,16 @@ public class GenConstants
     /** 複選框 */
     public static final String HTML_CHECKBOX = "checkbox";
 
-    /** 日期控件 */
+    /** 日期元件 */
     public static final String HTML_DATETIME = "datetime";
 
-    /** 圖片上傳控件 */
+    /** 圖片上傳元件 */
     public static final String HTML_IMAGE_UPLOAD = "imageUpload";
 
-    /** 文件上傳控件 */
+    /** 文件上傳元件 */
     public static final String HTML_FILE_UPLOAD = "fileUpload";
 
-    /** 富文字控件 */
+    /** 富文字元件 */
     public static final String HTML_EDITOR = "editor";
 
     /** 字串類型 */

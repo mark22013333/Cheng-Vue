@@ -12,28 +12,24 @@ import org.springframework.util.CollectionUtils;
 import java.util.Set;
 
 /**
- * CoolApps首创 自定義權限實現，ss取自SpringSecurity首字母
+ * 自定義權限實現，ss取自SpringSecurity首字母
  *
  * @author cheng
  */
 @Service("ss")
-public class PermissionService
-{
+public class PermissionService {
     /**
      * 驗證使用者是否具備某權限
      *
      * @param permission 權限字串
      * @return 使用者是否具備某權限
      */
-    public boolean hasPermi(String permission)
-    {
-        if (StringUtils.isEmpty(permission))
-        {
+    public boolean hasPermi(String permission) {
+        if (StringUtils.isEmpty(permission)) {
             return false;
         }
         LoginUser loginUser = SecurityUtils.getLoginUser();
-        if (StringUtils.isNull(loginUser) || CollectionUtils.isEmpty(loginUser.getPermissions()))
-        {
+        if (StringUtils.isNull(loginUser) || CollectionUtils.isEmpty(loginUser.getPermissions())) {
             return false;
         }
         PermissionContextHolder.setContext(permission);
@@ -46,8 +42,7 @@ public class PermissionService
      * @param permission 權限字串
      * @return 使用者是否不具備某權限
      */
-    public boolean lacksPermi(String permission)
-    {
+    public boolean lacksPermi(String permission) {
         return hasPermi(permission) != true;
     }
 
@@ -57,23 +52,18 @@ public class PermissionService
      * @param permissions 以 PERMISSION_DELIMETER 為分隔符號的權限列表
      * @return 使用者是否具有以下任意一個權限
      */
-    public boolean hasAnyPermi(String permissions)
-    {
-        if (StringUtils.isEmpty(permissions))
-        {
+    public boolean hasAnyPermi(String permissions) {
+        if (StringUtils.isEmpty(permissions)) {
             return false;
         }
         LoginUser loginUser = SecurityUtils.getLoginUser();
-        if (StringUtils.isNull(loginUser) || CollectionUtils.isEmpty(loginUser.getPermissions()))
-        {
+        if (StringUtils.isNull(loginUser) || CollectionUtils.isEmpty(loginUser.getPermissions())) {
             return false;
         }
         PermissionContextHolder.setContext(permissions);
         Set<String> authorities = loginUser.getPermissions();
-        for (String permission : permissions.split(Constants.PERMISSION_DELIMETER))
-        {
-            if (permission != null && hasPermissions(authorities, permission))
-            {
+        for (String permission : permissions.split(Constants.PERMISSION_DELIMETER)) {
+            if (permission != null && hasPermissions(authorities, permission)) {
                 return true;
             }
         }
@@ -86,22 +76,17 @@ public class PermissionService
      * @param role 角色字串
      * @return 使用者是否具備某角色
      */
-    public boolean hasRole(String role)
-    {
-        if (StringUtils.isEmpty(role))
-        {
+    public boolean hasRole(String role) {
+        if (StringUtils.isEmpty(role)) {
             return false;
         }
         LoginUser loginUser = SecurityUtils.getLoginUser();
-        if (StringUtils.isNull(loginUser) || CollectionUtils.isEmpty(loginUser.getUser().getRoles()))
-        {
+        if (StringUtils.isNull(loginUser) || CollectionUtils.isEmpty(loginUser.getUser().getRoles())) {
             return false;
         }
-        for (SysRole sysRole : loginUser.getUser().getRoles())
-        {
+        for (SysRole sysRole : loginUser.getUser().getRoles()) {
             String roleKey = sysRole.getRoleKey();
-            if (Constants.SUPER_ADMIN.equals(roleKey) || roleKey.equals(StringUtils.trim(role)))
-            {
+            if (Constants.SUPER_ADMIN.equals(roleKey) || roleKey.equals(StringUtils.trim(role))) {
                 return true;
             }
         }
@@ -114,8 +99,7 @@ public class PermissionService
      * @param role 角色名稱
      * @return 使用者是否不具備某角色
      */
-    public boolean lacksRole(String role)
-    {
+    public boolean lacksRole(String role) {
         return hasRole(role) != true;
     }
 
@@ -125,21 +109,16 @@ public class PermissionService
      * @param roles 以 ROLE_NAMES_DELIMETER 為分隔符號的角色列表
      * @return 使用者是否具有以下任意一個角色
      */
-    public boolean hasAnyRoles(String roles)
-    {
-        if (StringUtils.isEmpty(roles))
-        {
+    public boolean hasAnyRoles(String roles) {
+        if (StringUtils.isEmpty(roles)) {
             return false;
         }
         LoginUser loginUser = SecurityUtils.getLoginUser();
-        if (StringUtils.isNull(loginUser) || CollectionUtils.isEmpty(loginUser.getUser().getRoles()))
-        {
+        if (StringUtils.isNull(loginUser) || CollectionUtils.isEmpty(loginUser.getUser().getRoles())) {
             return false;
         }
-        for (String role : roles.split(Constants.ROLE_DELIMETER))
-        {
-            if (hasRole(role))
-            {
+        for (String role : roles.split(Constants.ROLE_DELIMETER)) {
+            if (hasRole(role)) {
                 return true;
             }
         }
@@ -150,11 +129,10 @@ public class PermissionService
      * 判斷是否包含權限
      *
      * @param permissions 權限列表
-     * @param permission 權限字串
+     * @param permission  權限字串
      * @return 使用者是否具備某權限
      */
-    private boolean hasPermissions(Set<String> permissions, String permission)
-    {
+    private boolean hasPermissions(Set<String> permissions, String permission) {
         return permissions.contains(Constants.ALL_PERMISSION) || permissions.contains(StringUtils.trim(permission));
     }
 }

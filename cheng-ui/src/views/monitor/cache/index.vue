@@ -56,7 +56,7 @@
                   </td>
                   <td class="el-table__cell is-leaf"><div class="cell" v-if="cache.dbSize">{{ cache.dbSize }} </div></td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">網路入口/出口</div>
+                    <div class="cell">網路 Input/Output</div>
                   </td>
                   <td class="el-table__cell is-leaf"><div class="cell" v-if="cache.info">{{ cache.info.instantaneous_input_kbps }}kps/{{cache.info.instantaneous_output_kbps}}kps</div></td>
                 </tr>

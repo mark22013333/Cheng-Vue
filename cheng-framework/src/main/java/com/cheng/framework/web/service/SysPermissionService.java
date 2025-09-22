@@ -20,8 +20,7 @@ import java.util.Set;
  * @author cheng
  */
 @Component
-public class SysPermissionService
-{
+public class SysPermissionService {
     @Autowired
     private ISysRoleService roleService;
 
@@ -34,16 +33,12 @@ public class SysPermissionService
      * @param user 使用者訊息
      * @return 角色權限訊息
      */
-    public Set<String> getRolePermission(SysUser user)
-    {
+    public Set<String> getRolePermission(SysUser user) {
         Set<String> roles = new HashSet<String>();
         // 管理員擁有所有權限
-        if (user.isAdmin())
-        {
+        if (user.isAdmin()) {
             roles.add("admin");
-        }
-        else
-        {
+        } else {
             roles.addAll(roleService.selectRolePermissionByUserId(user.getUserId()));
         }
         return roles;
@@ -55,32 +50,23 @@ public class SysPermissionService
      * @param user 使用者訊息
      * @return 選單權限訊息
      */
-    public Set<String> getMenuPermission(SysUser user)
-    {
+    public Set<String> getMenuPermission(SysUser user) {
         Set<String> perms = new HashSet<String>();
         // 管理員擁有所有權限
-        if (user.isAdmin())
-        {
+        if (user.isAdmin()) {
             perms.add("*:*:*");
-        }
-        else
-        {
+        } else {
             List<SysRole> roles = user.getRoles();
-            if (!CollectionUtils.isEmpty(roles))
-            {
+            if (!CollectionUtils.isEmpty(roles)) {
                 // 多角色設定permissions屬性，以便數據權限匹配權限
-                for (SysRole role : roles)
-                {
-                    if (StringUtils.equals(role.getStatus(), UserConstants.ROLE_NORMAL) && !role.isAdmin())
-                    {
+                for (SysRole role : roles) {
+                    if (StringUtils.equals(role.getStatus(), UserConstants.ROLE_NORMAL) && !role.isAdmin()) {
                         Set<String> rolePerms = menuService.selectMenuPermsByRoleId(role.getRoleId());
                         role.setPermissions(rolePerms);
                         perms.addAll(rolePerms);
                     }
                 }
-            }
-            else
-            {
+            } else {
                 perms.addAll(menuService.selectMenuPermsByUserId(user.getUserId()));
             }
         }

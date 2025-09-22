@@ -9,15 +9,14 @@ import java.util.List;
  *
  * @author cheng
  */
-public interface IGenTableColumnService
-{
+public interface IGenTableColumnService {
     /**
      * 查詢業務欄位列表
      *
      * @param tableId 業務欄位編號
      * @return 業務欄位集合
      */
-    public List<GenTableColumn> selectGenTableColumnListByTableId(Long tableId);
+    List<GenTableColumn> selectGenTableColumnListByTableId(Long tableId);
 
     /**
      * 新增業務欄位
@@ -25,7 +24,7 @@ public interface IGenTableColumnService
      * @param genTableColumn 業務欄位訊息
      * @return 結果
      */
-    public int insertGenTableColumn(GenTableColumn genTableColumn);
+    int insertGenTableColumn(GenTableColumn genTableColumn);
 
     /**
      * 修改業務欄位
@@ -33,7 +32,7 @@ public interface IGenTableColumnService
      * @param genTableColumn 業務欄位訊息
      * @return 結果
      */
-    public int updateGenTableColumn(GenTableColumn genTableColumn);
+    int updateGenTableColumn(GenTableColumn genTableColumn);
 
     /**
      * 刪除業務欄位訊息
@@ -41,5 +40,5 @@ public interface IGenTableColumnService
      * @param ids 需要刪除的數據ID
      * @return 結果
      */
-    public int deleteGenTableColumnByIds(String ids);
+    int deleteGenTableColumnByIds(String ids);
 }

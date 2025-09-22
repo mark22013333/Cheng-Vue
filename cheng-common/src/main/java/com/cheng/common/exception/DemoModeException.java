@@ -3,7 +3,7 @@ package com.cheng.common.exception;
 import java.io.Serial;
 
 /**
- * 演示模式異常
+ * 展示模式異常
  *
  * @author cheng
  */

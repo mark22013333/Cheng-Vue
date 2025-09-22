@@ -9,15 +9,14 @@ import java.util.List;
  *
  * @author cheng
  */
-public interface GenTableMapper
-{
+public interface GenTableMapper {
     /**
      * 查詢業務列表
      *
      * @param genTable 業務訊息
      * @return 業務集合
      */
-    public List<GenTable> selectGenTableList(GenTable genTable);
+    List<GenTable> selectGenTableList(GenTable genTable);
 
     /**
      * 查詢據庫列表
@@ -25,7 +24,7 @@ public interface GenTableMapper
      * @param genTable 業務訊息
      * @return 資料庫表集合
      */
-    public List<GenTable> selectDbTableList(GenTable genTable);
+    List<GenTable> selectDbTableList(GenTable genTable);
 
     /**
      * 查詢據庫列表
@@ -33,14 +32,14 @@ public interface GenTableMapper
      * @param tableNames 表名稱組
      * @return 資料庫表集合
      */
-    public List<GenTable> selectDbTableListByNames(String[] tableNames);
+    List<GenTable> selectDbTableListByNames(String[] tableNames);
 
     /**
      * 查詢所有表訊息
      *
      * @return 表訊息集合
      */
-    public List<GenTable> selectGenTableAll();
+    List<GenTable> selectGenTableAll();
 
     /**
      * 查詢表ID業務訊息
@@ -48,7 +47,7 @@ public interface GenTableMapper
      * @param id 業務ID
      * @return 業務訊息
      */
-    public GenTable selectGenTableById(Long id);
+    GenTable selectGenTableById(Long id);
 
     /**
      * 查詢表名稱業務訊息
@@ -56,7 +55,7 @@ public interface GenTableMapper
      * @param tableName 表名稱
      * @return 業務訊息
      */
-    public GenTable selectGenTableByName(String tableName);
+    GenTable selectGenTableByName(String tableName);
 
     /**
      * 新增業務
@@ -64,7 +63,7 @@ public interface GenTableMapper
      * @param genTable 業務訊息
      * @return 結果
      */
-    public int insertGenTable(GenTable genTable);
+    int insertGenTable(GenTable genTable);
 
     /**
      * 修改業務
@@ -72,7 +71,7 @@ public interface GenTableMapper
      * @param genTable 業務訊息
      * @return 結果
      */
-    public int updateGenTable(GenTable genTable);
+    int updateGenTable(GenTable genTable);
 
     /**
      * 批次刪除業務
@@ -80,7 +79,7 @@ public interface GenTableMapper
      * @param ids 需要刪除的數據ID
      * @return 結果
      */
-    public int deleteGenTableByIds(Long[] ids);
+    int deleteGenTableByIds(Long[] ids);
 
     /**
      * 建立表
@@ -88,5 +87,5 @@ public interface GenTableMapper
      * @param sql 表結構
      * @return 結果
      */
-    public int createTable(String sql);
+    int createTable(String sql);
 }

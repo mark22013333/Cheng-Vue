@@ -12,15 +12,6 @@
         <p>
           <el-tag type="danger">&yen;線上測試中</el-tag>
         </p>
-        <p>
-          <el-button
-            size="mini"
-            icon="el-icon-s-home"
-            plain
-            @click="goTarget('https://mark22013333.github.io/')">
-            部落格
-          </el-button>
-        </p>
       </el-col>
 
       <el-col :sm="24" :lg="12" style="padding-left: 50px">
@@ -40,6 +31,15 @@
             <span>聯絡訊息</span>
           </div>
           <div class="body">
+            <p>
+              <el-button
+                size="mini"
+                icon="el-icon-s-home"
+                plain
+                @click="goTarget('https://mark22013333.github.io/')">
+                部落格
+              </el-button>
+            </p>
           </div>
         </el-card>
       </el-col>
@@ -49,6 +49,12 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.0.1 - 2025-09-23">
+              <ol>
+                <li>整合了 Jasypt，對設定檔 (application.yml) 中的敏感資訊（如資料庫密碼、Token Secret）進行加密處理。</li>
+                <li>將加密演算法升級為更安全的 PBEWITHHMACSHA512ANDAES_256。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.0.0 - 2025-09-22">
               <ol>
                 <li>CoolApps前後端分離系統正式發布</li>
@@ -84,7 +90,7 @@ export default {
   data() {
     return {
       // 版本號
-      version: "1.0.0"
+      version: "1.0.1"
     }
   },
   methods: {

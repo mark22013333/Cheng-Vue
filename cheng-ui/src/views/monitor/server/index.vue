@@ -131,7 +131,7 @@
       <el-col :span="24" class="card-box">
         <el-card>
           <div slot="header">
-            <span><i class="el-icon-coffee-cup"></i> Java虚拟機訊息</span>
+            <span><i class="el-icon-coffee-cup"></i> Java虛擬機訊息</span>
           </div>
           <div class="el-table el-table--enable-row-hover el-table--medium">
             <table cellspacing="0" style="width: 100%;table-layout:fixed;">

@@ -117,7 +117,6 @@ public class TokenService {
      * 驗證令牌有效期，相差不足20分鐘，自動重新整理暫存
      *
      * @param loginUser 登入訊息
-     * @return 令牌
      */
     public void verifyToken(LoginUser loginUser) {
         long expireTime = loginUser.getExpireTime();
@@ -161,10 +160,9 @@ public class TokenService {
      * @return 令牌
      */
     private String createToken(Map<String, Object> claims) {
-        String token = Jwts.builder()
+        return Jwts.builder()
                 .setClaims(claims)
                 .signWith(SignatureAlgorithm.HS512, secret).compact();
-        return token;
     }
 
     /**
@@ -194,7 +192,7 @@ public class TokenService {
     /**
      * 取得請求token
      *
-     * @param request
+     * @param request request
      * @return token
      */
     private String getToken(HttpServletRequest request) {

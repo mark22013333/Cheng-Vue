@@ -25,8 +25,7 @@ import org.springframework.stereotype.Component;
  * @author cheng
  */
 @Component
-public class SysRegisterService
-{
+public class SysRegisterService {
     @Autowired
     private ISysUserService userService;
 
@@ -39,53 +38,37 @@ public class SysRegisterService
     /**
      * 註冊
      */
-    public String register(RegisterBody registerBody)
-    {
+    public String register(RegisterBody registerBody) {
         String msg = "", username = registerBody.getUsername(), password = registerBody.getPassword();
         SysUser sysUser = new SysUser();
         sysUser.setUserName(username);
 
         // 驗證碼開關
         boolean captchaEnabled = configService.selectCaptchaEnabled();
-        if (captchaEnabled)
-        {
+        if (captchaEnabled) {
             validateCaptcha(username, registerBody.getCode(), registerBody.getUuid());
         }
 
-        if (StringUtils.isEmpty(username))
-        {
+        if (StringUtils.isEmpty(username)) {
             msg = "使用者名不能為空";
-        }
-        else if (StringUtils.isEmpty(password))
-        {
+        } else if (StringUtils.isEmpty(password)) {
             msg = "使用者密碼不能為空";
-        }
-        else if (username.length() < UserConstants.USERNAME_MIN_LENGTH
-                || username.length() > UserConstants.USERNAME_MAX_LENGTH)
-        {
+        } else if (username.length() < UserConstants.USERNAME_MIN_LENGTH
+                || username.length() > UserConstants.USERNAME_MAX_LENGTH) {
             msg = "帳號長度必須在2到20個字串之間";
-        }
-        else if (password.length() < UserConstants.PASSWORD_MIN_LENGTH
-                || password.length() > UserConstants.PASSWORD_MAX_LENGTH)
-        {
+        } else if (password.length() < UserConstants.PASSWORD_MIN_LENGTH
+                || password.length() > UserConstants.PASSWORD_MAX_LENGTH) {
             msg = "密碼長度必須在5到20個字串之間";
-        }
-        else if (!userService.checkUserNameUnique(sysUser))
-        {
+        } else if (!userService.checkUserNameUnique(sysUser)) {
             msg = "儲存使用者'" + username + "'失敗，註冊帳號已存在";
-        }
-        else
-        {
+        } else {
             sysUser.setNickName(username);
             sysUser.setPwdUpdateDate(DateUtils.getNowDate());
             sysUser.setPassword(SecurityUtils.encryptPassword(password));
             boolean regFlag = userService.registerUser(sysUser);
-            if (!regFlag)
-            {
+            if (!regFlag) {
                 msg = "註冊失敗,請聯絡系統管理人員";
-            }
-            else
-            {
+            } else {
                 AsyncManager.me().execute(AsyncFactory.recordLogininfor(username, Constants.REGISTER, MessageUtils.message("user.register.success")));
             }
         }
@@ -96,21 +79,18 @@ public class SysRegisterService
      * 校驗驗證碼
      *
      * @param username 使用者名
-     * @param code 驗證碼
-     * @param uuid 唯一標識
+     * @param code     驗證碼
+     * @param uuid     唯一標識
      * @return 結果
      */
-    public void validateCaptcha(String username, String code, String uuid)
-    {
+    public void validateCaptcha(String username, String code, String uuid) {
         String verifyKey = CacheConstants.CAPTCHA_CODE_KEY + StringUtils.nvl(uuid, "");
         String captcha = redisCache.getCacheObject(verifyKey);
         redisCache.deleteObject(verifyKey);
-        if (captcha == null)
-        {
+        if (captcha == null) {
             throw new CaptchaExpireException();
         }
-        if (!code.equalsIgnoreCase(captcha))
-        {
+        if (!code.equalsIgnoreCase(captcha)) {
             throw new CaptchaException();
         }
     }

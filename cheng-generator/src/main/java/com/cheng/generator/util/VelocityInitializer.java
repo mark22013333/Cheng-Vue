@@ -10,25 +10,20 @@ import java.util.Properties;
  *
  * @author cheng
  */
-public class VelocityInitializer
-{
+public class VelocityInitializer {
     /**
      * 初始化vm方法
      */
-    public static void initVelocity()
-    {
+    public static void initVelocity() {
         Properties p = new Properties();
-        try
-        {
+        try {
             // 載入classpath目錄下的vm文件
             p.setProperty("resource.loader.file.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
             // 定義字串集
             p.setProperty(Velocity.INPUT_ENCODING, Constants.UTF8);
             // 初始化Velocity引擎，指定配置Properties
             Velocity.init(p);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

@@ -17,7 +17,7 @@
         <!--使用者數據-->
         <pane size="84">
           <el-col>
-            <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+            <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="85px">
               <el-form-item label="使用者名稱" prop="userName">
                 <el-input v-model="queryParams.userName" clearable placeholder="請輸入使用者名稱" style="width: 240px"
                           @keyup.enter.native="handleQuery"/>
@@ -27,7 +27,7 @@
                           @keyup.enter.native="handleQuery"/>
               </el-form-item>
               <el-form-item label="狀態" prop="status">
-                <el-select v-model="queryParams.status" clearable placeholder="使用者狀態" style="width: 240px">
+                <el-select v-model="queryParams.status" clearable placeholder="使用者狀態" style="width: 140px">
                   <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
                 </el-select>
               </el-form-item>
