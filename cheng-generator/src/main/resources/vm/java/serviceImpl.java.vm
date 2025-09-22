@@ -107,7 +107,7 @@ public class ${ClassName}ServiceImpl implements I${ClassName}Service
     }
 
     /**
-     * 批量刪除${functionName}
+     * 批次刪除${functionName}
      *
      * @param ${pkColumn.javaField}s 需要刪除的${functionName}主鍵
      * @return 結果

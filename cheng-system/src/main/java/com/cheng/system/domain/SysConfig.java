@@ -8,13 +8,15 @@ import jakarta.validation.constraints.Size;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import java.io.Serial;
+
 /**
  * 參數配置表 sys_config
  *
  * @author cheng
  */
-public class SysConfig extends BaseEntity
-{
+public class SysConfig extends BaseEntity {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -35,18 +37,19 @@ public class SysConfig extends BaseEntity
     @Excel(name = "參數鍵名")
     private String configKey;
 
-    /** 參數鍵值 */
+    /**
+     * 參數鍵值
+     */
     @Excel(name = "參數鍵值")
     private String configValue;
 
     /**
-     * 系統内置（Y是 N否）
+     * 系統內建（Y是 N否）
      */
-    @Excel(name = "系統内置", readConverterExp = "Y=是,N=否")
+    @Excel(name = "系統內建", readConverterExp = "Y=是,N=否")
     private String configType;
 
-    public Long getConfigId()
-    {
+    public Long getConfigId() {
         return configId;
     }
 
@@ -56,8 +59,7 @@ public class SysConfig extends BaseEntity
 
     @NotBlank(message = "參數名稱不能為空")
     @Size(min = 0, max = 100, message = "參數名稱不能超過100個字串")
-    public String getConfigName()
-    {
+    public String getConfigName() {
         return configName;
     }
 
@@ -67,8 +69,7 @@ public class SysConfig extends BaseEntity
 
     @NotBlank(message = "參數鍵名長度不能為空")
     @Size(min = 0, max = 100, message = "參數鍵名長度不能超過100個字串")
-    public String getConfigKey()
-    {
+    public String getConfigKey() {
         return configKey;
     }
 
@@ -78,39 +79,35 @@ public class SysConfig extends BaseEntity
 
     @NotBlank(message = "參數鍵值不能為空")
     @Size(min = 0, max = 500, message = "參數鍵值長度不能超過500個字串")
-    public String getConfigValue()
-    {
+    public String getConfigValue() {
         return configValue;
     }
 
-    public void setConfigValue(String configValue)
-    {
+    public void setConfigValue(String configValue) {
         this.configValue = configValue;
     }
 
-    public String getConfigType()
-    {
+    public String getConfigType() {
         return configType;
     }
 
-    public void setConfigType(String configType)
-    {
+    public void setConfigType(String configType) {
         this.configType = configType;
     }
-    
+
     @Override
     public String toString() {
-        return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
-            .append("configId", getConfigId())
-            .append("configName", getConfigName())
-            .append("configKey", getConfigKey())
-            .append("configValue", getConfigValue())
-            .append("configType", getConfigType())
-            .append("createBy", getCreateBy())
-            .append("createTime", getCreateTime())
-            .append("updateBy", getUpdateBy())
-            .append("updateTime", getUpdateTime())
-            .append("remark", getRemark())
-            .toString();
+        return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
+                .append("configId", getConfigId())
+                .append("configName", getConfigName())
+                .append("configKey", getConfigKey())
+                .append("configValue", getConfigValue())
+                .append("configType", getConfigType())
+                .append("createBy", getCreateBy())
+                .append("createTime", getCreateTime())
+                .append("updateBy", getUpdateBy())
+                .append("updateTime", getUpdateTime())
+                .append("remark", getRemark())
+                .toString();
     }
 }

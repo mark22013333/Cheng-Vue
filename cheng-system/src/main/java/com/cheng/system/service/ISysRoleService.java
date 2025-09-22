@@ -139,7 +139,7 @@ public interface ISysRoleService
     public int deleteRoleById(Long roleId);
 
     /**
-     * 批量刪除角色訊息
+     * 批次刪除角色訊息
      *
      * @param roleIds 需要刪除的角色ID
      * @return 結果
@@ -155,7 +155,7 @@ public interface ISysRoleService
     public int deleteAuthUser(SysUserRole userRole);
 
     /**
-     * 批量取消授權使用者角色
+     * 批次取消授權使用者角色
      * 
      * @param roleId 角色ID
      * @param userIds 需要取消授權的使用者數據ID
@@ -164,7 +164,7 @@ public interface ISysRoleService
     public int deleteAuthUsers(Long roleId, Long[] userIds);
 
     /**
-     * 批量選擇授權使用者角色
+     * 批次選擇授權使用者角色
      * 
      * @param roleId 角色ID
      * @param userIds 需要刪除的使用者數據ID

@@ -68,7 +68,7 @@ public class HttpStatus
     public static final int BAD_METHOD = 405;
 
     /**
-     * 資源冲突，或者資源被鎖
+     * 資源衝突，或者資源被鎖
      */
     public static final int CONFLICT = 409;
 

@@ -24,11 +24,10 @@ import java.util.List;
  * @author cheng
  */
 @Service
-public class SysConfigServiceImpl implements ISysConfigService
-{
+public class SysConfigServiceImpl implements ISysConfigService {
+    
     @Autowired
     private SysConfigMapper configMapper;
-
     @Autowired
     private RedisCache redisCache;
 
@@ -36,8 +35,7 @@ public class SysConfigServiceImpl implements ISysConfigService
      * 專案啟動時，初始化參數到暫存
      */
     @PostConstruct
-    public void init()
-    {
+    public void init() {
         loadingConfigCache();
     }
 
@@ -49,8 +47,7 @@ public class SysConfigServiceImpl implements ISysConfigService
      */
     @Override
     @DataSource(DataSourceType.MASTER)
-    public SysConfig selectConfigById(Long configId)
-    {
+    public SysConfig selectConfigById(Long configId) {
         SysConfig config = new SysConfig();
         config.setConfigId(configId);
         return configMapper.selectConfig(config);
@@ -63,18 +60,15 @@ public class SysConfigServiceImpl implements ISysConfigService
      * @return 參數鍵值
      */
     @Override
-    public String selectConfigByKey(String configKey)
-    {
+    public String selectConfigByKey(String configKey) {
         String configValue = Convert.toStr(redisCache.getCacheObject(getCacheKey(configKey)));
-        if (StringUtils.isNotEmpty(configValue))
-        {
+        if (StringUtils.isNotEmpty(configValue)) {
             return configValue;
         }
         SysConfig config = new SysConfig();
         config.setConfigKey(configKey);
         SysConfig retConfig = configMapper.selectConfig(config);
-        if (StringUtils.isNotNull(retConfig))
-        {
+        if (StringUtils.isNotNull(retConfig)) {
             redisCache.setCacheObject(getCacheKey(configKey), retConfig.getConfigValue());
             return retConfig.getConfigValue();
         }
@@ -87,11 +81,9 @@ public class SysConfigServiceImpl implements ISysConfigService
      * @return true開啟，false關閉
      */
     @Override
-    public boolean selectCaptchaEnabled()
-    {
+    public boolean selectCaptchaEnabled() {
         String captchaEnabled = selectConfigByKey("sys.account.captchaEnabled");
-        if (StringUtils.isEmpty(captchaEnabled))
-        {
+        if (StringUtils.isEmpty(captchaEnabled)) {
             return true;
         }
         return Convert.toBool(captchaEnabled);
@@ -104,8 +96,7 @@ public class SysConfigServiceImpl implements ISysConfigService
      * @return 參數配置集合
      */
     @Override
-    public List<SysConfig> selectConfigList(SysConfig config)
-    {
+    public List<SysConfig> selectConfigList(SysConfig config) {
         return configMapper.selectConfigList(config);
     }
 
@@ -116,11 +107,9 @@ public class SysConfigServiceImpl implements ISysConfigService
      * @return 結果
      */
     @Override
-    public int insertConfig(SysConfig config)
-    {
+    public int insertConfig(SysConfig config) {
         int row = configMapper.insertConfig(config);
-        if (row > 0)
-        {
+        if (row > 0) {
             redisCache.setCacheObject(getCacheKey(config.getConfigKey()), config.getConfigValue());
         }
         return row;
@@ -133,36 +122,30 @@ public class SysConfigServiceImpl implements ISysConfigService
      * @return 結果
      */
     @Override
-    public int updateConfig(SysConfig config)
-    {
+    public int updateConfig(SysConfig config) {
         SysConfig temp = configMapper.selectConfigById(config.getConfigId());
-        if (!StringUtils.equals(temp.getConfigKey(), config.getConfigKey()))
-        {
+        if (!StringUtils.equals(temp.getConfigKey(), config.getConfigKey())) {
             redisCache.deleteObject(getCacheKey(temp.getConfigKey()));
         }
 
         int row = configMapper.updateConfig(config);
-        if (row > 0)
-        {
+        if (row > 0) {
             redisCache.setCacheObject(getCacheKey(config.getConfigKey()), config.getConfigValue());
         }
         return row;
     }
 
     /**
-     * 批量刪除參數訊息
+     * 批次刪除參數訊息
      *
      * @param configIds 需要刪除的參數ID
      */
     @Override
-    public void deleteConfigByIds(Long[] configIds)
-    {
-        for (Long configId : configIds)
-        {
+    public void deleteConfigByIds(Long[] configIds) {
+        for (Long configId : configIds) {
             SysConfig config = selectConfigById(configId);
-            if (StringUtils.equals(UserConstants.YES, config.getConfigType()))
-            {
-                throw new ServiceException(String.format("内置參數【%1$s】不能刪除 ", config.getConfigKey()));
+            if (StringUtils.equals(UserConstants.YES, config.getConfigType())) {
+                throw new ServiceException(String.format("內建參數【%1$s】不能刪除 ", config.getConfigKey()));
             }
             configMapper.deleteConfigById(configId);
             redisCache.deleteObject(getCacheKey(config.getConfigKey()));
@@ -173,11 +156,9 @@ public class SysConfigServiceImpl implements ISysConfigService
      * 載入參數暫存數據
      */
     @Override
-    public void loadingConfigCache()
-    {
+    public void loadingConfigCache() {
         List<SysConfig> configsList = configMapper.selectConfigList(new SysConfig());
-        for (SysConfig config : configsList)
-        {
+        for (SysConfig config : configsList) {
             redisCache.setCacheObject(getCacheKey(config.getConfigKey()), config.getConfigValue());
         }
     }
@@ -186,8 +167,7 @@ public class SysConfigServiceImpl implements ISysConfigService
      * 清除參數暫存數據
      */
     @Override
-    public void clearConfigCache()
-    {
+    public void clearConfigCache() {
         Collection<String> keys = redisCache.keys(CacheConstants.SYS_CONFIG_KEY + "*");
         redisCache.deleteObject(keys);
     }
@@ -196,8 +176,7 @@ public class SysConfigServiceImpl implements ISysConfigService
      * 重置參數暫存數據
      */
     @Override
-    public void resetConfigCache()
-    {
+    public void resetConfigCache() {
         clearConfigCache();
         loadingConfigCache();
     }
@@ -209,12 +188,10 @@ public class SysConfigServiceImpl implements ISysConfigService
      * @return 結果
      */
     @Override
-    public boolean checkConfigKeyUnique(SysConfig config)
-    {
+    public boolean checkConfigKeyUnique(SysConfig config) {
         Long configId = StringUtils.isNull(config.getConfigId()) ? -1L : config.getConfigId();
         SysConfig info = configMapper.checkConfigKeyUnique(config.getConfigKey());
-        if (StringUtils.isNotNull(info) && info.getConfigId().longValue() != configId.longValue())
-        {
+        if (StringUtils.isNotNull(info) && info.getConfigId().longValue() != configId.longValue()) {
             return UserConstants.NOT_UNIQUE;
         }
         return UserConstants.UNIQUE;
@@ -226,8 +203,7 @@ public class SysConfigServiceImpl implements ISysConfigService
      * @param configKey 參數鍵
      * @return 暫存鍵key
      */
-    private String getCacheKey(String configKey)
-    {
+    private String getCacheKey(String configKey) {
         return CacheConstants.SYS_CONFIG_KEY + configKey;
     }
 }

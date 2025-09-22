@@ -199,7 +199,7 @@ public interface ISysUserService
     public int deleteUserById(Long userId);
 
     /**
-     * 批量刪除使用者訊息
+     * 批次刪除使用者訊息
      *
      * @param userIds 需要刪除的使用者ID
      * @return 結果

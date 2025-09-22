@@ -43,7 +43,7 @@ public interface SysJobMapper
     public int deleteJobById(Long jobId);
 
     /**
-     * 批量刪除呼叫任務訊息
+     * 批次刪除呼叫任務訊息
      *
      * @param ids 需要刪除的數據ID
      * @return 結果

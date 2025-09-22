@@ -28,7 +28,7 @@ public interface SysUserPostMapper
     public int countUserPostById(Long postId);
 
     /**
-     * 批量刪除使用者和職位關聯
+     * 批次刪除使用者和職位關聯
      *
      * @param ids 需要刪除的數據ID
      * @return 結果
@@ -36,7 +36,7 @@ public interface SysUserPostMapper
     public int deleteUserPost(Long[] ids);
 
     /**
-     * 批量新增使用者職位訊息
+     * 批次新增使用者職位訊息
      *
      * @param userPostList 使用者職位列表
      * @return 結果

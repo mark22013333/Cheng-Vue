@@ -75,7 +75,7 @@ public interface ISysPostService
     public int deletePostById(Long postId);
 
     /**
-     * 批量刪除職位訊息
+     * 批次刪除職位訊息
      *
      * @param postIds 需要刪除的職位ID
      * @return 結果

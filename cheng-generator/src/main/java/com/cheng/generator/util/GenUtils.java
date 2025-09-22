@@ -188,7 +188,7 @@ public class GenUtils
     }
 
     /**
-     * 批量替換前綴
+     * 批次替換前綴
      *
      * @param replacementm 替換值
      * @param searchList 替換列表

@@ -229,7 +229,7 @@ public class GenController extends BaseController
     }
 
     /**
-     * 批量產生程式碼
+     * 批次產生程式碼
      */
     @PreAuthorize("@ss.hasPermi('tool:gen:code')")
     @Log(title = "程式碼產生", businessType = BusinessType.GENCODE)

@@ -92,7 +92,7 @@ export function authUserCancel(data) {
   })
 }
 
-// 批量取消使用者授權角色
+// 批次取消使用者授權角色
 export function authUserCancelAll(data) {
   return request({
     url: '/system/role/authUser/cancelAll',

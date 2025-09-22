@@ -35,6 +35,13 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- Jasypt -->
+        <dependency>
+            <groupId>com.github.ulisesbocchio</groupId>
+            <artifactId>jasypt-spring-boot</artifactId>
+            <version>3.0.5</version>
+        </dependency>
+
         <!-- pagehelper 分頁套件 -->
         <dependency>
             <groupId>com.github.pagehelper</groupId>

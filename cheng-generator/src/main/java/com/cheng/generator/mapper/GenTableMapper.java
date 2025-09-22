@@ -75,7 +75,7 @@ public interface GenTableMapper
     public int updateGenTable(GenTable genTable);
 
     /**
-     * 批量刪除業務
+     * 批次刪除業務
      *
      * @param ids 需要刪除的數據ID
      * @return 結果

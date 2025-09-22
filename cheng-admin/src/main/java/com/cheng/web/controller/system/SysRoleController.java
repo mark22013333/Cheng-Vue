@@ -219,7 +219,7 @@ public class SysRoleController extends BaseController
     }
 
     /**
-     * 批量取消授權使用者
+     * 批次取消授權使用者
      */
     @PreAuthorize("@ss.hasPermi('system:role:edit')")
     @Log(title = "角色管理", businessType = BusinessType.GRANT)
@@ -230,7 +230,7 @@ public class SysRoleController extends BaseController
     }
 
     /**
-     * 批量選擇使用者授權
+     * 批次選擇使用者授權
      */
     @PreAuthorize("@ss.hasPermi('system:role:edit')")
     @Log(title = "角色管理", businessType = BusinessType.GRANT)

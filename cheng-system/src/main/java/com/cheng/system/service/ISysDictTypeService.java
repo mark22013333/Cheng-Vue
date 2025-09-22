@@ -52,7 +52,7 @@ public interface ISysDictTypeService
     public SysDictType selectDictTypeByType(String dictType);
 
     /**
-     * 批量刪除字典訊息
+     * 批次刪除字典訊息
      *
      * @param dictIds 需要刪除的字典ID
      */

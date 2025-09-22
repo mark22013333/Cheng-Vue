@@ -43,7 +43,7 @@ public interface SysJobLogMapper
     public int insertJobLog(SysJobLog jobLog);
 
     /**
-     * 批量刪除呼叫日誌訊息
+     * 批次刪除呼叫日誌訊息
      *
      * @param logIds 需要刪除的數據ID
      * @return 結果

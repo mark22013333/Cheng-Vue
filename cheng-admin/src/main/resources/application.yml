@@ -3,13 +3,13 @@ cheng:
   # 名稱
   name: CoolApps
   # 版本
-  version: 1.0.0
+  version: 1.0.1
   # 版權年份
   copyrightYear: 2025
   # 檔案路徑 - 由環境特定配置檔案設定 (application-local.yml 或 application-prod.yml)
   # profile: 路徑將從 application-local.yml 或 application-prod.yml 中取得
   # 取得ip位址開關
-  addressEnabled: false
+  addressEnabled: true
   # 驗證碼類型 math 數字計算 char 字元驗證
   captchaType: math
 
@@ -41,7 +41,7 @@ logging:
 user:
   password:
     # 密碼最大錯誤次數
-    maxRetryCount: 5
+    maxRetryCount: 3
     # 密碼鎖定時間（預設10分鐘）
     lockTime: 10
 
@@ -72,7 +72,7 @@ token:
   # 令牌自定義標識
   header: Authorization
   # 令牌密鑰
-  secret: diDsd]2FsGO@4dido1
+  secret: ENC(Xmcu0N3coRAuG7dbOj6S55XpoFiaNCfdVNP7A30IFt9qPjWt/ZMhPOz19E5Uzf1JLK5gAO5xmvqTkcK9E9A4fQ==)
   # 令牌有效期（預設30分鐘）
   expireTime: 30
 

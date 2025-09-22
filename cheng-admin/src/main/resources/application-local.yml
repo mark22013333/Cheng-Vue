@@ -29,9 +29,9 @@ spring:
     druid:
       # 主庫資料來源
       master:
-        url: jdbc:mysql://localhost:23506/cool-apps?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
-        username: root
-        password: root
+        url: ENC(zNokwHy9BqUx1wOU5vSLrvOx5BVaKKcx3OeDx5THHFu5GCa55UDw+/adpLCZkgjwWD81UQm1CE7xT+TYgbfsSpGBtR9so0cytPM6AxApYotzK/lYayg2m6fOQbRksHc5uyJJ0AaNPnM9b/EHbO9u1InANu+0D1uMSXBPH/Kux0y5/StoJhic9550N9VP7gE87n/fwy+rm2a2S4WS60AzZmjFcM9zk9lOW+kINCQrkWcX2KsdK1UacKjHdyRYv8Rh)
+        username: ENC(0UKMWnZmMGgHXFtYdh5VeYiDkTsaZJJmZfR+EzEpfuByzQ8rO6hr6IZ08mw1cfoS)
+        password: ENC(Hsy7m99sKMLebcY5XvuOu4RZ+iWrIfyuU1LU1QPNnspuVT96Ex4tz2DdcPHWoqld)
       # 從庫資料來源
       slave:
         # 從資料來源開關/預設關閉
@@ -70,8 +70,8 @@ spring:
         allow:
         url-pattern: /druid/*
         # 控制台管理使用者名和密碼
-        login-username: cheng
-        login-password: 123456
+        login-username: ENC(sbTHauToAPfdYb1Jtm9EKlvKzpojnYg3M3gLbxZEsrnqEEy2tp8XHr1cDIktpvBZ)
+        login-password: ENC(wUFsmTLtCP45xgn297Ry2eeGni5aahJec0vuYO3zKnQdWM4ES2Vm0f1jqMmFjJhK)
       filter:
         stat:
           enabled: true

@@ -99,7 +99,7 @@ public interface SysRoleMapper
     public int deleteRoleById(Long roleId);
 
     /**
-     * 批量刪除角色訊息
+     * 批次刪除角色訊息
      *
      * @param roleIds 需要刪除的角色ID
      * @return 結果

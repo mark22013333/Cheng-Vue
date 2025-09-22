@@ -64,37 +64,38 @@ public class DruidConfig {
             DataSource dataSource = SpringUtils.getBean(beanName);
             targetDataSources.put(sourceName, dataSource);
         } catch (Exception e) {
+            // ignore 
         }
     }
 
     /**
-     * 清除監控頁面底部的广告
+     * 清除監控頁面底部的廣告
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Bean
     @ConditionalOnProperty(name = "spring.datasource.druid.statViewServlet.enabled", havingValue = "true")
     public FilterRegistrationBean removeDruidFilterRegistrationBean(DruidStatProperties properties) {
-        // 取得web監控頁面的參數
+        // 取得 web 監控頁面的參數
         DruidStatProperties.StatViewServlet config = properties.getStatViewServlet();
-        // 提取common.js的配置路徑
+        // 提取 common.js 的配置路徑
         String pattern = config.getUrlPattern() != null ? config.getUrlPattern() : "/druid/*";
         String commonJsPattern = pattern.replaceAll("\\*", "js/common.js");
         final String filePath = "support/http/resources/js/common.js";
         // 建立filter進行過濾
         Filter filter = new Filter() {
             @Override
-            public void init(jakarta.servlet.FilterConfig filterConfig) throws ServletException {
+            public void init(jakarta.servlet.FilterConfig filterConfig) {
             }
 
             @Override
             public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
                     throws IOException, ServletException {
                 chain.doFilter(request, response);
-                // 重置缓冲區，響應頭不會被重置
+                // 重置緩衝區，響應頭不會被重置
                 response.resetBuffer();
-                // 取得common.js
+                // 取得 common.js
                 String text = Utils.readFromResource(filePath);
-                // 正則替換banner, 除去底部的广告訊息
+                // 正則替換 banner, 移除底部的廣告訊息
                 text = text.replaceAll("<a.*?banner\"></a><br/>", "");
                 text = text.replaceAll("powered.*?shrek.wang</a>", "");
                 response.getWriter().write(text);

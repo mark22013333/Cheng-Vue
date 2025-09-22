@@ -44,7 +44,7 @@ public interface I${ClassName}Service
     public int update${ClassName}(${ClassName} ${className});
 
     /**
-     * 批量刪除${functionName}
+     * 批次刪除${functionName}
      *
      * @param ${pkColumn.javaField}s 需要刪除的${functionName}主鍵集合
      * @return 結果

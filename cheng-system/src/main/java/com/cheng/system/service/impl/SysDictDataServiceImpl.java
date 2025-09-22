@@ -58,7 +58,7 @@ public class SysDictDataServiceImpl implements ISysDictDataService
     }
 
     /**
-     * 批量刪除字典數據訊息
+     * 批次刪除字典數據訊息
      *
      * @param dictCodes 需要刪除的字典數據ID
      */

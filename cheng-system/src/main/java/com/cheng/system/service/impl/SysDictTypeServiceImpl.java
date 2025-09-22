@@ -113,7 +113,7 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService
     }
 
     /**
-     * 批量刪除字典類型訊息
+     * 批次刪除字典類型訊息
      *
      * @param dictIds 需要刪除的字典ID
      */

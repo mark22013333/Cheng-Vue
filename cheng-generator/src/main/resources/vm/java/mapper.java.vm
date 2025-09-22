@@ -55,7 +55,7 @@ public interface ${ClassName}Mapper
     public int delete${ClassName}By${pkColumn.capJavaField}(${pkColumn.javaType} ${pkColumn.javaField});
 
     /**
-     * 批量刪除${functionName}
+     * 批次刪除${functionName}
      *
      * @param ${pkColumn.javaField}s 需要刪除的數據主鍵集合
      * @return 結果
@@ -64,7 +64,7 @@ public interface ${ClassName}Mapper
 #if($table.sub)
 
     /**
-     * 批量刪除${subTable.functionName}
+     * 批次刪除${subTable.functionName}
      *
      * @param ${pkColumn.javaField}s 需要刪除的數據主鍵集合
      * @return 結果
@@ -72,7 +72,7 @@ public interface ${ClassName}Mapper
     public int delete${subClassName}By${subTableFkClassName}s(${pkColumn.javaType}[] ${pkColumn.javaField}s);
     
     /**
-     * 批量新增${subTable.functionName}
+     * 批次新增${subTable.functionName}
      * 
      * @param ${subclassName}List ${subTable.functionName}列表
      * @return 結果

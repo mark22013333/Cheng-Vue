@@ -115,7 +115,7 @@ public interface IGenTableService
     public void synchDb(String tableName);
 
     /**
-     * 批量產生程式碼（下載方式）
+     * 批次產生程式碼（下載方式）
      *
      * @param tableNames 表陣列
      * @return 數據

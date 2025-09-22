@@ -28,7 +28,7 @@ public interface SysRoleMenuMapper
     public int deleteRoleMenuByRoleId(Long roleId);
 
     /**
-     * 批量刪除角色選單關聯訊息
+     * 批次刪除角色選單關聯訊息
      *
      * @param ids 需要刪除的數據ID
      * @return 結果
@@ -36,7 +36,7 @@ public interface SysRoleMenuMapper
     public int deleteRoleMenu(Long[] ids);
 
     /**
-     * 批量新增角色選單訊息
+     * 批次新增角色選單訊息
      *
      * @param roleMenuList 角色選單列表
      * @return 結果

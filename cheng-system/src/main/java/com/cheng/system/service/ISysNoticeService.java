@@ -52,7 +52,7 @@ public interface ISysNoticeService
     public int deleteNoticeById(Long noticeId);
     
     /**
-     * 批量刪除公告訊息
+     * 批次刪除公告訊息
      *
      * @param noticeIds 需要刪除的公告ID
      * @return 結果

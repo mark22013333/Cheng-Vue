@@ -10,7 +10,7 @@ spring:
       # 資料庫索引
       database: 0
       # 密碼
-      password: e23s5
+      password: ENC(KocpHJuKrmFEMlhiiSVggp5zrskhm6n2enL2w+SkHJtB+e4TrBuVU5dRksIpyFJA)
       # 連線逾時時間
       timeout: 10s
       lettuce:
@@ -29,9 +29,9 @@ spring:
     druid:
       # 主庫資料來源
       master:
-        url: jdbc:mysql://localhost:3306/cool-apps?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
-        username: demouser
-        password: e23s5
+        url: ENC(QIfE+54c3/N8YQwISQfFaY+bHBvIzXZe6arHJ+rqi5nPG5/PErRFNpH1RI7wSzoiEJyvNEmFh989MQoq9edI66mPLaKY4uY/IRloX9ob+PeAoeP/cls7hxF4SiTwi0IAQ9iEWclRq/SIqD46MWpvgCNFSHvaSspGL0lJeTLDdG8wsmWD5tGA6xXZUmnVkZGacxd9q0VjTxk7jtObP/VHX/vVAxFPlg4wm4YEaQDvXO3rNB/509UYk8smmE9r2WCJ)
+        username: ENC(KJxn/pP0PgrL+t9fQfUN1uqXY0Knyx5PGBAYoNvuqK/1zuSEZedeJpCeWDCpLZue)
+        password: ENC(7Xg2WNU8GvbgdzxLWVbiqHGXN6sRV/rbnDKDhANN0Tpx/xuCbemxwby3OzlQbM+p)
       # 從庫資料來源
       slave:
         # 從資料來源開關/預設關閉
@@ -70,8 +70,8 @@ spring:
         allow:
         url-pattern: /druid/*
         # 控制台管理使用者名和密碼
-        login-username: cheng
-        login-password: 123456
+        login-username: ENC(Uvanh/oVJo1l++vxWC8Dpmok57ocQNqa0dZYtUNDMW6914PLERelO0iwuTJYGL4i)
+        login-password: ENC(1+bjj9SBwCEwKnDuoZKiIo6xsRLrSTAiALLp+IEex5LhPj/zL8mZMUNmlZ9Zk32D)
       filter:
         stat:
           enabled: true

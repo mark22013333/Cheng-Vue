@@ -46,7 +46,7 @@
           :disabled="multiple"
           @click="cancelAuthUserAll"
           v-hasPermi="['system:role:remove']"
-        >批量取消授權
+        >批次取消授權
         </el-button>
       </el-col>
       <el-col :span="1.5">
@@ -187,7 +187,7 @@ export default {
         this.$modal.msgSuccess("取消授權成功")
       }).catch(() => {})
     },
-    /** 批量取消授權按鈕操作 */
+    /** 批次取消授權按鈕操作 */
     cancelAuthUserAll(row) {
       const roleId = this.queryParams.roleId
       const userIds = this.userIds.join(",")

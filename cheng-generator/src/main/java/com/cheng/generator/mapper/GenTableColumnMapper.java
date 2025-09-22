@@ -52,7 +52,7 @@ public interface GenTableColumnMapper
     public int deleteGenTableColumns(List<GenTableColumn> genTableColumns);
 
     /**
-     * 批量刪除業務欄位
+     * 批次刪除業務欄位
      *
      * @param ids 需要刪除的數據ID
      * @return 結果

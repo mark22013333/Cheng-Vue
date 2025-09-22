@@ -54,7 +54,7 @@ public interface ISysJobService
     public int deleteJob(SysJob job) throws SchedulerException;
 
     /**
-     * 批量刪除呼叫訊息
+     * 批次刪除呼叫訊息
      *
      * @param jobIds 需要刪除的任務ID
      * @return 結果

@@ -430,7 +430,7 @@ insert into sys_menu
 values ('1046', '線上查詢', '109', '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:online:query', '#', 'admin',
         sysdate(), '', null, '');
 insert into sys_menu
-values ('1047', '批量強退', '109', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:online:batchLogout', '#',
+values ('1047', '批次強退', '109', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:online:batchLogout', '#',
         'admin', sysdate(), '', null, '');
 insert into sys_menu
 values ('1048', '單條強退', '109', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:online:forceLogout', '#',

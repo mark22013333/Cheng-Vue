@@ -62,7 +62,7 @@ public interface SysDictDataMapper
     public int deleteDictDataById(Long dictCode);
 
     /**
-     * 批量刪除字典數據訊息
+     * 批次刪除字典數據訊息
      *
      * @param dictCodes 需要刪除的字典數據ID
      * @return 結果

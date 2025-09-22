@@ -21,7 +21,7 @@ public interface SysUserRoleMapper
     public int deleteUserRoleByUserId(Long userId);
 
     /**
-     * 批量刪除使用者和角色關聯
+     * 批次刪除使用者和角色關聯
      *
      * @param ids 需要刪除的數據ID
      * @return 結果
@@ -37,7 +37,7 @@ public interface SysUserRoleMapper
     public int countUserRoleByRoleId(Long roleId);
 
     /**
-     * 批量新增使用者角色訊息
+     * 批次新增使用者角色訊息
      *
      * @param userRoleList 使用者角色列表
      * @return 結果
@@ -53,7 +53,7 @@ public interface SysUserRoleMapper
     public int deleteUserRoleInfo(SysUserRole userRole);
 
     /**
-     * 批量取消授權使用者角色
+     * 批次取消授權使用者角色
      * 
      * @param roleId 角色ID
      * @param userIds 需要刪除的使用者數據ID

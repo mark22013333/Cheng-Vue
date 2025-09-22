@@ -170,7 +170,7 @@
               <el-input v-model="form.routeName" placeholder="請輸入路由名稱"/>
               <span slot="label">
                 <el-tooltip
-                  content="預設不填則和路由地址相同：如地址為：`user`，則名稱為`User`（註意：為避免名字的冲突，特殊情況下請自定義，保證唯一性）"
+                  content="預設不填則和路由地址相同：如地址為：`user`，則名稱為`User`（註意：為避免名字的衝突，特殊情況下請自定義，保證唯一性）"
                   placement="top">
                 <i class="el-icon-question"></i>
                 </el-tooltip>

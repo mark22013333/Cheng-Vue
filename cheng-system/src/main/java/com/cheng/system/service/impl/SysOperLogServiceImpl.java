@@ -43,7 +43,7 @@ public class SysOperLogServiceImpl implements ISysOperLogService
     }
 
     /**
-     * 批量刪除系統操作日誌
+     * 批次刪除系統操作日誌
      *
      * @param operIds 需要刪除的操作日誌ID
      * @return 結果

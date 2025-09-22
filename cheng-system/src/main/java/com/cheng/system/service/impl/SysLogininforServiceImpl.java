@@ -44,7 +44,7 @@ public class SysLogininforServiceImpl implements ISysLogininforService
     }
 
     /**
-     * 批量刪除系統登入日誌
+     * 批次刪除系統登入日誌
      *
      * @param infoIds 需要刪除的登入日誌ID
      * @return 結果
