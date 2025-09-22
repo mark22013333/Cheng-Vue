@@ -57,23 +57,23 @@
           </el-collapse>
         </el-card>
       </el-col>
-      <el-col :xs="24" :sm="24" :md="12" :lg="8">
-        <el-card class="update-log">
-          <div slot="header" class="clearfix">
-            <span>捐贈支援</span>
-          </div>
-          <div class="body">
-            <img
-              src="@/assets/images/pay.png"
-              alt="donate"
-              width="100%"
-            />
-            <span style="display: inline-block; height: 30px; line-height: 30px"
-            >你可以請作者喝杯咖啡表示鼓勵</span
-            >
-          </div>
-        </el-card>
-      </el-col>
+<!--      <el-col :xs="24" :sm="24" :md="12" :lg="8">-->
+<!--        <el-card class="update-log">-->
+<!--          <div slot="header" class="clearfix">-->
+<!--            <span>捐贈支援</span>-->
+<!--          </div>-->
+<!--          <div class="body">-->
+<!--            <img-->
+<!--              src="@/assets/images/pay.png"-->
+<!--              alt="donate"-->
+<!--              width="100%"-->
+<!--            />-->
+<!--            <span style="display: inline-block; height: 30px; line-height: 30px"-->
+<!--            >你可以請作者喝杯咖啡表示鼓勵</span-->
+<!--            >-->
+<!--          </div>-->
+<!--        </el-card>-->
+<!--      </el-col>-->
     </el-row>
   </div>
 </template>
@@ -84,7 +84,7 @@ export default {
   data() {
     return {
       // 版本號
-      version: "3.9.0"
+      version: "1.0.0"
     }
   },
   methods: {

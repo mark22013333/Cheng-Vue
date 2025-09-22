@@ -251,7 +251,7 @@ API 文檔：http://localhost:8080/swagger-ui/index.html
 
 詳細的手動部署步驟請參考：[部署指南](./cheng.deploy/manual-deployment-guide.md)
 
-### 生產環境配置
+### 正式環境配置
 
 1. **資料庫配置**：
 ```yaml
@@ -399,7 +399,7 @@ public class SysExampleController extends BaseController {
 系統整合了 Swagger 3.0，提供完整的 API 文檔：
 
 - **開發環境**：http://localhost:8080/swagger-ui/index.html
-- **生產環境**：https://cheng.tplinkdns.com/prod-api/swagger-ui/index.html
+- **正式環境**：https://cheng.tplinkdns.com/prod-api/swagger-ui/index.html
 
 ### 主要 API 端點
 
@@ -582,8 +582,8 @@ A: 在用戶管理中修改 admin 用戶密碼，或在個人中心修改。
 **Q: 如何新增自定義選單？**
 A: 在系統管理 -> 選單管理中新增選單項目，配置路由和權限。
 
-**Q: 如何部署到生產環境？**
-A: 參考 [部署指南](./cheng.deploy/manual-deployment-guide.md) 進行生產環境部署。
+**Q: 如何部署到正式環境？**
+A: 參考 [部署指南](./cheng.deploy/manual-deployment-guide.md) 進行正式環境部署。
 
 **Q: 如何客製化主題樣式？**
 A: 在介面設定中選擇主題，或修改 CSS 變數自定義樣式。

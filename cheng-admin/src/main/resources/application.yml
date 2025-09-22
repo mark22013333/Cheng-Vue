@@ -6,9 +6,8 @@ cheng:
   version: 1.0.0
   # 版權年份
   copyrightYear: 2025
-  # 檔案路徑 範例（ Windows設定D:/cheng/uploadPath，Linux設定 /home/cheng/uploadPath）
-  profile: /opt/cool-apps/uploadFile
-#  profile: /Users/cheng/uploadPath
+  # 檔案路徑 - 由環境特定配置檔案設定 (application-local.yml 或 application-prod.yml)
+  # profile: 路徑將從 application-local.yml 或 application-prod.yml 中取得
   # 取得ip位址開關
   addressEnabled: false
   # 驗證碼類型 math 數字計算 char 字元驗證
@@ -53,8 +52,8 @@ spring:
     # 國際化資源檔案路徑
     basename: i18n/messages
   profiles:
-    active: prod
-#    active: local
+#    active: prod
+    active: local
   # 文件上傳
   servlet:
     multipart:

@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <!-- 日誌存放路徑 -->
-    <property name="log.path" value="/opt/cool-apps/logs"/>
-<!--    <property name="log.path" value="/Users/cheng/cool-logs"/>-->
+    <springProperty scope="context" name="log.path" source="logging.file.path" defaultValue="/tmp/logs"/>
     <!-- 日誌輸出格式 -->
 	<property name="log.pattern" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{20} - [%method,%line] - %msg%n" />
 

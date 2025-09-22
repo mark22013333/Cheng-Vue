@@ -82,3 +82,12 @@ spring:
         wall:
           config:
             multi-statement-allow: true
+
+# 本地環境專用配置
+logging:
+  file:
+    path: /Users/cheng/cool-logs
+
+# 專案相關設定 - 本地環境
+cheng:
+  profile: /Users/cheng/uploadPath

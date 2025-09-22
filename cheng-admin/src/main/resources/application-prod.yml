@@ -82,3 +82,12 @@ spring:
         wall:
           config:
             multi-statement-allow: true
+
+# 正式環境專用配置
+logging:
+  file:
+    path: /opt/cool-apps/logs
+
+# 專案相關設定 - 正式環境
+cheng:
+  profile: /opt/cool-apps/uploadFile
