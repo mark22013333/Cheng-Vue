@@ -52,8 +52,8 @@ spring:
     # 國際化資源檔案路徑
     basename: i18n/messages
   profiles:
-#    active: prod
-    active: local
+    active: prod
+#    active: local
   # 文件上傳
   servlet:
     multipart:

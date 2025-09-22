@@ -2,6 +2,8 @@
 <configuration>
     <!-- 日誌存放路徑 -->
     <springProperty scope="context" name="log.path" source="logging.file.path" defaultValue="/tmp/logs"/>
+    <!-- 備用日誌路徑設定，使用多層級回退機制 -->
+    <property name="LOG_PATH" value="${logging.file.path:-${log.path:-/tmp/logs}}"/>
     <!-- 日誌輸出格式 -->
 	<property name="log.pattern" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{20} - [%method,%line] - %msg%n" />
 
@@ -14,11 +16,11 @@
 
     <!-- 系統日誌輸出 -->
 	<appender name="file_info" class="ch.qos.logback.core.rolling.RollingFileAppender">
-	    <file>${log.path}/sys-info.log</file>
+	    <file>${LOG_PATH}/sys-info.log</file>
         <!-- 循環政策：基於時間建立日誌文件 -->
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- 日誌文件名格式 -->
-			<fileNamePattern>${log.path}/sys-info.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<fileNamePattern>${LOG_PATH}/sys-info.%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- 日誌最大的歷史 60天 -->
 			<maxHistory>60</maxHistory>
 		</rollingPolicy>
@@ -36,11 +38,11 @@
 	</appender>
 	
 	<appender name="file_error" class="ch.qos.logback.core.rolling.RollingFileAppender">
-	    <file>${log.path}/sys-error.log</file>
+	    <file>${LOG_PATH}/sys-error.log</file>
         <!-- 循環政策：基於時間建立日誌文件 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- 日誌文件名格式 -->
-            <fileNamePattern>${log.path}/sys-error.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/sys-error.%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- 日誌最大的歷史 60天 -->
 			<maxHistory>60</maxHistory>
         </rollingPolicy>
@@ -59,10 +61,10 @@
 
     <!-- 使用者訪問日誌輸出  -->
     <appender name="sys-user" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>${log.path}/sys-user.log</file>
+		<file>${LOG_PATH}/sys-user.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 按天回滚 daily -->
-            <fileNamePattern>${log.path}/sys-user.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 按天滾動 daily -->
+            <fileNamePattern>${LOG_PATH}/sys-user.%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- 日誌最大的歷史 60天 -->
             <maxHistory>60</maxHistory>
         </rollingPolicy>
