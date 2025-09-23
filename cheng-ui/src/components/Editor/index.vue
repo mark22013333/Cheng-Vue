@@ -81,7 +81,7 @@ export default {
             [{size: ["small", false, "large", "huge"]}],   // 字體大小
             [{header: [1, 2, 3, 4, 5, 6, false]}],         // 標題
             [{color: []}, {background: []}],             // 字體顏色、字體背景顏色
-            [{align: []}],                                 // 對齐方式
+            [{align: []}],                                 // 對齊方式
             ["clean"],                                       // 清除文字格式
             ["link", "image", "video"]                       // 鏈接、圖片、影片
           ],
@@ -194,7 +194,7 @@ export default {
     handleUploadError() {
       this.$message.error("圖片新增失敗")
     },
-    // 複製粘贴圖片處理
+    // 複製貼上圖片處理
     handlePasteCapture(e) {
       const clipboard = e.clipboardData || window.clipboardData
       if (clipboard && clipboard.items) {

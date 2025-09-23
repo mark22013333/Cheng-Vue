@@ -20,7 +20,7 @@ public class ShutdownManager {
     }
 
     /**
-     * 停止異步執行任務
+     * 停止非同步執行任務
      */
     private void shutdownAsyncManager() {
         try {

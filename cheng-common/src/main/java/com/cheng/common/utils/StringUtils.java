@@ -667,7 +667,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     }
 
     /**
-     * 數字左邊补齐0，使之達到指定長度。註意，如果數字轉換為字串後，長度大於size，則只保留 最後size個字串。
+     * 數字左邊補齊0，使之達到指定長度。註意，如果數字轉換為字串後，長度大於size，則只保留 最後size個字串。
      *
      * @param num 數字物件
      * @param size 字串指定長度
@@ -679,12 +679,12 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     }
 
     /**
-     * 字串左补齐。如果原始字串s長度大於size，則只保留最後size個字串。
+     * 字串左補齊。如果原始字串s長度大於size，則只保留最後size個字串。
      *
      * @param s 原始字串
      * @param size 字串指定長度
-     * @param c 用於补齐的字串
-     * @return 返回指定長度的字串，由原字串左补齐或截取得到。
+     * @param c 用於補齊的字串
+     * @return 返回指定長度的字串，由原字串左補齊或截取得到。
      */
     public static final String padl(final String s, final int size, final char c)
     {

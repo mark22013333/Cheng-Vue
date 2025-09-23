@@ -63,7 +63,7 @@ public class Seq
     }
 
     /**
-     * 序列循環遞增字串[1, 10 的 (length)幂次方), 用0左补齐length位數
+     * 序列循環遞增字串[1, 10 的 (length)幂次方), 用0左補齊length位數
      * 
      * @return 序列值
      */
@@ -78,7 +78,7 @@ public class Seq
         {
             atomicInt.set(1);
         }
-        // 轉字串，用0左补齐
+        // 轉字串，用0左補齊
         return StringUtils.padl(value, length);
     }
 }

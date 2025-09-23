@@ -2,7 +2,7 @@ export default [
   {
     layout: 'colFormItem',
     tagIcon: 'input',
-    label: '手機號',
+    label: '手機號碼',
     vModel: 'mobile',
     formId: 6,
     tag: 'el-input',

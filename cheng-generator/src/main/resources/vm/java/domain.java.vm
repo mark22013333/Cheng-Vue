@@ -14,7 +14,7 @@ import com.cheng.common.annotation.Excel;
  * ${functionName}物件 ${tableName}
  * 
  * @author ${author}
- * @date ${datetime}
+ * @since ${datetime}
  */
 #if($table.crud || $table.sub)
 #set($Entity="BaseEntity")

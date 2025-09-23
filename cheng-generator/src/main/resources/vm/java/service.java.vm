@@ -7,7 +7,7 @@ import ${packageName}.domain.${ClassName};
  * ${functionName}Service介面
  * 
  * @author ${author}
- * @date ${datetime}
+ * @since ${datetime}
  */
 public interface I${ClassName}Service 
 {

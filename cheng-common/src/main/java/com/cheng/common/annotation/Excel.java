@@ -105,7 +105,7 @@ public @interface Excel {
     boolean needMerge() default false;
 
     /**
-     * 是否匯出數據,應對需求:有時我们需要匯出一份模板,這是標題需要但内容需要使用者手工填寫.
+     * 是否匯出數據,應對需求:有時我們需要匯出一份模板,這是標題需要但内容需要使用者手工填寫.
      */
     boolean isExport() default true;
 
@@ -145,7 +145,7 @@ public @interface Excel {
     IndexedColors color() default IndexedColors.BLACK;
 
     /**
-     * 匯出欄位對齐方式
+     * 匯出欄位對齊方式
      */
     HorizontalAlignment align() default HorizontalAlignment.CENTER;
 

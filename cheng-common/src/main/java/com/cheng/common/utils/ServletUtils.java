@@ -134,7 +134,7 @@ public class ServletUtils {
     }
 
     /**
-     * 是否是Ajax異步請求
+     * 是否是Ajax非同步請求
      *
      * @param request
      */

@@ -10,15 +10,14 @@ import java.util.List;
  *
  * @author cheng
  */
-public interface SysDictDataMapper
-{
+public interface SysDictDataMapper {
     /**
      * 根據條件分頁查詢字典數據
      *
      * @param dictData 字典數據訊息
      * @return 字典數據集合訊息
      */
-    public List<SysDictData> selectDictDataList(SysDictData dictData);
+    List<SysDictData> selectDictDataList(SysDictData dictData);
 
     /**
      * 根據字典類型查詢字典數據
@@ -26,16 +25,16 @@ public interface SysDictDataMapper
      * @param dictType 字典類型
      * @return 字典數據集合訊息
      */
-    public List<SysDictData> selectDictDataByType(String dictType);
+    List<SysDictData> selectDictDataByType(String dictType);
 
     /**
      * 根據字典類型和字典鍵值查詢字典數據訊息
      *
-     * @param dictType 字典類型
+     * @param dictType  字典類型
      * @param dictValue 字典鍵值
      * @return 字典標籤
      */
-    public String selectDictLabel(@Param("dictType") String dictType, @Param("dictValue") String dictValue);
+    String selectDictLabel(@Param("dictType") String dictType, @Param("dictValue") String dictValue);
 
     /**
      * 根據字典數據ID查詢訊息
@@ -43,7 +42,7 @@ public interface SysDictDataMapper
      * @param dictCode 字典數據ID
      * @return 字典數據
      */
-    public SysDictData selectDictDataById(Long dictCode);
+    SysDictData selectDictDataById(Long dictCode);
 
     /**
      * 查詢字典數據
@@ -51,7 +50,7 @@ public interface SysDictDataMapper
      * @param dictType 字典類型
      * @return 字典數據
      */
-    public int countDictDataByType(String dictType);
+    int countDictDataByType(String dictType);
 
     /**
      * 通過字典ID刪除字典數據訊息
@@ -59,7 +58,7 @@ public interface SysDictDataMapper
      * @param dictCode 字典數據ID
      * @return 結果
      */
-    public int deleteDictDataById(Long dictCode);
+    int deleteDictDataById(Long dictCode);
 
     /**
      * 批次刪除字典數據訊息
@@ -67,7 +66,7 @@ public interface SysDictDataMapper
      * @param dictCodes 需要刪除的字典數據ID
      * @return 結果
      */
-    public int deleteDictDataByIds(Long[] dictCodes);
+    int deleteDictDataByIds(Long[] dictCodes);
 
     /**
      * 新增字典數據訊息
@@ -75,7 +74,7 @@ public interface SysDictDataMapper
      * @param dictData 字典數據訊息
      * @return 結果
      */
-    public int insertDictData(SysDictData dictData);
+    int insertDictData(SysDictData dictData);
 
     /**
      * 修改字典數據訊息
@@ -83,7 +82,7 @@ public interface SysDictDataMapper
      * @param dictData 字典數據訊息
      * @return 結果
      */
-    public int updateDictData(SysDictData dictData);
+    int updateDictData(SysDictData dictData);
 
     /**
      * 同步修改字典類型
@@ -92,5 +91,5 @@ public interface SysDictDataMapper
      * @param newDictType 新舊字典類型
      * @return 結果
      */
-    public int updateDictDataType(@Param("oldDictType") String oldDictType, @Param("newDictType") String newDictType);
+    int updateDictDataType(@Param("oldDictType") String oldDictType, @Param("newDictType") String newDictType);
 }

@@ -285,7 +285,7 @@ export default {
     /** 同步資料庫操作 */
     handleSynchDb(row) {
       const tableName = row.tableName
-      this.$modal.confirm('確認要強制同步"' + tableName + '"表結構吗？').then(function () {
+      this.$modal.confirm('確認要強制同步"' + tableName + '"表結構嗎？').then(function () {
         return synchDb(tableName)
       }).then(() => {
         this.$modal.msgSuccess("同步成功")

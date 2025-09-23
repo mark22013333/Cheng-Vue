@@ -10,22 +10,21 @@ import java.util.List;
  *
  * @author cheng
  */
-public interface SysMenuMapper
-{
+public interface SysMenuMapper {
     /**
      * 查詢系統選單列表
      *
      * @param menu 選單訊息
      * @return 選單列表
      */
-    public List<SysMenu> selectMenuList(SysMenu menu);
+    List<SysMenu> selectMenuList(SysMenu menu);
 
     /**
      * 根據使用者所有權限
      *
      * @return 權限列表
      */
-    public List<String> selectMenuPerms();
+    List<String> selectMenuPerms();
 
     /**
      * 根據使用者查詢系統選單列表
@@ -33,15 +32,15 @@ public interface SysMenuMapper
      * @param menu 選單訊息
      * @return 選單列表
      */
-    public List<SysMenu> selectMenuListByUserId(SysMenu menu);
+    List<SysMenu> selectMenuListByUserId(SysMenu menu);
 
     /**
      * 根據角色ID查詢權限
-     * 
+     *
      * @param roleId 角色ID
      * @return 權限列表
      */
-    public List<String> selectMenuPermsByRoleId(Long roleId);
+    List<String> selectMenuPermsByRoleId(Long roleId);
 
     /**
      * 根據使用者ID查詢權限
@@ -49,14 +48,14 @@ public interface SysMenuMapper
      * @param userId 使用者ID
      * @return 權限列表
      */
-    public List<String> selectMenuPermsByUserId(Long userId);
+    List<String> selectMenuPermsByUserId(Long userId);
 
     /**
      * 根據使用者ID查詢選單
      *
      * @return 選單列表
      */
-    public List<SysMenu> selectMenuTreeAll();
+    List<SysMenu> selectMenuTreeAll();
 
     /**
      * 根據使用者ID查詢選單
@@ -64,16 +63,16 @@ public interface SysMenuMapper
      * @param userId 使用者ID
      * @return 選單列表
      */
-    public List<SysMenu> selectMenuTreeByUserId(Long userId);
+    List<SysMenu> selectMenuTreeByUserId(Long userId);
 
     /**
      * 根據角色ID查詢選單樹訊息
-     * 
-     * @param roleId 角色ID
+     *
+     * @param roleId            角色ID
      * @param menuCheckStrictly 選單樹選擇項是否關聯顯示
      * @return 選中選單列表
      */
-    public List<Long> selectMenuListByRoleId(@Param("roleId") Long roleId, @Param("menuCheckStrictly") boolean menuCheckStrictly);
+    List<Long> selectMenuListByRoleId(@Param("roleId") Long roleId, @Param("menuCheckStrictly") boolean menuCheckStrictly);
 
     /**
      * 根據選單ID查詢訊息
@@ -81,7 +80,7 @@ public interface SysMenuMapper
      * @param menuId 選單ID
      * @return 選單訊息
      */
-    public SysMenu selectMenuById(Long menuId);
+    SysMenu selectMenuById(Long menuId);
 
     /**
      * 是否存在選單子節點
@@ -89,7 +88,7 @@ public interface SysMenuMapper
      * @param menuId 選單ID
      * @return 結果
      */
-    public int hasChildByMenuId(Long menuId);
+    int hasChildByMenuId(Long menuId);
 
     /**
      * 新增選單訊息
@@ -97,7 +96,7 @@ public interface SysMenuMapper
      * @param menu 選單訊息
      * @return 結果
      */
-    public int insertMenu(SysMenu menu);
+    int insertMenu(SysMenu menu);
 
     /**
      * 修改選單訊息
@@ -105,7 +104,7 @@ public interface SysMenuMapper
      * @param menu 選單訊息
      * @return 結果
      */
-    public int updateMenu(SysMenu menu);
+    int updateMenu(SysMenu menu);
 
     /**
      * 刪除選單管理訊息
@@ -113,7 +112,7 @@ public interface SysMenuMapper
      * @param menuId 選單ID
      * @return 結果
      */
-    public int deleteMenuById(Long menuId);
+    int deleteMenuById(Long menuId);
 
     /**
      * 校驗選單名稱是否唯一
@@ -122,5 +121,5 @@ public interface SysMenuMapper
      * @param parentId 父選單ID
      * @return 結果
      */
-    public SysMenu checkMenuNameUnique(@Param("menuName") String menuName, @Param("parentId") Long parentId);
+    SysMenu checkMenuNameUnique(@Param("menuName") String menuName, @Param("parentId") Long parentId);
 }

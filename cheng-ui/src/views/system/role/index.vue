@@ -414,7 +414,7 @@ export default {
     // 角色狀態修改
     handleStatusChange(row) {
       let text = row.status === "0" ? "啟用" : "停用"
-      this.$modal.confirm('確認要"' + text + '""' + row.roleName + '"角色吗？').then(function () {
+      this.$modal.confirm('確認要"' + text + '""' + row.roleName + '"角色嗎？').then(function () {
         return changeRoleStatus(row.roleId, row.status)
       }).then(() => {
         this.$modal.msgSuccess(text + "成功")

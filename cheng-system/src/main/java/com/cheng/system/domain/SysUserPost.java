@@ -8,41 +8,38 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  *
  * @author cheng
  */
-public class SysUserPost
-{
+public class SysUserPost {
     /**
      * 使用者ID
      */
     private Long userId;
 
-    /** 職位ID */
+    /**
+     * 職位ID
+     */
     private Long postId;
 
-    public Long getUserId()
-    {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId)
-    {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 
-    public Long getPostId()
-    {
+    public Long getPostId() {
         return postId;
     }
 
-    public void setPostId(Long postId)
-    {
+    public void setPostId(Long postId) {
         this.postId = postId;
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
-            .append("userId", getUserId())
-            .append("postId", getPostId())
-            .toString();
+        return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
+                .append("userId", getUserId())
+                .append("postId", getPostId())
+                .toString();
     }
 }

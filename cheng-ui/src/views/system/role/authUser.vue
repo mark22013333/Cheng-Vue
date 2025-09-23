@@ -180,7 +180,7 @@ export default {
     /** 取消授權按鈕操作 */
     cancelAuthUser(row) {
       const roleId = this.queryParams.roleId
-      this.$modal.confirm('確認要取消該使用者"' + row.userName + '"角色吗？').then(function () {
+      this.$modal.confirm('確認要取消該使用者"' + row.userName + '"角色嗎？').then(function () {
         return authUserCancel({ userId: row.userId, roleId: roleId })
       }).then(() => {
         this.getList()

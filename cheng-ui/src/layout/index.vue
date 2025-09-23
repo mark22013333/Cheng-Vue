@@ -10,6 +10,8 @@
       <app-main/>
       <settings ref="settingRef"/>
     </div>
+    <!-- 浮動掃描按鈕 -->
+    <floating-scan-button/>
   </div>
 </template>
 
@@ -18,6 +20,7 @@ import {AppMain, Navbar, Settings, Sidebar, TagsView} from './components'
 import ResizeMixin from './mixin/ResizeHandler'
 import {mapState} from 'vuex'
 import variables from '@/assets/styles/variables.scss'
+import FloatingScanButton from '@/components/FloatingScanButton'
 
 export default {
   name: 'Layout',
@@ -26,7 +29,8 @@ export default {
     Navbar,
     Settings,
     Sidebar,
-    TagsView
+    TagsView,
+    FloatingScanButton
   },
   mixins: [ResizeMixin],
   computed: {

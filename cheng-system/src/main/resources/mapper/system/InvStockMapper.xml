@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.system.mapper.InvStockMapper">
+
+    <resultMap type="InvStock" id="InvStockResult">
+        <result property="stockId" column="stock_id"/>
+        <result property="itemId" column="item_id"/>
+        <result property="itemCode" column="item_code"/>
+        <result property="itemName" column="item_name"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="totalQuantity" column="total_quantity"/>
+        <result property="availableQty" column="available_qty"/>
+        <result property="borrowedQty" column="borrowed_qty"/>
+        <result property="reservedQty" column="reserved_qty"/>
+        <result property="damagedQty" column="damaged_qty"/>
+        <result property="lastInTime" column="last_in_time"/>
+        <result property="lastOutTime" column="last_out_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectInvStockVo">
+        select s.stock_id,
+               s.item_id,
+               i.item_code,
+               i.item_name,
+               i.category_id,
+               c.category_name,
+               i.specification,
+               i.unit,
+               s.total_quantity,
+               s.available_qty,
+               s.borrowed_qty,
+               s.reserved_qty,
+               s.damaged_qty,
+               s.last_in_time,
+               s.last_out_time,
+               s.update_time
+        from inv_stock s
+                 left join inv_item i on s.item_id = i.item_id
+                 left join inv_category c on i.category_id = c.category_id
+    </sql>
+
+    <select id="selectInvStockList" parameterType="InvStock" resultMap="InvStockResult">
+        <include refid="selectInvStockVo"/>
+        <where>
+            <if test="itemCode != null and itemCode != ''">and i.item_code like concat('%', #{itemCode}, '%')</if>
+            <if test="itemName != null and itemName != ''">and i.item_name like concat('%', #{itemName}, '%')</if>
+            <if test="categoryId != null">and i.category_id = #{categoryId}</if>
+        </where>
+        order by s.update_time desc
+    </select>
+
+    <select id="selectInvStockByStockId" parameterType="Long" resultMap="InvStockResult">
+        <include refid="selectInvStockVo"/>
+        where s.stock_id = #{stockId}
+    </select>
+
+    <select id="selectInvStockByItemId" parameterType="Long" resultMap="InvStockResult">
+        <include refid="selectInvStockVo"/>
+        where s.item_id = #{itemId}
+    </select>
+
+    <select id="selectLowStockList" resultMap="InvStockResult">
+        <include refid="selectInvStockVo"/>
+        where s.available_qty &lt;= 10
+        order by s.available_qty asc
+    </select>
+
+    <select id="selectOutOfStockList" resultMap="InvStockResult">
+        <include refid="selectInvStockVo"/>
+        where s.total_quantity = 0
+        order by s.update_time desc
+    </select>
+
+    <select id="selectStockStatistics" resultType="java.util.Map">
+        select count(*)                                                                      as totalItems,
+               sum(total_quantity)                                                           as totalQuantity,
+               sum(case when available_qty &lt;= 10 and available_qty > 0 then 1 else 0 end) as lowStockItems,
+               sum(case when total_quantity = 0 then 1 else 0 end)                           as outOfStockItems
+        from inv_stock s
+                 left join inv_item i on s.item_id = i.item_id
+        where i.status = '0'
+    </select>
+
+    <insert id="insertInvStock" parameterType="InvStock" useGeneratedKeys="true" keyProperty="stockId">
+        insert into inv_stock
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="itemId != null">item_id,</if>
+            <if test="totalQuantity != null">total_quantity,</if>
+            <if test="availableQty != null">available_qty,</if>
+            <if test="borrowedQty != null">borrowed_qty,</if>
+            <if test="reservedQty != null">reserved_qty,</if>
+            <if test="damagedQty != null">damaged_qty,</if>
+            <if test="lastInTime != null">last_in_time,</if>
+            <if test="lastOutTime != null">last_out_time,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="itemId != null">#{itemId},</if>
+            <if test="totalQuantity != null">#{totalQuantity},</if>
+            <if test="availableQty != null">#{availableQty},</if>
+            <if test="borrowedQty != null">#{borrowedQty},</if>
+            <if test="reservedQty != null">#{reservedQty},</if>
+            <if test="damagedQty != null">#{damagedQty},</if>
+            <if test="lastInTime != null">#{lastInTime},</if>
+            <if test="lastOutTime != null">#{lastOutTime},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateInvStock" parameterType="InvStock">
+        update inv_stock
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="itemId != null">item_id = #{itemId},</if>
+            <if test="totalQuantity != null">total_quantity = #{totalQuantity},</if>
+            <if test="availableQty != null">available_qty = #{availableQty},</if>
+            <if test="borrowedQty != null">borrowed_qty = #{borrowedQty},</if>
+            <if test="reservedQty != null">reserved_qty = #{reservedQty},</if>
+            <if test="damagedQty != null">damaged_qty = #{damagedQty},</if>
+            <if test="lastInTime != null">last_in_time = #{lastInTime},</if>
+            <if test="lastOutTime != null">last_out_time = #{lastOutTime},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where stock_id = #{stockId}
+    </update>
+
+    <update id="updateStockQuantity" parameterType="java.util.Map">
+        update inv_stock
+        set total_quantity = total_quantity + #{quantity},
+            available_qty  = available_qty + #{quantity},
+            update_time    = now()
+        where item_id = #{itemId}
+    </update>
+
+    <update id="updateBorrowedQuantity" parameterType="java.util.Map">
+        update inv_stock
+        set borrowed_qty  = borrowed_qty + #{quantity},
+            available_qty = available_qty - #{quantity},
+            update_time   = now()
+        where item_id = #{itemId}
+    </update>
+
+    <update id="updateReturnQuantity" parameterType="java.util.Map">
+        update inv_stock
+        set borrowed_qty  = borrowed_qty - #{quantity},
+            available_qty = available_qty + #{quantity},
+            update_time   = now()
+        where item_id = #{itemId}
+    </update>
+
+    <delete id="deleteInvStockByStockId" parameterType="Long">
+        delete
+        from inv_stock
+        where stock_id = #{stockId}
+    </delete>
+
+    <delete id="deleteInvStockByStockIds" parameterType="String">
+        delete from inv_stock where stock_id in
+        <foreach item="stockId" collection="array" open="(" separator="," close=")">
+            #{stockId}
+        </foreach>
+    </delete>
+
+</mapper>

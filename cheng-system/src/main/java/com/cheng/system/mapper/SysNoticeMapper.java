@@ -9,15 +9,15 @@ import java.util.List;
  *
  * @author cheng
  */
-public interface SysNoticeMapper
-{
+
+public interface SysNoticeMapper {
     /**
      * 查詢公告訊息
-     * 
+     *
      * @param noticeId 公告ID
      * @return 公告訊息
      */
-    public SysNotice selectNoticeById(Long noticeId);
+    SysNotice selectNoticeById(Long noticeId);
 
     /**
      * 查詢公告列表
@@ -25,7 +25,7 @@ public interface SysNoticeMapper
      * @param notice 公告訊息
      * @return 公告集合
      */
-    public List<SysNotice> selectNoticeList(SysNotice notice);
+    List<SysNotice> selectNoticeList(SysNotice notice);
 
     /**
      * 新增公告
@@ -33,7 +33,7 @@ public interface SysNoticeMapper
      * @param notice 公告訊息
      * @return 結果
      */
-    public int insertNotice(SysNotice notice);
+    int insertNotice(SysNotice notice);
 
     /**
      * 修改公告
@@ -41,15 +41,15 @@ public interface SysNoticeMapper
      * @param notice 公告訊息
      * @return 結果
      */
-    public int updateNotice(SysNotice notice);
+    int updateNotice(SysNotice notice);
 
     /**
      * 批次刪除公告
-     * 
+     *
      * @param noticeId 公告ID
      * @return 結果
      */
-    public int deleteNoticeById(Long noticeId);
+    int deleteNoticeById(Long noticeId);
 
     /**
      * 批次刪除公告訊息
@@ -57,5 +57,5 @@ public interface SysNoticeMapper
      * @param noticeIds 需要刪除的公告ID
      * @return 結果
      */
-    public int deleteNoticeByIds(Long[] noticeIds);
+    int deleteNoticeByIds(Long[] noticeIds);
 }

@@ -13,16 +13,16 @@ Vue.use(Router)
  *                                  // 只有一個時，會將那個子路由當做根路由顯示在側邊欄--如引導頁面
  *                                  // 若你想不管路由下面的 children 声明的個數都顯示你的根路由
  *                                  // 你可以設定 alwaysShow: true，這樣它就會忽略之前定義的規則，一直顯示根路由
- * redirect: noRedirect             // 當設定 noRedirect 的時候該路由在面包屑導航中不可被點擊
+ * redirect: noRedirect             // 當設定 noRedirect 的時候該路由在麵包屑導航中不可被點擊
  * name:'router-name'               // 設定路由的名字，一定要填寫不然使用<keep-alive>時會出現各種問題
  * query: '{"id": 1, "name": "ry"}' // 訪問路由的預設傳遞參數
  * roles: ['admin', 'common']       // 訪問路由的角色權限
  * permissions: ['a:a:a', 'b:b:b']  // 訪問路由的選單權限
  * meta : {
  noCache: true                   // 如果設定為true，則不會被 <keep-alive> 暫存(預設 false)
- title: 'title'                  // 設定該路由在側邊欄和面包屑中展示的名字
+ title: 'title'                  // 設定該路由在側邊欄和麵包屑中展示的名字
  icon: 'svg-name'                // 設定該路由的圖標，對應路徑src/assets/icons/svg
- breadcrumb: false               // 如果設定為false，則不會在breadcrumb面包屑中顯示
+ breadcrumb: false               // 如果設定為false，則不會在breadcrumb麵包屑中顯示
  activeMenu: '/system/user'      // 當路由設定了該屬性，則會高亮相對應的側邊欄。
   }
  */
@@ -158,6 +158,48 @@ export const dynamicRoutes = [
         component: () => import('@/views/tool/gen/editTable'),
         name: 'GenEdit',
         meta: {title: '修改產生配置', activeMenu: '/tool/gen'}
+      }
+    ]
+  },
+  {
+    path: '/inventory',
+    component: Layout,
+    redirect: 'noredirect',
+    name: 'Inventory',
+    meta: {
+      title: '庫存管理',
+      icon: 'shopping'
+    },
+    children: [
+      {
+        path: 'item',
+        component: () => import('@/views/inventory/item/index'),
+        name: 'Item',
+        meta: { title: '物品管理', icon: 'goods' }
+      },
+      {
+        path: 'stock',
+        component: () => import('@/views/inventory/stock/index'),
+        name: 'Stock',
+        meta: { title: '庫存查詢', icon: 'list' }
+      },
+      {
+        path: 'borrow',
+        component: () => import('@/views/inventory/borrow/index'),
+        name: 'Borrow',
+        meta: { title: '借出管理', icon: 'edit' }
+      },
+      {
+        path: 'scan',
+        component: () => import('@/views/inventory/scan/index'),
+        name: 'Scan',
+        meta: { title: '掃描功能', icon: 'search' }
+      },
+      {
+        path: 'report',
+        component: () => import('@/views/inventory/report/index'),
+        name: 'Report',
+        meta: { title: '庫存報表', icon: 'chart' }
       }
     ]
   }

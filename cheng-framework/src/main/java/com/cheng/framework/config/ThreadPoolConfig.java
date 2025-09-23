@@ -18,24 +18,18 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 public class ThreadPoolConfig {
     // 核心執行緒池大小
-    private int corePoolSize = 50;
-
-    // 最大可建立的執行緒數
-    private int maxPoolSize = 200;
-
-    // 队列最大長度
-    private int queueCapacity = 1000;
-
-    // 執行緒池维护執行緒所允許的閒置時間
-    private int keepAliveSeconds = 300;
+    private final int corePoolSize = 50;
 
     @Bean(name = "threadPoolTaskExecutor")
     public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setMaxPoolSize(maxPoolSize);
+        // 最大可建立的執行緒數
+        executor.setMaxPoolSize(200);
         executor.setCorePoolSize(corePoolSize);
-        executor.setQueueCapacity(queueCapacity);
-        executor.setKeepAliveSeconds(keepAliveSeconds);
+        // 佇列最大長度
+        executor.setQueueCapacity(1000);
+        // 執行緒池維護執行緒所允許的閒置時間
+        executor.setKeepAliveSeconds(300);
         // 執行緒池對拒絕任務(無執行緒可用)的處理策略
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return executor;

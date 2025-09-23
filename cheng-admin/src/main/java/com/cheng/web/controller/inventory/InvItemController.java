@@ -1,0 +1,191 @@
+package com.cheng.web.controller.inventory;
+
+import com.cheng.common.annotation.Log;
+import com.cheng.common.core.controller.BaseController;
+import com.cheng.common.core.domain.AjaxResult;
+import com.cheng.common.core.page.TableDataInfo;
+import com.cheng.common.enums.BusinessType;
+import com.cheng.common.utils.poi.ExcelUtil;
+import com.cheng.system.domain.InvItem;
+import com.cheng.system.service.IInvItemService;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+/**
+ * 物品資訊Controller
+ *
+ * @author cheng
+ * @since 2025-09-23
+ */
+@RestController
+@RequestMapping("/inventory/item")
+public class InvItemController extends BaseController {
+    @Autowired
+    private IInvItemService invItemService;
+
+    /**
+     * 查詢物品資訊列表
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:item:list')")
+    @GetMapping("/list")
+    public TableDataInfo list(InvItem invItem) {
+        startPage();
+        List<InvItem> list = invItemService.selectInvItemList(invItem);
+        return getDataTable(list);
+    }
+
+    /**
+     * 查詢低庫存物品列表
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:item:list')")
+    @GetMapping("/lowStock")
+    public TableDataInfo lowStockList() {
+        startPage();
+        List<InvItem> list = invItemService.selectLowStockItemList();
+        return getDataTable(list);
+    }
+
+    /**
+     * 匯出物品資訊列表
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:item:export')")
+    @Log(title = "物品資訊", businessType = BusinessType.EXPORT)
+    @PostMapping("/export")
+    public void export(HttpServletResponse response, InvItem invItem) {
+        List<InvItem> list = invItemService.selectInvItemList(invItem);
+        ExcelUtil<InvItem> util = new ExcelUtil<InvItem>(InvItem.class);
+        util.exportExcel(response, list, "物品資訊資料");
+    }
+
+    /**
+     * 獲取物品資訊詳細訊息
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:item:query')")
+    @GetMapping(value = "/{itemId}")
+    public AjaxResult getInfo(@PathVariable("itemId") Long itemId) {
+        return success(invItemService.selectInvItemByItemId(itemId));
+    }
+
+    /**
+     * 根據物品編碼獲取物品資訊
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:item:query')")
+    @GetMapping(value = "/code/{itemCode}")
+    public AjaxResult getInfoByCode(@PathVariable("itemCode") String itemCode) {
+        InvItem item = invItemService.selectInvItemByItemCode(itemCode);
+        if (item != null) {
+            return success(item);
+        } else {
+            return error("未找到對應的物品資訊");
+        }
+    }
+
+    /**
+     * 掃描條碼或QR碼獲取物品資訊
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:item:scan')")
+    @PostMapping("/scan")
+    public AjaxResult scanItem(@RequestBody ScanRequest scanRequest) {
+        try {
+            InvItem item = invItemService.scanItemByCode(scanRequest.getScanCode(), scanRequest.getScanType());
+            return success(item);
+        } catch (Exception e) {
+            return error(e.getMessage());
+        }
+    }
+
+    /**
+     * 新增物品資訊
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:item:add')")
+    @Log(title = "物品資訊", businessType = BusinessType.INSERT)
+    @PostMapping
+    public AjaxResult add(@Validated @RequestBody InvItem invItem) {
+        if (!invItemService.checkItemCodeUnique(invItem)) {
+            return error("新增物品'" + invItem.getItemName() + "'失敗，物品編碼已存在");
+        }
+        if (!invItemService.checkBarcodeUnique(invItem)) {
+            return error("新增物品'" + invItem.getItemName() + "'失敗，條碼已存在");
+        }
+        return toAjax(invItemService.insertInvItem(invItem));
+    }
+
+    /**
+     * 修改物品資訊
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:item:edit')")
+    @Log(title = "物品資訊", businessType = BusinessType.UPDATE)
+    @PutMapping
+    public AjaxResult edit(@Validated @RequestBody InvItem invItem) {
+        if (!invItemService.checkItemCodeUnique(invItem)) {
+            return error("修改物品'" + invItem.getItemName() + "'失敗，物品編碼已存在");
+        }
+        if (!invItemService.checkBarcodeUnique(invItem)) {
+            return error("修改物品'" + invItem.getItemName() + "'失敗，條碼已存在");
+        }
+        return toAjax(invItemService.updateInvItem(invItem));
+    }
+
+    /**
+     * 刪除物品資訊
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:item:remove')")
+    @Log(title = "物品資訊", businessType = BusinessType.DELETE)
+    @DeleteMapping("/{itemIds}")
+    public AjaxResult remove(@PathVariable Long[] itemIds) {
+        return toAjax(invItemService.deleteInvItemByItemIds(itemIds));
+    }
+
+    /**
+     * 匯入物品資料
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:item:import')")
+    @Log(title = "物品資訊", businessType = BusinessType.IMPORT)
+    @PostMapping("/importData")
+    public AjaxResult importData(MultipartFile file, boolean updateSupport) throws Exception {
+        ExcelUtil<InvItem> util = new ExcelUtil<InvItem>(InvItem.class);
+        List<InvItem> itemList = util.importExcel(file.getInputStream());
+        String operName = getUsername();
+        String message = invItemService.importItem(itemList, updateSupport, operName);
+        return success(message);
+    }
+
+    /**
+     * 下載匯入範本
+     */
+    @PostMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response) {
+        ExcelUtil<InvItem> util = new ExcelUtil<InvItem>(InvItem.class);
+        util.importTemplateExcel(response, "物品資料");
+    }
+
+    /**
+     * 掃描請求物件
+     */
+    public static class ScanRequest {
+        private String scanCode;
+        private String scanType; // 1條碼 2QR碼
+
+        public String getScanCode() {
+            return scanCode;
+        }
+
+        public void setScanCode(String scanCode) {
+            this.scanCode = scanCode;
+        }
+
+        public String getScanType() {
+            return scanType;
+        }
+
+        public void setScanType(String scanType) {
+            this.scanType = scanType;
+        }
+    }
+}

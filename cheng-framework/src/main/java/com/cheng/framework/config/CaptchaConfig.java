@@ -20,7 +20,7 @@ public class CaptchaConfig {
     public DefaultKaptcha getKaptchaBean() {
         DefaultKaptcha defaultKaptcha = new DefaultKaptcha();
         Properties properties = new Properties();
-        // 是否有邊框 預設為true 我们可以自己設定yes，no
+        // 是否有邊框 預設為true 我們可以自己設定yes，no
         properties.setProperty(KAPTCHA_BORDER, "yes");
         // 驗證碼文字字串顏色 預設為Color.BLACK
         properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_COLOR, "black");
@@ -47,7 +47,7 @@ public class CaptchaConfig {
     public DefaultKaptcha getKaptchaBeanMath() {
         DefaultKaptcha defaultKaptcha = new DefaultKaptcha();
         Properties properties = new Properties();
-        // 是否有邊框 預設為true 我们可以自己設定yes，no
+        // 是否有邊框 預設為true 我們可以自己設定yes，no
         properties.setProperty(KAPTCHA_BORDER, "yes");
         // 邊框顏色 預設為Color.BLACK
         properties.setProperty(KAPTCHA_BORDER_COLOR, "105,179,90");

@@ -26,7 +26,7 @@ public enum DesensitizedType {
     ID_CARD(s -> s.replaceAll("(\\d{4})\\d{10}(\\d{3}[Xx]|\\d{4})", "$1** **** ****$2")),
 
     /**
-     * 手機號，中間4位星號替換
+     * 手機號碼，中間4位星號替換
      */
     PHONE(s -> s.replaceAll("(\\d{3})\\d{4}(\\d{4})", "$1****$2")),
 

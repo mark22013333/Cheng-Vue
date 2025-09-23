@@ -49,6 +49,13 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.1.1 - 2025-09-23">
+              <ol>
+                <li>新增「庫存管理」模組，包含物品管理、庫存查詢、借出管理、掃描功能與庫存報表等頁面。</li>
+                <li>新增一個全域浮動的掃描按鈕元件，提升操作便利性。</li>
+                <li>為掃描功能整合了 html5-qrcode 套件。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.0.1 - 2025-09-23">
               <ol>
                 <li>整合了 Jasypt，對設定檔 (application.yml) 中的敏感資訊（如資料庫密碼、Token Secret）進行加密處理。</li>
@@ -63,23 +70,23 @@
           </el-collapse>
         </el-card>
       </el-col>
-<!--      <el-col :xs="24" :sm="24" :md="12" :lg="8">-->
-<!--        <el-card class="update-log">-->
-<!--          <div slot="header" class="clearfix">-->
-<!--            <span>捐贈支援</span>-->
-<!--          </div>-->
-<!--          <div class="body">-->
-<!--            <img-->
-<!--              src="@/assets/images/pay.png"-->
-<!--              alt="donate"-->
-<!--              width="100%"-->
-<!--            />-->
-<!--            <span style="display: inline-block; height: 30px; line-height: 30px"-->
-<!--            >你可以請作者喝杯咖啡表示鼓勵</span-->
-<!--            >-->
-<!--          </div>-->
-<!--        </el-card>-->
-<!--      </el-col>-->
+      <!--      <el-col :xs="24" :sm="24" :md="12" :lg="8">-->
+      <!--        <el-card class="update-log">-->
+      <!--          <div slot="header" class="clearfix">-->
+      <!--            <span>捐贈支援</span>-->
+      <!--          </div>-->
+      <!--          <div class="body">-->
+      <!--            <img-->
+      <!--              src="@/assets/images/pay.png"-->
+      <!--              alt="donate"-->
+      <!--              width="100%"-->
+      <!--            />-->
+      <!--            <span style="display: inline-block; height: 30px; line-height: 30px"-->
+      <!--            >你可以請作者喝杯咖啡表示鼓勵</span-->
+      <!--            >-->
+      <!--          </div>-->
+      <!--        </el-card>-->
+      <!--      </el-col>-->
     </el-row>
   </div>
 </template>

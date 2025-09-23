@@ -38,9 +38,9 @@ public class MyBatisConfig {
     static final String DEFAULT_RESOURCE_PATTERN = "**/*.class";
 
     public static String setTypeAliasesPackage(String typeAliasesPackage) {
-        ResourcePatternResolver resolver = (ResourcePatternResolver) new PathMatchingResourcePatternResolver();
+        ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         MetadataReaderFactory metadataReaderFactory = new CachingMetadataReaderFactory(resolver);
-        List<String> allResult = new ArrayList<String>();
+        List<String> allResult = new ArrayList<>();
         try {
             for (String aliasesPackage : typeAliasesPackage.split(",")) {
                 List<String> result = new ArrayList<String>();

@@ -14,8 +14,7 @@ import java.util.List;
  * @author cheng
  */
 @Service
-public class SysOperLogServiceImpl implements ISysOperLogService
-{
+public class SysOperLogServiceImpl implements ISysOperLogService {
     @Autowired
     private SysOperLogMapper operLogMapper;
 
@@ -25,8 +24,7 @@ public class SysOperLogServiceImpl implements ISysOperLogService
      * @param operLog 操作日誌物件
      */
     @Override
-    public void insertOperlog(SysOperLog operLog)
-    {
+    public void insertOperlog(SysOperLog operLog) {
         operLogMapper.insertOperlog(operLog);
     }
 
@@ -37,8 +35,7 @@ public class SysOperLogServiceImpl implements ISysOperLogService
      * @return 操作日誌集合
      */
     @Override
-    public List<SysOperLog> selectOperLogList(SysOperLog operLog)
-    {
+    public List<SysOperLog> selectOperLogList(SysOperLog operLog) {
         return operLogMapper.selectOperLogList(operLog);
     }
 
@@ -49,20 +46,18 @@ public class SysOperLogServiceImpl implements ISysOperLogService
      * @return 結果
      */
     @Override
-    public int deleteOperLogByIds(Long[] operIds)
-    {
+    public int deleteOperLogByIds(Long[] operIds) {
         return operLogMapper.deleteOperLogByIds(operIds);
     }
 
     /**
      * 查詢操作日誌詳細
-     * 
+     *
      * @param operId 操作ID
      * @return 操作日誌物件
      */
     @Override
-    public SysOperLog selectOperLogById(Long operId)
-    {
+    public SysOperLog selectOperLogById(Long operId) {
         return operLogMapper.selectOperLogById(operId);
     }
 
@@ -70,8 +65,7 @@ public class SysOperLogServiceImpl implements ISysOperLogService
      * 清除操作日誌
      */
     @Override
-    public void cleanOperLog()
-    {
+    public void cleanOperLog() {
         operLogMapper.cleanOperLog();
     }
 }

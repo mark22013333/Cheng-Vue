@@ -10,14 +10,17 @@
                         size="small" style="margin-bottom: 20px"/>
             </div>
             <div class="head-container">
-              <el-tree :data="deptOptions" :props="defaultProps" :expand-on-click-node="false" :filter-node-method="filterNode" ref="tree" node-key="id" default-expand-all highlight-current @node-click="handleNodeClick" />
+              <el-tree :data="deptOptions" :props="defaultProps" :expand-on-click-node="false"
+                       :filter-node-method="filterNode" ref="tree" node-key="id" default-expand-all highlight-current
+                       @node-click="handleNodeClick"/>
             </div>
           </el-col>
         </pane>
         <!--使用者數據-->
         <pane size="84">
           <el-col>
-            <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="85px">
+            <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
+                     label-width="85px">
               <el-form-item label="使用者名稱" prop="userName">
                 <el-input v-model="queryParams.userName" clearable placeholder="請輸入使用者名稱" style="width: 240px"
                           @keyup.enter.native="handleQuery"/>
@@ -28,11 +31,13 @@
               </el-form-item>
               <el-form-item label="狀態" prop="status">
                 <el-select v-model="queryParams.status" clearable placeholder="使用者狀態" style="width: 140px">
-                  <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
+                  <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+                             :value="dict.value"/>
                 </el-select>
               </el-form-item>
               <el-form-item label="建立時間">
-                <el-date-picker v-model="dateRange" end-placeholder="結束日期" range-separator="-" start-placeholder="開始日期"
+                <el-date-picker v-model="dateRange" end-placeholder="結束日期" range-separator="-"
+                                start-placeholder="開始日期"
                                 style="width: 240px" type="daterange"
                                 value-format="yyyy-MM-dd"></el-date-picker>
               </el-form-item>
@@ -44,13 +49,18 @@
 
             <el-row :gutter="10" class="mb8">
               <el-col :span="1.5">
-                <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['system:user:add']">新增</el-button>
+                <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
+                           v-hasPermi="['system:user:add']">新增
+                </el-button>
               </el-col>
               <el-col :span="1.5">
-                <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['system:user:edit']">修改</el-button>
+                <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
+                           v-hasPermi="['system:user:edit']">修改
+                </el-button>
               </el-col>
               <el-col :span="1.5">
-                <el-button v-hasPermi="['system:user:remove']" :disabled="multiple" icon="el-icon-delete" plain size="mini"
+                <el-button v-hasPermi="['system:user:remove']" :disabled="multiple" icon="el-icon-delete" plain
+                           size="mini"
                            type="danger" @click="handleDelete">刪除
                 </el-button>
               </el-col>
@@ -68,20 +78,24 @@
             </el-row>
 
             <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
-              <el-table-column type="selection" width="50" align="center" />
+              <el-table-column type="selection" width="50" align="center"/>
               <el-table-column v-if="columns.userId.visible" key="userId" align="center" label="使用者編號"
                                prop="userId"/>
-              <el-table-column v-if="columns.userName.visible" key="userName" :show-overflow-tooltip="true" align="center"
+              <el-table-column v-if="columns.userName.visible" key="userName" :show-overflow-tooltip="true"
+                               align="center"
                                label="使用者名稱" prop="userName"/>
-              <el-table-column v-if="columns.nickName.visible" key="nickName" :show-overflow-tooltip="true" align="center"
+              <el-table-column v-if="columns.nickName.visible" key="nickName" :show-overflow-tooltip="true"
+                               align="center"
                                label="使用者暱稱" prop="nickName"/>
-              <el-table-column v-if="columns.deptName.visible" key="deptName" :show-overflow-tooltip="true" align="center"
+              <el-table-column v-if="columns.deptName.visible" key="deptName" :show-overflow-tooltip="true"
+                               align="center"
                                label="部門" prop="dept.deptName"/>
               <el-table-column v-if="columns.phonenumber.visible" key="phonenumber" align="center" label="手機號碼"
                                prop="phonenumber" width="120"/>
               <el-table-column v-if="columns.status.visible" key="status" align="center" label="狀態">
                 <template slot-scope="scope">
-                  <el-switch v-model="scope.row.status" active-value="0" inactive-value="1" @change="handleStatusChange(scope.row)"></el-switch>
+                  <el-switch v-model="scope.row.status" active-value="0" inactive-value="1"
+                             @change="handleStatusChange(scope.row)"></el-switch>
                 </template>
               </el-table-column>
               <el-table-column v-if="columns.createTime.visible" align="center" label="建立時間" prop="createTime"
@@ -92,24 +106,30 @@
               </el-table-column>
               <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
                 <template slot-scope="scope" v-if="scope.row.userId !== 1">
-                  <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:user:edit']">修改</el-button>
+                  <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+                             v-hasPermi="['system:user:edit']">修改
+                  </el-button>
                   <el-button v-hasPermi="['system:user:remove']" icon="el-icon-delete" size="mini" type="text"
                              @click="handleDelete(scope.row)">刪除
                   </el-button>
-                  <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)" v-hasPermi="['system:user:resetPwd', 'system:user:edit']">
+                  <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)"
+                               v-hasPermi="['system:user:resetPwd', 'system:user:edit']">
                     <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
                     <el-dropdown-menu slot="dropdown">
                       <el-dropdown-item v-hasPermi="['system:user:resetPwd']" command="handleResetPwd"
                                         icon="el-icon-key">重置密碼
                       </el-dropdown-item>
-                      <el-dropdown-item command="handleAuthRole" icon="el-icon-circle-check" v-hasPermi="['system:user:edit']">分配角色</el-dropdown-item>
+                      <el-dropdown-item command="handleAuthRole" icon="el-icon-circle-check"
+                                        v-hasPermi="['system:user:edit']">分配角色
+                      </el-dropdown-item>
                     </el-dropdown-menu>
                   </el-dropdown>
                 </template>
               </el-table-column>
             </el-table>
 
-            <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" @pagination="getList" />
+            <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum"
+                        :limit.sync="queryParams.pageSize" @pagination="getList"/>
           </el-col>
         </pane>
       </splitpanes>
@@ -160,14 +180,17 @@
           <el-col :span="12">
             <el-form-item label="使用者性别">
               <el-select v-model="form.sex" placeholder="請選擇性别">
-                <el-option v-for="dict in dict.type.sys_user_sex" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
+                <el-option v-for="dict in dict.type.sys_user_sex" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="狀態">
               <el-radio-group v-model="form.status">
-                <el-radio v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.value">{{ dict.label }}</el-radio>
+                <el-radio v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.value">
+                  {{ dict.label }}
+                </el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -176,14 +199,16 @@
           <el-col :span="12">
             <el-form-item label="職位">
               <el-select v-model="form.postIds" multiple placeholder="請選擇職位">
-                <el-option v-for="item in postOptions" :key="item.postId" :label="item.postName" :value="item.postId" :disabled="item.status == 1" ></el-option>
+                <el-option v-for="item in postOptions" :key="item.postId" :label="item.postName" :value="item.postId"
+                           :disabled="item.status == 1"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="角色">
               <el-select v-model="form.roleIds" multiple placeholder="請選擇角色">
-                <el-option v-for="item in roleOptions" :key="item.roleId" :label="item.roleName" :value="item.roleId" :disabled="item.status == 1"></el-option>
+                <el-option v-for="item in roleOptions" :key="item.roleId" :label="item.roleName" :value="item.roleId"
+                           :disabled="item.status == 1"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -204,7 +229,9 @@
 
     <!-- 使用者匯入對話框 -->
     <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
-      <el-upload ref="upload" :limit="1" accept=".xlsx, .xls" :headers="upload.headers" :action="upload.url + '?updateSupport=' + upload.updateSupport" :disabled="upload.isUploading" :on-progress="handleFileUploadProgress" :on-success="handleFileSuccess" :auto-upload="false" drag>
+      <el-upload ref="upload" :limit="1" accept=".xlsx, .xls" :headers="upload.headers"
+                 :action="upload.url + '?updateSupport=' + upload.updateSupport" :disabled="upload.isUploading"
+                 :on-progress="handleFileUploadProgress" :on-success="handleFileSuccess" :auto-upload="false" drag>
         <i class="el-icon-upload"></i>
         <div class="el-upload__text">將文件拖到此處，或<em>點擊上傳</em></div>
         <div class="el-upload__tip text-center" slot="tip">
@@ -246,7 +273,7 @@ import "splitpanes/dist/splitpanes.css"
 export default {
   name: "User",
   dicts: ['sys_normal_disable', 'sys_user_sex'],
-  components: { Treeselect, Splitpanes, Pane },
+  components: {Treeselect, Splitpanes, Pane},
   data() {
     return {
       // 遮罩層
@@ -298,7 +325,7 @@ export default {
         // 是否更新已經存在的使用者數據
         updateSupport: 0,
         // 設定上傳的請求頭部
-        headers: { Authorization: "Bearer " + getToken() },
+        headers: {Authorization: "Bearer " + getToken()},
         // 上傳的地址
         url: process.env.VUE_APP_BASE_API + "/system/user/importData"
       },
@@ -408,11 +435,11 @@ export default {
     // 使用者狀態修改
     handleStatusChange(row) {
       let text = row.status === "0" ? "啟用" : "停用"
-      this.$modal.confirm('確認要"' + text + '""' + row.userName + '"使用者吗？').then(function () {
+      this.$modal.confirm('確認要"' + text + '""' + row.userName + '"使用者嗎？').then(function () {
         return changeUserStatus(row.userId, row.status)
       }).then(() => {
         this.$modal.msgSuccess(text + "成功")
-      }).catch(function() {
+      }).catch(function () {
         row.status = row.status === "0" ? "1" : "0"
       })
     },
@@ -510,19 +537,20 @@ export default {
             return "不能包含非法字串：< > \" ' \\\ |"
           }
         },
-      }).then(({ value }) => {
-          resetUserPwd(row.userId, value).then(response => {
-            this.$modal.msgSuccess("修改成功，新密碼是：" + value)
-          })
-        }).catch(() => {})
+      }).then(({value}) => {
+        resetUserPwd(row.userId, value).then(response => {
+          this.$modal.msgSuccess("修改成功，新密碼是：" + value)
+        })
+      }).catch(() => {
+      })
     },
     /** 分配角色操作 */
-    handleAuthRole: function(row) {
+    handleAuthRole: function (row) {
       const userId = row.userId
       this.$router.push("/system/user-auth/role/" + userId)
     },
     /** 提交按鈕 */
-    submitForm: function() {
+    submitForm: function () {
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.userId != undefined) {
@@ -549,7 +577,8 @@ export default {
       }).then(() => {
         this.getList()
         this.$modal.msgSuccess("刪除成功")
-      }).catch(() => {})
+      }).catch(() => {
+      })
     },
     /** 匯出按鈕操作 */
     handleExport() {
@@ -564,8 +593,7 @@ export default {
     },
     /** 下載模板操作 */
     importTemplate() {
-      this.download('system/user/importTemplate', {
-      }, `user_template_${new Date().getTime()}.xlsx`)
+      this.download('system/user/importTemplate', {}, `user_template_${new Date().getTime()}.xlsx`)
     },
     // 文件上傳中處理
     handleFileUploadProgress(event, file, fileList) {

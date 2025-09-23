@@ -64,7 +64,7 @@ public class SysDictType extends BaseEntity {
 
     @NotBlank(message = "字典類型不能為空")
     @Size(min = 0, max = 100, message = "字典類型類型長度不能超過100個字串")
-    @Pattern(regexp = "^[a-z][a-z0-9_]*$", message = "字典類型必須以字母開頭，且只能為（小寫字母，數字，下滑線）")
+    @Pattern(regexp = "^[a-z][a-z0-9_]*$", message = "字典類型必須以字母開頭，且只能為（小寫字母，數字，底線）")
     public String getDictType() {
         return dictType;
     }

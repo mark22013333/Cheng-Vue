@@ -15,7 +15,7 @@
           {{ message }}
         </div>
         <div class="bullshit__info">
-          對不起，您正在寻找的頁面不存在。尝試檢查URL的錯誤，然後按瀏覽器上的重新整理按鈕或尝試在我们的應用程序中找到其他内容。
+          對不起，您正在尋找的頁面不存在。嘗試檢查URL的錯誤，然後按瀏覽器上的重新整理按鈕或嘗試在我們的應用程式中找到其他内容。
         </div>
         <router-link to="/" class="bullshit__return-home">
           返回首頁

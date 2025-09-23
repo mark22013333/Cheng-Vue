@@ -24,7 +24,7 @@ import ${packageName}.service.I${ClassName}Service;
  * ${functionName}Service業務層處理
  * 
  * @author ${author}
- * @date ${datetime}
+ * @since ${datetime}
  */
 @Service
 public class ${ClassName}ServiceImpl implements I${ClassName}Service 

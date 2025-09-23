@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.system.mapper.InvStockRecordMapper">
+    
+    <resultMap type="InvStockRecord" id="InvStockRecordResult">
+        <result property="recordId"    column="record_id"    />
+        <result property="itemId"    column="item_id"    />
+        <result property="itemCode"    column="item_code"    />
+        <result property="itemName"    column="item_name"    />
+        <result property="recordType"    column="record_type"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="beforeQty"    column="before_qty"    />
+        <result property="afterQty"    column="after_qty"    />
+        <result property="unitPrice"    column="unit_price"    />
+        <result property="totalAmount"    column="total_amount"    />
+        <result property="operatorId"    column="operator_id"    />
+        <result property="operatorName"    column="operator_name"    />
+        <result property="deptId"    column="dept_id"    />
+        <result property="deptName"    column="dept_name"    />
+        <result property="recordTime"    column="record_time"    />
+        <result property="reason"    column="reason"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectInvStockRecordVo">
+        select r.record_id, r.item_id, i.item_code, i.item_name, r.record_type, r.quantity, 
+               r.before_qty, r.after_qty, r.unit_price, r.total_amount, r.operator_id, r.operator_name, 
+               r.dept_id, d.dept_name, r.record_time, r.reason, r.remark 
+        from inv_stock_record r
+        left join inv_item i on r.item_id = i.item_id
+        left join sys_dept d on r.dept_id = d.dept_id
+    </sql>
+
+    <select id="selectInvStockRecordList" parameterType="InvStockRecord" resultMap="InvStockRecordResult">
+        <include refid="selectInvStockRecordVo"/>
+        <where>  
+            <if test="itemCode != null and itemCode != ''"> and i.item_code like concat('%', #{itemCode}, '%')</if>
+            <if test="itemName != null and itemName != ''"> and i.item_name like concat('%', #{itemName}, '%')</if>
+            <if test="recordType != null and recordType != ''"> and r.record_type = #{recordType}</if>
+            <if test="operatorName != null and operatorName != ''"> and r.operator_name like concat('%', #{operatorName}, '%')</if>
+            <if test="params.beginRecordTime != null and params.beginRecordTime != ''"><!-- 開始記錄時間 -->
+                and date_format(r.record_time,'%y%m%d') &gt;= date_format(#{params.beginRecordTime},'%y%m%d')
+            </if>
+            <if test="params.endRecordTime != null and params.endRecordTime != ''"><!-- 結束記錄時間 -->
+                and date_format(r.record_time,'%y%m%d') &lt;= date_format(#{params.endRecordTime},'%y%m%d')
+            </if>
+        </where>
+        order by r.record_time desc
+    </select>
+    
+    <select id="selectInvStockRecordByRecordId" parameterType="Long" resultMap="InvStockRecordResult">
+        <include refid="selectInvStockRecordVo"/>
+        where r.record_id = #{recordId}
+    </select>
+
+    <select id="selectRecordListByItemId" parameterType="Long" resultMap="InvStockRecordResult">
+        <include refid="selectInvStockRecordVo"/>
+        where r.item_id = #{itemId}
+        order by r.record_time desc
+    </select>
+
+    <select id="selectInvStockRecordByRecordType" parameterType="String" resultMap="InvStockRecordResult">
+        <include refid="selectInvStockRecordVo"/>
+        where r.record_type = #{recordType}
+        order by r.record_time desc
+    </select>
+
+    <select id="selectRecordListByOperatorId" parameterType="Long" resultMap="InvStockRecordResult">
+        <include refid="selectInvStockRecordVo"/>
+        where r.operator_id = #{operatorId}
+        order by r.record_time desc
+    </select>
+
+    <select id="selectStockRecordStatistics" resultType="java.util.Map">
+        select 
+            record_type,
+            count(*) as count,
+            sum(case when record_type in ('1', '4') then quantity else 0 end) as inQuantity,
+            sum(case when record_type in ('2', '3') then quantity else 0 end) as outQuantity
+        from inv_stock_record
+        where record_time >= date_sub(now(), interval 30 day)
+        group by record_type
+    </select>
+        
+    <insert id="insertInvStockRecord" parameterType="InvStockRecord" useGeneratedKeys="true" keyProperty="recordId">
+        insert into inv_stock_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="itemId != null">item_id,</if>
+            <if test="recordType != null and recordType != ''">record_type,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="beforeQty != null">before_qty,</if>
+            <if test="afterQty != null">after_qty,</if>
+            <if test="unitPrice != null">unit_price,</if>
+            <if test="totalAmount != null">total_amount,</if>
+            <if test="operatorId != null">operator_id,</if>
+            <if test="operatorName != null and operatorName != ''">operator_name,</if>
+            <if test="deptId != null">dept_id,</if>
+            <if test="recordTime != null">record_time,</if>
+            <if test="reason != null">reason,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="itemId != null">#{itemId},</if>
+            <if test="recordType != null and recordType != ''">#{recordType},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="beforeQty != null">#{beforeQty},</if>
+            <if test="afterQty != null">#{afterQty},</if>
+            <if test="unitPrice != null">#{unitPrice},</if>
+            <if test="totalAmount != null">#{totalAmount},</if>
+            <if test="operatorId != null">#{operatorId},</if>
+            <if test="operatorName != null and operatorName != ''">#{operatorName},</if>
+            <if test="deptId != null">#{deptId},</if>
+            <if test="recordTime != null">#{recordTime},</if>
+            <if test="reason != null">#{reason},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateInvStockRecord" parameterType="InvStockRecord">
+        update inv_stock_record
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="itemId != null">item_id = #{itemId},</if>
+            <if test="recordType != null and recordType != ''">record_type = #{recordType},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="beforeQty != null">before_qty = #{beforeQty},</if>
+            <if test="afterQty != null">after_qty = #{afterQty},</if>
+            <if test="unitPrice != null">unit_price = #{unitPrice},</if>
+            <if test="totalAmount != null">total_amount = #{totalAmount},</if>
+            <if test="operatorId != null">operator_id = #{operatorId},</if>
+            <if test="operatorName != null and operatorName != ''">operator_name = #{operatorName},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="recordTime != null">record_time = #{recordTime},</if>
+            <if test="reason != null">reason = #{reason},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where record_id = #{recordId}
+    </update>
+
+    <delete id="deleteInvStockRecordByRecordId" parameterType="Long">
+        delete from inv_stock_record where record_id = #{recordId}
+    </delete>
+
+    <delete id="deleteInvStockRecordByRecordIds" parameterType="String">
+        delete from inv_stock_record where record_id in 
+        <foreach item="recordId" collection="array" open="(" separator="," close=")">
+            #{recordId}
+        </foreach>
+    </delete>
+
+</mapper>

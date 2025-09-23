@@ -426,7 +426,7 @@ export default {
     // 任務狀態修改
     handleStatusChange(row) {
       let text = row.status === "0" ? "啟用" : "停用"
-      this.$modal.confirm('確認要"' + text + '""' + row.jobName + '"任務吗？').then(function () {
+      this.$modal.confirm('確認要"' + text + '""' + row.jobName + '"任務嗎？').then(function () {
         return changeJobStatus(row.jobId, row.status)
       }).then(() => {
         this.$modal.msgSuccess(text + "成功")
@@ -436,7 +436,7 @@ export default {
     },
     /* 立即執行一次 */
     handleRun(row) {
-      this.$modal.confirm('確認要立即執行一次"' + row.jobName + '"任務吗？').then(function () {
+      this.$modal.confirm('確認要立即執行一次"' + row.jobName + '"任務嗎？').then(function () {
         return runJob(row.jobId, row.jobGroup)
       }).then(() => {
         this.$modal.msgSuccess("執行成功")

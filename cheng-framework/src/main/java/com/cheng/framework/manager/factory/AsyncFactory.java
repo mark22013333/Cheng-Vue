@@ -9,7 +9,7 @@ import com.cheng.common.utils.ip.IpUtils;
 import com.cheng.common.utils.spring.SpringUtils;
 import com.cheng.system.domain.SysLogininfor;
 import com.cheng.system.domain.SysOperLog;
-import com.cheng.system.service.ISysLogininforService;
+import com.cheng.system.service.ISysUninformatively;
 import com.cheng.system.service.ISysOperLogService;
 import eu.bitwalker.useragentutils.UserAgent;
 import org.slf4j.Logger;
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.util.TimerTask;
 
 /**
- * 異步工廠（產生任務用）
+ * 非同步工廠（產生任務用）
  *
  * @author cheng
  */
@@ -68,7 +68,7 @@ public class AsyncFactory {
                     logininfor.setStatus(Constants.FAIL);
                 }
                 // 新增數據
-                SpringUtils.getBean(ISysLogininforService.class).insertLogininfor(logininfor);
+                SpringUtils.getBean(ISysUninformatively.class).insertLogininfor(logininfor);
             }
         };
     }

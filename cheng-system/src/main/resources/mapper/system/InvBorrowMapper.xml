@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.system.mapper.InvBorrowMapper">
+
+    <resultMap type="InvBorrow" id="InvBorrowResult">
+        <result property="borrowId" column="borrow_id"/>
+        <result property="borrowNo" column="borrow_no"/>
+        <result property="itemId" column="item_id"/>
+        <result property="itemCode" column="item_code"/>
+        <result property="itemName" column="item_name"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="quantity" column="quantity"/>
+        <result property="borrowerId" column="borrower_id"/>
+        <result property="borrowerName" column="borrower_name"/>
+        <result property="borrowerDept" column="borrower_dept"/>
+        <result property="quantity" column="quantity"/>
+        <result property="borrowTime" column="borrow_time"/>
+        <result property="expectedReturn" column="expected_return"/>
+        <result property="actualReturn" column="actual_return"/>
+        <result property="returnQuantity" column="return_quantity"/>
+        <result property="purpose" column="purpose"/>
+        <result property="status" column="status"/>
+        <result property="approverId" column="approver_id"/>
+        <result property="approverName" column="approver_name"/>
+        <result property="approveTime" column="approve_time"/>
+        <result property="approveRemark" column="approve_remark"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectInvBorrowVo">
+        select b.borrow_id,
+               b.borrow_no,
+               b.item_id,
+               i.item_code,
+               i.item_name,
+               c.category_name,
+               b.borrower_id,
+               b.borrower_name,
+               b.borrower_dept,
+               b.quantity,
+               b.borrow_time,
+               b.expected_return,
+               b.actual_return,
+               b.return_quantity,
+               b.status,
+               b.approver_id,
+               b.approver_name,
+               b.approve_time,
+               b.purpose,
+               b.create_by,
+               b.create_time,
+               b.update_by,
+               b.update_time,
+               b.remark
+        from inv_borrow b
+                 left join inv_item i on b.item_id = i.item_id
+                 left join inv_category c on i.category_id = c.category_id
+    </sql>
+
+    <select id="selectInvBorrowList" parameterType="InvBorrow" resultMap="InvBorrowResult">
+        <include refid="selectInvBorrowVo"/>
+        <where>
+            <if test="borrowNo != null and borrowNo != ''">and b.borrow_no like concat('%', #{borrowNo}, '%')</if>
+            <if test="itemName != null and itemName != ''">and i.item_name like concat('%', #{itemName}, '%')</if>
+            <if test="borrowerName != null and borrowerName != ''">and b.borrower_name like concat('%', #{borrowerName},
+                '%')
+            </if>
+            <if test="status != null and status != ''">and b.status = #{status}</if>
+            <if test="params.beginBorrowTime != null and params.beginBorrowTime != ''"><!-- 開始借出時間 -->
+                and date_format(b.borrow_time,'%y%m%d') &gt;= date_format(#{params.beginBorrowTime},'%y%m%d')
+            </if>
+            <if test="params.endBorrowTime != null and params.endBorrowTime != ''"><!-- 結束借出時間 -->
+                and date_format(b.borrow_time,'%y%m%d') &lt;= date_format(#{params.endBorrowTime},'%y%m%d')
+            </if>
+        </where>
+        order by b.create_time desc
+    </select>
+
+    <select id="selectInvBorrowByBorrowId" parameterType="Long" resultMap="InvBorrowResult">
+        <include refid="selectInvBorrowVo"/>
+        where b.borrow_id = #{borrowId}
+    </select>
+
+    <select id="selectInvBorrowByBorrowNo" parameterType="String" resultMap="InvBorrowResult">
+        <include refid="selectInvBorrowVo"/>
+        where b.borrow_no = #{borrowNo}
+    </select>
+
+    <select id="selectBorrowListByItemId" parameterType="Long" resultMap="InvBorrowResult">
+        <include refid="selectInvBorrowVo"/>
+        where b.item_id = #{itemId}
+    </select>
+
+    <select id="selectBorrowListByBorrowerId" parameterType="Long" resultMap="InvBorrowResult">
+        <include refid="selectInvBorrowVo"/>
+        where b.borrower_id = #{borrowerId}
+    </select>
+
+    <select id="selectOverdueBorrowList" resultMap="InvBorrowResult">
+        <include refid="selectInvBorrowVo"/>
+        where b.status = '1' and b.expected_return &lt; now()
+        order by b.expected_return asc
+    </select>
+
+    <select id="selectInvBorrowByStatus" parameterType="String" resultMap="InvBorrowResult">
+        <include refid="selectInvBorrowVo"/>
+        where b.status = #{status}
+        order by b.create_time desc
+    </select>
+
+    <select id="selectBorrowStatistics" resultType="java.util.Map">
+        select sum(case when status = '0' then 1 else 0 end)                                as pending,
+               sum(case when status = '1' then 1 else 0 end)                                as borrowed,
+               sum(case when status = '2' then 1 else 0 end)                                as returned,
+               sum(case when status = '1' and expected_return &lt; now() then 1 else 0 end) as overdue
+        from inv_borrow
+    </select>
+
+    <insert id="insertInvBorrow" parameterType="InvBorrow" useGeneratedKeys="true" keyProperty="borrowId">
+        insert into inv_borrow
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="borrowNo != null and borrowNo != ''">borrow_no,</if>
+            <if test="itemId != null">item_id,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="borrowerId != null">borrower_id,</if>
+            <if test="borrowerName != null and borrowerName != ''">borrower_name,</if>
+            <if test="borrowerPhone != null">borrower_phone,</if>
+            <if test="borrowTime != null">borrow_time,</if>
+            <if test="expectedReturn != null">expected_return,</if>
+            <if test="actualReturn != null">actual_return,</if>
+            <if test="purpose != null">purpose,</if>
+            <if test="status != null">status,</if>
+            <if test="approverId != null">approver_id,</if>
+            <if test="approverName != null">approver_name,</if>
+            <if test="approveTime != null">approve_time,</if>
+            <if test="approveRemark != null">approve_remark,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="borrowNo != null and borrowNo != ''">#{borrowNo},</if>
+            <if test="itemId != null">#{itemId},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="borrowerId != null">#{borrowerId},</if>
+            <if test="borrowerName != null and borrowerName != ''">#{borrowerName},</if>
+            <if test="borrowerPhone != null">#{borrowerPhone},</if>
+            <if test="borrowTime != null">#{borrowTime},</if>
+            <if test="expectedReturn != null">#{expectedReturn},</if>
+            <if test="actualReturn != null">#{actualReturn},</if>
+            <if test="purpose != null">#{purpose},</if>
+            <if test="status != null">#{status},</if>
+            <if test="approverId != null">#{approverId},</if>
+            <if test="approverName != null">#{approverName},</if>
+            <if test="approveTime != null">#{approveTime},</if>
+            <if test="approveRemark != null">#{approveRemark},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateInvBorrow" parameterType="InvBorrow">
+        update inv_borrow
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="borrowNo != null and borrowNo != ''">borrow_no = #{borrowNo},</if>
+            <if test="returnQuantity != null">return_quantity = #{returnQuantity},</if>
+            <if test="itemId != null">item_id = #{itemId},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="borrowerId != null">borrower_id = #{borrowerId},</if>
+            <if test="borrowerName != null and borrowerName != ''">borrower_name = #{borrowerName},</if>
+            <if test="borrowerPhone != null">borrower_phone = #{borrowerPhone},</if>
+            <if test="borrowTime != null">borrow_time = #{borrowTime},</if>
+            <if test="expectedReturn != null">expected_return = #{expectedReturn},</if>
+            <if test="actualReturn != null">actual_return = #{actualReturn},</if>
+            <if test="purpose != null">purpose = #{purpose},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="approverId != null">approver_id = #{approverId},</if>
+            <if test="approverName != null">approver_name = #{approverName},</if>
+            <if test="approveTime != null">approve_time = #{approveTime},</if>
+            <if test="approveRemark != null">approve_remark = #{approveRemark},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where borrow_id = #{borrowId}
+    </update>
+
+    <update id="updateBorrowStatus" parameterType="java.util.Map">
+        update inv_borrow
+        set status      = #{status},
+            update_time = now()
+        where borrow_id = #{borrowId}
+    </update>
+
+    <delete id="deleteInvBorrowByBorrowId" parameterType="Long">
+        delete
+        from inv_borrow
+        where borrow_id = #{borrowId}
+    </delete>
+
+    <delete id="deleteInvBorrowByBorrowIds" parameterType="String">
+        delete from inv_borrow where borrow_id in
+        <foreach item="borrowId" collection="array" open="(" separator="," close=")">
+            #{borrowId}
+        </foreach>
+    </delete>
+
+    <select id="countTodayBorrows" resultType="int">
+        select count(*)
+        from inv_borrow
+        where date_format(create_time, '%Y-%m-%d') = date_format(now(), '%Y-%m-%d')
+    </select>
+
+    <update id="updateReturnInfo">
+        update inv_borrow
+        set return_quantity = #{returnQuantity},
+            actual_return   = #{actualReturn},
+            update_time     = now()
+        where borrow_id = #{borrowId}
+    </update>
+
+</mapper>

@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.system.mapper.InvReturnMapper">
+    
+    <resultMap type="InvReturn" id="InvReturnResult">
+        <result property="returnId"    column="return_id"    />
+        <result property="borrowId"    column="borrow_id"    />
+        <result property="borrowCode"    column="borrow_code"    />
+        <result property="itemId"    column="item_id"    />
+        <result property="itemCode"    column="item_code"    />
+        <result property="itemName"    column="item_name"    />
+        <result property="returnQuantity"    column="return_quantity"    />
+        <result property="borrowerId"    column="borrower_id"    />
+        <result property="borrowerName"    column="borrower_name"    />
+        <result property="returnTime"    column="return_time"    />
+        <result property="expectedReturn"    column="expected_return"    />
+        <result property="isOverdue"    column="is_overdue"    />
+        <result property="overdueDays"    column="overdue_days"    />
+        <result property="itemCondition"    column="item_condition"    />
+        <result property="damageDescription"    column="damage_description"    />
+        <result property="compensationAmount"    column="compensation_amount"    />
+        <result property="receiverId"    column="receiver_id"    />
+        <result property="receiverName"    column="receiver_name"    />
+        <result property="returnStatus"    column="return_status"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectInvReturnVo">
+        select r.return_id, r.borrow_id, r.borrow_code, r.item_id, i.item_code, i.item_name, r.return_quantity, 
+               r.borrower_id, r.borrower_name, r.return_time, r.expected_return, r.is_overdue, r.overdue_days, 
+               r.item_condition, r.damage_description, r.compensation_amount, r.receiver_id, r.receiver_name, 
+               r.return_status, r.create_by, r.create_time, r.update_by, r.update_time, r.remark 
+        from inv_return r
+        left join inv_item i on r.item_id = i.item_id
+    </sql>
+
+    <select id="selectInvReturnList" parameterType="InvReturn" resultMap="InvReturnResult">
+        <include refid="selectInvReturnVo"/>
+        <where>  
+            <if test="borrowCode != null and borrowCode != ''"> and r.borrow_code like concat('%', #{borrowCode}, '%')</if>
+            <if test="itemName != null and itemName != ''"> and i.item_name like concat('%', #{itemName}, '%')</if>
+            <if test="borrowerName != null and borrowerName != ''"> and r.borrower_name like concat('%', #{borrowerName}, '%')</if>
+            <if test="itemCondition != null and itemCondition != ''"> and r.item_condition = #{itemCondition}</if>
+            <if test="returnStatus != null and returnStatus != ''"> and r.return_status = #{returnStatus}</if>
+            <if test="isOverdue != null and isOverdue != ''"> and r.is_overdue = #{isOverdue}</if>
+            <if test="params.beginReturnTime != null and params.beginReturnTime != ''"><!-- 開始歸還時間 -->
+                and date_format(r.return_time,'%y%m%d') &gt;= date_format(#{params.beginReturnTime},'%y%m%d')
+            </if>
+            <if test="params.endReturnTime != null and params.endReturnTime != ''"><!-- 結束歸還時間 -->
+                and date_format(r.return_time,'%y%m%d') &lt;= date_format(#{params.endReturnTime},'%y%m%d')
+            </if>
+        </where>
+        order by r.return_time desc
+    </select>
+    
+    <select id="selectInvReturnByReturnId" parameterType="Long" resultMap="InvReturnResult">
+        <include refid="selectInvReturnVo"/>
+        where r.return_id = #{returnId}
+    </select>
+
+    <select id="selectInvReturnByBorrowId" parameterType="Long" resultMap="InvReturnResult">
+        <include refid="selectInvReturnVo"/>
+        where r.borrow_id = #{borrowId}
+        order by r.return_time desc
+    </select>
+
+    <select id="selectInvReturnByItemId" parameterType="Long" resultMap="InvReturnResult">
+        <include refid="selectInvReturnVo"/>
+        where r.item_id = #{itemId}
+        order by r.return_time desc
+    </select>
+
+    <select id="selectInvReturnByBorrowerId" parameterType="Long" resultMap="InvReturnResult">
+        <include refid="selectInvReturnVo"/>
+        where r.borrower_id = #{borrowerId}
+        order by r.return_time desc
+    </select>
+
+    <select id="selectOverdueReturnList" resultMap="InvReturnResult">
+        <include refid="selectInvReturnVo"/>
+        where r.is_overdue = '1'
+        order by r.overdue_days desc
+    </select>
+
+    <select id="selectDamagedReturnList" resultMap="InvReturnResult">
+        <include refid="selectInvReturnVo"/>
+        where r.item_condition = 'damaged'
+        order by r.return_time desc
+    </select>
+
+    <select id="selectLostReturnList" resultMap="InvReturnResult">
+        <include refid="selectInvReturnVo"/>
+        where r.item_condition = 'lost'
+        order by r.return_time desc
+    </select>
+
+    <select id="selectInvReturnByStatus" parameterType="String" resultMap="InvReturnResult">
+        <include refid="selectInvReturnVo"/>
+        where r.return_status = #{returnStatus}
+        order by r.return_time desc
+    </select>
+
+    <select id="selectReturnStatistics" resultType="java.util.Map">
+        select 
+            count(*) as totalReturns,
+            sum(case when is_overdue = '1' then 1 else 0 end) as overdueReturns,
+            sum(case when item_condition = 'damaged' then 1 else 0 end) as damagedReturns,
+            sum(case when item_condition = 'lost' then 1 else 0 end) as lostReturns,
+            sum(case when return_status = '0' then 1 else 0 end) as pendingReturns,
+            sum(compensation_amount) as totalCompensation
+        from inv_return
+        where return_time >= date_sub(now(), interval 30 day)
+    </select>
+        
+    <insert id="insertInvReturn" parameterType="InvReturn" useGeneratedKeys="true" keyProperty="returnId">
+        insert into inv_return
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="borrowId != null">borrow_id,</if>
+            <if test="borrowCode != null and borrowCode != ''">borrow_code,</if>
+            <if test="itemId != null">item_id,</if>
+            <if test="returnQuantity != null">return_quantity,</if>
+            <if test="borrowerId != null">borrower_id,</if>
+            <if test="borrowerName != null and borrowerName != ''">borrower_name,</if>
+            <if test="returnTime != null">return_time,</if>
+            <if test="expectedReturn != null">expected_return,</if>
+            <if test="isOverdue != null and isOverdue != ''">is_overdue,</if>
+            <if test="overdueDays != null">overdue_days,</if>
+            <if test="itemCondition != null and itemCondition != ''">item_condition,</if>
+            <if test="damageDescription != null">damage_description,</if>
+            <if test="compensationAmount != null">compensation_amount,</if>
+            <if test="receiverId != null">receiver_id,</if>
+            <if test="receiverName != null and receiverName != ''">receiver_name,</if>
+            <if test="returnStatus != null and returnStatus != ''">return_status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="borrowId != null">#{borrowId},</if>
+            <if test="borrowCode != null and borrowCode != ''">#{borrowCode},</if>
+            <if test="itemId != null">#{itemId},</if>
+            <if test="returnQuantity != null">#{returnQuantity},</if>
+            <if test="borrowerId != null">#{borrowerId},</if>
+            <if test="borrowerName != null and borrowerName != ''">#{borrowerName},</if>
+            <if test="returnTime != null">#{returnTime},</if>
+            <if test="expectedReturn != null">#{expectedReturn},</if>
+            <if test="isOverdue != null and isOverdue != ''">#{isOverdue},</if>
+            <if test="overdueDays != null">#{overdueDays},</if>
+            <if test="itemCondition != null and itemCondition != ''">#{itemCondition},</if>
+            <if test="damageDescription != null">#{damageDescription},</if>
+            <if test="compensationAmount != null">#{compensationAmount},</if>
+            <if test="receiverId != null">#{receiverId},</if>
+            <if test="receiverName != null and receiverName != ''">#{receiverName},</if>
+            <if test="returnStatus != null and returnStatus != ''">#{returnStatus},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateInvReturn" parameterType="InvReturn">
+        update inv_return
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="borrowId != null">borrow_id = #{borrowId},</if>
+            <if test="borrowCode != null and borrowCode != ''">borrow_code = #{borrowCode},</if>
+            <if test="itemId != null">item_id = #{itemId},</if>
+            <if test="returnQuantity != null">return_quantity = #{returnQuantity},</if>
+            <if test="borrowerId != null">borrower_id = #{borrowerId},</if>
+            <if test="borrowerName != null and borrowerName != ''">borrower_name = #{borrowerName},</if>
+            <if test="returnTime != null">return_time = #{returnTime},</if>
+            <if test="expectedReturn != null">expected_return = #{expectedReturn},</if>
+            <if test="isOverdue != null and isOverdue != ''">is_overdue = #{isOverdue},</if>
+            <if test="overdueDays != null">overdue_days = #{overdueDays},</if>
+            <if test="itemCondition != null and itemCondition != ''">item_condition = #{itemCondition},</if>
+            <if test="damageDescription != null">damage_description = #{damageDescription},</if>
+            <if test="compensationAmount != null">compensation_amount = #{compensationAmount},</if>
+            <if test="receiverId != null">receiver_id = #{receiverId},</if>
+            <if test="receiverName != null and receiverName != ''">receiver_name = #{receiverName},</if>
+            <if test="returnStatus != null and returnStatus != ''">return_status = #{returnStatus},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where return_id = #{returnId}
+    </update>
+
+    <delete id="deleteInvReturnByReturnId" parameterType="Long">
+        delete from inv_return where return_id = #{returnId}
+    </delete>
+
+    <delete id="deleteInvReturnByReturnIds" parameterType="String">
+        delete from inv_return where return_id in 
+        <foreach item="returnId" collection="array" open="(" separator="," close=")">
+            #{returnId}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -9,13 +9,15 @@ import jakarta.validation.constraints.Size;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import java.io.Serial;
+
 /**
  * 職位表 sys_post
  *
  * @author cheng
  */
-public class SysPost extends BaseEntity
-{
+public class SysPost extends BaseEntity {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -36,7 +38,9 @@ public class SysPost extends BaseEntity
     @Excel(name = "職位名稱")
     private String postName;
 
-    /** 職位排序 */
+    /**
+     * 職位排序
+     */
     @Excel(name = "職位排序")
     private Integer postSort;
 
@@ -46,11 +50,12 @@ public class SysPost extends BaseEntity
     @Excel(name = "狀態", readConverterExp = "0=正常,1=停用")
     private String status;
 
-    /** 使用者是否存在此職位標識 預設不存在 */
+    /**
+     * 使用者是否存在此職位標識 預設不存在
+     */
     private boolean flag = false;
 
-    public Long getPostId()
-    {
+    public Long getPostId() {
         return postId;
     }
 
@@ -60,8 +65,7 @@ public class SysPost extends BaseEntity
 
     @NotBlank(message = "職位編碼不能為空")
     @Size(min = 0, max = 64, message = "職位編碼長度不能超過64個字串")
-    public String getPostCode()
-    {
+    public String getPostCode() {
         return postCode;
     }
 
@@ -71,8 +75,7 @@ public class SysPost extends BaseEntity
 
     @NotBlank(message = "職位名稱不能為空")
     @Size(min = 0, max = 50, message = "職位名稱長度不能超過50個字串")
-    public String getPostName()
-    {
+    public String getPostName() {
         return postName;
     }
 
@@ -81,49 +84,43 @@ public class SysPost extends BaseEntity
     }
 
     @NotNull(message = "顯示順序不能為空")
-    public Integer getPostSort()
-    {
+    public Integer getPostSort() {
         return postSort;
     }
 
-    public void setPostSort(Integer postSort)
-    {
+    public void setPostSort(Integer postSort) {
         this.postSort = postSort;
     }
 
-    public String getStatus()
-    {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(String status)
-    {
+    public void setStatus(String status) {
         this.status = status;
     }
 
-    public boolean isFlag()
-    {
+    public boolean isFlag() {
         return flag;
     }
 
-    public void setFlag(boolean flag)
-    {
+    public void setFlag(boolean flag) {
         this.flag = flag;
     }
-    
+
     @Override
     public String toString() {
-        return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
-            .append("postId", getPostId())
-            .append("postCode", getPostCode())
-            .append("postName", getPostName())
-            .append("postSort", getPostSort())
-            .append("status", getStatus())
-            .append("createBy", getCreateBy())
-            .append("createTime", getCreateTime())
-            .append("updateBy", getUpdateBy())
-            .append("updateTime", getUpdateTime())
-            .append("remark", getRemark())
-            .toString();
+        return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
+                .append("postId", getPostId())
+                .append("postCode", getPostCode())
+                .append("postName", getPostName())
+                .append("postSort", getPostSort())
+                .append("status", getStatus())
+                .append("createBy", getCreateBy())
+                .append("createTime", getCreateTime())
+                .append("updateBy", getUpdateBy())
+                .append("updateTime", getUpdateTime())
+                .append("remark", getRemark())
+                .toString();
     }
 }

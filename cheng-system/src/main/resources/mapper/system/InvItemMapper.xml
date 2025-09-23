@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.system.mapper.InvItemMapper">
+    
+    <resultMap type="InvItem" id="InvItemResult">
+        <result property="itemId"    column="item_id"    />
+        <result property="itemCode"    column="item_code"    />
+        <result property="itemName"    column="item_name"    />
+        <result property="categoryId"    column="category_id"    />
+        <result property="categoryName"    column="category_name"    />
+        <result property="specification"    column="specification"    />
+        <result property="unit"    column="unit"    />
+        <result property="brand"    column="brand"    />
+        <result property="model"    column="model"    />
+        <result property="supplier"    column="supplier"    />
+        <result property="purchasePrice"    column="purchase_price"    />
+        <result property="currentPrice"    column="current_price"    />
+        <result property="imageUrl"    column="image_url"    />
+        <result property="barcode"    column="barcode"    />
+        <result property="qrCode"    column="qr_code"    />
+        <result property="status"    column="status"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectInvItemVo">
+        select i.item_id, i.item_code, i.item_name, i.category_id, c.category_name, i.specification, i.unit, i.brand, i.model, i.supplier, i.purchase_price, i.current_price, i.image_url, i.barcode, i.qr_code, i.status, i.create_by, i.create_time, i.update_by, i.update_time, i.remark 
+        from inv_item i
+        left join inv_category c on i.category_id = c.category_id
+    </sql>
+
+    <select id="selectInvItemList" parameterType="InvItem" resultMap="InvItemResult">
+        <include refid="selectInvItemVo"/>
+        <where>  
+            <if test="itemCode != null  and itemCode != ''"> and i.item_code like concat('%', #{itemCode}, '%')</if>
+            <if test="itemName != null  and itemName != ''"> and i.item_name like concat('%', #{itemName}, '%')</if>
+            <if test="categoryId != null "> and i.category_id = #{categoryId}</if>
+            <if test="brand != null  and brand != ''"> and i.brand like concat('%', #{brand}, '%')</if>
+            <if test="model != null  and model != ''"> and i.model like concat('%', #{model}, '%')</if>
+            <if test="supplier != null  and supplier != ''"> and i.supplier like concat('%', #{supplier}, '%')</if>
+            <if test="status != null  and status != ''"> and i.status = #{status}</if>
+        </where>
+        order by i.create_time desc
+    </select>
+    
+    <select id="selectInvItemByItemId" parameterType="Long" resultMap="InvItemResult">
+        <include refid="selectInvItemVo"/>
+        where i.item_id = #{itemId}
+    </select>
+
+    <select id="selectInvItemByItemCode" parameterType="String" resultMap="InvItemResult">
+        <include refid="selectInvItemVo"/>
+        where i.item_code = #{itemCode}
+    </select>
+
+    <select id="selectInvItemByBarcode" parameterType="String" resultMap="InvItemResult">
+        <include refid="selectInvItemVo"/>
+        where i.barcode = #{barcode}
+    </select>
+
+    <select id="selectInvItemByQrcode" parameterType="String" resultMap="InvItemResult">
+        <include refid="selectInvItemVo"/>
+        where i.qr_code = #{qr_code}
+    </select>
+
+    <select id="selectInvItemByCategoryId" parameterType="Long" resultMap="InvItemResult">
+        <include refid="selectInvItemVo"/>
+        where i.category_id = #{categoryId}
+    </select>
+
+    <select id="selectLowStockItems" resultMap="InvItemResult">
+        <include refid="selectInvItemVo"/>
+        inner join inv_stock s on i.item_id = s.item_id
+        where s.stock_quantity &lt;= s.min_stock
+        order by s.stock_quantity asc
+    </select>
+
+    <select id="checkItemCodeUnique" parameterType="InvItem" resultMap="InvItemResult">
+        <include refid="selectInvItemVo"/>
+        where i.item_code = #{itemCode} limit 1
+    </select>
+
+    <select id="checkBarcodeUnique" parameterType="InvItem" resultMap="InvItemResult">
+        <include refid="selectInvItemVo"/>
+        where i.barcode = #{barcode} limit 1
+    </select>
+    <select id="selectInvItemByQrCode" resultType="com.cheng.system.domain.InvItem">
+
+    </select>
+
+    <insert id="insertInvItem" parameterType="InvItem" useGeneratedKeys="true" keyProperty="itemId">
+        insert into inv_item
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="itemCode != null and itemCode != ''">item_code,</if>
+            <if test="itemName != null and itemName != ''">item_name,</if>
+            <if test="categoryId != null">category_id,</if>
+            <if test="specification != null">specification,</if>
+            <if test="unit != null">unit,</if>
+            <if test="brand != null">brand,</if>
+            <if test="model != null">model,</if>
+            <if test="supplier != null">supplier,</if>
+            <if test="purchasePrice != null">purchase_price,</if>
+            <if test="currentPrice != null">current_price,</if>
+            <if test="imageUrl != null">image_url,</if>
+            <if test="barcode != null">barcode,</if>
+            <if test="qrCode != null">qr_code,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="itemCode != null and itemCode != ''">#{itemCode},</if>
+            <if test="itemName != null and itemName != ''">#{itemName},</if>
+            <if test="categoryId != null">#{categoryId},</if>
+            <if test="specification != null">#{specification},</if>
+            <if test="unit != null">#{unit},</if>
+            <if test="brand != null">#{brand},</if>
+            <if test="model != null">#{model},</if>
+            <if test="supplier != null">#{supplier},</if>
+            <if test="purchasePrice != null">#{purchasePrice},</if>
+            <if test="currentPrice != null">#{currentPrice},</if>
+            <if test="imageUrl != null">#{imageUrl},</if>
+            <if test="barcode != null">#{barcode},</if>
+            <if test="qrCode != null">#{qr_code},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateInvItem" parameterType="InvItem">
+        update inv_item
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="itemCode != null and itemCode != ''">item_code = #{itemCode},</if>
+            <if test="itemName != null and itemName != ''">item_name = #{itemName},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="specification != null">specification = #{specification},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="brand != null">brand = #{brand},</if>
+            <if test="model != null">model = #{model},</if>
+            <if test="supplier != null">supplier = #{supplier},</if>
+            <if test="purchasePrice != null">purchase_price = #{purchasePrice},</if>
+            <if test="currentPrice != null">current_price = #{currentPrice},</if>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="barcode != null">barcode = #{barcode},</if>
+            <if test="qrCode != null">qr_code = #{qrCode},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where item_id = #{itemId}
+    </update>
+
+    <delete id="deleteInvItemByItemId" parameterType="Long">
+        delete from inv_item where item_id = #{itemId}
+    </delete>
+
+    <delete id="deleteInvItemByItemIds" parameterType="String">
+        delete from inv_item where item_id in 
+        <foreach item="itemId" collection="array" open="(" separator="," close=")">
+            #{itemId}
+        </foreach>
+    </delete>
+
+</mapper>

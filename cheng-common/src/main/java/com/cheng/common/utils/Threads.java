@@ -26,7 +26,7 @@ public class Threads {
 
     /**
      * 停止執行緒池
-     * 先使用shutdown, 停止接收新任務並尝試完成所有已存在任務.
+     * 先使用shutdown, 停止接收新任務並嘗試完成所有已存在任務.
      * 如果逾時, 則呼叫shutdownNow, 取消在workQueue中Pending的任務,並中斷所有阻塞函數.
      * 如果仍然逾時，則強制登出.
      * 另對在shutdown時執行緒本身被呼叫中斷做了處理.

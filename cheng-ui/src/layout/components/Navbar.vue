@@ -91,7 +91,7 @@ export default {
       this.$emit('setLayout')
     },
     logout() {
-      this.$confirm('確定登出系統吗？', '提示', {
+      this.$confirm('確定登出系統嗎？', '提示', {
         confirmButtonText: '確定',
         cancelButtonText: '取消',
         type: 'warning'

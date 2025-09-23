@@ -18,7 +18,7 @@ public class IpUtils {
     public final static String REGX_IP = "((" + REGX_0_255 + "\\.){3}" + REGX_0_255 + ")";
     public final static String REGX_IP_WILDCARD = "(((\\*\\.){3}\\*)|(" + REGX_0_255 + "(\\.\\*){3})|(" + REGX_0_255 + "\\." + REGX_0_255 + ")(\\.\\*){2}" + "|((" + REGX_0_255 + "\\.){3}\\*))";
     // 匹配網段
-    public final static String REGX_IP_SEG = "(" + REGX_IP + "\\-" + REGX_IP + ")";
+    public final static String REGX_IP_SEG = "(" + REGX_IP + "-" + REGX_IP + ")";
 
     /**
      * 取得客户端IP
@@ -74,7 +74,7 @@ public class IpUtils {
     /**
      * 檢查是否為内部IP位置
      *
-     * @param addr byte地址
+     * @param addr byte位置
      * @return 結果
      */
     private static boolean internalIp(byte[] addr) {
@@ -100,9 +100,8 @@ public class IpUtils {
                     return true;
                 }
             case SECTION_5:
-                switch (b1) {
-                    case SECTION_6:
-                        return true;
+                if (b1 == SECTION_6) {
+                    return true;
                 }
             default:
                 return false;
@@ -110,13 +109,13 @@ public class IpUtils {
     }
 
     /**
-     * 將IPv4地址轉換成位元組
+     * 將IPv4位置轉換成位元組
      *
-     * @param text IPv4地址
+     * @param text IPv4位置
      * @return byte 位元組
      */
     public static byte[] textToNumericFormatV4(String text) {
-        if (text.length() == 0) {
+        if (text.isEmpty()) {
             return null;
         }
 
@@ -191,7 +190,7 @@ public class IpUtils {
     public static String getHostIp() {
         try {
             return InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
+        } catch (UnknownHostException ignored) {
         }
         return "127.0.0.1";
     }
@@ -247,14 +246,14 @@ public class IpUtils {
     }
 
     /**
-     * 是否為IP，或 *為間隔的通用符號地址
+     * 是否為IP，或 *為間隔的通用符號位置
      */
     public static boolean isIpWildCard(String ip) {
         return StringUtils.isNotBlank(ip) && ip.matches(REGX_IP_WILDCARD);
     }
 
     /**
-     * 檢測參數是否在ip通用符號里
+     * 檢測參數是否在ip通用符號裡
      */
     public static boolean ipIsInWildCardNoCheck(String ipWildCard, String ip) {
         String[] s1 = ipWildCard.split("\\.");

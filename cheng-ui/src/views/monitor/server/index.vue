@@ -150,7 +150,7 @@
                   </td>
                   <td class="el-table__cell is-leaf"><div class="cell" v-if="server.jvm">{{ server.jvm.startTime }}</div></td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">執行時長</div>
+                    <div class="cell">執行時間</div>
                   </td>
                   <td class="el-table__cell is-leaf"><div class="cell" v-if="server.jvm">{{ server.jvm.runTime }}</div></td>
                 </tr>

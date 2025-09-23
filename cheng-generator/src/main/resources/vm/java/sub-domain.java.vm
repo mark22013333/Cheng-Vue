@@ -11,7 +11,7 @@ import com.cheng.common.annotation.Excel;
  * ${subTable.functionName}物件 ${subTableName}
  * 
  * @author ${author}
- * @date ${datetime}
+ * @since ${datetime}
  */
 public class ${subClassName} extends BaseEntity
 {
