@@ -90,7 +90,7 @@ public class RedisCache {
     }
 
     /**
-     * 獲得暫存的基本物件。
+     * 取得暫存的基本物件。
      *
      * @param key 暫存鍵值
      * @return 暫存鍵值對應的數據
@@ -132,7 +132,7 @@ public class RedisCache {
     }
 
     /**
-     * 獲得暫存的list物件
+     * 取得暫存的list物件
      *
      * @param key 暫存的鍵值
      * @return 暫存鍵值對應的數據
@@ -157,7 +157,7 @@ public class RedisCache {
     }
 
     /**
-     * 獲得暫存的set
+     * 取得暫存的set
      *
      * @param key
      * @return
@@ -179,7 +179,7 @@ public class RedisCache {
     }
 
     /**
-     * 獲得暫存的Map
+     * 取得暫存的Map
      *
      * @param key
      * @return
@@ -234,7 +234,7 @@ public class RedisCache {
     }
 
     /**
-     * 獲得暫存的基本物件列表
+     * 取得暫存的基本物件列表
      *
      * @param pattern 字串前綴
      * @return 物件列表

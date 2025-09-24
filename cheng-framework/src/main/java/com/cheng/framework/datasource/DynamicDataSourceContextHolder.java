@@ -18,7 +18,7 @@ public class DynamicDataSourceContextHolder {
     private static final ThreadLocal<String> CONTEXT_HOLDER = new ThreadLocal<>();
 
     /**
-     * 獲得資料來源的變數
+     * 取得資料來源的變數
      */
     public static String getDataSourceType() {
         return CONTEXT_HOLDER.get();

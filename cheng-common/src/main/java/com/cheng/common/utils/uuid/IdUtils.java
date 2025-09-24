@@ -25,7 +25,7 @@ public class IdUtils {
     }
 
     /**
-     * 取得隨機UUID，使用性能更好的ThreadLocalRandom產生UUID
+     * 取得隨機UUID，使用效能更好的ThreadLocalRandom產生UUID
      *
      * @return 隨機UUID
      */
@@ -34,7 +34,7 @@ public class IdUtils {
     }
 
     /**
-     * 簡化的UUID，去掉了横線，使用性能更好的ThreadLocalRandom產生UUID
+     * 簡化的UUID，去掉了横線，使用效能更好的ThreadLocalRandom產生UUID
      *
      * @return 簡化的UUID，去掉了横線
      */

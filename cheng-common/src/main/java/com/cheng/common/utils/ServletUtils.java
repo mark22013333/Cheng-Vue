@@ -66,7 +66,7 @@ public class ServletUtils {
     }
 
     /**
-     * 獲得所有請求參數
+     * 取得所有請求參數
      *
      * @param request 請求物件{@link ServletRequest}
      * @return Map
@@ -77,7 +77,7 @@ public class ServletUtils {
     }
 
     /**
-     * 獲得所有請求參數
+     * 取得所有請求參數
      *
      * @param request 請求物件{@link ServletRequest}
      * @return Map

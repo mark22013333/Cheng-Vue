@@ -1,10 +1,10 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="登入地址" prop="ipaddr">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="75px">
+      <el-form-item label="IP位置" prop="ipaddr">
         <el-input
           v-model="queryParams.ipaddr"
-          placeholder="請輸入登入地址"
+          placeholder="請輸入IP位置"
           clearable
           style="width: 240px;"
           @keyup.enter.native="handleQuery"
@@ -107,7 +107,7 @@
       <el-table-column align="center" label="訪問編號" prop="infoId"/>
       <el-table-column :show-overflow-tooltip="true" :sort-orders="['descending', 'ascending']" align="center" label="使用者名稱" prop="userName"
                        sortable="custom"/>
-      <el-table-column :show-overflow-tooltip="true" align="center" label="登入地址" prop="ipaddr" width="130"/>
+      <el-table-column :show-overflow-tooltip="true" align="center" label="IP位置" prop="ipaddr" width="130"/>
       <el-table-column :show-overflow-tooltip="true" align="center" label="登入地點" prop="loginLocation"/>
       <el-table-column :show-overflow-tooltip="true" align="center" label="瀏覽器" prop="browser"/>
       <el-table-column align="center" label="作業系統" prop="os"/>

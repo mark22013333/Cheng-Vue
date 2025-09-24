@@ -32,7 +32,7 @@ public class StrFormatter {
         }
         final int strPatternLength = strPattern.length();
 
-        // 初始化定義好的長度以獲得更好的性能
+        // 初始化定義好的長度以取得更好的效能
         StringBuilder sbuf = new StringBuilder(strPatternLength + 50);
 
         int handledPosition = 0;

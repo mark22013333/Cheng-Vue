@@ -209,9 +209,9 @@ public class IpUtils {
     }
 
     /**
-     * 從多級反向代理中獲得第一個非unknown IP位置
+     * 從多級反向代理中取得第一個非unknown IP位置
      *
-     * @param ip 獲得的IP位置
+     * @param ip 取得的IP位置
      * @return 第一個非unknown IP位置
      */
     public static String getMultistageReverseProxyIp(String ip) {
@@ -219,7 +219,7 @@ public class IpUtils {
         if (ip != null && ip.indexOf(",") > 0) {
             final String[] ips = ip.trim().split(",");
             for (String subIp : ips) {
-                if (false == isUnknown(subIp)) {
+                if (!isUnknown(subIp)) {
                     ip = subIp;
                     break;
                 }

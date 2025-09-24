@@ -97,7 +97,7 @@ public class ReflectUtils {
 
     /**
      * 直接呼叫物件方法, 無視private/protected修飾符號.
-     * 用於一次性呼叫的情況，否則應使用getAccessibleMethod()函數獲得Method後反複呼叫.
+     * 用於一次性呼叫的情況，否則應使用getAccessibleMethod()函數取得Method後反複呼叫.
      * 同時匹配方法名+參數類型，
      */
     @SuppressWarnings("unchecked")
@@ -121,7 +121,7 @@ public class ReflectUtils {
 
     /**
      * 直接呼叫物件方法, 無視private/protected修飾符號，
-     * 用於一次性呼叫的情況，否則應使用getAccessibleMethodByName()函數獲得Method後反複呼叫.
+     * 用於一次性呼叫的情況，否則應使用getAccessibleMethodByName()函數取得Method後反複呼叫.
      * 只匹配函數名，如果有多個同名函數呼叫第一個。
      */
     @SuppressWarnings("unchecked")
@@ -262,7 +262,7 @@ public class ReflectUtils {
     }
 
     /**
-     * 通過反射, 獲得Class定義中声明的泛型參數的類型, 註意泛型必須定義在父類處
+     * 通過反射, 取得Class定義中声明的泛型參數的類型, 註意泛型必須定義在父類處
      * 如無法找到, 返回Object.class.
      */
     @SuppressWarnings("unchecked")
@@ -271,7 +271,7 @@ public class ReflectUtils {
     }
 
     /**
-     * 通過反射, 獲得Class定義中声明的父類的泛型參數的類型.
+     * 通過反射, 取得Class定義中声明的父類的泛型參數的類型.
      * 如無法找到, 返回Object.class.
      */
     public static Class getClassGenricType(final Class clazz, final int index) {

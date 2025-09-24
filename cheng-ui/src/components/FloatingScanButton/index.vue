@@ -31,7 +31,7 @@
           <div id="floating-qr-reader" style="width: 100%; height: 250px;"></div>
           <div class="scan-tips">
             <p><i class="el-icon-info"></i> 將QR碼或條碼對準攝影機</p>
-            <p><i class="el-icon-warning"></i> 請保持適當距離以獲得最佳掃描效果</p>
+            <p><i class="el-icon-warning"></i> 請保持適當距離以取得最佳掃描效果</p>
           </div>
         </div>
 

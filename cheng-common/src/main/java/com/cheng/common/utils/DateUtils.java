@@ -155,7 +155,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
         long nh = 1000 * 60 * 60;
         long nm = 1000 * 60;
         // long ns = 1000;
-        // 獲得兩個時間的毫秒時間差異
+        // 取得兩個時間的毫秒時間差異
         long diff = endDate.getTime() - startTime.getTime();
         // 計算差多少天
         long day = diff / nd;
