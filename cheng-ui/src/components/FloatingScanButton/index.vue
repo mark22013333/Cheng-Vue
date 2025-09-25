@@ -159,7 +159,7 @@ export default {
             fps: 10,
             qrbox: {width: 380, height: 280},
             aspectRatio: 1.0,
-            // 手機端優化配置
+            // 手機端優化設定
             videoConstraints: {
               facingMode: this.currentCamera,
               focusMode: "continuous",
@@ -219,7 +219,7 @@ export default {
             focusMode: "continuous"
           }
         }).then(() => {
-          // 權限獲取成功後啟動掃描
+          // 權限取得成功後啟動掃描
           if (this.html5QrCode) {
             this.html5QrCode.render(
               (decodedText) => {

@@ -9,10 +9,6 @@
       <template v-if="device!=='mobile'">
         <search id="header-search" class="right-menu-item" />
 
-        <el-tooltip content="文件地址" effect="dark" placement="bottom">
-          <ruo-yi-doc id="cheng-doc" class="right-menu-item hover-effect" />
-        </el-tooltip>
-
         <screenfull id="screenfull" class="right-menu-item hover-effect" />
 
         <el-tooltip content="介面大小" effect="dark" placement="bottom">

@@ -5,7 +5,7 @@ import com.cheng.common.exception.base.BaseException;
 import java.io.Serial;
 
 /**
- * 文件訊息異常類
+ * 檔案訊息異常類
  *
  * @author cheng
  */

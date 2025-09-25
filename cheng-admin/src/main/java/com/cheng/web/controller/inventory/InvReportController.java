@@ -44,7 +44,7 @@ public class InvReportController extends BaseController {
     private IInvStockRecordService invStockRecordService;
 
     /**
-     * 獲取庫存報表資料
+     * 取得庫存報表資料
      */
     @PreAuthorize("@ss.hasPermi('inventory:report:view')")
     @GetMapping("/stock")
@@ -66,7 +66,7 @@ public class InvReportController extends BaseController {
     }
 
     /**
-     * 獲取借出報表資料
+     * 取得借出報表資料
      */
     @PreAuthorize("@ss.hasPermi('inventory:report:view')")
     @GetMapping("/borrow")
@@ -89,7 +89,7 @@ public class InvReportController extends BaseController {
     }
 
     /**
-     * 獲取庫存異動報表資料
+     * 取得庫存異動報表資料
      */
     @PreAuthorize("@ss.hasPermi('inventory:report:view')")
     @GetMapping("/movement")
@@ -149,7 +149,7 @@ public class InvReportController extends BaseController {
 
 
     /**
-     * 獲取儀表板統計資料
+     * 取得儀表板統計資料
      */
     @PreAuthorize("@ss.hasPermi('inventory:report:view')")
     @GetMapping("/dashboard")

@@ -64,7 +64,7 @@ public class InvItemController extends BaseController {
     }
 
     /**
-     * 獲取物品資訊詳細訊息
+     * 取得物品資訊詳細訊息
      */
     @PreAuthorize("@ss.hasPermi('inventory:item:query')")
     @GetMapping(value = "/{itemId}")
@@ -73,7 +73,7 @@ public class InvItemController extends BaseController {
     }
 
     /**
-     * 根據物品編碼獲取物品資訊
+     * 根據物品編碼取得物品資訊
      */
     @PreAuthorize("@ss.hasPermi('inventory:item:query')")
     @GetMapping(value = "/code/{itemCode}")
@@ -87,7 +87,7 @@ public class InvItemController extends BaseController {
     }
 
     /**
-     * 掃描條碼或QR碼獲取物品資訊
+     * 掃描條碼或QR碼取得物品資訊
      */
     @PreAuthorize("@ss.hasPermi('inventory:item:scan')")
     @PostMapping("/scan")

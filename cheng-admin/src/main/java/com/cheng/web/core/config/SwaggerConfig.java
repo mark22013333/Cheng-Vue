@@ -12,14 +12,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Swagger2的介面配置
+ * Swagger 3 的介面設定
  *
  * @author cheng
  */
 @Configuration
 public class SwaggerConfig {
     /**
-     * 系統基礎配置
+     * 系統基礎設定
      */
     @Autowired
     private CoolAppsConfig coolAppsConfig;
@@ -30,7 +30,7 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI customOpenApi() {
         return new OpenAPI().components(new Components()
-                        // 設定認證的請求頭
+                        // 設定認證的請求標頭
                         .addSecuritySchemes("apikey", securityScheme()))
                 .addSecurityItem(new SecurityRequirement().addList("apikey"))
                 .info(getApiInfo());
@@ -50,7 +50,7 @@ public class SwaggerConfig {
      */
     public Info getApiInfo() {
         return new Info()
-                .title("標題：CoolApps管理系統-介面文件")
+                .title("標題：CoolApps管理系統-介面檔案")
                 .description("描述：測試用...")
                 .contact(new Contact().name(coolAppsConfig.getName()))
                 .version("版本:" + coolAppsConfig.getVersion());

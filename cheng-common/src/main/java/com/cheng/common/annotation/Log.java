@@ -9,7 +9,6 @@ import java.lang.annotation.*;
  * 自定義操作日誌記錄註解
  *
  * @author cheng
- *
  */
 @Target({ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
@@ -26,7 +25,7 @@ public @interface Log {
     BusinessType businessType() default BusinessType.OTHER;
 
     /**
-     * 操作人類别
+     * 操作人類別
      */
     OperatorType operatorType() default OperatorType.MANAGE;
 

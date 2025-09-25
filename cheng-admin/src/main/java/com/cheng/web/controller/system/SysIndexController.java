@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class SysIndexController {
     /**
-     * 系統基礎配置
+     * 系統基礎設定
      */
     @Autowired
     private CoolAppsConfig coolAppsConfig;

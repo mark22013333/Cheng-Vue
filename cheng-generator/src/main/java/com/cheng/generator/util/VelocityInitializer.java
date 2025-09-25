@@ -17,11 +17,11 @@ public class VelocityInitializer {
     public static void initVelocity() {
         Properties p = new Properties();
         try {
-            // 載入classpath目錄下的vm文件
+            // 載入classpath目錄下的vm檔案
             p.setProperty("resource.loader.file.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
             // 定義字串集
             p.setProperty(Velocity.INPUT_ENCODING, Constants.UTF8);
-            // 初始化Velocity引擎，指定配置Properties
+            // 初始化Velocity引擎，指定設定Properties
             Velocity.init(p);
         } catch (Exception e) {
             throw new RuntimeException(e);

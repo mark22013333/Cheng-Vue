@@ -157,7 +157,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -376,7 +376,7 @@ export default {
         isUploading: false,
         // 是否更新已經存在的物品資料
         updateSupport: 0,
-        // 設定上傳的請求頭部
+        // 設定上傳的請求標頭
         headers: { Authorization: "Bearer " + getToken() },
         // 上傳的地址
         url: process.env.VUE_APP_BASE_API + "/inventory/item/importData"

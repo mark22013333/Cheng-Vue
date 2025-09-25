@@ -77,7 +77,7 @@ export default {
         autoCropHeight: 200,        // 預設產生截圖框高度
         fixedBox: true,             // 固定截圖框大小 不允許改變
         outputType: "png",           // 預設產生截圖為PNG格式
-        filename: 'avatar'          // 文件名稱
+        filename: 'avatar'          // 檔案名稱
       },
       previews: {},
       resizeHandler: null
@@ -121,7 +121,7 @@ export default {
     // 上傳預處理
     beforeUpload(file) {
       if (file.type.indexOf("image/") == -1) {
-        this.$modal.msgError("文件格式錯誤，請上傳圖片類型,如：JPG，PNG後綴的文件。")
+        this.$modal.msgError("檔案格式錯誤，請上傳圖片類型,如：JPG，PNG後綴的檔案。")
       } else {
         const reader = new FileReader()
         reader.readAsDataURL(file)

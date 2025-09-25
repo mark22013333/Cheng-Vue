@@ -12,17 +12,20 @@ import java.util.*;
  * @author cheng
  */
 @SuppressWarnings("deprecation")
-public class StringUtils extends org.apache.commons.lang3.StringUtils
-{
+public class StringUtils extends org.apache.commons.lang3.StringUtils {
     /**
      * 空字串
      */
     private static final String NULLSTR = "";
 
-    /** 下畫線 */
+    /**
+     * 下畫線
+     */
     private static final char SEPARATOR = '_';
 
-    /** 星號 */
+    /**
+     * 星號
+     */
     private static final char ASTERISK = '*';
 
     /**
@@ -31,8 +34,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * @param value defaultValue 要判斷的value
      * @return value 返回值
      */
-    public static <T> T nvl(T value, T defaultValue)
-    {
+    public static <T> T nvl(T value, T defaultValue) {
         return value != null ? value : defaultValue;
     }
 
@@ -42,8 +44,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * @param coll 要判斷的Collection
      * @return true：為空 false：非空
      */
-    public static boolean isEmpty(Collection<?> coll)
-    {
+    public static boolean isEmpty(Collection<?> coll) {
         return isNull(coll) || coll.isEmpty();
     }
 
@@ -53,8 +54,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * @param coll 要判斷的Collection
      * @return true：非空 false：空
      */
-    public static boolean isNotEmpty(Collection<?> coll)
-    {
+    public static boolean isNotEmpty(Collection<?> coll) {
         return !isEmpty(coll);
     }
 
@@ -62,10 +62,9 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * * 判斷一個物件陣列是否為空
      *
      * @param objects 要判斷的物件陣列
-     ** @return true：為空 false：非空
+     *                * @return true：為空 false：非空
      */
-    public static boolean isEmpty(Object[] objects)
-    {
+    public static boolean isEmpty(Object[] objects) {
         return isNull(objects) || (objects.length == 0);
     }
 
@@ -75,8 +74,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * @param objects 要判斷的物件陣列
      * @return true：非空 false：空
      */
-    public static boolean isNotEmpty(Object[] objects)
-    {
+    public static boolean isNotEmpty(Object[] objects) {
         return !isEmpty(objects);
     }
 
@@ -86,8 +84,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * @param map 要判斷的Map
      * @return true：為空 false：非空
      */
-    public static boolean isEmpty(Map<?, ?> map)
-    {
+    public static boolean isEmpty(Map<?, ?> map) {
         return isNull(map) || map.isEmpty();
     }
 
@@ -97,95 +94,84 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * @param map 要判斷的Map
      * @return true：非空 false：空
      */
-    public static boolean isNotEmpty(Map<?, ?> map)
-    {
+    public static boolean isNotEmpty(Map<?, ?> map) {
         return !isEmpty(map);
     }
 
     /**
      * * 判斷一個字串是否為空串
-     * 
+     *
      * @param str String
      * @return true：為空 false：非空
      */
-    public static boolean isEmpty(String str)
-    {
+    public static boolean isEmpty(String str) {
         return isNull(str) || NULLSTR.equals(str.trim());
     }
 
     /**
      * * 判斷一個字串是否為非空串
-     * 
+     *
      * @param str String
      * @return true：非空串 false：空串
      */
-    public static boolean isNotEmpty(String str)
-    {
+    public static boolean isNotEmpty(String str) {
         return !isEmpty(str);
     }
 
     /**
      * * 判斷一個物件是否為空
-     * 
+     *
      * @param object Object
      * @return true：為空 false：非空
      */
-    public static boolean isNull(Object object)
-    {
+    public static boolean isNull(Object object) {
         return object == null;
     }
 
     /**
      * * 判斷一個物件是否非空
-     * 
+     *
      * @param object Object
      * @return true：非空 false：空
      */
-    public static boolean isNotNull(Object object)
-    {
+    public static boolean isNotNull(Object object) {
         return !isNull(object);
     }
 
     /**
-     * * 判斷一個物件是否是陣列類型（Java基本型别的陣列）
+     * * 判斷一個物件是否是陣列類型（Java基本型別的陣列）
      *
      * @param object 物件
      * @return true：是陣列 false：不是陣列
      */
-    public static boolean isArray(Object object)
-    {
+    public static boolean isArray(Object object) {
         return isNotNull(object) && object.getClass().isArray();
     }
 
     /**
      * 去空格
      */
-    public static String trim(String str)
-    {
+    public static String trim(String str) {
         return (str == null ? "" : str.trim());
     }
 
     /**
      * 替換指定字串的指定區間内字串為"*"
      *
-     * @param str 字串
+     * @param str          字串
      * @param startInclude 開始位置（包含）
-     * @param endExclude 結束位置（不包含）
+     * @param endExclude   結束位置（不包含）
      * @return 替換後的字串
      */
-    public static String hide(CharSequence str, int startInclude, int endExclude)
-    {
-        if (isEmpty(str))
-        {
+    public static String hide(CharSequence str, int startInclude, int endExclude) {
+        if (isEmpty(str)) {
             return NULLSTR;
         }
         final int strLength = str.length();
-        if (startInclude > strLength)
-        {
+        if (startInclude > strLength) {
             return NULLSTR;
         }
-        if (endExclude > strLength)
-        {
+        if (endExclude > strLength) {
             endExclude = strLength;
         }
         if (startInclude > endExclude) {
@@ -193,14 +179,10 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
             return NULLSTR;
         }
         final char[] chars = new char[strLength];
-        for (int i = 0; i < strLength; i++)
-        {
-            if (i >= startInclude && i < endExclude)
-            {
+        for (int i = 0; i < strLength; i++) {
+            if (i >= startInclude && i < endExclude) {
                 chars[i] = ASTERISK;
-            }
-            else
-            {
+            } else {
                 chars[i] = str.charAt(i);
             }
         }
@@ -210,28 +192,23 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     /**
      * 截取字串
      *
-     * @param str 字串
+     * @param str   字串
      * @param start 開始
      * @return 結果
      */
-    public static String substring(final String str, int start)
-    {
-        if (str == null)
-        {
+    public static String substring(final String str, int start) {
+        if (str == null) {
             return NULLSTR;
         }
 
-        if (start < 0)
-        {
+        if (start < 0) {
             start = str.length() + start;
         }
 
-        if (start < 0)
-        {
+        if (start < 0) {
             start = 0;
         }
-        if (start > str.length())
-        {
+        if (start > str.length()) {
             return NULLSTR;
         }
 
@@ -241,43 +218,35 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     /**
      * 截取字串
      *
-     * @param str 字串
+     * @param str   字串
      * @param start 開始
-     * @param end 結束
+     * @param end   結束
      * @return 結果
      */
-    public static String substring(final String str, int start, int end)
-    {
-        if (str == null)
-        {
+    public static String substring(final String str, int start, int end) {
+        if (str == null) {
             return NULLSTR;
         }
 
-        if (end < 0)
-        {
+        if (end < 0) {
             end = str.length() + end;
         }
-        if (start < 0)
-        {
+        if (start < 0) {
             start = str.length() + start;
         }
 
-        if (end > str.length())
-        {
+        if (end > str.length()) {
             end = str.length();
         }
 
-        if (start > end)
-        {
+        if (start > end) {
             return NULLSTR;
         }
 
-        if (start < 0)
-        {
+        if (start < 0) {
             start = 0;
         }
-        if (end < 0)
-        {
+        if (end < 0) {
             end = 0;
         }
 
@@ -287,23 +256,19 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     /**
      * 在字串中尋找第一個出現的 `open` 和最後一個出現的 `close` 之間的子字串
      *
-     * @param str 要截取的字串
-     * @param open 起始字串
+     * @param str   要截取的字串
+     * @param open  起始字串
      * @param close 結束字串
      * @return 截取結果
      */
-    public static String substringBetweenLast(final String str, final String open, final String close)
-    {
-        if (isEmpty(str) || isEmpty(open) || isEmpty(close))
-        {
+    public static String substringBetweenLast(final String str, final String open, final String close) {
+        if (isEmpty(str) || isEmpty(open) || isEmpty(close)) {
             return NULLSTR;
         }
         final int start = str.indexOf(open);
-        if (start != INDEX_NOT_FOUND)
-        {
+        if (start != INDEX_NOT_FOUND) {
             final int end = str.lastIndexOf(close);
-            if (end != INDEX_NOT_FOUND)
-            {
+            if (end != INDEX_NOT_FOUND) {
                 return str.substring(start + open.length(), end);
             }
         }
@@ -316,18 +281,14 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * @param str 要判斷的value
      * @return 結果
      */
-    public static boolean hasText(String str)
-    {
+    public static boolean hasText(String str) {
         return (str != null && !str.isEmpty() && containsText(str));
     }
 
-    private static boolean containsText(CharSequence str)
-    {
+    private static boolean containsText(CharSequence str) {
         int strLen = str.length();
-        for (int i = 0; i < strLen; i++)
-        {
-            if (!Character.isWhitespace(str.charAt(i)))
-            {
+        for (int i = 0; i < strLen; i++) {
+            if (!Character.isWhitespace(str.charAt(i))) {
                 return true;
             }
         }
@@ -340,17 +301,15 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * 如果想輸出 {} 使用 \\轉譯 { 即可，如果想輸出 {} 之前的 \ 使用雙轉譯符號 \\\\ 即可<br>
      * 例：<br>
      * 通常使用：format("this is {} for {}", "a", "b") -> this is a for b<br>
-     * 轉譯{}： format("this is \\{} for {}", "a", "b") -> this is \{} for a<br>
-     * 轉譯\： format("this is \\\\{} for {}", "a", "b") -> this is \a for b<br>
+     * 轉譯{}： format ("this is \\{} for {}", "a", "b") -> this is \{} for a<br>
+     * 轉譯\： format ("this is \\\\{} for {}", "a", "b") -> this is \a for b<br>
      *
      * @param template 文字模板，被替換的部分用 {} 表示
-     * @param params 參數值
+     * @param params   參數值
      * @return 格式化後的文字
      */
-    public static String format(String template, Object... params)
-    {
-        if (isEmpty(params) || isEmpty(template))
-        {
+    public static String format(String template, Object... params) {
+        if (isEmpty(params) || isEmpty(template)) {
             return template;
         }
         return StrFormatter.format(template, params);
@@ -362,8 +321,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * @param link 鏈接
      * @return 結果
      */
-    public static boolean ishttp(String link)
-    {
+    public static boolean ishttp(String link) {
         return StringUtils.startsWithAny(link, Constants.HTTP, Constants.HTTPS);
     }
 
@@ -374,8 +332,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * @param sep 分隔符號
      * @return set集合
      */
-    public static final Set<String> str2Set(String str, String sep)
-    {
+    public static final Set<String> str2Set(String str, String sep) {
         return new HashSet<String>(str2List(str, sep, true, false));
     }
 
@@ -386,42 +343,35 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * @param sep 分隔符號
      * @return list集合
      */
-    public static final List<String> str2List(String str, String sep)
-    {
+    public static final List<String> str2List(String str, String sep) {
         return str2List(str, sep, true, false);
     }
 
     /**
      * 字串轉list
      *
-     * @param str 字串
-     * @param sep 分隔符號
+     * @param str         字串
+     * @param sep         分隔符號
      * @param filterBlank 過濾纯空白
-     * @param trim 去掉首尾空白
+     * @param trim        去掉首尾空白
      * @return list集合
      */
-    public static final List<String> str2List(String str, String sep, boolean filterBlank, boolean trim)
-    {
+    public static final List<String> str2List(String str, String sep, boolean filterBlank, boolean trim) {
         List<String> list = new ArrayList<String>();
-        if (StringUtils.isEmpty(str))
-        {
+        if (StringUtils.isEmpty(str)) {
             return list;
         }
 
         // 過濾空白字串
-        if (filterBlank && StringUtils.isBlank(str))
-        {
+        if (filterBlank && StringUtils.isBlank(str)) {
             return list;
         }
         String[] split = str.split(sep);
-        for (String string : split)
-        {
-            if (filterBlank && StringUtils.isBlank(string))
-            {
+        for (String string : split) {
+            if (filterBlank && StringUtils.isBlank(string)) {
                 continue;
             }
-            if (trim)
-            {
+            if (trim) {
                 string = string.trim();
             }
             list.add(string);
@@ -434,21 +384,15 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * 判斷給定的collection列表中是否包含陣列array 判斷給定的陣列array中是否包含給定的元素value
      *
      * @param collection 給定的集合
-     * @param array 給定的陣列
+     * @param array      給定的陣列
      * @return boolean 結果
      */
-    public static boolean containsAny(Collection<String> collection, String... array)
-    {
-        if (isEmpty(collection) || isEmpty(array))
-        {
+    public static boolean containsAny(Collection<String> collection, String... array) {
+        if (isEmpty(collection) || isEmpty(array)) {
             return false;
-        }
-        else
-        {
-            for (String str : array)
-            {
-                if (collection.contains(str))
-                {
+        } else {
+            for (String str : array) {
+                if (collection.contains(str)) {
                     return true;
                 }
             }
@@ -459,20 +403,16 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     /**
      * 尋找指定字串是否包含指定字串列表中的任意一個字串同時串忽略大小寫
      *
-     * @param cs 指定字串
+     * @param cs                  指定字串
      * @param searchCharSequences 需要檢查的字串陣列
      * @return 是否包含任意一個字串
      */
-    public static boolean containsAnyIgnoreCase(CharSequence cs, CharSequence... searchCharSequences)
-    {
-        if (isEmpty(cs) || isEmpty(searchCharSequences))
-        {
+    public static boolean containsAnyIgnoreCase(CharSequence cs, CharSequence... searchCharSequences) {
+        if (isEmpty(cs) || isEmpty(searchCharSequences)) {
             return false;
         }
-        for (CharSequence testStr : searchCharSequences)
-        {
-            if (containsIgnoreCase(cs, testStr))
-            {
+        for (CharSequence testStr : searchCharSequences) {
+            if (containsIgnoreCase(cs, testStr)) {
                 return true;
             }
         }
@@ -482,10 +422,8 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     /**
      * 驼峰轉下畫線命名
      */
-    public static String toUnderScoreCase(String str)
-    {
-        if (str == null)
-        {
+    public static String toUnderScoreCase(String str) {
+        if (str == null) {
             return null;
         }
         StringBuilder sb = new StringBuilder();
@@ -495,31 +433,23 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
         boolean curreCharIsUpperCase = true;
         // 下一字串是否大寫
         boolean nexteCharIsUpperCase = true;
-        for (int i = 0; i < str.length(); i++)
-        {
+        for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
-            if (i > 0)
-            {
+            if (i > 0) {
                 preCharIsUpperCase = Character.isUpperCase(str.charAt(i - 1));
-            }
-            else
-            {
+            } else {
                 preCharIsUpperCase = false;
             }
 
             curreCharIsUpperCase = Character.isUpperCase(c);
 
-            if (i < (str.length() - 1))
-            {
+            if (i < (str.length() - 1)) {
                 nexteCharIsUpperCase = Character.isUpperCase(str.charAt(i + 1));
             }
 
-            if (preCharIsUpperCase && curreCharIsUpperCase && !nexteCharIsUpperCase)
-            {
+            if (preCharIsUpperCase && curreCharIsUpperCase && !nexteCharIsUpperCase) {
                 sb.append(SEPARATOR);
-            }
-            else if ((i != 0 && !preCharIsUpperCase) && curreCharIsUpperCase)
-            {
+            } else if ((i != 0 && !preCharIsUpperCase) && curreCharIsUpperCase) {
                 sb.append(SEPARATOR);
             }
             sb.append(Character.toLowerCase(c));
@@ -531,18 +461,14 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     /**
      * 是否包含字串
      *
-     * @param str 驗證字串
+     * @param str  驗證字串
      * @param strs 字串組
      * @return 包含返回true
      */
-    public static boolean inStringIgnoreCase(String str, String... strs)
-    {
-        if (str != null && strs != null)
-        {
-            for (String s : strs)
-            {
-                if (str.equalsIgnoreCase(trim(s)))
-                {
+    public static boolean inStringIgnoreCase(String str, String... strs) {
+        if (str != null && strs != null) {
+            for (String s : strs) {
+                if (str.equalsIgnoreCase(trim(s))) {
                     return true;
                 }
             }
@@ -556,15 +482,13 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * @param name 轉換前的下畫線大寫方式命名的字串
      * @return 轉換後的驼峰式命名的字串
      */
-    public static String convertToCamelCase(String name)
-    {
+    public static String convertToCamelCase(String name) {
         StringBuilder result = new StringBuilder();
         // 快速檢查
         if (name == null || name.isEmpty()) {
             // 沒必要轉換
             return "";
-        }
-        else if (!name.contains("_")) {
+        } else if (!name.contains("_")) {
             // 不含下畫線，僅將首字母大寫
             return name.substring(0, 1).toUpperCase() + name.substring(1);
         }
@@ -572,8 +496,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
         String[] camels = name.split("_");
         for (String camel : camels) {
             // 跳過原始字串中開頭、結尾的下換線或雙重下畫線
-            if (camel.isEmpty())
-            {
+            if (camel.isEmpty()) {
                 continue;
             }
             // 首字母大寫
@@ -587,34 +510,25 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * 驼峰式命名法
      * 例如：user_name->userName
      */
-    public static String toCamelCase(String s)
-    {
-        if (s == null)
-        {
+    public static String toCamelCase(String s) {
+        if (s == null) {
             return null;
         }
-        if (s.indexOf(SEPARATOR) == -1)
-        {
+        if (s.indexOf(SEPARATOR) == -1) {
             return s;
         }
         s = s.toLowerCase();
         StringBuilder sb = new StringBuilder(s.length());
         boolean upperCase = false;
-        for (int i = 0; i < s.length(); i++)
-        {
+        for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
 
-            if (c == SEPARATOR)
-            {
+            if (c == SEPARATOR) {
                 upperCase = true;
-            }
-            else if (upperCase)
-            {
+            } else if (upperCase) {
                 sb.append(Character.toUpperCase(c));
                 upperCase = false;
-            }
-            else
-            {
+            } else {
                 sb.append(c);
             }
         }
@@ -624,20 +538,16 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     /**
      * 尋找指定字串是否匹配指定字串列表中的任意一個字串
      *
-     * @param str 指定字串
+     * @param str  指定字串
      * @param strs 需要檢查的字串陣列
      * @return 是否匹配
      */
-    public static boolean matches(String str, List<String> strs)
-    {
-        if (isEmpty(str) || isEmpty(strs))
-        {
+    public static boolean matches(String str, List<String> strs) {
+        if (isEmpty(str) || isEmpty(strs)) {
             return false;
         }
-        for (String pattern : strs)
-        {
-            if (isMatch(pattern, str))
-            {
+        for (String pattern : strs) {
+            if (isMatch(pattern, str)) {
                 return true;
             }
         }
@@ -645,70 +555,58 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     }
 
     /**
-     * 判斷url是否與規則配置: 
-     * ? 表示單個字串; 
-     * * 表示一層路徑内的任意字串，不可跨層級; 
+     * 判斷url是否與規則設定:
+     * ? 表示單個字串;
+     * * 表示一層路徑内的任意字串，不可跨層級;
      * ** 表示任意層路徑;
      *
      * @param pattern 匹配規則
-     * @param url 需要匹配的url
+     * @param url     需要匹配的url
      * @return
      */
-    public static boolean isMatch(String pattern, String url)
-    {
+    public static boolean isMatch(String pattern, String url) {
         AntPathMatcher matcher = new AntPathMatcher();
         return matcher.match(pattern, url);
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T cast(Object obj)
-    {
+    public static <T> T cast(Object obj) {
         return (T) obj;
     }
 
     /**
      * 數字左邊補齊0，使之達到指定長度。註意，如果數字轉換為字串後，長度大於size，則只保留 最後size個字串。
      *
-     * @param num 數字物件
+     * @param num  數字物件
      * @param size 字串指定長度
      * @return 返回數字的字串格式，該字串為指定長度。
      */
-    public static final String padl(final Number num, final int size)
-    {
+    public static final String padl(final Number num, final int size) {
         return padl(num.toString(), size, '0');
     }
 
     /**
      * 字串左補齊。如果原始字串s長度大於size，則只保留最後size個字串。
      *
-     * @param s 原始字串
+     * @param s    原始字串
      * @param size 字串指定長度
-     * @param c 用於補齊的字串
+     * @param c    用於補齊的字串
      * @return 返回指定長度的字串，由原字串左補齊或截取得到。
      */
-    public static final String padl(final String s, final int size, final char c)
-    {
+    public static final String padl(final String s, final int size, final char c) {
         final StringBuilder sb = new StringBuilder(size);
-        if (s != null)
-        {
+        if (s != null) {
             final int len = s.length();
-            if (s.length() <= size)
-            {
-                for (int i = size - len; i > 0; i--)
-                {
+            if (s.length() <= size) {
+                for (int i = size - len; i > 0; i--) {
                     sb.append(c);
                 }
                 sb.append(s);
-            }
-            else
-            {
+            } else {
                 return s.substring(len - size, len);
             }
-        }
-        else
-        {
-            for (int i = size; i > 0; i--)
-            {
+        } else {
+            for (int i = size; i > 0; i--) {
                 sb.append(c);
             }
         }

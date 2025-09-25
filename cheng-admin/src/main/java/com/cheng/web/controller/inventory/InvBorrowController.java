@@ -14,7 +14,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 借出記錄Controller
@@ -74,14 +76,14 @@ public class InvBorrowController extends BaseController {
     }
 
     /**
-     * 獲取借出統計資料
+     * 取得借出統計資料
      */
     @PreAuthorize("@ss.hasPermi('inventory:borrow:list')")
     @GetMapping("/stats")
     public AjaxResult getBorrowStats() {
         try {
-            // 獲取借出統計資料
-            java.util.Map<String, Object> stats = new java.util.HashMap<>();
+            // 取得借出統計資料
+            Map<String, Object> stats = new HashMap<>();
 
             // 總借出記錄數
             int totalBorrows = invBorrowService.selectInvBorrowList(new InvBorrow()).size();
@@ -105,12 +107,12 @@ public class InvBorrowController extends BaseController {
 
             return success(stats);
         } catch (Exception e) {
-            return error("獲取借出統計資料失敗：" + e.getMessage());
+            return error("取得借出統計資料失敗：" + e.getMessage());
         }
     }
 
     /**
-     * 獲取借出記錄詳細訊息
+     * 取得借出記錄詳細訊息
      */
     @PreAuthorize("@ss.hasPermi('inventory:borrow:query')")
     @GetMapping(value = "/{borrowId}")
@@ -119,7 +121,7 @@ public class InvBorrowController extends BaseController {
     }
 
     /**
-     * 根據借出單號獲取借出記錄
+     * 根據借出單號取得借出記錄
      */
     @PreAuthorize("@ss.hasPermi('inventory:borrow:query')")
     @GetMapping(value = "/no/{borrowNo}")

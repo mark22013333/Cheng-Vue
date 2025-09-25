@@ -9,7 +9,7 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * 提供共用唯一識别碼（universally unique identifier）（UUID）實現
+ * 提供共用唯一識別碼（universally unique identifier）（UUID）實現
  *
  * @author cheng
  */
@@ -410,7 +410,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      * 如果兩個 UUID 不同，且第一個 UUID 的最高有效欄位大於第二個 UUID 的對應欄位，則第一個 UUID 大於第二個 UUID。
      *
      * @param val 與此 UUID 比較的 UUID
-     * @return 在此 UUID 小於、等於或大於 val 時，分别返回 -1、0 或 1。
+     * @return 在此 UUID 小於、等於或大於 val 時，分別返回 -1、0 或 1。
      *
      */
     @Override

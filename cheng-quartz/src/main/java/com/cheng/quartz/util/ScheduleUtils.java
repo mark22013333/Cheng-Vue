@@ -111,7 +111,7 @@ public class ScheduleUtils
     }
 
     /**
-     * 檢查包名是否為白名單配置
+     * 檢查包名是否為白名單設定
      *
      * @param invokeTarget 目標字串
      * @return 結果

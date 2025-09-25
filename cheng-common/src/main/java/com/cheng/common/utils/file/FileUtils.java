@@ -16,7 +16,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 文件處理工具類
+ * 檔案處理工具類
  *
  * @author cheng
  */
@@ -25,9 +25,9 @@ public class FileUtils
     public static String FILENAME_PATTERN = "[a-zA-Z0-9_\\-\\|\\.\\u4e00-\\u9fa5]+";
 
     /**
-     * 輸出指定文件的byte陣列
+     * 輸出指定檔案的byte陣列
      *
-     * @param filePath 文件路徑
+     * @param filePath 檔案路徑
      * @param os 輸出流
      * @return
      */
@@ -61,10 +61,10 @@ public class FileUtils
     }
 
     /**
-     * 寫數據到文件中
+     * 寫數據到檔案中
      *
      * @param data 數據
-     * @return 目標文件
+     * @return 目標檔案
      * @throws IOException IO異常
      */
     public static String writeImportBytes(byte[] data) throws IOException
@@ -73,11 +73,11 @@ public class FileUtils
     }
 
     /**
-     * 寫數據到文件中
+     * 寫數據到檔案中
      *
      * @param data 數據
-     * @param uploadDir 目標文件
-     * @return 目標文件
+     * @param uploadDir 目標檔案
+     * @return 目標檔案
      * @throws IOException IO異常
      */
     public static String writeBytes(byte[] data, String uploadDir) throws IOException
@@ -102,8 +102,8 @@ public class FileUtils
     /**
      * 移除路徑中的請求前綴片段
      *
-     * @param filePath 文件路徑
-     * @return 移除後的文件路徑
+     * @param filePath 檔案路徑
+     * @return 移除後的檔案路徑
      */
     public static String stripPrefix(String filePath)
     {
@@ -111,16 +111,16 @@ public class FileUtils
     }
 
     /**
-     * 刪除文件
+     * 刪除檔案
      * 
-     * @param filePath 文件
+     * @param filePath 檔案
      * @return
      */
     public static boolean deleteFile(String filePath)
     {
         boolean flag = false;
         File file = new File(filePath);
-        // 路徑為文件且不為空則進行刪除
+        // 路徑為檔案且不為空則進行刪除
         if (file.isFile() && file.exists())
         {
             flag = file.delete();
@@ -129,9 +129,9 @@ public class FileUtils
     }
 
     /**
-     * 文件名稱驗證
+     * 檔案名稱驗證
      *
-     * @param filename 文件名稱
+     * @param filename 檔案名稱
      * @return true 正常 false 非法
      */
     public static boolean isValidFilename(String filename)
@@ -140,35 +140,35 @@ public class FileUtils
     }
 
     /**
-     * 檢查文件是否可下載
+     * 檢查檔案是否可下載
      *
-     * @param resource 需要下載的文件
+     * @param resource 需要下載的檔案
      * @return true 正常 false 非法
      */
     public static boolean checkAllowDownload(String resource)
     {
-        // 禁止目錄上跳級别
+        // 禁止目錄上跳級別
         if (StringUtils.contains(resource, ".."))
         {
             return false;
         }
 
-        // 檢查允許下載的文件規則
+        // 檢查允許下載的檔案規則
         if (ArrayUtils.contains(MimeTypeUtils.DEFAULT_ALLOWED_EXTENSION, FileTypeUtils.getFileType(resource)))
         {
             return true;
         }
 
-        // 不在允許下載的文件規則
+        // 不在允許下載的檔案規則
         return false;
     }
 
     /**
-     * 下載文件名重新編碼
+     * 下載檔案名重新編碼
      *
      * @param request 請求物件
-     * @param fileName 文件名
-     * @return 編碼後的文件名
+     * @param fileName 檔案名
+     * @return 編碼後的檔案名
      */
     public static String setFileDownloadHeader(HttpServletRequest request, String fileName) throws UnsupportedEncodingException
     {
@@ -199,10 +199,10 @@ public class FileUtils
     }
 
     /**
-     * 下載文件名重新編碼
+     * 下載檔案名重新編碼
      *
      * @param response 響應物件
-     * @param realFileName 真實文件名
+     * @param realFileName 真實檔案名
      */
     public static void setAttachmentResponseHeader(HttpServletResponse response, String realFileName) throws UnsupportedEncodingException
     {
@@ -263,10 +263,10 @@ public class FileUtils
     }
 
     /**
-     * 取得文件名稱 /profile/upload/2022/04/16/cheng.png -- cheng.png
+     * 取得檔案名稱 /profile/upload/2022/04/16/cheng.png -- cheng.png
      *
      * @param fileName 路徑名稱
-     * @return 沒有文件路徑的名稱
+     * @return 沒有檔案路徑的名稱
      */
     public static String getName(String fileName)
     {
@@ -281,10 +281,10 @@ public class FileUtils
     }
 
     /**
-     * 取得不帶後綴文件名稱 /profile/upload/2022/04/16/cheng.png -- cheng
+     * 取得不帶後綴檔案名稱 /profile/upload/2022/04/16/cheng.png -- cheng
      *
      * @param fileName 路徑名稱
-     * @return 沒有文件路徑和後綴的名稱
+     * @return 沒有檔案路徑和後綴的名稱
      */
     public static String getNameNotSuffix(String fileName)
     {

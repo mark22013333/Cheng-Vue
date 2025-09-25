@@ -216,7 +216,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -417,7 +417,7 @@ export default {
         this.itemOptions = response.data;
       });
     },
-    /** 獲取借出統計 */
+    /** 取得借出統計 */
     getBorrowStatistics() {
       getBorrowStats().then(response => {
         this.borrowStats = response.data;
@@ -567,7 +567,7 @@ export default {
         ...this.queryParams
       }, `borrow_${new Date().getTime()}.xlsx`)
     },
-    /** 獲取狀態類型 */
+    /** 取得狀態類型 */
     getStatusType(status) {
       const statusMap = {
         '0': 'info',     // 待審核
@@ -578,7 +578,7 @@ export default {
       };
       return statusMap[status] || 'info';
     },
-    /** 獲取狀態文字 */
+    /** 取得狀態文字 */
     getStatusText(status) {
       const statusMap = {
         '0': '待審核',

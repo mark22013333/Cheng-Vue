@@ -5,6 +5,7 @@ import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.system.domain.SysCache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.DefaultedRedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,7 +28,7 @@ public class CacheController {
 
     {
         caches.add(new SysCache(CacheConstants.LOGIN_TOKEN_KEY, "使用者訊息"));
-        caches.add(new SysCache(CacheConstants.SYS_CONFIG_KEY, "配置訊息"));
+        caches.add(new SysCache(CacheConstants.SYS_CONFIG_KEY, "設定訊息"));
         caches.add(new SysCache(CacheConstants.SYS_DICT_KEY, "數據字典"));
         caches.add(new SysCache(CacheConstants.CAPTCHA_CODE_KEY, "驗證碼"));
         caches.add(new SysCache(CacheConstants.REPEAT_SUBMIT_KEY, "防重提交"));
@@ -39,9 +40,9 @@ public class CacheController {
     @PreAuthorize("@ss.hasPermi('monitor:cache:list')")
     @GetMapping()
     public AjaxResult getInfo() throws Exception {
-        Properties info = (Properties) redisTemplate.execute((RedisCallback<Object>) connection -> connection.info());
+        Properties info = (Properties) redisTemplate.execute((RedisCallback<Object>) DefaultedRedisConnection::info);
         Properties commandStats = (Properties) redisTemplate.execute((RedisCallback<Object>) connection -> connection.info("commandstats"));
-        Object dbSize = redisTemplate.execute((RedisCallback<Object>) connection -> connection.dbSize());
+        Object dbSize = redisTemplate.execute((RedisCallback<Object>) DefaultedRedisConnection::dbSize);
 
         Map<String, Object> result = new HashMap<>(3);
         result.put("info", info);

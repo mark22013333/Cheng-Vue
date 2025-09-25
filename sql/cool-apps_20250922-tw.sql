@@ -183,7 +183,7 @@ create table sys_menu
     component   varchar(255) default null comment '元件路徑',
     query       varchar(255) default null comment '路由參數',
     route_name  varchar(50)  default '' comment '路由名稱',
-    is_frame    int(1)          default 1                  comment '是否為外鏈（0是 1否）',
+    is_frame    int(1)          default 1                  comment '是否為外部連結（0是 1否）',
     is_cache    int(1)          default 0                  comment '是否暫存（0暫存 1不暫存）',
     menu_type   char(1)      default '' comment '功能表類型（M目錄 C功能表 F按鈕）',
     visible     char(1)      default 0 comment '功能表狀態（0顯示 1隱藏）',
@@ -806,7 +806,7 @@ create table sys_dict_data
     dict_value  varchar(100) default '' comment '字典鍵值',
     dict_type   varchar(100) default '' comment '字典類型',
     css_class   varchar(100) default null comment '樣式屬性（其他樣式擴充）',
-    list_class  varchar(100) default null comment '表格回顯樣式',
+    list_class  varchar(100) default null comment '表格顯示樣式',
     is_default  char(1)      default 'N' comment '是否預設（Y是 N否）',
     status      char(1)      default '0' comment '狀態（0正常 1停用）',
     create_by   varchar(64)  default '' comment '建立者',
@@ -878,7 +878,7 @@ values (29, 2, '失敗', '1', 'sys_common_status', '', 'danger', 'N', '0', 'admi
 
 
 -- ----------------------------
--- 13、參數配置表
+-- 13、參數設定表
 -- ----------------------------
 drop table if exists sys_config;
 create table sys_config
@@ -894,7 +894,7 @@ create table sys_config
     update_time  datetime comment '更新時間',
     remark       varchar(500) default null comment '備註',
     primary key (config_id)
-) engine=innodb auto_increment=100 comment = '參數配置表';
+) engine=innodb auto_increment=100 comment = '參數設定表';
 
 insert into sys_config
 values (1, '主框架頁-預設介面樣式名稱', 'sys.index.skinName', 'skin-blue', 'Y', 'admin', sysdate(), '', null,
@@ -973,7 +973,7 @@ values (2, '系統預設（有參數）', 'DEFAULT', 'ryTask.ryParams(\'ry\')', 
         sysdate(),
         '', null, '');
 insert into sys_job
-values (3, '系統預設（多參）', 'DEFAULT', 'ryTask.ryMultipleParams(\'ry\', true, 2000L, 316.50D, 100)', '0/20 * * * * ?',
+values (3, '系統預設（多參數）', 'DEFAULT', 'ryTask.ryMultipleParams(\'ry\', true, 2000L, 316.50D, 100)', '0/20 * * * * ?',
         '3', '1', '1', 'admin', sysdate(), '', null, '');
 
 

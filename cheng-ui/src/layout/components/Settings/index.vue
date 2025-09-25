@@ -37,7 +37,7 @@
 
         <el-divider/>
 
-        <h3 class="drawer-title">系統介面配置</h3>
+        <h3 class="drawer-title">系統介面設定</h3>
 
         <div class="drawer-item">
           <span>開啟 TopNav</span>
@@ -76,9 +76,9 @@
 
         <el-divider/>
 
-        <el-button icon="el-icon-document-add" plain size="small" type="primary" @click="saveSetting">儲存配置
+        <el-button icon="el-icon-document-add" plain size="small" type="primary" @click="saveSetting">儲存設定
         </el-button>
-        <el-button size="small" plain icon="el-icon-refresh" @click="resetSetting">重置配置</el-button>
+        <el-button size="small" plain icon="el-icon-refresh" @click="resetSetting">重置設定</el-button>
       </div>
     </div>
   </el-drawer>

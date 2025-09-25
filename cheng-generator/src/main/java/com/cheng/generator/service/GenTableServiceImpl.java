@@ -56,7 +56,7 @@ public class GenTableServiceImpl implements IGenTableService {
      * 取得程式碼產生地址
      *
      * @param table    業務表訊息
-     * @param template 模板文件路徑
+     * @param template 模板檔案路徑
      * @return 產生地址
      */
     public static String getGenPath(GenTable table, String template) {

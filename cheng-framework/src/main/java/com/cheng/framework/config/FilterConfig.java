@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Filter配置
+ * Filter設定
  *
  * @author cheng
  */

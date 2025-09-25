@@ -186,7 +186,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -367,7 +367,7 @@ export default {
         this.categoryOptions = response.data;
       });
     },
-    /** 獲取庫存統計 */
+    /** 取得庫存統計 */
     getStockStatistics() {
       getStockStats().then(response => {
         this.stockStats = response.data;
@@ -513,7 +513,7 @@ export default {
         ...this.queryParams
       }, `stock_${new Date().getTime()}.xlsx`)
     },
-    /** 獲取庫存狀態樣式 */
+    /** 取得庫存狀態樣式 */
     getStockClass(row) {
       if (row.stockQuantity <= 0) {
         return 'text-danger';
@@ -522,7 +522,7 @@ export default {
       }
       return '';
     },
-    /** 獲取狀態類型 */
+    /** 取得狀態類型 */
     getStatusType(row) {
       if (row.stockQuantity <= 0) {
         return 'danger';
@@ -531,7 +531,7 @@ export default {
       }
       return 'success';
     },
-    /** 獲取狀態文字 */
+    /** 取得狀態文字 */
     getStatusText(row) {
       if (row.stockQuantity <= 0) {
         return '缺貨';

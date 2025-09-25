@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 
 /**
- * 路由配置訊息
+ * 路由設定訊息
  *
  * @author cheng
  */

@@ -5,8 +5,7 @@ package com.cheng.common.constant;
  *
  * @author cheng
  */
-public class HttpStatus
-{
+public class HttpStatus {
     /**
      * 操作成功
      */

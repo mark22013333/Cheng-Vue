@@ -368,7 +368,7 @@ export default {
         this.loading = false
       })
     },
-    // 任務組名字典翻译
+    // 任務組名字典翻譯
     jobGroupFormat(row, column) {
       return this.selectDictLabel(this.dict.type.sys_job_group, row.jobGroup)
     },

@@ -1,4 +1,4 @@
-# 資料來源配置
+# 資料來源設定
 spring:
   data:
     # redis 設定
@@ -45,19 +45,19 @@ spring:
       minIdle: 10
       # 最大連線池數量
       maxActive: 20
-      # 配置取得連線等待逾時的時間
+      # 設定取得連線等待逾時的時間
       maxWait: 60000
-      # 配置連線逾時時間
+      # 設定連線逾時時間
       connectTimeout: 30000
-      # 配置網路逾時時間
+      # 設定網路逾時時間
       socketTimeout: 60000
-      # 配置間隔多久才進行一次檢測，檢測需要關閉的閒置連線，單位是毫秒
+      # 設定間隔多久才進行一次檢測，檢測需要關閉的閒置連線，單位是毫秒
       timeBetweenEvictionRunsMillis: 60000
-      # 配置一個連線在池中最小生存的時間，單位是毫秒
+      # 設定一個連線在池中最小生存的時間，單位是毫秒
       minEvictableIdleTimeMillis: 300000
-      # 配置一個連線在池中最大生存的時間，單位是毫秒
+      # 設定一個連線在池中最大生存的時間，單位是毫秒
       maxEvictableIdleTimeMillis: 900000
-      # 配置檢測連線是否有效
+      # 設定檢測連線是否有效
       validationQuery: SELECT 1 FROM DUAL
       testWhileIdle: true
       testOnBorrow: false
@@ -83,7 +83,7 @@ spring:
           config:
             multi-statement-allow: true
 
-# 正式環境專用配置
+# 正式環境專用設定
 logging:
   file:
     path: /opt/cool-apps/logs

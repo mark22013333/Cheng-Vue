@@ -1,34 +1,33 @@
 package ${packageName}.service.impl;
 
 import java.util.List;
-#foreach ($column in $columns)
-#if($column.javaField == 'createTime' || $column.javaField == 'updateTime')
-import com.cheng.common.utils.DateUtils;
-#break
-#end
-#end
+    #foreach ($column in $columns)
+        #if($column.javaField == 'createTime' || $column.javaField == 'updateTime')
+        import com.cheng.common.utils.DateUtils;
+            #break
+        #end
+    #end
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-#if($table.sub)
-import java.util.ArrayList;
+    #if($table.sub)
+    import java.util.ArrayList;
 
-import com.cheng.common.utils.StringUtils;
-import org.springframework.transaction.annotation.Transactional;
-import ${packageName}.domain.${subClassName};
-#end
+    import com.cheng.common.utils.StringUtils;
+    import org.springframework.transaction.annotation.Transactional;
+    import ${packageName}.domain.${subClassName};
+    #end
 import ${packageName}.mapper.${ClassName}Mapper;
 import ${packageName}.domain.${ClassName};
 import ${packageName}.service.I${ClassName}Service;
 
 /**
  * ${functionName}Service業務層處理
- * 
+ *
  * @author ${author}
  * @since ${datetime}
  */
 @Service
-public class ${ClassName}ServiceImpl implements I${ClassName}Service 
-{
+public class ${ClassName}ServiceImpl implements I${ClassName}Service {
     @Autowired
     private ${ClassName}Mapper ${className}Mapper;
 
@@ -39,70 +38,67 @@ public class ${ClassName}ServiceImpl implements I${ClassName}Service
      * @return ${functionName}
      */
     @Override
-    public ${ClassName} select${ClassName}By${pkColumn.capJavaField}(${pkColumn.javaType} ${pkColumn.javaField})
-    {
+    public ${ClassName} select${ClassName}By${pkColumn.capJavaField}(${pkColumn.javaType} ${pkColumn.javaField}) {
         return ${className}Mapper.select${ClassName}By${pkColumn.capJavaField}(${pkColumn.javaField});
     }
 
     /**
      * 查詢${functionName}列表
-     * 
+     *
      * @param ${className} ${functionName}
      * @return ${functionName}
      */
     @Override
-    public List<${ClassName}> select${ClassName}List(${ClassName} ${className})
-    {
+    public List<${ClassName}> select${ClassName}List(${ClassName} ${className}) {
         return ${className}Mapper.select${ClassName}List(${className});
     }
 
     /**
      * 新增${functionName}
-     * 
+     *
      * @param ${className} ${functionName}
      * @return 結果
      */
-#if($table.sub)
-    @Transactional
-#end
+        #if($table.sub)
+        @Transactional
+        #end
     @Override
-    public int insert${ClassName}(${ClassName} ${className})
-    {
-#foreach ($column in $columns)
-#if($column.javaField == 'createTime')
-        ${className}.setCreateTime(DateUtils.getNowDate());
-#end
-#end
-#if($table.sub)
-        int rows = ${className}Mapper.insert${ClassName}(${className});
-        insert${subClassName}(${className});
-        return rows;
-#else
-        return ${className}Mapper.insert${ClassName}(${className});
-#end
+    public int insert${ClassName}(${ClassName} ${className}) {
+        #foreach ($column in $columns)
+            #if($column.javaField == 'createTime')
+                ${className}.setCreateTime(DateUtils.getNowDate());
+            #end
+        #end
+        #if($table.sub)
+            int rows = ${className}Mapper.insert${ClassName}(${className});
+            insert${subClassName}(${className});
+            return rows;
+        #else
+            return ${className}Mapper.insert${ClassName}(${className});
+        #end
     }
 
     /**
      * 修改${functionName}
-     * 
+     *
      * @param ${className} ${functionName}
      * @return 結果
      */
-#if($table.sub)
-    @Transactional
-#end
+        #if($table.sub)
+        @Transactional
+        #end
     @Override
-    public int update${ClassName}(${ClassName} ${className})
-    {
-#foreach ($column in $columns)
-#if($column.javaField == 'updateTime')
-        ${className}.setUpdateTime(DateUtils.getNowDate());
-#end
-#end
-#if($table.sub)
-        ${className}Mapper.delete${subClassName}By${subTableFkClassName}(${className}.get${pkColumn.capJavaField}());
-        insert${subClassName}(${className});
-#end
+    public int update${ClassName}(${ClassName} ${className}) {
+        #foreach ($column in $columns)
+            #if($column.javaField == 'updateTime')
+                ${className}.setUpdateTime(DateUtils.getNowDate());
+            #end
+        #end
+        #if($table.sub)
+                ${className}Mapper.delete${subClassName}By${subTableFkClassName}(${className}.get${pkColumn.capJavaField}())
+            ;
+            insert${subClassName}(${className});
+        #end
         return ${className}Mapper.update${ClassName}(${className});
     }
 
@@ -112,15 +108,14 @@ public class ${ClassName}ServiceImpl implements I${ClassName}Service
      * @param ${pkColumn.javaField}s 需要刪除的${functionName}主鍵
      * @return 結果
      */
-#if($table.sub)
-    @Transactional
-#end
+        #if($table.sub)
+        @Transactional
+        #end
     @Override
-    public int delete${ClassName}By${pkColumn.capJavaField}s(${pkColumn.javaType}[] ${pkColumn.javaField}s)
-    {
-#if($table.sub)
-        ${className}Mapper.delete${subClassName}By${subTableFkClassName}s(${pkColumn.javaField}s);
-#end
+    public int delete${ClassName}By${pkColumn.capJavaField}s(${pkColumn.javaType}[] ${pkColumn.javaField}s) {
+        #if($table.sub)
+                ${className}Mapper.delete${subClassName}By${subTableFkClassName}s(${pkColumn.javaField}s);
+        #end
         return ${className}Mapper.delete${ClassName}By${pkColumn.capJavaField}s(${pkColumn.javaField}s);
     }
 
@@ -130,41 +125,37 @@ public class ${ClassName}ServiceImpl implements I${ClassName}Service
      * @param ${pkColumn.javaField} ${functionName}主鍵
      * @return 結果
      */
-#if($table.sub)
-    @Transactional
-#end
+        #if($table.sub)
+        @Transactional
+        #end
     @Override
-    public int delete${ClassName}By${pkColumn.capJavaField}(${pkColumn.javaType} ${pkColumn.javaField})
-    {
-#if($table.sub)
-        ${className}Mapper.delete${subClassName}By${subTableFkClassName}(${pkColumn.javaField});
-#end
+    public int delete${ClassName}By${pkColumn.capJavaField}(${pkColumn.javaType} ${pkColumn.javaField}) {
+        #if($table.sub)
+                ${className}Mapper.delete${subClassName}By${subTableFkClassName}(${pkColumn.javaField});
+        #end
         return ${className}Mapper.delete${ClassName}By${pkColumn.capJavaField}(${pkColumn.javaField});
     }
-#if($table.sub)
+    #if($table.sub)
 
-    /**
-     * 新增${subTable.functionName}訊息
-     *
-     * @param ${className} ${functionName}物件
-     */
-    public void insert${subClassName}(${ClassName} ${className})
-    {
-        List<${subClassName}> ${subclassName}List = ${className}.get${subClassName}List();
-        ${pkColumn.javaType} ${pkColumn.javaField} = ${className}.get${pkColumn.capJavaField}();
-        if (StringUtils.isNotNull(${subclassName}List))
-        {
-            List<${subClassName}> list = new ArrayList<${subClassName}>();
-            for (${subClassName} ${subclassName} : ${subclassName}List)
-            {
-                ${subclassName}.set${subTableFkClassName}(${pkColumn.javaField});
-                list.add(${subclassName});
-            }
-            if (list.size() > 0)
-            {
-                ${className}Mapper.batch${subClassName}(list);
+        /**
+         * 新增${subTable.functionName}訊息
+         *
+         * @param ${className} ${functionName}物件
+         */
+        public void insert${subClassName}(${ClassName} ${className}) {
+            List<${subClassName}> ${subclassName}List = ${className}.get${subClassName}List();
+            ${pkColumn.javaType} ${pkColumn.javaField} = ${className}.get${pkColumn.capJavaField}();
+            if (StringUtils.isNotNull(${subclassName}List)) {
+                List<${subClassName}> list = new ArrayList<${subClassName}>();
+                for (${subClassName} ${subclassName} :${subclassName}List)
+                {
+                    ${subclassName}.set${subTableFkClassName}(${pkColumn.javaField});
+                    list.add(${subclassName});
+                }
+                if (list.size() > 0) {
+                        ${className}Mapper.batch${subClassName}(list);
+                }
             }
         }
-    }
-#end
+    #end
 }

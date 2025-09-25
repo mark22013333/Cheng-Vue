@@ -42,7 +42,7 @@ export default {
 
       // 游標拖曳事件
       document.onmousemove = function (e) {
-        // 通過事件委托，計算移動的距離 （開始拖曳至結束拖曳的距離）
+        // 通過事件委派，計算移動的距離 （開始拖曳至結束拖曳的距離）
         const l = e.clientX - disX
         const t = e.clientY - disY
 

@@ -4,19 +4,20 @@ import java.io.Serial;
 import java.util.Arrays;
 
 /**
- * 文件上傳 誤異常類
+ * 檔案上傳 誤異常類
  *
  * @author cheng
  */
 public class InvalidExtensionException extends FileUploadException {
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private String[] allowedExtension;
-    private String extension;
-    private String filename;
+    private final String[] allowedExtension;
+    private final String extension;
+    private final String filename;
 
     public InvalidExtensionException(String[] allowedExtension, String extension, String filename) {
-        super("文件[" + filename + "]後綴[" + extension + "]不正確，請上傳" + Arrays.toString(allowedExtension) + "格式");
+        super("檔案[" + filename + "]後綴[" + extension + "]不正確，請上傳" + Arrays.toString(allowedExtension) + "格式");
         this.allowedExtension = allowedExtension;
         this.extension = extension;
         this.filename = filename;

@@ -5,7 +5,6 @@ package com.cheng.common.core.domain.model;
  *
  * @author cheng
  */
-public class RegisterBody extends LoginBody
-{
+public class RegisterBody extends LoginBody {
 
 }

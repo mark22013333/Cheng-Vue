@@ -5,18 +5,15 @@ package com.cheng.common.utils;
  *
  * @author cheng
  */
-public class DesensitizedUtil
-{
+public class DesensitizedUtil {
     /**
      * 密碼的全部字串都用*代替，比如：******
      *
      * @param password 密碼
      * @return 去識別化後的密碼
      */
-    public static String password(String password)
-    {
-        if (StringUtils.isBlank(password))
-        {
+    public static String password(String password) {
+        if (StringUtils.isBlank(password)) {
             return StringUtils.EMPTY;
         }
         return StringUtils.repeat('*', password.length());
@@ -28,19 +25,14 @@ public class DesensitizedUtil
      * @param carLicense 完整的車牌號
      * @return 去識別化後的車牌
      */
-    public static String carLicense(String carLicense)
-    {
-        if (StringUtils.isBlank(carLicense))
-        {
+    public static String carLicense(String carLicense) {
+        if (StringUtils.isBlank(carLicense)) {
             return StringUtils.EMPTY;
         }
         // 普通車牌
-        if (carLicense.length() == 7)
-        {
+        if (carLicense.length() == 7) {
             carLicense = StringUtils.hide(carLicense, 3, 6);
-        }
-        else if (carLicense.length() == 8)
-        {
+        } else if (carLicense.length() == 8) {
             // 新能源車牌
             carLicense = StringUtils.hide(carLicense, 3, 7);
         }

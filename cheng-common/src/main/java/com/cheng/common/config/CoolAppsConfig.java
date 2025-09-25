@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * 讀取專案相關配置
+ * 讀取專案相關設定
  *
  * @author cheng
  */

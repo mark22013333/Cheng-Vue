@@ -140,7 +140,7 @@ public class LogAspect {
         operLog.setBusinessType(log.businessType().ordinal());
         // 設定標題
         operLog.setTitle(log.title());
-        // 設定操作人類别
+        // 設定操作人類別
         operLog.setOperatorType(log.operatorType().ordinal());
         // 是否需要儲存request，參數和值
         if (log.isSaveRequestData()) {

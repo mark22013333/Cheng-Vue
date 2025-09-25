@@ -48,7 +48,7 @@
       <!-- 報表內容區域 -->
       <div class="report-content" v-if="currentReport">
         <el-divider content-position="left">{{ reportTitle }}</el-divider>
-        
+
         <!-- 篩選條件 -->
         <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="80px">
           <el-form-item label="時間範圍">
@@ -198,10 +198,10 @@
 </template>
 
 <script>
-import { 
-  getStockReport, 
-  getBorrowReport, 
-  getMovementReport, 
+import {
+  getStockReport,
+  getBorrowReport,
+  getMovementReport,
   getScanReport,
   exportStockReport,
   exportBorrowReport,
@@ -301,7 +301,7 @@ export default {
       if (!this.currentReport) return;
 
       this.loading = true;
-      
+
       switch (this.currentReport) {
         case 'stock':
           this.generateStockReport();
@@ -324,7 +324,7 @@ export default {
         const result = response.data;
         this.reportData = result.data;
         this.total = result.data.length;
-        
+
         const stats = result.statistics;
         this.reportStats = [
           { label: '總物品數', value: stats.totalItems },
@@ -332,7 +332,7 @@ export default {
           { label: '低庫存物品', value: stats.lowStockItems },
           { label: '缺貨物品', value: stats.outOfStockItems }
         ];
-        
+
         this.loading = false;
       }).catch(() => {
         this.loading = false;
@@ -345,7 +345,7 @@ export default {
         const result = response.data;
         this.reportData = result.data;
         this.total = result.data.length;
-        
+
         const stats = result.statistics;
         this.reportStats = [
           { label: '總借出數', value: stats.totalBorrows },
@@ -354,7 +354,7 @@ export default {
           { label: '已歸還', value: stats.returnedBorrows },
           { label: '逾期未還', value: stats.overdueBorrows }
         ];
-        
+
         this.loading = false;
       }).catch(() => {
         this.loading = false;
@@ -367,7 +367,7 @@ export default {
         const result = response.data;
         this.reportData = result.data;
         this.total = result.data.length;
-        
+
         const stats = result.statistics;
         this.reportStats = [
           { label: '總記錄數', value: stats.totalRecords },
@@ -375,7 +375,7 @@ export default {
           { label: '出庫記錄', value: stats.outRecords },
           { label: '盤點記錄', value: stats.checkRecords }
         ];
-        
+
         this.loading = false;
       }).catch(() => {
         this.loading = false;
@@ -388,11 +388,11 @@ export default {
         const result = response.data;
         this.reportData = result.data;
         this.total = result.data.length;
-        
+
         const stats = result.statistics;
-        const successRate = stats.totalScans > 0 ? 
+        const successRate = stats.totalScans > 0 ?
           ((stats.successScans / stats.totalScans) * 100).toFixed(2) + '%' : '0%';
-        
+
         this.reportStats = [
           { label: '總掃描次數', value: stats.totalScans },
           { label: '成功次數', value: stats.successScans },
@@ -401,7 +401,7 @@ export default {
           { label: 'QR碼掃描', value: stats.qrcodeScans },
           { label: '成功率', value: successRate }
         ];
-        
+
         this.loading = false;
       }).catch(() => {
         this.loading = false;
@@ -415,7 +415,7 @@ export default {
         this.$message.warning('請先選擇報表類型');
         return;
       }
-      
+
       let exportFunction;
       switch (this.currentReport) {
         case 'stock':
@@ -434,7 +434,7 @@ export default {
           this.$message.error('不支援的報表類型');
           return;
       }
-      
+
       this.$message.loading('正在匯出報表...');
       exportFunction(this.queryParams).then(() => {
         this.$message.success('報表匯出成功');
@@ -449,11 +449,11 @@ export default {
         this.$message.warning('請先選擇報表類型');
         return;
       }
-      
+
       window.print();
     },
 
-    /** 獲取庫存狀態類型 */
+    /** 取得庫存狀態類型 */
     getStockStatusType(row) {
       if (row.stockQuantity <= 0) {
         return 'danger';
@@ -463,7 +463,7 @@ export default {
       return 'success';
     },
 
-    /** 獲取庫存狀態文字 */
+    /** 取得庫存狀態文字 */
     getStockStatusText(row) {
       if (row.stockQuantity <= 0) {
         return '缺貨';
@@ -473,7 +473,7 @@ export default {
       return '正常';
     },
 
-    /** 獲取借出狀態類型 */
+    /** 取得借出狀態類型 */
     getBorrowStatusType(status) {
       const statusMap = {
         '0': 'info',     // 待審核
@@ -485,7 +485,7 @@ export default {
       return statusMap[status] || 'info';
     },
 
-    /** 獲取借出狀態文字 */
+    /** 取得借出狀態文字 */
     getBorrowStatusText(status) {
       const statusMap = {
         '0': '待審核',

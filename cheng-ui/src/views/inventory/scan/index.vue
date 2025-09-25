@@ -291,16 +291,16 @@ export default {
       try {
         // 檢測是否為手機端
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
+
         const config = {
           fps: 10,
           qrbox: isMobile ? {width: 200, height: 200} : {width: 250, height: 250},
           aspectRatio: 1.0,
-          // 手機端優化配置
+          // 手機端優化設定
           ...(isMobile && {
             // 支援近距離掃描
             supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-            // 優化手機端攝影機配置
+            // 優化手機端攝影機設定
             videoConstraints: {
               facingMode: "environment", // 使用後置攝影機
               focusMode: "continuous", // 連續對焦
@@ -603,49 +603,49 @@ export default {
   .scan-container .el-col {
     margin-bottom: 20px;
   }
-  
+
   .scan-container .el-row {
     flex-direction: column;
   }
-  
+
   .scan-container .el-col:first-child {
     margin-bottom: 20px;
   }
-  
+
   #qr-reader {
     height: 250px !important;
   }
-  
+
   .camera-scan {
     padding: 10px;
   }
-  
+
   .scan-controls .el-button {
     margin: 5px 2px;
     font-size: 12px;
   }
-  
+
   .manual-input .el-form-item {
     margin-bottom: 15px;
   }
-  
+
   .item-info .el-descriptions {
     font-size: 12px;
   }
-  
+
   .action-buttons .el-button {
     margin: 5px 2px;
     font-size: 12px;
   }
-  
+
   .scan-history .el-table {
     font-size: 12px;
   }
-  
+
   .result-card {
     margin: 10px 0;
   }
-  
+
   .item-image .el-image {
     width: 120px !important;
     height: 120px !important;
@@ -656,36 +656,36 @@ export default {
   .app-container {
     padding: 10px;
   }
-  
+
   .box-card {
     margin: 0;
   }
-  
+
   .scan-container .el-col {
     width: 100%;
   }
-  
+
   #qr-reader {
     height: 200px !important;
   }
-  
+
   .scan-controls .el-button {
     display: block;
     width: 100%;
     margin: 5px 0;
   }
-  
+
   .action-buttons .el-button {
     display: block;
     width: 100%;
     margin: 5px 0;
   }
-  
+
   .item-image .el-image {
     width: 100px !important;
     height: 100px !important;
   }
-  
+
   .el-descriptions {
     font-size: 11px;
   }

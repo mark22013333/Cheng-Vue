@@ -73,7 +73,7 @@ public class InvStockController extends BaseController {
     }
 
     /**
-     * 獲取庫存詳細訊息
+     * 取得庫存詳細訊息
      */
     @PreAuthorize("@ss.hasPermi('inventory:stock:query')")
     @GetMapping(value = "/{stockId}")
@@ -82,7 +82,7 @@ public class InvStockController extends BaseController {
     }
 
     /**
-     * 根據物品ID獲取庫存訊息
+     * 根據物品ID取得庫存訊息
      */
     @PreAuthorize("@ss.hasPermi('inventory:stock:query')")
     @GetMapping(value = "/item/{itemId}")

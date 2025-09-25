@@ -92,7 +92,7 @@ public class GenUtils {
         if (StringUtils.endsWithIgnoreCase(columnName, "status")) {
             column.setHtmlType(GenConstants.HTML_RADIO);
         }
-        // 類型&性别欄位設定下拉框
+        // 類型&性別欄位設定下拉框
         else if (StringUtils.endsWithIgnoreCase(columnName, "type")
                 || StringUtils.endsWithIgnoreCase(columnName, "sex")) {
             column.setHtmlType(GenConstants.HTML_SELECT);
@@ -101,7 +101,7 @@ public class GenUtils {
         else if (StringUtils.endsWithIgnoreCase(columnName, "image")) {
             column.setHtmlType(GenConstants.HTML_IMAGE_UPLOAD);
         }
-        // 文件欄位設定文件上傳元件
+        // 檔案欄位設定檔案上傳元件
         else if (StringUtils.endsWithIgnoreCase(columnName, "file")) {
             column.setHtmlType(GenConstants.HTML_FILE_UPLOAD);
         }

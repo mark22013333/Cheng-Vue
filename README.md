@@ -85,8 +85,8 @@ CoolApps 是一個基於若依(RY)專案修改的 Spring Boot 3.5.4 和 Vue.js 2
 
 ### 🔐 權限管理
 - **用戶管理**：用戶新增、編輯、刪除、角色分配
-- **角色管理**：角色權限配置、數據權限控制
-- **選單管理**：動態選單配置、權限控制
+- **角色管理**：角色權限設定、數據權限控制
+- **選單管理**：動態選單設定、權限控制
 - **部門管理**：組織架構管理、數據權限範圍
 
 ### 📊 系統監控
@@ -98,10 +98,10 @@ CoolApps 是一個基於若依(RY)專案修改的 Spring Boot 3.5.4 和 Vue.js 2
 
 ### 🛠️ 系統工具
 - **程式碼產生**：自動產生 CRUD 程式碼
-- **系統介面**：動態介面配置
+- **系統介面**：動態介面設定
 - **定時任務**：Quartz 定時任務管理
 - **資料字典**：系統字典管理
-- **參數設定**：系統參數配置
+- **參數設定**：系統參數設定
 
 ### 📝 內容管理
 - **通知公告**：系統公告發布管理
@@ -119,7 +119,7 @@ cheng-vue
 ├── cheng-quartz         # 定時任務模組
 ├── cheng-system         # 系統管理模組
 ├── cheng-ui             # 前端 Vue.js 專案
-├── cheng.deploy         # 部署腳本和配置
+├── cheng.deploy         # 部署腳本和設定
 ├── sql                  # 資料庫腳本
 └── doc                  # 專案文檔
 ```
@@ -128,7 +128,7 @@ cheng-vue
 
 - **cheng-admin**：系統主模組，整合所有功能模組，產出 `apps.war` 部署檔案
 - **cheng-common**：通用工具類、常數定義、共用元件
-- **cheng-framework**：核心框架配置，包含安全、暫存、異常處理等
+- **cheng-framework**：核心框架設定，包含安全、暫存、異常處理等
 - **cheng-generator**：程式碼產生器，支援自動產生 Controller、Service、Mapper 等
 - **cheng-quartz**：定時任務管理，基於 Quartz 實現
 - **cheng-system**：系統管理功能，包含用戶、角色、選單等管理
@@ -169,7 +169,7 @@ mysql -u root -p cool-apps < sql/quartz-tw.sql
 
 ### 後端啟動
 
-1. 修改資料庫配置：
+1. 修改資料庫設定：
 ```yaml
 # cheng-admin/src/main/resources/application-local.yml
 spring:
@@ -251,9 +251,9 @@ API 文檔：http://localhost:8080/swagger-ui/index.html
 
 詳細的手動部署步驟請參考：[部署指南](./cheng.deploy/manual-deployment-guide.md)
 
-### 正式環境配置
+### 正式環境設定
 
-1. **資料庫配置**：
+1. **資料庫設定**：
 ```yaml
 # application-prod.yml
 spring:
@@ -265,7 +265,7 @@ spring:
         password: ${DB_PASSWORD:your_secure_password}
 ```
 
-2. **Redis 配置**：
+2. **Redis 設定**：
 ```yaml
 spring:
   data:
@@ -276,7 +276,7 @@ spring:
       database: 0
 ```
 
-3. **Nginx 配置**：
+3. **Nginx 設定**：
 ```nginx
 # 前端靜態資源
 location / {
@@ -301,16 +301,16 @@ location /prod-api/ {
 src/main/java/com/cheng/
 ├── common/              # 通用模組
 │   ├── annotation/      # 自定義註解
-│   ├── config/          # 配置類
+│   ├── config/          # 設定類
 │   ├── constant/        # 常數定義
 │   ├── core/           # 核心工具
 │   ├── enums/          # 列舉定義
 │   ├── exception/      # 異常處理
 │   └── utils/          # 工具類
 ├── framework/          # 框架模組
-│   ├── config/         # 框架配置
-│   ├── security/       # 安全配置
-│   └── web/           # Web 配置
+│   ├── config/         # 框架設定
+│   ├── security/       # 安全設定
+│   └── web/           # Web 設定
 ├── system/            # 系統模組
 │   ├── domain/        # 實體類
 │   ├── mapper/        # 數據訪問層
@@ -446,7 +446,7 @@ POST /system/user
 
 1. **資料庫優化**：
    - 使用 Druid 連線池
-   - 配置合理的連線池參數
+   - 設定合理的連線池參數
    - 開啟 SQL 監控和慢查詢記錄
 
 2. **暫存優化**：
@@ -513,7 +513,7 @@ mvn test jacoco:report
 使用 Swagger UI 或 Postman 進行 API 測試：
 
 1. 匯入 API 文檔到 Postman
-2. 配置環境變數
+2. 設定環境變數
 3. 執行測試集合
 
 ## 📊 監控告警
@@ -527,7 +527,7 @@ mvn test jacoco:report
 
 ### 日誌管理
 
-- **應用日誌**：Logback 配置
+- **應用日誌**：Logback 設定
 - **存取日誌**：Nginx 存取記錄
 - **錯誤日誌**：異常堆疊追蹤
 - **審計日誌**：用戶操作記錄
@@ -540,7 +540,7 @@ mvn test jacoco:report
 - 🚀 升級 Spring Boot 到 3.5.4
 - 🎨 優化前端介面和用戶體驗
 - 📝 完善部署文檔和腳本
-- 🔐 增強安全配置和權限控制
+- 🔐 增強安全設定和權限控制
 
 ## 🤝 貢獻指南
 
@@ -580,7 +580,7 @@ mvn test jacoco:report
 A: 在用戶管理中修改 admin 用戶密碼，或在個人中心修改。
 
 **Q: 如何新增自定義選單？**
-A: 在系統管理 -> 選單管理中新增選單項目，配置路由和權限。
+A: 在系統管理 -> 選單管理中新增選單項目，設定路由和權限。
 
 **Q: 如何部署到正式環境？**
 A: 參考 [部署指南](./cheng.deploy/manual-deployment-guide.md) 進行正式環境部署。

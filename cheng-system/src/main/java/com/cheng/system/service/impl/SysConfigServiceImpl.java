@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 參數配置 服務層實現
+ * 參數設定 服務層實現
  *
  * @author cheng
  */
@@ -40,10 +40,10 @@ public class SysConfigServiceImpl implements ISysConfigService {
     }
 
     /**
-     * 查詢參數配置訊息
+     * 查詢參數設定訊息
      *
-     * @param configId 參數配置ID
-     * @return 參數配置訊息
+     * @param configId 參數設定ID
+     * @return 參數設定訊息
      */
     @Override
     @DataSource(DataSourceType.MASTER)
@@ -54,7 +54,7 @@ public class SysConfigServiceImpl implements ISysConfigService {
     }
 
     /**
-     * 根據鍵名查詢參數配置訊息
+     * 根據鍵名查詢參數設定訊息
      *
      * @param configKey 參數key
      * @return 參數鍵值
@@ -90,10 +90,10 @@ public class SysConfigServiceImpl implements ISysConfigService {
     }
 
     /**
-     * 查詢參數配置列表
+     * 查詢參數設定列表
      *
-     * @param config 參數配置訊息
-     * @return 參數配置集合
+     * @param config 參數設定訊息
+     * @return 參數設定集合
      */
     @Override
     public List<SysConfig> selectConfigList(SysConfig config) {
@@ -101,9 +101,9 @@ public class SysConfigServiceImpl implements ISysConfigService {
     }
 
     /**
-     * 新增參數配置
+     * 新增參數設定
      *
-     * @param config 參數配置訊息
+     * @param config 參數設定訊息
      * @return 結果
      */
     @Override
@@ -116,9 +116,9 @@ public class SysConfigServiceImpl implements ISysConfigService {
     }
 
     /**
-     * 修改參數配置
+     * 修改參數設定
      *
-     * @param config 參數配置訊息
+     * @param config 參數設定訊息
      * @return 結果
      */
     @Override
@@ -184,7 +184,7 @@ public class SysConfigServiceImpl implements ISysConfigService {
     /**
      * 校驗參數鍵名是否唯一
      *
-     * @param config 參數配置訊息
+     * @param config 參數設定訊息
      * @return 結果
      */
     @Override

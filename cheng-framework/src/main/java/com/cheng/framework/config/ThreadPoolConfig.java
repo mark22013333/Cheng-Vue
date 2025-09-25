@@ -11,7 +11,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * 執行緒池配置
+ * 執行緒池設定
  *
  * @author cheng
  **/

@@ -81,7 +81,7 @@ const componentChild = {
       }
       if (conf.showTip) {
         list.push(<div slot="tip"
-                       class="el-upload__tip">只能上傳不超過 {conf.fileSize}{conf.sizeUnit} 的{conf.accept}文件</div>)
+                       class="el-upload__tip">只能上傳不超過 {conf.fileSize}{conf.sizeUnit} 的{conf.accept}檔案</div>)
       }
       return list
     }

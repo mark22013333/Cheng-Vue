@@ -10,7 +10,7 @@ import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
 /**
- * 資源文件配置載入
+ * 資源檔案設定載入
  *
  * @author cheng
  */

@@ -53,9 +53,9 @@ public class SysOperLog extends BaseEntity {
     private String requestMethod;
 
     /**
-     * 操作類别（0其它 1後台使用者 2手機端使用者）
+     * 操作類別（0其它 1後台使用者 2手機端使用者）
      */
-    @Excel(name = "操作類别", readConverterExp = "0=其它,1=後台使用者,2=手機端使用者")
+    @Excel(name = "操作類別", readConverterExp = "0=其它,1=後台使用者,2=手機端使用者")
     private Integer operatorType;
 
     /**

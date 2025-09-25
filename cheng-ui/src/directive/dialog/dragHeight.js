@@ -18,7 +18,7 @@ export default {
         const curHeight = dragDom.offsetHeight
         document.onmousemove = function(e) {
           e.preventDefault() // 移動時禁用預設事件
-          // 通過事件委托，計算移動的距離
+          // 通過事件委派，計算移動的距離
           const xl = e.clientX - disX
           const yl = e.clientY - disY
           dragDom.style.width = `${curWidth + xl}px`

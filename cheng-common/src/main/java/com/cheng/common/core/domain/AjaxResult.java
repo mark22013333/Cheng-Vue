@@ -3,6 +3,7 @@ package com.cheng.common.core.domain;
 import com.cheng.common.constant.HttpStatus;
 import com.cheng.common.utils.StringUtils;
 
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -12,6 +13,7 @@ import java.util.Objects;
  * @author cheng
  */
 public class AjaxResult extends HashMap<String, Object> {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**

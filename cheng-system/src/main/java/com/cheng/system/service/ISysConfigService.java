@@ -5,21 +5,21 @@ import com.cheng.system.domain.SysConfig;
 import java.util.List;
 
 /**
- * 參數配置 服務層
+ * 參數設定 服務層
  *
  * @author cheng
  */
 public interface ISysConfigService {
     /**
-     * 查詢參數配置訊息
+     * 查詢參數設定訊息
      *
-     * @param configId 參數配置ID
-     * @return 參數配置訊息
+     * @param configId 參數設定ID
+     * @return 參數設定訊息
      */
     SysConfig selectConfigById(Long configId);
 
     /**
-     * 根據鍵名查詢參數配置訊息
+     * 根據鍵名查詢參數設定訊息
      *
      * @param configKey 參數鍵名
      * @return 參數鍵值
@@ -34,25 +34,25 @@ public interface ISysConfigService {
     boolean selectCaptchaEnabled();
 
     /**
-     * 查詢參數配置列表
+     * 查詢參數設定列表
      *
-     * @param config 參數配置訊息
-     * @return 參數配置集合
+     * @param config 參數設定訊息
+     * @return 參數設定集合
      */
     List<SysConfig> selectConfigList(SysConfig config);
 
     /**
-     * 新增參數配置
+     * 新增參數設定
      *
-     * @param config 參數配置訊息
+     * @param config 參數設定訊息
      * @return 結果
      */
     int insertConfig(SysConfig config);
 
     /**
-     * 修改參數配置
+     * 修改參數設定
      *
-     * @param config 參數配置訊息
+     * @param config 參數設定訊息
      * @return 結果
      */
     int updateConfig(SysConfig config);

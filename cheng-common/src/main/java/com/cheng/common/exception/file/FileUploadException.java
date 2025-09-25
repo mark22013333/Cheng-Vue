@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 import java.io.Serial;
 
 /**
- * 文件上傳異常類
+ * 檔案上傳異常類
  *
  * @author cheng
  */

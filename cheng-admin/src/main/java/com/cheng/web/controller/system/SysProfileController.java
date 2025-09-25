@@ -28,8 +28,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/system/user/profile")
-public class SysProfileController extends BaseController
-{
+public class SysProfileController extends BaseController {
     @Autowired
     private ISysUserService userService;
 
@@ -40,8 +39,7 @@ public class SysProfileController extends BaseController
      * 個人訊息
      */
     @GetMapping
-    public AjaxResult profile()
-    {
+    public AjaxResult profile() {
         LoginUser loginUser = getLoginUser();
         SysUser user = loginUser.getUser();
         AjaxResult ajax = AjaxResult.success(user);
@@ -55,24 +53,20 @@ public class SysProfileController extends BaseController
      */
     @Log(title = "個人訊息", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult updateProfile(@RequestBody SysUser user)
-    {
+    public AjaxResult updateProfile(@RequestBody SysUser user) {
         LoginUser loginUser = getLoginUser();
         SysUser currentUser = loginUser.getUser();
         currentUser.setNickName(user.getNickName());
         currentUser.setEmail(user.getEmail());
         currentUser.setPhonenumber(user.getPhonenumber());
         currentUser.setSex(user.getSex());
-        if (StringUtils.isNotEmpty(user.getPhonenumber()) && !userService.checkPhoneUnique(currentUser))
-        {
+        if (StringUtils.isNotEmpty(user.getPhonenumber()) && !userService.checkPhoneUnique(currentUser)) {
             return error("修改使用者'" + loginUser.getUsername() + "'失敗，手機號碼已存在");
         }
-        if (StringUtils.isNotEmpty(user.getEmail()) && !userService.checkEmailUnique(currentUser))
-        {
+        if (StringUtils.isNotEmpty(user.getEmail()) && !userService.checkEmailUnique(currentUser)) {
             return error("修改使用者'" + loginUser.getUsername() + "'失敗，信箱帳號已存在");
         }
-        if (userService.updateUserProfile(currentUser) > 0)
-        {
+        if (userService.updateUserProfile(currentUser) > 0) {
             // 更新暫存使用者訊息
             tokenService.setLoginUser(loginUser);
             return success();
@@ -85,24 +79,20 @@ public class SysProfileController extends BaseController
      */
     @Log(title = "個人訊息", businessType = BusinessType.UPDATE)
     @PutMapping("/updatePwd")
-    public AjaxResult updatePwd(@RequestBody Map<String, String> params)
-    {
+    public AjaxResult updatePwd(@RequestBody Map<String, String> params) {
         String oldPassword = params.get("oldPassword");
         String newPassword = params.get("newPassword");
         LoginUser loginUser = getLoginUser();
         Long userId = loginUser.getUserId();
         String password = loginUser.getPassword();
-        if (!SecurityUtils.matchesPassword(oldPassword, password))
-        {
+        if (!SecurityUtils.matchesPassword(oldPassword, password)) {
             return error("修改密碼失敗，舊密碼錯誤");
         }
-        if (SecurityUtils.matchesPassword(newPassword, password))
-        {
+        if (SecurityUtils.matchesPassword(newPassword, password)) {
             return error("新密碼不能與舊密碼相同");
         }
         newPassword = SecurityUtils.encryptPassword(newPassword);
-        if (userService.resetUserPwd(userId, newPassword) > 0)
-        {
+        if (userService.resetUserPwd(userId, newPassword) > 0) {
             // 更新暫存使用者密碼&密碼最後更新時間
             loginUser.getUser().setPwdUpdateDate(DateUtils.getNowDate());
             loginUser.getUser().setPassword(newPassword);
@@ -117,17 +107,13 @@ public class SysProfileController extends BaseController
      */
     @Log(title = "使用者頭像", businessType = BusinessType.UPDATE)
     @PostMapping("/avatar")
-    public AjaxResult avatar(@RequestParam("avatarfile") MultipartFile file) throws Exception
-    {
-        if (!file.isEmpty())
-        {
+    public AjaxResult avatar(@RequestParam("avatarfile") MultipartFile file) throws Exception {
+        if (!file.isEmpty()) {
             LoginUser loginUser = getLoginUser();
             String avatar = FileUploadUtils.upload(CoolAppsConfig.getAvatarPath(), file, MimeTypeUtils.IMAGE_EXTENSION, true);
-            if (userService.updateUserAvatar(loginUser.getUserId(), avatar))
-            {
+            if (userService.updateUserAvatar(loginUser.getUserId(), avatar)) {
                 String oldAvatar = loginUser.getUser().getAvatar();
-                if (StringUtils.isNotEmpty(oldAvatar))
-                {
+                if (StringUtils.isNotEmpty(oldAvatar)) {
                     FileUtils.deleteFile(CoolAppsConfig.getProfile() + FileUtils.stripPrefix(oldAvatar));
                 }
                 AjaxResult ajax = AjaxResult.success();

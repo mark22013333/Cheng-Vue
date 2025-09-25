@@ -61,7 +61,7 @@ public class SqlUtil
         {
             if (StringUtils.indexOfIgnoreCase(value, sqlKeyword) > -1)
             {
-                throw new UtilException("參數存在SQL注入風险");
+                throw new UtilException("參數存在SQL注入風險");
             }
         }
     }

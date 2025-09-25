@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 參數配置 訊息操作處理
+ * 參數設定 訊息操作處理
  *
  * @author cheng
  */
@@ -28,7 +28,7 @@ public class SysConfigController extends BaseController {
     private ISysConfigService configService;
 
     /**
-     * 取得參數配置列表
+     * 取得參數設定列表
      */
     @PreAuthorize("@ss.hasPermi('system:config:list')")
     @GetMapping("/list")
@@ -65,7 +65,7 @@ public class SysConfigController extends BaseController {
     }
 
     /**
-     * 新增參數配置
+     * 新增參數設定
      */
     @PreAuthorize("@ss.hasPermi('system:config:add')")
     @Log(title = "參數管理", businessType = BusinessType.INSERT)
@@ -79,7 +79,7 @@ public class SysConfigController extends BaseController {
     }
 
     /**
-     * 修改參數配置
+     * 修改參數設定
      */
     @PreAuthorize("@ss.hasPermi('system:config:edit')")
     @Log(title = "參數管理", businessType = BusinessType.UPDATE)
@@ -93,7 +93,7 @@ public class SysConfigController extends BaseController {
     }
 
     /**
-     * 刪除參數配置
+     * 刪除參數設定
      */
     @PreAuthorize("@ss.hasPermi('system:config:remove')")
     @Log(title = "參數管理", businessType = BusinessType.DELETE)

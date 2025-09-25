@@ -343,7 +343,7 @@ export default {
       const tableId = row.tableId || this.ids[0]
       const tableName = row.tableName || this.tableNames[0]
       const params = { pageNum: this.queryParams.pageNum }
-      this.$tab.openPage("修改[" + tableName + "]產生配置", '/tool/gen-edit/index/' + tableId, params)
+      this.$tab.openPage("修改[" + tableName + "]產生設定", '/tool/gen-edit/index/' + tableId, params)
     },
     /** 刪除按鈕操作 */
     handleDelete(row) {

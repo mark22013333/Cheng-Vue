@@ -32,7 +32,7 @@ export function isHttp(url) {
 }
 
 /**
- * 判斷path是否為外鏈
+ * 判斷path是否為外部連結
  * @param {string} path
  * @returns {Boolean}
  */

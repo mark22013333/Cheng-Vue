@@ -10,7 +10,13 @@ import java.util.Properties;
 import static com.google.code.kaptcha.Constants.*;
 
 /**
- * 驗證碼配置
+ * 驗證碼設定（優化樣式）
+ * <p>
+ * 更柔和的配色與更清晰的可讀性：
+ * - 去除邊框
+ * - 使用輕柔漸層背景
+ * - 文字採深灰色，輕水波紋效果
+ * - 減少噪點，提升辨識度
  *
  * @author cheng
  */
@@ -20,24 +26,28 @@ public class CaptchaConfig {
     public DefaultKaptcha getKaptchaBean() {
         DefaultKaptcha defaultKaptcha = new DefaultKaptcha();
         Properties properties = new Properties();
-        // 是否有邊框 預設為true 我們可以自己設定yes，no
-        properties.setProperty(KAPTCHA_BORDER, "yes");
-        // 驗證碼文字字串顏色 預設為Color.BLACK
-        properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_COLOR, "black");
-        // 驗證碼圖片寬度 預設為200
+        // 是否有邊框（改為無邊框，視覺更簡潔）
+        properties.setProperty(KAPTCHA_BORDER, "no");
+        // 驗證碼文字顏色（深灰）
+        properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_COLOR, "34,34,34");
+        // 驗證碼圖片寬高
         properties.setProperty(KAPTCHA_IMAGE_WIDTH, "160");
-        // 驗證碼圖片高度 預設為50
         properties.setProperty(KAPTCHA_IMAGE_HEIGHT, "60");
-        // 驗證碼文字字串大小 預設為40
-        properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_SIZE, "38");
-        // KAPTCHA_SESSION_KEY
+        // 文字大小與間距
+        properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_SIZE, "40");
+        properties.setProperty(KAPTCHA_TEXTPRODUCER_CHAR_SPACE, "4");
+        // Session Key
         properties.setProperty(KAPTCHA_SESSION_CONFIG_KEY, "kaptchaCode");
-        // 驗證碼文字字串長度 預設為5
+        // 文字長度
         properties.setProperty(KAPTCHA_TEXTPRODUCER_CHAR_LENGTH, "4");
-        // 驗證碼文字字體樣式 預設為new Font("Arial", 1, fontSize), new Font("Courier", 1, fontSize)
-        properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_NAMES, "Arial,Courier");
-        // 圖片樣式 水纹com.google.code.kaptcha.impl.WaterRipple 鱼眼com.google.code.kaptcha.impl.FishEyeGimpy 阴影com.google.code.kaptcha.impl.ShadowGimpy
-        properties.setProperty(KAPTCHA_OBSCURIFICATOR_IMPL, "com.google.code.kaptcha.impl.ShadowGimpy");
+        // 字型（包含中英文常見字型，缺字時會回退）
+        properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_NAMES, "Arial,Courier,Microsoft YaHei,宋體,楷體");
+        // 背景漸層（淺灰藍到更淺的藍白）
+        properties.setProperty(KAPTCHA_BACKGROUND_CLR_FROM, "247,249,252");
+        properties.setProperty(KAPTCHA_BACKGROUND_CLR_TO, "220,235,255");
+        // 干擾與樣式（少噪點+柔和水紋）
+        properties.setProperty(KAPTCHA_NOISE_IMPL, "com.google.code.kaptcha.impl.NoNoise");
+        properties.setProperty(KAPTCHA_OBSCURIFICATOR_IMPL, "com.google.code.kaptcha.impl.WaterRipple");
         Config config = new Config(properties);
         defaultKaptcha.setConfig(config);
         return defaultKaptcha;
@@ -47,34 +57,31 @@ public class CaptchaConfig {
     public DefaultKaptcha getKaptchaBeanMath() {
         DefaultKaptcha defaultKaptcha = new DefaultKaptcha();
         Properties properties = new Properties();
-        // 是否有邊框 預設為true 我們可以自己設定yes，no
-        properties.setProperty(KAPTCHA_BORDER, "yes");
-        // 邊框顏色 預設為Color.BLACK
-        properties.setProperty(KAPTCHA_BORDER_COLOR, "105,179,90");
-        // 驗證碼文字字串顏色 預設為Color.BLACK
-        properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_COLOR, "blue");
-        // 驗證碼圖片寬度 預設為200
+        // 是否有邊框（改為無邊框）
+        properties.setProperty(KAPTCHA_BORDER, "no");
+        // 文字顏色（深灰）
+        properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_COLOR, "40,40,40");
+        // 圖片尺寸
         properties.setProperty(KAPTCHA_IMAGE_WIDTH, "160");
-        // 驗證碼圖片高度 預設為50
         properties.setProperty(KAPTCHA_IMAGE_HEIGHT, "60");
-        // 驗證碼文字字串大小 預設為40
-        properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_SIZE, "35");
-        // KAPTCHA_SESSION_KEY
+        // 字體大小與間距
+        properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_SIZE, "40");
+        properties.setProperty(KAPTCHA_TEXTPRODUCER_CHAR_SPACE, "4");
+        // Session Key
         properties.setProperty(KAPTCHA_SESSION_CONFIG_KEY, "kaptchaCodeMath");
-        // 驗證碼文字產生器
+        // 自訂文字產生器（保留原有邏輯）
         properties.setProperty(KAPTCHA_TEXTPRODUCER_IMPL, "com.cheng.framework.config.KaptchaTextCreator");
-        // 驗證碼文字字串間距 預設為2
-        properties.setProperty(KAPTCHA_TEXTPRODUCER_CHAR_SPACE, "3");
-        // 驗證碼文字字串長度 預設為5
+        // 文字長度（數學算式通常較長，維持 6）
         properties.setProperty(KAPTCHA_TEXTPRODUCER_CHAR_LENGTH, "6");
-        // 驗證碼文字字體樣式 預設為new Font("Arial", 1, fontSize), new Font("Courier", 1, fontSize)
-        properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_NAMES, "Arial,Courier");
-        // 驗證碼噪點顏色 預設為Color.BLACK
+        // 字型
+        properties.setProperty(KAPTCHA_TEXTPRODUCER_FONT_NAMES, "Arial,Courier,Microsoft YaHei,宋體,楷體");
+        // 背景色（白到愛麗絲藍，清爽）
+        properties.setProperty(KAPTCHA_BACKGROUND_CLR_FROM, "255,255,255");
+        properties.setProperty(KAPTCHA_BACKGROUND_CLR_TO, "240,248,255");
+        // 少噪點與柔和水紋
         properties.setProperty(KAPTCHA_NOISE_COLOR, "white");
-        // 干扰實現類
         properties.setProperty(KAPTCHA_NOISE_IMPL, "com.google.code.kaptcha.impl.NoNoise");
-        // 圖片樣式 水纹com.google.code.kaptcha.impl.WaterRipple 鱼眼com.google.code.kaptcha.impl.FishEyeGimpy 阴影com.google.code.kaptcha.impl.ShadowGimpy
-        properties.setProperty(KAPTCHA_OBSCURIFICATOR_IMPL, "com.google.code.kaptcha.impl.ShadowGimpy");
+        properties.setProperty(KAPTCHA_OBSCURIFICATOR_IMPL, "com.google.code.kaptcha.impl.WaterRipple");
         Config config = new Config(properties);
         defaultKaptcha.setConfig(config);
         return defaultKaptcha;

@@ -1,7 +1,7 @@
 package com.cheng.common.utils;
 
 /**
- * 處理並記錄日誌文件
+ * 處理並記錄日誌檔案
  *
  * @author cheng
  */

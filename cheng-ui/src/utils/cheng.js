@@ -66,7 +66,7 @@ export function addDateRange(params, dateRange, propName) {
   return search
 }
 
-// 回顯數據字典
+// 顯示數據字典
 export function selectDictLabel(datas, value) {
   if (value === undefined) {
     return ""
@@ -84,7 +84,7 @@ export function selectDictLabel(datas, value) {
   return actions.join('')
 }
 
-// 回顯數據字典（字串、陣列）
+// 顯示數據字典（字串、陣列）
 export function selectDictLabels(datas, value, separator) {
   if (value === undefined || value.length ===0) {
     return ""

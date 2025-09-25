@@ -8,5 +8,5 @@ gen:
   autoRemovePre: false
   # 表前綴（產生類名不會包含表前綴，多個用逗號分隔）
   tablePrefix: sys_
-  # 是否允許產生文件覆蓋到本機（自定義路徑），預設不允許
+  # 是否允許產生檔案覆蓋到本機（自定義路徑），預設不允許
   allowOverwrite: false

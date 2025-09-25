@@ -144,7 +144,7 @@
       @pagination="getList"
     />
 
-    <!-- 新增或修改參數配置對話框 -->
+    <!-- 新增或修改參數設定對話框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="字典類型">
@@ -162,7 +162,7 @@
         <el-form-item label="顯示排序" prop="dictSort">
           <el-input-number v-model="form.dictSort" controls-position="right" :min="0" />
         </el-form-item>
-        <el-form-item label="回顯樣式" prop="listClass">
+        <el-form-item label="顯示樣式" prop="listClass">
           <el-select v-model="form.listClass">
             <el-option
               v-for="item in listClassOptions"
@@ -222,7 +222,7 @@ export default {
       title: "",
       // 是否顯示彈出層
       open: false,
-      // 數據標籤回顯樣式
+      // 數據標籤顯示樣式
       listClassOptions: [
         {
           value: "default",
@@ -246,7 +246,7 @@ export default {
         },
         {
           value: "danger",
-          label: "危险"
+          label: "危險"
         }
       ],
       // 類型數據字典

@@ -266,7 +266,7 @@ export default {
         }
       )
     },
-    // 操作日誌類型字典翻译
+    // 操作日誌類型字典翻譯
     typeFormat(row, column) {
       return this.selectDictLabel(this.dict.type.sys_oper_type, row.businessType)
     },

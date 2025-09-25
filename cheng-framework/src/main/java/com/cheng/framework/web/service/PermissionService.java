@@ -43,7 +43,7 @@ public class PermissionService {
      * @return 使用者是否不具備某權限
      */
     public boolean lacksPermi(String permission) {
-        return hasPermi(permission) != true;
+        return !hasPermi(permission);
     }
 
     /**
@@ -63,7 +63,7 @@ public class PermissionService {
         PermissionContextHolder.setContext(permissions);
         Set<String> authorities = loginUser.getPermissions();
         for (String permission : permissions.split(Constants.PERMISSION_DELIMETER)) {
-            if (permission != null && hasPermissions(authorities, permission)) {
+            if (hasPermissions(authorities, permission)) {
                 return true;
             }
         }
@@ -100,7 +100,7 @@ public class PermissionService {
      * @return 使用者是否不具備某角色
      */
     public boolean lacksRole(String role) {
-        return hasRole(role) != true;
+        return !hasRole(role);
     }
 
     /**

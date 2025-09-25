@@ -171,14 +171,14 @@ function buildBeforeUpload(conf) {
   if (conf.fileSize) {
     rightSizeCode = `let isRightSize = file.size / ${unitNum} < ${conf.fileSize}
     if(!isRightSize){
-      this.$message.error('文件大小超過 ${conf.fileSize}${conf.sizeUnit}')
+      this.$message.error('檔案大小超過 ${conf.fileSize}${conf.sizeUnit}')
     }`
     returnList.push('isRightSize')
   }
   if (conf.accept) {
     acceptCode = `let isAccept = new RegExp('${conf.accept}').test(file.type)
     if(!isAccept){
-      this.$message.error('應該選擇${conf.accept}類型的文件')
+      this.$message.error('應該選擇${conf.accept}類型的檔案')
     }`
     returnList.push('isAccept')
   }

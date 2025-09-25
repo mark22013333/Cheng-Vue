@@ -17,22 +17,22 @@ public class BaseException extends RuntimeException {
     /**
      * 所屬模組
      */
-    private String module;
+    private final String module;
 
     /**
      * 錯誤碼
      */
-    private String code;
+    private final String code;
 
     /**
      * 錯誤碼對應的參數
      */
-    private Object[] args;
+    private final Object[] args;
 
     /**
      * 錯誤訊息
      */
-    private String defaultMessage;
+    private final String defaultMessage;
 
     public BaseException(String module, String code, Object[] args, String defaultMessage) {
         this.module = module;

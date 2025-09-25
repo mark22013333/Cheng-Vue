@@ -7,7 +7,7 @@
 //import java.util.Properties;
 //
 ///**
-// * 定時任務配置（單機部署建議刪除此類和qrtz資料庫表，預設走記憶體會最高效）
+// * 定時任務設定（單機部署建議刪除此類和qrtz資料庫表，預設走記憶體會最高效）
 // * 
 // * @author cheng
 // */
@@ -24,13 +24,13 @@
 //        Properties prop = new Properties();
 //        prop.put("org.quartz.scheduler.instanceName", "RuoyiScheduler");
 //        prop.put("org.quartz.scheduler.instanceId", "AUTO");
-//        // 執行緒池配置
+//        // 執行緒池設定
 //        prop.put("org.quartz.threadPool.class", "org.quartz.simpl.SimpleThreadPool");
 //        prop.put("org.quartz.threadPool.threadCount", "20");
 //        prop.put("org.quartz.threadPool.threadPriority", "5");
-//        // JobStore配置
+//        // JobStore設定
 //        prop.put("org.quartz.jobStore.class", "org.springframework.scheduling.quartz.LocalDataSourceJobStore");
-//        // 集群配置
+//        // 集群設定
 //        prop.put("org.quartz.jobStore.isClustered", "true");
 //        prop.put("org.quartz.jobStore.clusterCheckinInterval", "15000");
 //        prop.put("org.quartz.jobStore.maxMisfiresToHandleAtATime", "10");

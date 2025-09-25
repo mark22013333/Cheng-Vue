@@ -17,7 +17,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 共用配置
+ * 共用設定
  *
  * @author cheng
  */
@@ -28,11 +28,11 @@ public class ResourcesConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        /* 本機文件上傳路徑 */
+        /* 本機檔案上傳路徑 */
         registry.addResourceHandler(Constants.RESOURCE_PREFIX + "/**")
                 .addResourceLocations("file:" + CoolAppsConfig.getProfile() + "/");
 
-        /* swagger配置 */
+        /* swagger設定 */
         registry.addResourceHandler("/swagger-ui/**")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/springfox-swagger-ui/")
                 .setCacheControl(CacheControl.maxAge(5, TimeUnit.HOURS).cachePublic());
@@ -47,16 +47,16 @@ public class ResourcesConfig implements WebMvcConfigurer {
     }
 
     /**
-     * 跨域配置
+     * 跨域設定
      */
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        // 設定訪問源地址
+        // 設定訪問來源地址
         config.addAllowedOriginPattern("*");
-        // 設定訪問源請求頭
+        // 設定訪問來源請求標頭
         config.addAllowedHeader("*");
-        // 設定訪問源請求方法
+        // 設定訪問來源請求方法
         config.addAllowedMethod("*");
         // 有效期 1800秒
         config.setMaxAge(1800L);

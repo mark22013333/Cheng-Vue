@@ -310,7 +310,7 @@ public class SysMenuServiceImpl implements ISysMenuService {
      * @return 路由名稱
      */
     public String getRouteName(SysMenu menu) {
-        // 非外鏈並且是一級目錄（類型為目錄）
+        // 非外部連結並且是一級目錄（類型為目錄）
         if (isMenuFrame(menu)) {
             return StringUtils.EMPTY;
         }
@@ -318,7 +318,7 @@ public class SysMenuServiceImpl implements ISysMenuService {
     }
 
     /**
-     * 取得路由名稱，如沒有配置路由名稱則取路由地址
+     * 取得路由名稱，如沒有設定路由名稱則取路由地址
      *
      * @param name 路由名稱
      * @param path 路由地址
@@ -341,12 +341,12 @@ public class SysMenuServiceImpl implements ISysMenuService {
         if (menu.getParentId().intValue() != 0 && isInnerLink(menu)) {
             routerPath = innerLinkReplaceEach(routerPath);
         }
-        // 非外鏈並且是一級目錄（類型為目錄）
+        // 非外部連結並且是一級目錄（類型為目錄）
         if (0 == menu.getParentId().intValue() && UserConstants.TYPE_DIR.equals(menu.getMenuType())
                 && UserConstants.NO_FRAME.equals(menu.getIsFrame())) {
             routerPath = "/" + menu.getPath();
         }
-        // 非外鏈並且是一級目錄（類型為選單）
+        // 非外部連結並且是一級目錄（類型為選單）
         else if (isMenuFrame(menu)) {
             routerPath = "/";
         }

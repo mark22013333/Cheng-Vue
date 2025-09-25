@@ -60,9 +60,9 @@ public class SysUser extends BaseEntity {
     private String phonenumber;
 
     /**
-     * 使用者性别
+     * 使用者性別
      */
-    @Excel(name = "使用者性别", readConverterExp = "0=男,1=女,2=未知")
+    @Excel(name = "使用者性別", readConverterExp = "0=男,1=女,2=未知")
     private String sex;
 
     /**

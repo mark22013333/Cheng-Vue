@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 獲取庫存報表資料
+// 取得庫存報表資料
 export function getStockReport(query) {
   return request({
     url: '/inventory/report/stock',
@@ -9,7 +9,7 @@ export function getStockReport(query) {
   })
 }
 
-// 獲取借出報表資料
+// 取得借出報表資料
 export function getBorrowReport(query) {
   return request({
     url: '/inventory/report/borrow',
@@ -18,7 +18,7 @@ export function getBorrowReport(query) {
   })
 }
 
-// 獲取庫存異動報表資料
+// 取得庫存異動報表資料
 export function getMovementReport(query) {
   return request({
     url: '/inventory/report/movement',
@@ -27,7 +27,7 @@ export function getMovementReport(query) {
   })
 }
 
-// 獲取掃描記錄報表資料
+// 取得掃描記錄報表資料
 export function getScanReport(query) {
   return request({
     url: '/inventory/report/scan',

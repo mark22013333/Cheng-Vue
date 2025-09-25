@@ -14,7 +14,7 @@ export default {
     Vue.prototype.$cache = cache
     // 模態框物件
     Vue.prototype.$modal = modal
-    // 下載文件
+    // 下載檔案
     Vue.prototype.$download = download
   }
 }

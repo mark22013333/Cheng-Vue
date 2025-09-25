@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS QRTZ_JOB_DETAILS;
 DROP TABLE IF EXISTS QRTZ_CALENDARS;
 
 -- ----------------------------
--- 1、儲存每一個已配置的 jobDetail 的詳細資訊
+-- 1、儲存每一個已設定的 jobDetail 的詳細資訊
 -- ----------------------------
 create table QRTZ_JOB_DETAILS
 (
@@ -29,7 +29,7 @@ create table QRTZ_JOB_DETAILS
 ) engine=innodb comment = '任務詳細資訊表';
 
 -- ----------------------------
--- 2、 儲存已配置的 Trigger 的資訊
+-- 2、 儲存已設定的 Trigger 的資訊
 -- ----------------------------
 create table QRTZ_TRIGGERS
 (
@@ -96,7 +96,7 @@ create table QRTZ_BLOB_TRIGGERS
 ) engine=innodb comment = 'Blob類型的觸發器表';
 
 -- ----------------------------
--- 6、 以 Blob 類型儲存存放日曆資訊， quartz可配置一個日歷來指定一個時間範圍
+-- 6、 以 Blob 類型儲存存放日曆資訊， quartz可設定一個日歷來指定一個時間範圍
 -- ----------------------------
 create table QRTZ_CALENDARS
 (

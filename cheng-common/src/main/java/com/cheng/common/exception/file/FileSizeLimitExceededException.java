@@ -3,7 +3,7 @@ package com.cheng.common.exception.file;
 import java.io.Serial;
 
 /**
- * 文件名大小限制異常類
+ * 檔案名大小限制異常類
  *
  * @author cheng
  */

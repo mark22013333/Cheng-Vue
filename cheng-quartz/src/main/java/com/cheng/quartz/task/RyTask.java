@@ -13,7 +13,7 @@ public class RyTask
 {
     public void ryMultipleParams(String s, Boolean b, Long l, Double d, Integer i)
     {
-        System.out.println(StringUtils.format("執行多參方法： 字串類型{}，布林類型{}，長整型{}，浮點型{}，整數類型{}", s, b, l, d, i));
+        System.out.println(StringUtils.format("執行多參數方法： 字串類型{}，布林類型{}，長整型{}，浮點型{}，整數類型{}", s, b, l, d, i));
     }
 
     public void ryParams(String params)

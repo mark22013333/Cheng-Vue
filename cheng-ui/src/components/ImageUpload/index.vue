@@ -27,7 +27,7 @@
       請上傳
       <template v-if="fileSize"> 大小不超過 <b style="color: #f56c6c">{{ fileSize }}MB</b></template>
       <template v-if="fileType"> 格式為 <b style="color: #f56c6c">{{ fileType.join("/") }}</b></template>
-      的文件
+      的檔案
     </div>
 
     <el-dialog
@@ -71,7 +71,7 @@ export default {
        type: Number,
       default: 5
     },
-    // 文件類型, 例如['png', 'jpg', 'jpeg']
+    // 檔案類型, 例如['png', 'jpg', 'jpeg']
     fileType: {
       type: Array,
       default: () => ["png", "jpg", "jpeg"]
@@ -172,11 +172,11 @@ export default {
       }
 
       if (!isImg) {
-        this.$modal.msgError(`文件格式不正確，請上傳${this.fileType.join("/")}圖片格式文件!`)
+        this.$modal.msgError(`檔案格式不正確，請上傳${this.fileType.join("/")}圖片格式檔案!`)
         return false
       }
       if (file.name.includes(',')) {
-        this.$modal.msgError('文件名不正確，不能包含英文逗號!')
+        this.$modal.msgError('檔案名不正確，不能包含英文逗號!')
         return false
       }
       if (this.fileSize) {
@@ -189,9 +189,9 @@ export default {
       this.$modal.loading("正在上傳圖片，請稍候...")
       this.number++
     },
-    // 文件個數超出
+    // 檔案個數超出
     handleExceed() {
-      this.$modal.msgError(`上傳文件數量不能超過 ${this.limit} 個!`)
+      this.$modal.msgError(`上傳檔案數量不能超過 ${this.limit} 個!`)
     },
     // 上傳成功呼叫
     handleUploadSuccess(res, file) {

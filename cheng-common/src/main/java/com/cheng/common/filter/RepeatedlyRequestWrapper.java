@@ -12,64 +12,55 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 構建可重複讀取inputStream的request
  *
  * @author cheng
  */
-public class RepeatedlyRequestWrapper extends HttpServletRequestWrapper
-{
+public class RepeatedlyRequestWrapper extends HttpServletRequestWrapper {
     private final byte[] body;
 
-    public RepeatedlyRequestWrapper(HttpServletRequest request, ServletResponse response) throws IOException
-    {
+    public RepeatedlyRequestWrapper(HttpServletRequest request, ServletResponse response) throws IOException {
         super(request);
         request.setCharacterEncoding(Constants.UTF8);
         response.setCharacterEncoding(Constants.UTF8);
 
-        body = HttpHelper.getBodyString(request).getBytes(Constants.UTF8);
+        body = HttpHelper.getBodyString(request).getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
-    public BufferedReader getReader() throws IOException
-    {
+    public BufferedReader getReader() throws IOException {
         return new BufferedReader(new InputStreamReader(getInputStream()));
     }
 
     @Override
-    public ServletInputStream getInputStream() throws IOException
-    {
+    public ServletInputStream getInputStream() {
         final ByteArrayInputStream bais = new ByteArrayInputStream(body);
-        return new ServletInputStream()
-        {
+        return new ServletInputStream() {
             @Override
-            public int read() throws IOException
-            {
+            public int read() throws IOException {
                 return bais.read();
             }
 
             @Override
-            public int available() throws IOException
-            {
+            public int available() throws IOException {
                 return body.length;
             }
 
             @Override
-            public boolean isFinished()
-            {
+            public boolean isFinished() {
                 return false;
             }
 
             @Override
-            public boolean isReady()
-            {
+            public boolean isReady() {
                 return false;
             }
 
             @Override
-            public void setReadListener(ReadListener readListener)
-            {
+            public void setReadListener(ReadListener readListener) {
 
             }
         };

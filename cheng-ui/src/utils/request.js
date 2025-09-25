@@ -14,7 +14,7 @@ export let isRelogin = { show: false }
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
 // 建立axios實體
 const service = axios.create({
-  // axios中請求配置有baseURL選項，表示請求URL公開部分
+  // axios中請求設定有baseURL選項，表示請求URL公開部分
   baseURL: process.env.VUE_APP_BASE_API,
   // 逾時
   timeout: 10000
@@ -152,7 +152,7 @@ export function download(url, params, filename, config) {
     downloadLoadingInstance.close()
   }).catch((r) => {
     console.error(r)
-    Message.error('下載文件出現錯誤，請聯絡管理員！')
+    Message.error('下載檔案出現錯誤，請聯絡管理員！')
     downloadLoadingInstance.close()
   })
 }

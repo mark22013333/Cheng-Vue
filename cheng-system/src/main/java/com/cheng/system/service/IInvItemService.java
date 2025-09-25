@@ -58,7 +58,7 @@ public interface IInvItemService {
     List<InvItem> selectLowStockItemList();
 
     /**
-     * 掃描條碼或QR碼獲取物品資訊
+     * 掃描條碼或QR碼取得物品資訊
      *
      * @param scanCode 掃描內容
      * @param scanType 掃描類型（1條碼 2QR碼）

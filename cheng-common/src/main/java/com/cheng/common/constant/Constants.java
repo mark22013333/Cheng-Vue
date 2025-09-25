@@ -5,7 +5,7 @@ import io.jsonwebtoken.Claims;
 import java.util.Locale;
 
 /**
- * 共用常量訊息
+ * 共用常數訊息
  *
  * @author cheng
  */
@@ -156,12 +156,12 @@ public class Constants {
     public static final String LOOKUP_LDAPS = "ldaps:";
 
     /**
-     * 自動識别json物件白名單配置（僅允許解析的包名，範圍越小越安全）
+     * 自動識別json物件白名單設定（僅允許解析的包名，範圍越小越安全）
      */
     public static final String[] JSON_WHITELIST_STR = {"com.cheng"};
 
     /**
-     * 定時任務白名單配置（僅允許訪問的包名，如其他需要可以自行新增）
+     * 定時任務白名單設定（僅允許訪問的包名，如其他需要可以自行新增）
      */
     public static final String[] JOB_WHITELIST_STR = {"com.cheng.quartz.task"};
 

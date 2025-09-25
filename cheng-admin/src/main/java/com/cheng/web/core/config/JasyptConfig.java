@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * @author cheng
- * @since 2023/12/3 12:35 AM
+ * @since 2023/12/3 12:35
  **/
 @Configuration
 public class JasyptConfig {

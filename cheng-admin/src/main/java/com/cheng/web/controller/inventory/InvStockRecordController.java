@@ -58,7 +58,7 @@ public class InvStockRecordController extends BaseController {
     }
 
     /**
-     * 獲取庫存異動記錄詳細資訊
+     * 取得庫存異動記錄詳細資訊
      */
     @PreAuthorize("@ss.hasPermi('inventory:stockRecord:query')")
     @GetMapping(value = "/{recordId}")

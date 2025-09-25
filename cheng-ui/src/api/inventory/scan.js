@@ -9,7 +9,7 @@ export function scanItem(data) {
   })
 }
 
-// 獲取掃描歷史
+// 取得掃描歷史
 export function getScanHistory(query) {
   return request({
     url: '/inventory/scan/history',

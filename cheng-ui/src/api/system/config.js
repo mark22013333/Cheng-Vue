@@ -25,7 +25,7 @@ export function getConfigKey(configKey) {
   })
 }
 
-// 新增參數配置
+// 新增參數設定
 export function addConfig(data) {
   return request({
     url: '/system/config',
@@ -34,7 +34,7 @@ export function addConfig(data) {
   })
 }
 
-// 修改參數配置
+// 修改參數設定
 export function updateConfig(data) {
   return request({
     url: '/system/config',
@@ -43,7 +43,7 @@ export function updateConfig(data) {
   })
 }
 
-// 刪除參數配置
+// 刪除參數設定
 export function delConfig(configId) {
   return request({
     url: '/system/config/' + configId,

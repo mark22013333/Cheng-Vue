@@ -135,7 +135,7 @@
       </splitpanes>
     </el-row>
 
-    <!-- 新增或修改使用者配置對話框 -->
+    <!-- 新增或修改使用者設定對話框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
@@ -178,8 +178,8 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="使用者性别">
-              <el-select v-model="form.sex" placeholder="請選擇性别">
+            <el-form-item label="使用者性別">
+              <el-select v-model="form.sex" placeholder="請選擇性別">
                 <el-option v-for="dict in dict.type.sys_user_sex" :key="dict.value" :label="dict.label"
                            :value="dict.value"></el-option>
               </el-select>
@@ -233,13 +233,13 @@
                  :action="upload.url + '?updateSupport=' + upload.updateSupport" :disabled="upload.isUploading"
                  :on-progress="handleFileUploadProgress" :on-success="handleFileSuccess" :auto-upload="false" drag>
         <i class="el-icon-upload"></i>
-        <div class="el-upload__text">將文件拖到此處，或<em>點擊上傳</em></div>
+        <div class="el-upload__text">將檔案拖到此處，或<em>點擊上傳</em></div>
         <div class="el-upload__tip text-center" slot="tip">
           <div class="el-upload__tip" slot="tip">
             <el-checkbox v-model="upload.updateSupport"/>
             是否更新已經存在的使用者數據
           </div>
-          <span>僅允許匯入xls、xlsx格式文件。</span>
+          <span>僅允許匯入xls、xlsx格式檔案。</span>
           <el-link :underline="false" style="font-size: 12px; vertical-align: baseline" type="primary"
                    @click="importTemplate">下載模板
           </el-link>
@@ -324,7 +324,7 @@ export default {
         isUploading: false,
         // 是否更新已經存在的使用者數據
         updateSupport: 0,
-        // 設定上傳的請求頭部
+        // 設定上傳的請求標頭
         headers: {Authorization: "Bearer " + getToken()},
         // 上傳的地址
         url: process.env.VUE_APP_BASE_API + "/system/user/importData"
@@ -595,11 +595,11 @@ export default {
     importTemplate() {
       this.download('system/user/importTemplate', {}, `user_template_${new Date().getTime()}.xlsx`)
     },
-    // 文件上傳中處理
+    // 檔案上傳中處理
     handleFileUploadProgress(event, file, fileList) {
       this.upload.isUploading = true
     },
-    // 文件上傳成功處理
+    // 檔案上傳成功處理
     handleFileSuccess(response, file, fileList) {
       this.upload.open = false
       this.upload.isUploading = false
@@ -607,11 +607,11 @@ export default {
       this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "匯入結果", {dangerouslyUseHTMLString: true})
       this.getList()
     },
-    // 提交上傳文件
+    // 提交上傳檔案
     submitFileForm() {
       const file = this.$refs.upload.uploadFiles
       if (!file || file.length === 0 || !file[0].name.toLowerCase().endsWith('.xls') && !file[0].name.toLowerCase().endsWith('.xlsx')) {
-        this.$modal.msgError("請選擇後綴為 “xls”或“xlsx”的文件。")
+        this.$modal.msgError("請選擇後綴為 “xls”或“xlsx”的檔案。")
         return
       }
       this.$refs.upload.submit()

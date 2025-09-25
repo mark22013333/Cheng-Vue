@@ -40,7 +40,7 @@
     <dependencyManagement>
         <dependencies>
 
-            <!-- SpringBoot的依賴配置-->
+            <!-- SpringBoot的依賴設定-->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>

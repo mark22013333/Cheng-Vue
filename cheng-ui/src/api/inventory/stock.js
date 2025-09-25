@@ -70,7 +70,7 @@ export function stockCheck(data) {
   })
 }
 
-// 獲取庫存統計
+// 取得庫存統計
 export function getStockStats() {
   return request({
     url: '/inventory/stock/stats',
@@ -78,7 +78,7 @@ export function getStockStats() {
   })
 }
 
-// 獲取低庫存列表
+// 取得低庫存列表
 export function getLowStockList(query) {
   return request({
     url: '/inventory/stock/low',

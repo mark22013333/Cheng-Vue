@@ -1,7 +1,7 @@
 package com.cheng.common.constant;
 
 /**
- * 暫存的key 常量
+ * 暫存的key 常數
  *
  * @author cheng
  */

@@ -46,7 +46,7 @@ public class ImageUtils {
     }
 
     /**
-     * 讀取文件為位元組數據
+     * 讀取檔案為位元組數據
      *
      * @param url 地址
      * @return 位元組數據
@@ -70,7 +70,7 @@ public class ImageUtils {
             }
             return IOUtils.toByteArray(in);
         } catch (Exception e) {
-            log.error("取得文件路徑異常:", e);
+            log.error("取得檔案路徑異常:", e);
             return null;
         } finally {
             IOUtils.closeQuietly(in);

@@ -40,7 +40,7 @@
                   <td class="el-table__cell is-leaf"><div class="cell">使用CPU</div></td>
                   <td class="el-table__cell is-leaf"><div class="cell" v-if="cache.info">{{ parseFloat(cache.info.used_cpu_user_children).toFixed(2) }}</div></td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">記憶體配置</div>
+                    <div class="cell">記憶體設定</div>
                   </td>
                   <td class="el-table__cell is-leaf"><div class="cell" v-if="cache.info">{{ cache.info.maxmemory_human }}</div></td>
                 </tr>

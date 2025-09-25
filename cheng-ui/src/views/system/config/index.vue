@@ -151,7 +151,7 @@
       @pagination="getList"
     />
 
-    <!-- 新增或修改參數配置對話框 -->
+    <!-- 新增或修改參數設定對話框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="參數名稱" prop="configName">

@@ -6,7 +6,7 @@ cheng:
   version: 1.0.1
   # 版權年份
   copyrightYear: 2025
-  # 檔案路徑 - 由環境特定配置檔案設定 (application-local.yml 或 application-prod.yml)
+  # 檔案路徑 - 由環境特定設定檔案設定 (application-local.yml 或 application-prod.yml)
   # profile: 路徑將從 application-local.yml 或 application-prod.yml 中取得
   # 取得ip位址開關
   addressEnabled: true
@@ -80,9 +80,9 @@ token:
 mybatis:
   # 搜尋指定包別名
   typeAliasesPackage: com.cheng.**.domain
-  # 設定mapper的掃描，找到所有的mapper.xml映射文件
+  # 設定mapper的掃描，找到所有的mapper.xml映射檔案
   mapperLocations: classpath*:mapper/**/*Mapper.xml
-  # 載入全域的設定文件
+  # 載入全域的設定檔案
   configLocation: classpath:mybatis/mybatis-config.xml
 
 # PageHelper分頁套件

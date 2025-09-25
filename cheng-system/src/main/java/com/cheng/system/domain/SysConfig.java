@@ -11,7 +11,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import java.io.Serial;
 
 /**
- * 參數配置表 sys_config
+ * 參數設定表 sys_config
  *
  * @author cheng
  */

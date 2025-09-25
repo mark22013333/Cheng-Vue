@@ -6,7 +6,7 @@ import Layout from '@/layout'
 Vue.use(Router)
 
 /**
- * Note: 路由配置項
+ * Note: 路由設定項
  *
  * hidden: true                     // 當設定 true 的時候該路由不會再側邊欄出現 如401，login等頁面，或者如一些編輯頁面/edit/1
  * alwaysShow: true                 // 當你一個路由下面的 children 声明的路由大於1個時，自動會變成嵌套的模式--如元件頁面
@@ -157,7 +157,7 @@ export const dynamicRoutes = [
         path: 'index/:tableId(\\d+)',
         component: () => import('@/views/tool/gen/editTable'),
         name: 'GenEdit',
-        meta: {title: '修改產生配置', activeMenu: '/tool/gen'}
+        meta: {title: '修改產生設定', activeMenu: '/tool/gen'}
       }
     ]
   },

@@ -9,7 +9,7 @@
     <el-form-item label="信箱" prop="email">
       <el-input v-model="form.email" maxlength="50" />
     </el-form-item>
-    <el-form-item label="性别">
+    <el-form-item label="性別">
       <el-radio-group v-model="form.sex">
         <el-radio label="0">男</el-radio>
         <el-radio label="1">女</el-radio>

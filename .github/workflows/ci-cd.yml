@@ -1,0 +1,159 @@
+name: Cheng-Vue CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+concurrency:
+  group: cheng-vue-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '18'
+  JAVA_VERSION: '17'
+
+jobs:
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: cheng-ui/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: cheng-ui            # <- 若前端不在 cheng-ui，請調整路徑
+        run: npm ci
+
+      - name: Build frontend
+        run: bash cheng.deploy/build-frontend.sh
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: |
+            cheng-ui/dist                     # <- 若輸出路徑不同，請調整
+
+  build-backend:
+    name: Build Backend (Maven)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java ${{ env.JAVA_VERSION }} and Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'maven'
+
+      - name: Build backend (Maven)
+        working-directory: cheng-admin        # <- 後端主模組
+        run: mvn -B -DskipTests package
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-wars
+          path: |
+            cheng-admin/target/apps.war       # 由 cheng-admin 的 pom.xml <finalName> 決定
+
+  deploy:
+    name: Deploy (needs build jobs)
+    needs: [build-frontend, build-backend]
+    runs-on: ubuntu-latest
+    environment: production                   # <- 可選：若要使用 Environment 的審核機制
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend-dist
+
+      - name: Download backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-wars
+          path: backend-wars
+
+      - name: Ensure deploy scripts are executable
+        run: |
+          chmod +x cheng.deploy/*.sh
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Use pre-provided known_hosts (optional)
+        if: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+
+      - name: Add server to known_hosts via ssh-keyscan (fallback)
+        if: ${{ !secrets.SSH_KNOWN_HOSTS }}
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          SERVER_PORT: ${{ secrets.SSH_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          SERVER_PORT=${SERVER_PORT:-22}
+          ssh-keyscan -p "$SERVER_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy backend WAR to server (no rebuild)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          SERVER_PORT: ${{ secrets.SSH_PORT }}
+          TOMCAT_WEBAPPS_DIR: ${{ secrets.TOMCAT_WEBAPPS_DIR }}
+        run: |
+          set -e
+          SERVER_PORT=${SERVER_PORT:-22}
+          TOMCAT_WEBAPPS_DIR=${TOMCAT_WEBAPPS_DIR:-/usr/libexec/tomcat10/webapps}
+          APP_NAME=apps
+
+          echo "Uploading backend-wars/${APP_NAME}.war to ${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/${APP_NAME}-new.war"
+          scp -P "$SERVER_PORT" backend-wars/${APP_NAME}.war "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/${APP_NAME}-new.war"
+
+          echo "Deploying on remote Tomcat..."
+          ssh -p "$SERVER_PORT" "${DEPLOY_USER}@${DEPLOY_HOST}" <<EOF
+            set -e
+            echo "Stopping Tomcat..."
+            sudo systemctl stop tomcat10
+
+            echo "Backing up existing WAR if exists..."
+            if [ -f "${TOMCAT_WEBAPPS_DIR}/${APP_NAME}.war" ]; then
+              sudo mv "${TOMCAT_WEBAPPS_DIR}/${APP_NAME}.war" "${TOMCAT_WEBAPPS_DIR}/${APP_NAME}.war.backup.$(date +%Y%m%d_%H%M%S)"
+            fi
+
+            echo "Removing exploded app directory..."
+            sudo rm -rf "${TOMCAT_WEBAPPS_DIR}/${APP_NAME}/"
+
+            echo "Placing new WAR..."
+            sudo cp "/tmp/${APP_NAME}-new.war" "${TOMCAT_WEBAPPS_DIR}/${APP_NAME}.war"
+            sudo chown tomcat:tomcat "${TOMCAT_WEBAPPS_DIR}/${APP_NAME}.war"
+
+            echo "Starting Tomcat..."
+            sudo systemctl start tomcat10
+
+            echo "Cleaning up temp WAR..."
+            rm -f "/tmp/${APP_NAME}-new.war"
+          EOF
+
+      # 若部署前端需要把 frontend-dist 傳上去，可在腳本內處理，或示範如下：
+      # - name: Deploy frontend static files (optional)
+      #   run: |
+      #     (cd frontend-dist && bash ../cheng.deploy/deploy-to-server.sh)

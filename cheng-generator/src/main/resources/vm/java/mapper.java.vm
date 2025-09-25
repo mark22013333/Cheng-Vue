@@ -1,19 +1,19 @@
 package ${packageName}.mapper;
 
 import java.util.List;
+
 import ${packageName}.domain.${ClassName};
 #if($table.sub)
-import ${packageName}.domain.${subClassName};
+import ${packageName}.domain .${subClassName};
 #end
 
 /**
  * ${functionName}Mapper介面
- * 
+ *
  * @author ${author}
  * @since ${datetime}
  */
-public interface ${ClassName}Mapper 
-{
+public interface ${ClassName}Mapper {
     /**
      * 查詢${functionName}
      *
@@ -24,7 +24,7 @@ public interface ${ClassName}Mapper
 
     /**
      * 查詢${functionName}列表
-     * 
+     *
      * @param ${className} ${functionName}
      * @return ${functionName}集合
      */
@@ -32,7 +32,7 @@ public interface ${ClassName}Mapper
 
     /**
      * 新增${functionName}
-     * 
+     *
      * @param ${className} ${functionName}
      * @return 結果
      */
@@ -40,7 +40,7 @@ public interface ${ClassName}Mapper
 
     /**
      * 修改${functionName}
-     * 
+     *
      * @param ${className} ${functionName}
      * @return 結果
      */
@@ -61,31 +61,31 @@ public interface ${ClassName}Mapper
      * @return 結果
      */
     public int delete${ClassName}By${pkColumn.capJavaField}s(${pkColumn.javaType}[] ${pkColumn.javaField}s);
-#if($table.sub)
+    #if($table.sub)
 
-    /**
-     * 批次刪除${subTable.functionName}
-     *
-     * @param ${pkColumn.javaField}s 需要刪除的數據主鍵集合
-     * @return 結果
-     */
-    public int delete${subClassName}By${subTableFkClassName}s(${pkColumn.javaType}[] ${pkColumn.javaField}s);
-    
-    /**
-     * 批次新增${subTable.functionName}
-     * 
-     * @param ${subclassName}List ${subTable.functionName}列表
-     * @return 結果
-     */
-    public int batch${subClassName}(List<${subClassName}> ${subclassName}List);
-    
+        /**
+         * 批次刪除${subTable.functionName}
+         *
+         * @param ${pkColumn.javaField}s 需要刪除的數據主鍵集合
+         * @return 結果
+         */
+        public int delete${subClassName}By${subTableFkClassName}s(${pkColumn.javaType}[] ${pkColumn.javaField}s);
 
-    /**
-     * 通過${functionName}主鍵刪除${subTable.functionName}訊息
-     * 
-     * @param ${pkColumn.javaField} ${functionName}ID
-     * @return 結果
-     */
-    public int delete${subClassName}By${subTableFkClassName}(${pkColumn.javaType} ${pkColumn.javaField});
-#end
+        /**
+         * 批次新增${subTable.functionName}
+         *
+         * @param ${subclassName}List ${subTable.functionName}列表
+         * @return 結果
+         */
+        public int batch${subClassName}(List<${subClassName}> ${subclassName}List);
+
+
+        /**
+         * 通過${functionName}主鍵刪除${subTable.functionName}訊息
+         *
+         * @param ${pkColumn.javaField} ${functionName}ID
+         * @return 結果
+         */
+        public int delete${subClassName}By${subTableFkClassName}(${pkColumn.javaType} ${pkColumn.javaField});
+    #end
 }

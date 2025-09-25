@@ -190,7 +190,7 @@ public class GenController extends BaseController {
     @GetMapping("/genCode/{tableName}")
     public AjaxResult genCode(@PathVariable("tableName") String tableName) {
         if (!GenConfig.isAllowOverwrite()) {
-            return AjaxResult.error("【系統預設】不允許產生文件覆蓋到本機");
+            return AjaxResult.error("【系統預設】不允許產生檔案覆蓋到本機");
         }
         genTableService.generatorCode(tableName);
         return success();
@@ -220,7 +220,7 @@ public class GenController extends BaseController {
     }
 
     /**
-     * 產生zip文件
+     * 產生zip檔案
      */
     private void genCode(HttpServletResponse response, byte[] data) throws IOException {
         response.reset();

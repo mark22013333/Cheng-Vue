@@ -88,7 +88,7 @@
                 <el-option label="複選框" value="checkbox"/>
                 <el-option label="日期元件" value="datetime" />
                 <el-option label="圖片上傳" value="imageUpload"/>
-                <el-option label="文件上傳" value="fileUpload"/>
+                <el-option label="檔案上傳" value="fileUpload"/>
                 <el-option label="富文字元件" value="editor"/>
               </el-select>
             </template>

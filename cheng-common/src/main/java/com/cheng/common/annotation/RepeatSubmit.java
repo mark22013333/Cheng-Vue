@@ -6,7 +6,6 @@ import java.lang.annotation.*;
  * 自定義註解防止表單重複提交
  *
  * @author cheng
- *
  */
 @Inherited
 @Target(ElementType.METHOD)

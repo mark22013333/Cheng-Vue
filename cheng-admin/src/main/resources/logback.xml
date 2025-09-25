@@ -17,9 +17,9 @@
     <!-- 系統日誌輸出 -->
 	<appender name="file_info" class="ch.qos.logback.core.rolling.RollingFileAppender">
 	    <file>${LOG_PATH}/sys-info.log</file>
-        <!-- 循環政策：基於時間建立日誌文件 -->
+        <!-- 循環政策：基於時間建立日誌檔案 -->
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 日誌文件名格式 -->
+            <!-- 日誌檔案名格式 -->
 			<fileNamePattern>${LOG_PATH}/sys-info.%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- 日誌最大的歷史 60天 -->
 			<maxHistory>60</maxHistory>
@@ -28,7 +28,7 @@
 			<pattern>${log.pattern}</pattern>
 		</encoder>
 		<filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <!-- 過濾的級别 -->
+            <!-- 過濾的級別 -->
             <level>INFO</level>
             <!-- 匹配時的操作：接收（記錄） -->
             <onMatch>ACCEPT</onMatch>
@@ -39,9 +39,9 @@
 	
 	<appender name="file_error" class="ch.qos.logback.core.rolling.RollingFileAppender">
 	    <file>${LOG_PATH}/sys-error.log</file>
-        <!-- 循環政策：基於時間建立日誌文件 -->
+        <!-- 循環政策：基於時間建立日誌檔案 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 日誌文件名格式 -->
+            <!-- 日誌檔案名格式 -->
             <fileNamePattern>${LOG_PATH}/sys-error.%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- 日誌最大的歷史 60天 -->
 			<maxHistory>60</maxHistory>
@@ -50,7 +50,7 @@
             <pattern>${log.pattern}</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <!-- 過濾的級别 -->
+            <!-- 過濾的級別 -->
             <level>ERROR</level>
             <!-- 匹配時的操作：接收（記錄） -->
             <onMatch>ACCEPT</onMatch>
@@ -73,9 +73,9 @@
         </encoder>
     </appender>
 
-    <!-- 系統模組日誌級别控制  -->
+    <!-- 系統模組日誌級別控制  -->
     <logger name="com.cheng" level="info"/>
-    <!-- Spring日誌級别控制  -->
+    <!-- Spring日誌級別控制  -->
 	<logger name="org.springframework" level="warn" />
 
 	<root level="info">

@@ -91,7 +91,6 @@ public class SysLoginService {
      * @param username 使用者名
      * @param code     驗證碼
      * @param uuid     唯一標識
-     * @return 結果
      */
     public void validateCaptcha(String username, String code, String uuid) {
         boolean captchaEnabled = configService.selectCaptchaEnabled();

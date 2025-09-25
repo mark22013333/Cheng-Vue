@@ -1,16 +1,16 @@
 package ${packageName}.service;
 
 import java.util.List;
-import ${packageName}.domain.${ClassName};
+
+import ${packageName}.domain .${ClassName};
 
 /**
  * ${functionName}Service介面
- * 
+ *
  * @author ${author}
  * @since ${datetime}
  */
-public interface I${ClassName}Service 
-{
+public interface I${ClassName}Service {
     /**
      * 查詢${functionName}
      *
@@ -21,7 +21,7 @@ public interface I${ClassName}Service
 
     /**
      * 查詢${functionName}列表
-     * 
+     *
      * @param ${className} ${functionName}
      * @return ${functionName}集合
      */
@@ -29,7 +29,7 @@ public interface I${ClassName}Service
 
     /**
      * 新增${functionName}
-     * 
+     *
      * @param ${className} ${functionName}
      * @return 結果
      */
@@ -37,7 +37,7 @@ public interface I${ClassName}Service
 
     /**
      * 修改${functionName}
-     * 
+     *
      * @param ${className} ${functionName}
      * @return 結果
      */

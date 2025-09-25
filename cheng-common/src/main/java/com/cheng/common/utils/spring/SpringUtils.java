@@ -83,7 +83,7 @@ public final class SpringUtils implements BeanFactoryPostProcessor, ApplicationC
     }
 
     /**
-     * 如果給定的bean名字在bean定義中有别名，則返回這些别名
+     * 如果給定的bean名字在bean定義中有別名，則返回這些別名
      *
      * @param name
      * @return
@@ -110,18 +110,18 @@ public final class SpringUtils implements BeanFactoryPostProcessor, ApplicationC
     }
 
     /**
-     * 取得目前的環境配置，無配置返回null
+     * 取得目前的環境設定，無設定返回null
      *
-     * @return 目前的環境配置
+     * @return 目前的環境設定
      */
     public static String[] getActiveProfiles() {
         return applicationContext.getEnvironment().getActiveProfiles();
     }
 
     /**
-     * 取得目前的環境配置，當有多個環境配置時，只取得第一個
+     * 取得目前的環境設定，當有多個環境設定時，只取得第一個
      *
-     * @return 目前的環境配置
+     * @return 目前的環境設定
      */
     public static String getActiveProfile() {
         final String[] activeProfiles = getActiveProfiles();
@@ -129,10 +129,10 @@ public final class SpringUtils implements BeanFactoryPostProcessor, ApplicationC
     }
 
     /**
-     * 取得配置文件中的值
+     * 取得設定檔案中的值
      *
-     * @param key 配置文件的key
-     * @return 目前的配置文件的值
+     * @param key 設定檔案的key
+     * @return 目前的設定檔案的值
      *
      */
     public static String getRequiredProperty(String key) {

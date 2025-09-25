@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * druid 配置多資料來源
+ * druid 設定多資料來源
  *
  * @author cheng
  */
@@ -77,7 +77,7 @@ public class DruidConfig {
     public FilterRegistrationBean removeDruidFilterRegistrationBean(DruidStatProperties properties) {
         // 取得 web 監控頁面的參數
         DruidStatProperties.StatViewServlet config = properties.getStatViewServlet();
-        // 提取 common.js 的配置路徑
+        // 提取 common.js 的設定路徑
         String pattern = config.getUrlPattern() != null ? config.getUrlPattern() : "/druid/*";
         String commonJsPattern = pattern.replaceAll("\\*", "js/common.js");
         final String filePath = "support/http/resources/js/common.js";

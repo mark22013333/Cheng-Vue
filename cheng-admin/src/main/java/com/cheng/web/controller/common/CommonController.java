@@ -28,8 +28,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/common")
-public class CommonController
-{
+public class CommonController {
     private static final Logger log = LoggerFactory.getLogger(CommonController.class);
 
     @Autowired
@@ -40,17 +39,14 @@ public class CommonController
     /**
      * 共用下載請求
      *
-     * @param fileName 文件名稱
-     * @param delete 是否刪除
+     * @param fileName 檔案名稱
+     * @param delete   是否刪除
      */
     @GetMapping("/download")
-    public void fileDownload(String fileName, Boolean delete, HttpServletResponse response, HttpServletRequest request)
-    {
-        try
-        {
-            if (!FileUtils.checkAllowDownload(fileName))
-            {
-                throw new Exception(StringUtils.format("文件名稱({})非法，不允許下載。 ", fileName));
+    public void fileDownload(String fileName, Boolean delete, HttpServletResponse response, HttpServletRequest request) {
+        try {
+            if (!FileUtils.checkAllowDownload(fileName)) {
+                throw new Exception(StringUtils.format("檔案名稱({})非法，不允許下載。 ", fileName));
             }
             String realFileName = System.currentTimeMillis() + fileName.substring(fileName.indexOf("_") + 1);
             String filePath = CoolAppsConfig.getDownloadPath() + fileName;
@@ -58,14 +54,11 @@ public class CommonController
             response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
             FileUtils.setAttachmentResponseHeader(response, realFileName);
             FileUtils.writeBytes(filePath, response.getOutputStream());
-            if (delete)
-            {
+            if (delete) {
                 FileUtils.deleteFile(filePath);
             }
-        }
-        catch (Exception e)
-        {
-            log.error("下載文件失敗", e);
+        } catch (Exception e) {
+            log.error("下載檔案失敗", e);
         }
     }
 
@@ -73,13 +66,11 @@ public class CommonController
      * 共用上傳請求（單個）
      */
     @PostMapping("/upload")
-    public AjaxResult uploadFile(MultipartFile file) throws Exception
-    {
-        try
-        {
-            // 上傳文件路徑
+    public AjaxResult uploadFile(MultipartFile file) throws Exception {
+        try {
+            // 上傳檔案路徑
             String filePath = CoolAppsConfig.getUploadPath();
-            // 上傳並返回新文件名稱
+            // 上傳並返回新檔案名稱
             String fileName = FileUploadUtils.upload(filePath, file);
             String url = serverConfig.getUrl() + fileName;
             AjaxResult ajax = AjaxResult.success();
@@ -88,9 +79,7 @@ public class CommonController
             ajax.put("newFileName", FileUtils.getName(fileName));
             ajax.put("originalFilename", file.getOriginalFilename());
             return ajax;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             return AjaxResult.error(e.getMessage());
         }
     }
@@ -99,19 +88,16 @@ public class CommonController
      * 共用上傳請求（多個）
      */
     @PostMapping("/uploads")
-    public AjaxResult uploadFiles(List<MultipartFile> files) throws Exception
-    {
-        try
-        {
-            // 上傳文件路徑
+    public AjaxResult uploadFiles(List<MultipartFile> files) {
+        try {
+            // 上傳檔案路徑
             String filePath = CoolAppsConfig.getUploadPath();
-            List<String> urls = new ArrayList<String>();
-            List<String> fileNames = new ArrayList<String>();
-            List<String> newFileNames = new ArrayList<String>();
-            List<String> originalFilenames = new ArrayList<String>();
-            for (MultipartFile file : files)
-            {
-                // 上傳並返回新文件名稱
+            List<String> urls = new ArrayList<>();
+            List<String> fileNames = new ArrayList<>();
+            List<String> newFileNames = new ArrayList<>();
+            List<String> originalFilenames = new ArrayList<>();
+            for (MultipartFile file : files) {
+                // 上傳並返回新檔案名稱
                 String fileName = FileUploadUtils.upload(filePath, file);
                 String url = serverConfig.getUrl() + fileName;
                 urls.add(url);
@@ -125,9 +111,7 @@ public class CommonController
             ajax.put("newFileNames", StringUtils.join(newFileNames, FILE_DELIMETER));
             ajax.put("originalFilenames", StringUtils.join(originalFilenames, FILE_DELIMETER));
             return ajax;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             return AjaxResult.error(e.getMessage());
         }
     }
@@ -136,14 +120,10 @@ public class CommonController
      * 本機資源共用下載
      */
     @GetMapping("/download/resource")
-    public void resourceDownload(String resource, HttpServletRequest request, HttpServletResponse response)
-            throws Exception
-    {
-        try
-        {
-            if (!FileUtils.checkAllowDownload(resource))
-            {
-                throw new Exception(StringUtils.format("資源文件({})非法，不允許下載。 ", resource));
+    public void resourceDownload(String resource, HttpServletRequest request, HttpServletResponse response) {
+        try {
+            if (!FileUtils.checkAllowDownload(resource)) {
+                throw new Exception(StringUtils.format("資源檔案({})非法，不允許下載。 ", resource));
             }
             // 本機資源路徑
             String localPath = CoolAppsConfig.getProfile();
@@ -154,10 +134,8 @@ public class CommonController
             response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
             FileUtils.setAttachmentResponseHeader(response, downloadName);
             FileUtils.writeBytes(downloadPath, response.getOutputStream());
-        }
-        catch (Exception e)
-        {
-            log.error("下載文件失敗", e);
+        } catch (Exception e) {
+            log.error("下載檔案失敗", e);
         }
     }
 }

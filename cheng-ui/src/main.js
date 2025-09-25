@@ -26,7 +26,7 @@ import Pagination from "@/components/Pagination"
 import RightToolbar from "@/components/RightToolbar"
 // 富文字元件
 import Editor from "@/components/Editor"
-// 文件上傳元件
+// 檔案上傳元件
 import FileUpload from "@/components/FileUpload"
 // 圖片上傳元件
 import ImageUpload from "@/components/ImageUpload"

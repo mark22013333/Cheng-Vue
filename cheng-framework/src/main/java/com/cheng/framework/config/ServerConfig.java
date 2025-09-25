@@ -5,7 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
 
 /**
- * 服務相關配置
+ * 服務相關設定
  *
  * @author cheng
  */

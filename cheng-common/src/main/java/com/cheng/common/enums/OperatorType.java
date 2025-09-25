@@ -1,7 +1,7 @@
 package com.cheng.common.enums;
 
 /**
- * 操作人類别
+ * 操作人類別
  *
  * @author cheng
  */

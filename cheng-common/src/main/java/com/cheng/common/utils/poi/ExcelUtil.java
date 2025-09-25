@@ -155,7 +155,7 @@ public class ExcelUtil<T> {
      * 解析匯出值 0=男,1=女,2=未知
      *
      * @param propertyValue 參數值
-     * @param converterExp  翻译註解
+     * @param converterExp  翻譯註解
      * @param separator     分隔符號
      * @return 解析後值
      */
@@ -184,7 +184,7 @@ public class ExcelUtil<T> {
      * 反向解析值 男=0,女=1,未知=2
      *
      * @param propertyValue 參數值
-     * @param converterExp  翻译註解
+     * @param converterExp  翻譯註解
      * @param separator     分隔符號
      * @return 解析後值
      */
@@ -407,7 +407,7 @@ public class ExcelUtil<T> {
         // 如果指定sheet名,則取指定sheet中的内容 否則預設指向第1個sheet
         Sheet sheet = StringUtils.isNotEmpty(sheetName) ? wb.getSheet(sheetName) : wb.getSheetAt(0);
         if (sheet == null) {
-            throw new IOException("文件sheet不存在");
+            throw new IOException("檔案sheet不存在");
         }
         boolean isXSSFWorkbook = !(wb instanceof HSSFWorkbook);
         Map<String, List<PictureData>> pictures = null;
@@ -1128,7 +1128,7 @@ public class ExcelUtil<T> {
         DataValidationHelper helper = sheet.getDataValidationHelper();
         // 載入下拉列表内容
         DataValidationConstraint constraint = helper.createFormulaListConstraint(hideSheetName + "_data");
-        // 設定數據有效性載入在哪個單元格上,四個參數分别是：起始行、終止行、起始列、終止列
+        // 設定數據有效性載入在哪個單元格上,四個參數分別是：起始行、終止行、起始列、終止列
         CellRangeAddressList regions = new CellRangeAddressList(firstRow, endRow, firstCol, endCol);
         // 數據有效性物件
         DataValidation dataValidation = helper.createValidation(constraint, regions);
@@ -1206,7 +1206,7 @@ public class ExcelUtil<T> {
     }
 
     /**
-     * 編碼文件名
+     * 編碼檔案名
      */
     public String encodingFilename(String filename) {
         return UUID.randomUUID() + "_" + filename + ".xlsx";
@@ -1215,7 +1215,7 @@ public class ExcelUtil<T> {
     /**
      * 取得下載路徑
      *
-     * @param filename 文件名稱
+     * @param filename 檔案名稱
      */
     public String getAbsoluteFile(String filename) {
         String downloadPath = CoolAppsConfig.getDownloadPath() + filename;

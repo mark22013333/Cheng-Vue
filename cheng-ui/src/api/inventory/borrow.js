@@ -70,7 +70,7 @@ export function approveBorrow(data) {
   })
 }
 
-// 獲取借出統計
+// 取得借出統計
 export function getBorrowStats() {
   return request({
     url: '/inventory/borrow/stats',
@@ -78,7 +78,7 @@ export function getBorrowStats() {
   })
 }
 
-// 獲取逾期記錄
+// 取得逾期記錄
 export function getOverdueList(query) {
   return request({
     url: '/inventory/borrow/overdue',

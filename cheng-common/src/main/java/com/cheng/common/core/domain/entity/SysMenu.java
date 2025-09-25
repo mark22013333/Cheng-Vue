@@ -48,7 +48,7 @@ public class SysMenu extends BaseEntity
     /** 路由名稱，預設和路由地址相同的驼峰格式（註意：因為vue3版本的router會刪除名稱相同路由，為避免名字的衝突，特殊情況可以自定義） */
     private String routeName;
 
-    /** 是否為外鏈（0是 1否） */
+    /** 是否為外部連結（0是 1否） */
     private String isFrame;
 
     /** 是否暫存（0暫存 1不暫存） */

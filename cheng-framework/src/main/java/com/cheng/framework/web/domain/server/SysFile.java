@@ -1,7 +1,7 @@
 package com.cheng.framework.web.domain.server;
 
 /**
- * 系統文件相關訊息
+ * 系統檔案相關訊息
  *
  * @author cheng
  */
@@ -17,7 +17,7 @@ public class SysFile {
     private String sysTypeName;
 
     /**
-     * 文件類型
+     * 檔案類型
      */
     private String typeName;
 

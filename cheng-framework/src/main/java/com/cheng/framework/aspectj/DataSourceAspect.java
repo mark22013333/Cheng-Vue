@@ -24,33 +24,26 @@ import java.util.Objects;
 @Aspect
 @Order(1)
 @Component
-public class DataSourceAspect
-{
+public class DataSourceAspect {
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
     @Pointcut("@annotation(com.cheng.common.annotation.DataSource)"
             + "|| @within(com.cheng.common.annotation.DataSource)")
-    public void dsPointCut()
-    {
+    public void dsPointCut() {
 
     }
 
     @Around("dsPointCut()")
-    public Object around(ProceedingJoinPoint point) throws Throwable
-    {
+    public Object around(ProceedingJoinPoint point) throws Throwable {
         DataSource dataSource = getDataSource(point);
 
-        if (StringUtils.isNotNull(dataSource))
-        {
+        if (StringUtils.isNotNull(dataSource)) {
             DynamicDataSourceContextHolder.setDataSourceType(dataSource.value().name());
         }
 
-        try
-        {
+        try {
             return point.proceed();
-        }
-        finally
-        {
+        } finally {
             // 銷毁資料來源 在執行方法之後
             DynamicDataSourceContextHolder.clearDataSourceType();
         }
@@ -59,12 +52,10 @@ public class DataSourceAspect
     /**
      * 取得需要切換的資料來源
      */
-    public DataSource getDataSource(ProceedingJoinPoint point)
-    {
+    public DataSource getDataSource(ProceedingJoinPoint point) {
         MethodSignature signature = (MethodSignature) point.getSignature();
         DataSource dataSource = AnnotationUtils.findAnnotation(signature.getMethod(), DataSource.class);
-        if (Objects.nonNull(dataSource))
-        {
+        if (Objects.nonNull(dataSource)) {
             return dataSource;
         }
 

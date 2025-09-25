@@ -66,7 +66,7 @@ export default {
       downloadLoadingInstance.close()
     }).catch((r) => {
       console.error(r)
-      Message.error('下載文件出現錯誤，請聯絡管理員！')
+      Message.error('下載檔案出現錯誤，請聯絡管理員！')
       downloadLoadingInstance.close()
     })
   },

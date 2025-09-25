@@ -152,10 +152,10 @@ public class VelocityUtils {
     }
 
     /**
-     * 取得文件名
+     * 取得檔案名
      */
     public static String getFileName(String template, GenTable genTable) {
-        // 文件名稱
+        // 檔案名稱
         String fileName = "";
         // 包路徑
         String packageName = genTable.getPackageName();

@@ -10,7 +10,7 @@ module.exports = {
   sideTheme: 'theme-dark',
 
   /**
-   * 系統介面配置
+   * 系統介面設定
    */
   showSettings: true,
 

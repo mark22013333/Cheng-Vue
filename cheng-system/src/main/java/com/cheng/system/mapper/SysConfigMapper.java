@@ -5,61 +5,61 @@ import com.cheng.system.domain.SysConfig;
 import java.util.List;
 
 /**
- * 參數配置 數據層
+ * 參數設定 數據層
  *
  * @author cheng
  */
 public interface SysConfigMapper {
     /**
-     * 查詢參數配置訊息
+     * 查詢參數設定訊息
      *
-     * @param config 參數配置訊息
-     * @return 參數配置訊息
+     * @param config 參數設定訊息
+     * @return 參數設定訊息
      */
     SysConfig selectConfig(SysConfig config);
 
     /**
-     * 通過ID查詢配置
+     * 通過ID查詢設定
      *
      * @param configId 參數ID
-     * @return 參數配置訊息
+     * @return 參數設定訊息
      */
     SysConfig selectConfigById(Long configId);
 
     /**
-     * 查詢參數配置列表
+     * 查詢參數設定列表
      *
-     * @param config 參數配置訊息
-     * @return 參數配置集合
+     * @param config 參數設定訊息
+     * @return 參數設定集合
      */
     List<SysConfig> selectConfigList(SysConfig config);
 
     /**
-     * 根據鍵名查詢參數配置訊息
+     * 根據鍵名查詢參數設定訊息
      *
      * @param configKey 參數鍵名
-     * @return 參數配置訊息
+     * @return 參數設定訊息
      */
     SysConfig checkConfigKeyUnique(String configKey);
 
     /**
-     * 新增參數配置
+     * 新增參數設定
      *
-     * @param config 參數配置訊息
+     * @param config 參數設定訊息
      * @return 結果
      */
     int insertConfig(SysConfig config);
 
     /**
-     * 修改參數配置
+     * 修改參數設定
      *
-     * @param config 參數配置訊息
+     * @param config 參數設定訊息
      * @return 結果
      */
     int updateConfig(SysConfig config);
 
     /**
-     * 刪除參數配置
+     * 刪除參數設定
      *
      * @param configId 參數ID
      * @return 結果

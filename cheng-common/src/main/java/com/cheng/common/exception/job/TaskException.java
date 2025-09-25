@@ -11,7 +11,7 @@ public class TaskException extends Exception {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private Code code;
+    private final Code code;
 
     public TaskException(String msg, Code code) {
         this(msg, code, null);

@@ -183,10 +183,10 @@
           <el-col :span="12" v-if="form.menuType != 'F'">
             <el-form-item prop="isFrame">
               <span slot="label">
-                <el-tooltip content="選擇是外鏈則路由地址需要以`http(s)://`開頭" placement="top">
+                <el-tooltip content="選擇是外部連結則路由地址需要以`http(s)://`開頭" placement="top">
                 <i class="el-icon-question"></i>
                 </el-tooltip>
-                是否外鏈
+                是否外部連結
               </span>
               <el-radio-group v-model="form.isFrame">
                 <el-radio label="0">是</el-radio>

@@ -30,7 +30,7 @@ public class MimeTypeUtils {
             "bmp", "gif", "jpg", "jpeg", "png",
             // word excel powerpoint
             "doc", "docx", "xls", "xlsx", "ppt", "pptx", "html", "htm", "txt",
-            // 壓縮文件
+            // 壓縮檔案
             "rar", "zip", "gz", "bz2",
             // 影片格式
             "mp4", "avi", "rmvb",

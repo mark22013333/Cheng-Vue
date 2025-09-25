@@ -48,7 +48,7 @@ export default {
       type: Boolean,
       default: false,
     },
-    /* 上傳文件大小限制(MB) */
+    /* 上傳檔案大小限制(MB) */
     fileSize: {
       type: Number,
       default: 5,
@@ -72,7 +72,7 @@ export default {
         bounds: document.body,
         debug: "warn",
         modules: {
-          // 工具欄配置
+          // 工具欄設定
           toolbar: [
             ["bold", "italic", "underline", "strike"],       // 加粗 斜體 下畫線 刪除線
             ["blockquote", "code-block"],                    // 引用  程式碼塊
@@ -161,16 +161,16 @@ export default {
     handleBeforeUpload(file) {
       const type = ["image/jpeg", "image/jpg", "image/png", "image/svg"]
       const isJPG = type.includes(file.type)
-      // 檢驗文件格式
+      // 檢驗檔案格式
       if (!isJPG) {
         this.$message.error(`圖片格式錯誤!`)
         return false
       }
-      // 校檢文件大小
+      // 校檢檔案大小
       if (this.fileSize) {
         const isLt = file.size / 1024 / 1024 < this.fileSize
         if (!isLt) {
-          this.$message.error(`上傳文件大小不能超過 ${this.fileSize} MB!`)
+          this.$message.error(`上傳檔案大小不能超過 ${this.fileSize} MB!`)
           return false
         }
       }
