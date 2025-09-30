@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -17,6 +19,8 @@ import java.util.Date;
  *
  * @author cheng
  */
+@Setter
+@Getter
 public class InvBorrow extends BaseEntity {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -157,174 +161,6 @@ public class InvBorrow extends BaseEntity {
 
     public InvBorrow(Long borrowId) {
         this.borrowId = borrowId;
-    }
-
-    public Long getBorrowId() {
-        return borrowId;
-    }
-
-    public void setBorrowId(Long borrowId) {
-        this.borrowId = borrowId;
-    }
-
-    public String getBorrowNo() {
-        return borrowNo;
-    }
-
-    public void setBorrowNo(String borrowNo) {
-        this.borrowNo = borrowNo;
-    }
-
-    public Long getItemId() {
-        return itemId;
-    }
-
-    public void setItemId(Long itemId) {
-        this.itemId = itemId;
-    }
-
-    public String getItemName() {
-        return itemName;
-    }
-
-    public void setItemName(String itemName) {
-        this.itemName = itemName;
-    }
-
-    public String getItemCode() {
-        return itemCode;
-    }
-
-    public void setItemCode(String itemCode) {
-        this.itemCode = itemCode;
-    }
-
-    public Long getBorrowerId() {
-        return borrowerId;
-    }
-
-    public void setBorrowerId(Long borrowerId) {
-        this.borrowerId = borrowerId;
-    }
-
-    public String getBorrowerName() {
-        return borrowerName;
-    }
-
-    public void setBorrowerName(String borrowerName) {
-        this.borrowerName = borrowerName;
-    }
-
-    public Long getBorrowerDept() {
-        return borrowerDept;
-    }
-
-    public void setBorrowerDept(Long borrowerDept) {
-        this.borrowerDept = borrowerDept;
-    }
-
-    public String getBorrowerDeptName() {
-        return borrowerDeptName;
-    }
-
-    public void setBorrowerDeptName(String borrowerDeptName) {
-        this.borrowerDeptName = borrowerDeptName;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public Date getBorrowTime() {
-        return borrowTime;
-    }
-
-    public void setBorrowTime(Date borrowTime) {
-        this.borrowTime = borrowTime;
-    }
-
-    public Date getExpectedReturn() {
-        return expectedReturn;
-    }
-
-    public void setExpectedReturn(Date expectedReturn) {
-        this.expectedReturn = expectedReturn;
-    }
-
-    public Date getActualReturn() {
-        return actualReturn;
-    }
-
-    public void setActualReturn(Date actualReturn) {
-        this.actualReturn = actualReturn;
-    }
-
-    public Integer getReturnQuantity() {
-        return returnQuantity;
-    }
-
-    public void setReturnQuantity(Integer returnQuantity) {
-        this.returnQuantity = returnQuantity;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Long getApproverId() {
-        return approverId;
-    }
-
-    public void setApproverId(Long approverId) {
-        this.approverId = approverId;
-    }
-
-    public String getApproverName() {
-        return approverName;
-    }
-
-    public void setApproverName(String approverName) {
-        this.approverName = approverName;
-    }
-
-    public Date getApproveTime() {
-        return approveTime;
-    }
-
-    public void setApproveTime(Date approveTime) {
-        this.approveTime = approveTime;
-    }
-
-    public String getPurpose() {
-        return purpose;
-    }
-
-    public void setPurpose(String purpose) {
-        this.purpose = purpose;
-    }
-
-    public String getApproveRemark() {
-        return approveRemark;
-    }
-
-    public void setApproveRemark(String approveRemark) {
-        this.approveRemark = approveRemark;
-    }
-
-    public String getCategoryName() {
-        return categoryName;
-    }
-
-    public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
     }
 
     @Override

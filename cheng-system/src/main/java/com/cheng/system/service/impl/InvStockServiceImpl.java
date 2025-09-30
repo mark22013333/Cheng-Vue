@@ -5,6 +5,7 @@ import com.cheng.common.utils.SecurityUtils;
 import com.cheng.common.exception.ServiceException;
 import com.cheng.system.domain.InvStock;
 import com.cheng.system.domain.InvStockRecord;
+import com.cheng.system.dto.InvStockStatisticsDTO;
 import com.cheng.system.mapper.InvStockMapper;
 import com.cheng.system.mapper.InvStockRecordMapper;
 import com.cheng.system.service.IInvStockService;
@@ -77,7 +78,7 @@ public class InvStockServiceImpl implements IInvStockService {
      * @return 統計資訊
      */
     @Override
-    public List<InvStock> selectStockStatistics() {
+    public List<InvStockStatisticsDTO> selectStockStatistics() {
         return invStockMapper.selectStockStatistics();
     }
 

@@ -1,6 +1,8 @@
 package com.cheng.system.mapper;
 
 import com.cheng.system.domain.InvStock;
+import com.cheng.system.dto.InvStockStatisticsDTO;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -46,7 +48,21 @@ public interface InvStockMapper {
      *
      * @return 統計資訊
      */
-    List<InvStock> selectStockStatistics();
+    @Select("""
+            select count(*) as totalItems,
+                   sum(total_quantity) as totalQuantity,
+                   sum(case when available_qty <= 10 and available_qty > 0 then 1 else 0 end) as lowStockItems,
+                   sum(case when total_quantity = 0 then 1 else 0 end) as outOfStockItems
+            from inv_stock s
+            left join inv_item i on s.item_id = i.item_id
+            where i.status = '0'""")
+    @Results(id = "InvStockStatisticsMap", value = {
+            @Result(property = "totalItems", column = "totalItems"),
+            @Result(property = "totalQuantity", column = "totalQuantity"),
+            @Result(property = "lowStockItems", column = "lowStockItems"),
+            @Result(property = "outOfStockItems", column = "outOfStockItems")
+    })
+    List<InvStockStatisticsDTO> selectStockStatistics();
 
     /**
      * 新增庫存
@@ -66,39 +82,62 @@ public interface InvStockMapper {
 
     /**
      * 更新庫存數量（入庫）
+     * 使用註解方式實作，避免依賴 XML 映射。
      *
-     * @param itemId 物品ID
-     * @param quantity 數量
-     * @return 結果
+     * @param itemId   物品ID
+     * @param quantity 數量（正值）
+     * @return 影響筆數
      */
-    int updateStockIn(Long itemId, Integer quantity);
+    @Update("update inv_stock " +
+            "set total_quantity = total_quantity + #{quantity}, " +
+            "    available_qty  = available_qty + #{quantity}, " +
+            "    last_in_time   = now(), " +
+            "    update_time    = now() " +
+            "where item_id = #{itemId}")
+    int updateStockIn(@Param("itemId") Long itemId, @Param("quantity") Integer quantity);
 
     /**
      * 更新庫存數量（出庫）
      *
-     * @param itemId 物品ID
+     * @param itemId   物品ID
      * @param quantity 數量
      * @return 結果
      */
-    int updateStockOut(Long itemId, Integer quantity);
+    @Update("update inv_stock " +
+            "set total_quantity = total_quantity - #{quantity}, " +
+            "    available_qty  = available_qty - #{quantity}, " +
+            "    last_out_time  = now(), " +
+            "    update_time    = now() " +
+            "where item_id = #{itemId} and available_qty >= #{quantity}")
+    int updateStockOut(@Param("itemId") Long itemId, @Param("quantity") Integer quantity);
 
     /**
      * 更新借出數量
      *
-     * @param itemId 物品ID
+     * @param itemId   物品ID
      * @param quantity 數量
      * @return 結果
      */
-    int updateBorrowedQty(Long itemId, Integer quantity);
+    @Update("update inv_stock " +
+            "set borrowed_qty  = borrowed_qty + #{quantity}, " +
+            "    available_qty = available_qty - #{quantity}, " +
+            "    update_time   = now() " +
+            "where item_id = #{itemId} and available_qty >= #{quantity}")
+    int updateBorrowedQty(@Param("itemId") Long itemId, @Param("quantity") Integer quantity);
 
     /**
      * 更新歸還數量
      *
-     * @param itemId 物品ID
+     * @param itemId   物品ID
      * @param quantity 數量
      * @return 結果
      */
-    int updateReturnedQty(Long itemId, Integer quantity);
+    @Update("update inv_stock " +
+            "set borrowed_qty  = borrowed_qty - #{quantity}, " +
+            "    available_qty = available_qty + #{quantity}, " +
+            "    update_time   = now() " +
+            "where item_id = #{itemId} and borrowed_qty >= #{quantity}")
+    int updateReturnedQty(@Param("itemId") Long itemId, @Param("quantity") Integer quantity);
 
     /**
      * 刪除庫存
@@ -114,7 +153,8 @@ public interface InvStockMapper {
      * @param itemId 物品ID
      * @return 結果
      */
-    int deleteInvStockByItemId(Long itemId);
+    @Delete("delete from inv_stock where item_id = #{itemId}")
+    int deleteInvStockByItemId(@Param("itemId") Long itemId);
 
     /**
      * 批量刪除庫存

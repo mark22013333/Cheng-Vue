@@ -2,6 +2,8 @@ package com.cheng.system.domain;
 
 import com.cheng.common.annotation.Excel;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -14,6 +16,8 @@ import java.util.Date;
  *
  * @author cheng
  */
+@Setter
+@Getter
 public class InvStock implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -109,118 +113,6 @@ public class InvStock implements Serializable {
 
     public InvStock(Long itemId) {
         this.itemId = itemId;
-    }
-
-    public Long getStockId() {
-        return stockId;
-    }
-
-    public void setStockId(Long stockId) {
-        this.stockId = stockId;
-    }
-
-    public Long getItemId() {
-        return itemId;
-    }
-
-    public void setItemId(Long itemId) {
-        this.itemId = itemId;
-    }
-
-    public String getItemName() {
-        return itemName;
-    }
-
-    public void setItemName(String itemName) {
-        this.itemName = itemName;
-    }
-
-    public String getItemCode() {
-        return itemCode;
-    }
-
-    public void setItemCode(String itemCode) {
-        this.itemCode = itemCode;
-    }
-
-    public Long getCategoryId() {
-        return categoryId;
-    }
-
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
-    }
-
-    public String getCategoryName() {
-        return categoryName;
-    }
-
-    public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
-    }
-
-    public Integer getTotalQuantity() {
-        return totalQuantity;
-    }
-
-    public void setTotalQuantity(Integer totalQuantity) {
-        this.totalQuantity = totalQuantity;
-    }
-
-    public Integer getAvailableQty() {
-        return availableQty;
-    }
-
-    public void setAvailableQty(Integer availableQty) {
-        this.availableQty = availableQty;
-    }
-
-    public Integer getBorrowedQty() {
-        return borrowedQty;
-    }
-
-    public void setBorrowedQty(Integer borrowedQty) {
-        this.borrowedQty = borrowedQty;
-    }
-
-    public Integer getReservedQty() {
-        return reservedQty;
-    }
-
-    public void setReservedQty(Integer reservedQty) {
-        this.reservedQty = reservedQty;
-    }
-
-    public Integer getDamagedQty() {
-        return damagedQty;
-    }
-
-    public void setDamagedQty(Integer damagedQty) {
-        this.damagedQty = damagedQty;
-    }
-
-    public Date getLastInTime() {
-        return lastInTime;
-    }
-
-    public void setLastInTime(Date lastInTime) {
-        this.lastInTime = lastInTime;
-    }
-
-    public Date getLastOutTime() {
-        return lastOutTime;
-    }
-
-    public void setLastOutTime(Date lastOutTime) {
-        this.lastOutTime = lastOutTime;
-    }
-
-    public Date getUpdateTime() {
-        return updateTime;
-    }
-
-    public void setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
     }
 
     @Override

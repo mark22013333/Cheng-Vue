@@ -154,9 +154,9 @@ public class TokenService {
     }
 
     /**
-     * 從數據声明產生令牌
+     * 從數據聲明產生令牌
      *
-     * @param claims 數據声明
+     * @param claims 數據聲明
      * @return 令牌
      */
     private String createToken(Map<String, Object> claims) {
@@ -166,10 +166,10 @@ public class TokenService {
     }
 
     /**
-     * 從令牌中取得數據声明
+     * 從令牌中取得數據聲明
      *
      * @param token 令牌
-     * @return 數據声明
+     * @return 數據聲明
      */
     private Claims parseToken(String token) {
         return Jwts.parser()

@@ -6,26 +6,34 @@ import com.cheng.common.constant.UserConstants;
 import com.cheng.common.core.domain.BaseEntity;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+
+import java.io.Serial;
 
 /**
  * 字典數據表 sys_dict_data
  *
  * @author cheng
  */
+@Setter
 public class SysDictData extends BaseEntity {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
      * 字典編碼
      */
+    @Getter
     @Excel(name = "字典編碼", cellType = ColumnType.NUMERIC)
     private Long dictCode;
 
     /**
      * 字典排序
      */
+    @Getter
     @Excel(name = "字典排序", cellType = ColumnType.NUMERIC)
     private Long dictSort;
 
@@ -55,44 +63,27 @@ public class SysDictData extends BaseEntity {
     /**
      * 表格字典樣式
      */
+    @Getter
     private String listClass;
 
     /**
      * 是否預設（Y是 N否）
      */
+    @Getter
     @Excel(name = "是否預設", readConverterExp = "Y=是,N=否")
     private String isDefault;
 
     /**
      * 狀態（0正常 1停用）
      */
+    @Getter
     @Excel(name = "狀態", readConverterExp = "0=正常,1=停用")
     private String status;
-
-    public Long getDictCode() {
-        return dictCode;
-    }
-
-    public void setDictCode(Long dictCode) {
-        this.dictCode = dictCode;
-    }
-
-    public Long getDictSort() {
-        return dictSort;
-    }
-
-    public void setDictSort(Long dictSort) {
-        this.dictSort = dictSort;
-    }
 
     @NotBlank(message = "字典標籤不能為空")
     @Size(min = 0, max = 100, message = "字典標籤長度不能超過100個字串")
     public String getDictLabel() {
         return dictLabel;
-    }
-
-    public void setDictLabel(String dictLabel) {
-        this.dictLabel = dictLabel;
     }
 
     @NotBlank(message = "字典鍵值不能為空")
@@ -101,18 +92,10 @@ public class SysDictData extends BaseEntity {
         return dictValue;
     }
 
-    public void setDictValue(String dictValue) {
-        this.dictValue = dictValue;
-    }
-
     @NotBlank(message = "字典類型不能為空")
     @Size(min = 0, max = 100, message = "字典類型長度不能超過100個字串")
     public String getDictType() {
         return dictType;
-    }
-
-    public void setDictType(String dictType) {
-        this.dictType = dictType;
     }
 
     @Size(min = 0, max = 100, message = "樣式屬性長度不能超過100個字串")
@@ -120,36 +103,8 @@ public class SysDictData extends BaseEntity {
         return cssClass;
     }
 
-    public void setCssClass(String cssClass) {
-        this.cssClass = cssClass;
-    }
-
-    public String getListClass() {
-        return listClass;
-    }
-
-    public void setListClass(String listClass) {
-        this.listClass = listClass;
-    }
-
     public boolean getDefault() {
         return UserConstants.YES.equals(this.isDefault);
-    }
-
-    public String getIsDefault() {
-        return isDefault;
-    }
-
-    public void setIsDefault(String isDefault) {
-        this.isDefault = isDefault;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     @Override

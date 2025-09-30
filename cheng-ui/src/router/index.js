@@ -9,9 +9,9 @@ Vue.use(Router)
  * Note: 路由設定項
  *
  * hidden: true                     // 當設定 true 的時候該路由不會再側邊欄出現 如401，login等頁面，或者如一些編輯頁面/edit/1
- * alwaysShow: true                 // 當你一個路由下面的 children 声明的路由大於1個時，自動會變成嵌套的模式--如元件頁面
+ * alwaysShow: true                 // 當你一個路由下面的 children 聲明的路由大於1個時，自動會變成嵌套的模式--如元件頁面
  *                                  // 只有一個時，會將那個子路由當做根路由顯示在側邊欄--如引導頁面
- *                                  // 若你想不管路由下面的 children 声明的個數都顯示你的根路由
+ *                                  // 若你想不管路由下面的 children 聲明的個數都顯示你的根路由
  *                                  // 你可以設定 alwaysShow: true，這樣它就會忽略之前定義的規則，一直顯示根路由
  * redirect: noRedirect             // 當設定 noRedirect 的時候該路由在麵包屑導航中不可被點擊
  * name:'router-name'               // 設定路由的名字，一定要填寫不然使用<keep-alive>時會出現各種問題

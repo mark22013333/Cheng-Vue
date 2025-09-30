@@ -1,6 +1,7 @@
 package com.cheng.system.service;
 
 import com.cheng.system.domain.InvStock;
+import com.cheng.system.dto.InvStockStatisticsDTO;
 
 import java.util.List;
 
@@ -46,7 +47,7 @@ public interface IInvStockService {
      *
      * @return 統計資訊
      */
-    List<InvStock> selectStockStatistics();
+    List<InvStockStatisticsDTO> selectStockStatistics();
 
     /**
      * 新增庫存

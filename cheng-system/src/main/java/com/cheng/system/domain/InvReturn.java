@@ -5,6 +5,8 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.cheng.common.annotation.Excel;
@@ -16,6 +18,8 @@ import com.cheng.common.core.domain.BaseEntity;
  * @author cheng
  * @since 2025-09-23
  */
+@Setter
+@Getter
 public class InvReturn extends BaseEntity {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -134,158 +138,6 @@ public class InvReturn extends BaseEntity {
      */
     @Excel(name = "歸還狀態", readConverterExp = "0=待確認,1=已確認,2=有異議")
     private String returnStatus;
-
-    public void setReturnId(Long returnId) {
-        this.returnId = returnId;
-    }
-
-    public Long getReturnId() {
-        return returnId;
-    }
-
-    public void setBorrowId(Long borrowId) {
-        this.borrowId = borrowId;
-    }
-
-    public Long getBorrowId() {
-        return borrowId;
-    }
-
-    public void setBorrowCode(String borrowCode) {
-        this.borrowCode = borrowCode;
-    }
-
-    public String getBorrowCode() {
-        return borrowCode;
-    }
-
-    public void setItemId(Long itemId) {
-        this.itemId = itemId;
-    }
-
-    public Long getItemId() {
-        return itemId;
-    }
-
-    public void setItemCode(String itemCode) {
-        this.itemCode = itemCode;
-    }
-
-    public String getItemCode() {
-        return itemCode;
-    }
-
-    public void setItemName(String itemName) {
-        this.itemName = itemName;
-    }
-
-    public String getItemName() {
-        return itemName;
-    }
-
-    public void setReturnQuantity(Long returnQuantity) {
-        this.returnQuantity = returnQuantity;
-    }
-
-    public Long getReturnQuantity() {
-        return returnQuantity;
-    }
-
-    public void setBorrowerId(Long borrowerId) {
-        this.borrowerId = borrowerId;
-    }
-
-    public Long getBorrowerId() {
-        return borrowerId;
-    }
-
-    public void setBorrowerName(String borrowerName) {
-        this.borrowerName = borrowerName;
-    }
-
-    public String getBorrowerName() {
-        return borrowerName;
-    }
-
-    public void setReturnTime(Date returnTime) {
-        this.returnTime = returnTime;
-    }
-
-    public Date getReturnTime() {
-        return returnTime;
-    }
-
-    public void setExpectedReturn(Date expectedReturn) {
-        this.expectedReturn = expectedReturn;
-    }
-
-    public Date getExpectedReturn() {
-        return expectedReturn;
-    }
-
-    public void setIsOverdue(String isOverdue) {
-        this.isOverdue = isOverdue;
-    }
-
-    public String getIsOverdue() {
-        return isOverdue;
-    }
-
-    public void setOverdueDays(Long overdueDays) {
-        this.overdueDays = overdueDays;
-    }
-
-    public Long getOverdueDays() {
-        return overdueDays;
-    }
-
-    public void setItemCondition(String itemCondition) {
-        this.itemCondition = itemCondition;
-    }
-
-    public String getItemCondition() {
-        return itemCondition;
-    }
-
-    public void setDamageDescription(String damageDescription) {
-        this.damageDescription = damageDescription;
-    }
-
-    public String getDamageDescription() {
-        return damageDescription;
-    }
-
-    public void setCompensationAmount(BigDecimal compensationAmount) {
-        this.compensationAmount = compensationAmount;
-    }
-
-    public BigDecimal getCompensationAmount() {
-        return compensationAmount;
-    }
-
-    public void setReceiverId(Long receiverId) {
-        this.receiverId = receiverId;
-    }
-
-    public Long getReceiverId() {
-        return receiverId;
-    }
-
-    public void setReceiverName(String receiverName) {
-        this.receiverName = receiverName;
-    }
-
-    public String getReceiverName() {
-        return receiverName;
-    }
-
-    public void setReturnStatus(String returnStatus) {
-        this.returnStatus = returnStatus;
-    }
-
-    public String getReturnStatus() {
-        return returnStatus;
-    }
 
     @Override
     public String toString() {

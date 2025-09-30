@@ -4,6 +4,8 @@ import com.cheng.common.core.domain.BaseEntity;
 import com.cheng.common.xss.Xss;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -14,6 +16,7 @@ import java.io.Serial;
  *
  * @author cheng
  */
+@Setter
 public class SysNotice extends BaseEntity {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -21,6 +24,7 @@ public class SysNotice extends BaseEntity {
     /**
      * 公告ID
      */
+    @Getter
     private Long noticeId;
 
     /**
@@ -31,59 +35,26 @@ public class SysNotice extends BaseEntity {
     /**
      * 公告類型（1通知 2公告）
      */
+    @Getter
     private String noticeType;
 
     /**
      * 公告内容
      */
+    @Getter
     private String noticeContent;
 
     /**
      * 公告狀態（0正常 1關閉）
      */
+    @Getter
     private String status;
-
-    public Long getNoticeId() {
-        return noticeId;
-    }
-
-    public void setNoticeId(Long noticeId) {
-        this.noticeId = noticeId;
-    }
-
-    public void setNoticeTitle(String noticeTitle) {
-        this.noticeTitle = noticeTitle;
-    }
 
     @Xss(message = "公告標題不能包含腳本字串")
     @NotBlank(message = "公告標題不能為空")
     @Size(min = 0, max = 50, message = "公告標題不能超過50個字串")
     public String getNoticeTitle() {
         return noticeTitle;
-    }
-
-    public void setNoticeType(String noticeType) {
-        this.noticeType = noticeType;
-    }
-
-    public String getNoticeType() {
-        return noticeType;
-    }
-
-    public void setNoticeContent(String noticeContent) {
-        this.noticeContent = noticeContent;
-    }
-
-    public String getNoticeContent() {
-        return noticeContent;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getStatus() {
-        return status;
     }
 
     @Override

@@ -420,7 +420,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     }
 
     /**
-     * 驼峰轉下畫線命名
+     * 駝峰轉下畫線命名
      */
     public static String toUnderScoreCase(String str) {
         if (str == null) {
@@ -477,10 +477,10 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     }
 
     /**
-     * 將下畫線大寫方式命名的字串轉換為驼峰式。如果轉換前的下畫線大寫方式命名的字串為空，則返回空字串。 例如：HELLO_WORLD->HelloWorld
+     * 將下畫線大寫方式命名的字串轉換為駝峰式。如果轉換前的下畫線大寫方式命名的字串為空，則返回空字串。 例如：HELLO_WORLD->HelloWorld
      *
      * @param name 轉換前的下畫線大寫方式命名的字串
-     * @return 轉換後的驼峰式命名的字串
+     * @return 轉換後的駝峰式命名的字串
      */
     public static String convertToCamelCase(String name) {
         StringBuilder result = new StringBuilder();
@@ -507,7 +507,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     }
 
     /**
-     * 驼峰式命名法
+     * 駝峰式命名法
      * 例如：user_name->userName
      */
     public static String toCamelCase(String s) {

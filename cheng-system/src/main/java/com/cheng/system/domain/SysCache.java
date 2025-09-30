@@ -1,12 +1,16 @@
 package com.cheng.system.domain;
 
 import com.cheng.common.utils.StringUtils;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 暫存訊息
  *
  * @author cheng
  */
+@Setter
+@Getter
 public class SysCache {
     /**
      * 暫存名稱
@@ -43,35 +47,4 @@ public class SysCache {
         this.cacheValue = cacheValue;
     }
 
-    public String getCacheName() {
-        return cacheName;
-    }
-
-    public void setCacheName(String cacheName) {
-        this.cacheName = cacheName;
-    }
-
-    public String getCacheKey() {
-        return cacheKey;
-    }
-
-    public void setCacheKey(String cacheKey) {
-        this.cacheKey = cacheKey;
-    }
-
-    public String getCacheValue() {
-        return cacheValue;
-    }
-
-    public void setCacheValue(String cacheValue) {
-        this.cacheValue = cacheValue;
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark;
-    }
 }

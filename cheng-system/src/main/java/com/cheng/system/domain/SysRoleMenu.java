@@ -1,5 +1,7 @@
 package com.cheng.system.domain;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -8,6 +10,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  *
  * @author cheng
  */
+@Setter
+@Getter
 public class SysRoleMenu {
     /**
      * 角色ID
@@ -18,22 +22,6 @@ public class SysRoleMenu {
      * 選單ID
      */
     private Long menuId;
-
-    public Long getRoleId() {
-        return roleId;
-    }
-
-    public void setRoleId(Long roleId) {
-        this.roleId = roleId;
-    }
-
-    public Long getMenuId() {
-        return menuId;
-    }
-
-    public void setMenuId(Long menuId) {
-        this.menuId = menuId;
-    }
 
     @Override
     public String toString() {

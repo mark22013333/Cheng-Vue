@@ -5,6 +5,8 @@ import com.cheng.common.core.domain.entity.SysDept;
 import com.cheng.common.core.domain.entity.SysMenu;
 import com.cheng.common.utils.StringUtils;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -16,6 +18,8 @@ import java.util.stream.Collectors;
  *
  * @author cheng
  */
+@Setter
+@Getter
 public class TreeSelect implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -58,35 +62,4 @@ public class TreeSelect implements Serializable {
         this.children = menu.getChildren().stream().map(TreeSelect::new).collect(Collectors.toList());
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
-    public boolean isDisabled() {
-        return disabled;
-    }
-
-    public void setDisabled(boolean disabled) {
-        this.disabled = disabled;
-    }
-
-    public List<TreeSelect> getChildren() {
-        return children;
-    }
-
-    public void setChildren(List<TreeSelect> children) {
-        this.children = children;
-    }
 }

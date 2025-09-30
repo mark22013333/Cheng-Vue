@@ -1,5 +1,6 @@
 package com.cheng.common.core.domain;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,8 +9,8 @@ import java.util.List;
  *
  * @author cheng
  */
-public class TreeEntity extends BaseEntity
-{
+public class TreeEntity extends BaseEntity {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -17,65 +18,63 @@ public class TreeEntity extends BaseEntity
      */
     private String parentName;
 
-    /** 父選單ID */
+    /**
+     * 父選單ID
+     */
     private Long parentId;
 
-    /** 顯示順序 */
+    /**
+     * 顯示順序
+     */
     private Integer orderNum;
 
-    /** 祖級列表 */
+    /**
+     * 祖級列表
+     */
     private String ancestors;
 
-    /** 子部門 */
+    /**
+     * 子部門
+     */
     private List<?> children = new ArrayList<>();
 
-    public String getParentName()
-    {
+    public String getParentName() {
         return parentName;
     }
 
-    public void setParentName(String parentName)
-    {
+    public void setParentName(String parentName) {
         this.parentName = parentName;
     }
 
-    public Long getParentId()
-    {
+    public Long getParentId() {
         return parentId;
     }
 
-    public void setParentId(Long parentId)
-    {
+    public void setParentId(Long parentId) {
         this.parentId = parentId;
     }
 
-    public Integer getOrderNum()
-    {
+    public Integer getOrderNum() {
         return orderNum;
     }
 
-    public void setOrderNum(Integer orderNum)
-    {
+    public void setOrderNum(Integer orderNum) {
         this.orderNum = orderNum;
     }
 
-    public String getAncestors()
-    {
+    public String getAncestors() {
         return ancestors;
     }
 
-    public void setAncestors(String ancestors)
-    {
+    public void setAncestors(String ancestors) {
         this.ancestors = ancestors;
     }
 
-    public List<?> getChildren()
-    {
+    public List<?> getChildren() {
         return children;
     }
 
-    public void setChildren(List<?> children)
-    {
+    public void setChildren(List<?> children) {
         this.children = children;
     }
 }

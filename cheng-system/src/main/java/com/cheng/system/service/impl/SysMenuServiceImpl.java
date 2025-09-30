@@ -322,7 +322,7 @@ public class SysMenuServiceImpl implements ISysMenuService {
      *
      * @param name 路由名稱
      * @param path 路由地址
-     * @return 路由名稱（驼峰格式）
+     * @return 路由名稱（駝峰格式）
      */
     public String getRouteName(String name, String path) {
         String routerName = StringUtils.isNotEmpty(name) ? name : path;

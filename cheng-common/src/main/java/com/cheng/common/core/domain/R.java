@@ -1,6 +1,8 @@
 package com.cheng.common.core.domain;
 
 import com.cheng.common.constant.HttpStatus;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -10,6 +12,8 @@ import java.io.Serializable;
  *
  * @author cheng
  */
+@Setter
+@Getter
 public class R<T> implements Serializable {
     /**
      * 成功
@@ -76,27 +80,4 @@ public class R<T> implements Serializable {
         return R.SUCCESS == ret.getCode();
     }
 
-    public int getCode() {
-        return code;
-    }
-
-    public void setCode(int code) {
-        this.code = code;
-    }
-
-    public String getMsg() {
-        return msg;
-    }
-
-    public void setMsg(String msg) {
-        this.msg = msg;
-    }
-
-    public T getData() {
-        return data;
-    }
-
-    public void setData(T data) {
-        this.data = data;
-    }
 }

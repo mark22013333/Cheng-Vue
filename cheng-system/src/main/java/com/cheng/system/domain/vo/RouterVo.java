@@ -42,7 +42,7 @@ public class RouterVo {
     private String query;
 
     /**
-     * 當你一個路由下面的 children 声明的路由大於1個時，自動會變成嵌套的模式--如元件頁面
+     * 當你一個路由下面的 children 聲明的路由大於1個時，自動會變成嵌套的模式--如元件頁面
      */
     private Boolean alwaysShow;
 

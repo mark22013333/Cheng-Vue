@@ -8,6 +8,7 @@ import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.system.domain.InvStock;
 import com.cheng.system.service.IInvStockService;
+import com.cheng.system.dto.InvStockStatisticsDTO;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -56,7 +57,7 @@ public class InvStockController extends BaseController {
     @PreAuthorize("@ss.hasPermi('inventory:stock:list')")
     @GetMapping("/statistics")
     public AjaxResult statistics() {
-        List<InvStock> list = invStockService.selectStockStatistics();
+        List<InvStockStatisticsDTO> list = invStockService.selectStockStatistics();
         return success(list);
     }
 

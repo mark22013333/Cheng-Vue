@@ -6,6 +6,8 @@ import com.cheng.common.core.domain.BaseEntity;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -16,6 +18,7 @@ import java.io.Serial;
  *
  * @author cheng
  */
+@Setter
 public class SysPost extends BaseEntity {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -23,6 +26,7 @@ public class SysPost extends BaseEntity {
     /**
      * 職位序號
      */
+    @Getter
     @Excel(name = "職位序號", cellType = ColumnType.NUMERIC)
     private Long postId;
 
@@ -47,6 +51,7 @@ public class SysPost extends BaseEntity {
     /**
      * 狀態（0正常 1停用）
      */
+    @Getter
     @Excel(name = "狀態", readConverterExp = "0=正常,1=停用")
     private String status;
 
@@ -55,22 +60,10 @@ public class SysPost extends BaseEntity {
      */
     private boolean flag = false;
 
-    public Long getPostId() {
-        return postId;
-    }
-
-    public void setPostId(Long postId) {
-        this.postId = postId;
-    }
-
     @NotBlank(message = "職位編碼不能為空")
     @Size(min = 0, max = 64, message = "職位編碼長度不能超過64個字串")
     public String getPostCode() {
         return postCode;
-    }
-
-    public void setPostCode(String postCode) {
-        this.postCode = postCode;
     }
 
     @NotBlank(message = "職位名稱不能為空")
@@ -79,33 +72,9 @@ public class SysPost extends BaseEntity {
         return postName;
     }
 
-    public void setPostName(String postName) {
-        this.postName = postName;
-    }
-
     @NotNull(message = "顯示順序不能為空")
     public Integer getPostSort() {
         return postSort;
-    }
-
-    public void setPostSort(Integer postSort) {
-        this.postSort = postSort;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public boolean isFlag() {
-        return flag;
-    }
-
-    public void setFlag(boolean flag) {
-        this.flag = flag;
     }
 
     @Override
