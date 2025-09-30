@@ -75,15 +75,6 @@
         order by s.update_time desc
     </select>
 
-    <select id="selectStockStatistics" resultType="java.util.Map">
-        select count(*)                                                                      as totalItems,
-               sum(total_quantity)                                                           as totalQuantity,
-               sum(case when available_qty &lt;= 10 and available_qty > 0 then 1 else 0 end) as lowStockItems,
-               sum(case when total_quantity = 0 then 1 else 0 end)                           as outOfStockItems
-        from inv_stock s
-                 left join inv_item i on s.item_id = i.item_id
-        where i.status = '0'
-    </select>
 
     <insert id="insertInvStock" parameterType="InvStock" useGeneratedKeys="true" keyProperty="stockId">
         insert into inv_stock
