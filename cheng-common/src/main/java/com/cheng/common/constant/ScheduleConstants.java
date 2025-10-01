@@ -1,5 +1,8 @@
 package com.cheng.common.constant;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 /**
  * 任務呼叫共用常數
  *
@@ -33,6 +36,8 @@ public class ScheduleConstants {
      */
     public static final String MISFIRE_DO_NOTHING = "3";
 
+    @Getter
+    @AllArgsConstructor
     public enum Status {
         /**
          * 正常
@@ -42,15 +47,6 @@ public class ScheduleConstants {
          * 暫停
          */
         PAUSE("1");
-
         private final String value;
-
-        Status(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
     }
 }

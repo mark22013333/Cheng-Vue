@@ -77,7 +77,7 @@ public class InvStockController extends BaseController {
      * 取得庫存詳細訊息
      */
     @PreAuthorize("@ss.hasPermi('inventory:stock:query')")
-    @GetMapping(value = "/{stockId}")
+    @GetMapping(value = "/{stockId:\\d+}")
     public AjaxResult getInfo(@PathVariable("stockId") Long stockId) {
         return success(invStockService.selectInvStockByStockId(stockId));
     }
@@ -169,7 +169,7 @@ public class InvStockController extends BaseController {
      */
     @PreAuthorize("@ss.hasPermi('inventory:stock:remove')")
     @Log(title = "庫存", businessType = BusinessType.DELETE)
-    @DeleteMapping("/{stockIds}")
+    @DeleteMapping("/{stockIds:(?:\\d+,)*\\d+}")
     public AjaxResult remove(@PathVariable Long[] stockIds) {
         return toAjax(invStockService.deleteInvStockByStockIds(stockIds));
     }

@@ -9,20 +9,16 @@ import org.springframework.stereotype.Component;
  * @author cheng
  */
 @Component("ryTask")
-public class RyTask
-{
-    public void ryMultipleParams(String s, Boolean b, Long l, Double d, Integer i)
-    {
+public class RyTask {
+    public void ryMultipleParams(String s, Boolean b, Long l, Double d, Integer i) {
         System.out.println(StringUtils.format("執行多參數方法： 字串類型{}，布林類型{}，長整型{}，浮點型{}，整數類型{}", s, b, l, d, i));
     }
 
-    public void ryParams(String params)
-    {
+    public void ryParams(String params) {
         System.out.println("執行有參數方法：" + params);
     }
 
-    public void ryNoParams()
-    {
+    public void ryNoParams() {
         System.out.println("執行無參數方法");
     }
 }

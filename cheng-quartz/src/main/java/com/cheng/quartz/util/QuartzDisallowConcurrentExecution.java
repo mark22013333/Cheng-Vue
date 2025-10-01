@@ -5,7 +5,7 @@ import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
 
 /**
- * 定時任務處理（禁止並發執行）
+ * 定時任務處理（禁止併發執行）
  *
  * @author cheng
  *

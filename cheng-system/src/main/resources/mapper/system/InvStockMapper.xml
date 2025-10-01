@@ -11,6 +11,11 @@
         <result property="itemName" column="item_name"/>
         <result property="categoryId" column="category_id"/>
         <result property="categoryName" column="category_name"/>
+        <result property="specification" column="specification"/>
+        <result property="unit" column="unit"/>
+        <result property="minStock" column="min_stock"/>
+        <result property="maxStock" column="max_stock"/>
+        <result property="location" column="location"/>
         <result property="totalQuantity" column="total_quantity"/>
         <result property="availableQty" column="available_qty"/>
         <result property="borrowedQty" column="borrowed_qty"/>
@@ -23,23 +28,26 @@
 
     <sql id="selectInvStockVo">
         select s.stock_id,
-               s.item_id,
+               i.item_id,
                i.item_code,
                i.item_name,
                i.category_id,
                c.category_name,
                i.specification,
                i.unit,
-               s.total_quantity,
-               s.available_qty,
-               s.borrowed_qty,
-               s.reserved_qty,
-               s.damaged_qty,
+               i.min_stock,
+               i.max_stock,
+               i.location,
+               IFNULL(s.total_quantity, 0) as total_quantity,
+               IFNULL(s.available_qty, 0)  as available_qty,
+               IFNULL(s.borrowed_qty, 0)   as borrowed_qty,
+               IFNULL(s.reserved_qty, 0)   as reserved_qty,
+               IFNULL(s.damaged_qty, 0)    as damaged_qty,
                s.last_in_time,
                s.last_out_time,
                s.update_time
-        from inv_stock s
-                 left join inv_item i on s.item_id = i.item_id
+        from inv_item i
+                 left join inv_stock s on s.item_id = i.item_id
                  left join inv_category c on i.category_id = c.category_id
     </sql>
 
@@ -65,13 +73,13 @@
 
     <select id="selectLowStockList" resultMap="InvStockResult">
         <include refid="selectInvStockVo"/>
-        where s.available_qty &lt;= 10
-        order by s.available_qty asc
+        where IFNULL(s.available_qty, 0) &lt;= 10
+        order by IFNULL(s.available_qty, 0) asc
     </select>
 
     <select id="selectOutOfStockList" resultMap="InvStockResult">
         <include refid="selectInvStockVo"/>
-        where s.total_quantity = 0
+        where IFNULL(s.total_quantity, 0) = 0
         order by s.update_time desc
     </select>
 

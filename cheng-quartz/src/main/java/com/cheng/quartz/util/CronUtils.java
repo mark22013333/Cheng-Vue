@@ -6,7 +6,7 @@ import java.text.ParseException;
 import java.util.Date;
 
 /**
- * cron表達式工具類
+ * Cron表達式工具類
  *
  * @author cheng
  *

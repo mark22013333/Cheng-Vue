@@ -1,5 +1,7 @@
 package com.cheng.common.exception.job;
 
+import lombok.Getter;
+
 import java.io.Serial;
 
 /**
@@ -7,6 +9,7 @@ import java.io.Serial;
  *
  * @author cheng
  */
+@Getter
 public class TaskException extends Exception {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -20,10 +23,6 @@ public class TaskException extends Exception {
     public TaskException(String msg, Code code, Exception nestedEx) {
         super(msg, nestedEx);
         this.code = code;
-    }
-
-    public Code getCode() {
-        return code;
     }
 
     public enum Code {

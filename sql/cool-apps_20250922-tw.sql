@@ -953,7 +953,7 @@ create table sys_job
     job_name        varchar(64)  default '' comment '任務名稱',
     job_group       varchar(64)  default 'DEFAULT' comment '任務組名',
     invoke_target   varchar(500) not null comment '呼叫目標字串',
-    cron_expression varchar(255) default '' comment 'cron執行運算式',
+    cron_expression varchar(255) default '' comment 'Cron執行運算式',
     misfire_policy  varchar(20)  default '3' comment '計畫執行錯誤策略（1立即執行 2執行一次 3放棄執行）',
     concurrent      char(1)      default '1' comment '是否併發執行（0允許 1禁止）',
     status          char(1)      default '0' comment '狀態（0正常 1暫停）',

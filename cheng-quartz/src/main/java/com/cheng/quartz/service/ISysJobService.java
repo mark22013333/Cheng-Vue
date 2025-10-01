@@ -94,7 +94,7 @@ public interface ISysJobService
     public int updateJob(SysJob job) throws SchedulerException, TaskException;
 
     /**
-     * 校驗cron表達式是否有效
+     * 校驗Cron表達式是否有效
      *
      * @param cronExpression 表達式
      * @return 結果

@@ -4,7 +4,7 @@ import com.cheng.quartz.domain.SysJob;
 import org.quartz.JobExecutionContext;
 
 /**
- * 定時任務處理（允許並發執行）
+ * 定時任務處理（允許併發執行）
  *
  * @author cheng
  *

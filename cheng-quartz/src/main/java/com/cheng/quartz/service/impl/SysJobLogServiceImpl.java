@@ -14,8 +14,7 @@ import java.util.List;
  * @author cheng
  */
 @Service
-public class SysJobLogServiceImpl implements ISysJobLogService
-{
+public class SysJobLogServiceImpl implements ISysJobLogService {
     @Autowired
     private SysJobLogMapper jobLogMapper;
 
@@ -26,8 +25,7 @@ public class SysJobLogServiceImpl implements ISysJobLogService
      * @return 呼叫任務日誌集合
      */
     @Override
-    public List<SysJobLog> selectJobLogList(SysJobLog jobLog)
-    {
+    public List<SysJobLog> selectJobLogList(SysJobLog jobLog) {
         return jobLogMapper.selectJobLogList(jobLog);
     }
 
@@ -38,8 +36,7 @@ public class SysJobLogServiceImpl implements ISysJobLogService
      * @return 呼叫任務日誌物件訊息
      */
     @Override
-    public SysJobLog selectJobLogById(Long jobLogId)
-    {
+    public SysJobLog selectJobLogById(Long jobLogId) {
         return jobLogMapper.selectJobLogById(jobLogId);
     }
 
@@ -49,8 +46,7 @@ public class SysJobLogServiceImpl implements ISysJobLogService
      * @param jobLog 呼叫日誌訊息
      */
     @Override
-    public void addJobLog(SysJobLog jobLog)
-    {
+    public void addJobLog(SysJobLog jobLog) {
         jobLogMapper.insertJobLog(jobLog);
     }
 
@@ -61,8 +57,7 @@ public class SysJobLogServiceImpl implements ISysJobLogService
      * @return 結果
      */
     @Override
-    public int deleteJobLogByIds(Long[] logIds)
-    {
+    public int deleteJobLogByIds(Long[] logIds) {
         return jobLogMapper.deleteJobLogByIds(logIds);
     }
 
@@ -72,8 +67,7 @@ public class SysJobLogServiceImpl implements ISysJobLogService
      * @param jobId 呼叫日誌ID
      */
     @Override
-    public int deleteJobLogById(Long jobId)
-    {
+    public int deleteJobLogById(Long jobId) {
         return jobLogMapper.deleteJobLogById(jobId);
     }
 
@@ -81,8 +75,7 @@ public class SysJobLogServiceImpl implements ISysJobLogService
      * 清除任務日誌
      */
     @Override
-    public void cleanJobLog()
-    {
+    public void cleanJobLog() {
         jobLogMapper.cleanJobLog();
     }
 }

@@ -58,6 +58,36 @@ public class InvStock implements Serializable {
     private String categoryName;
 
     /**
+     * 規格（inv_item.specification）
+     */
+    @Excel(name = "規格")
+    private String specification;
+
+    /**
+     * 單位（inv_item.unit）
+     */
+    @Excel(name = "單位")
+    private String unit;
+
+    /**
+     * 最低庫存（inv_item.min_stock）
+     */
+    @Excel(name = "最小庫存")
+    private Integer minStock;
+
+    /**
+     * 最高庫存（inv_item.max_stock）
+     */
+    @Excel(name = "最大庫存")
+    private Integer maxStock;
+
+    /**
+     * 存放位置（inv_item.location）
+     */
+    @Excel(name = "存放位置")
+    private String location;
+
+    /**
      * 總數量
      */
     @Excel(name = "總數量")
@@ -124,6 +154,11 @@ public class InvStock implements Serializable {
                 .append("itemCode", getItemCode())
                 .append("categoryId", getCategoryId())
                 .append("categoryName", getCategoryName())
+                .append("specification", getSpecification())
+                .append("unit", getUnit())
+                .append("minStock", getMinStock())
+                .append("maxStock", getMaxStock())
+                .append("location", getLocation())
                 .append("totalQuantity", getTotalQuantity())
                 .append("availableQty", getAvailableQty())
                 .append("borrowedQty", getBorrowedQty())

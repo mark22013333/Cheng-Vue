@@ -169,7 +169,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
 
     /**
      * 取得隨機數產生器物件<br>
-     * ThreadLocalRandom是JDK 7之後提供並發產生隨機數，能夠解決多個執行緒發生的競爭爭奪。
+     * ThreadLocalRandom是JDK 7之後提供併發產生隨機數，能夠解決多個執行緒發生的競爭爭奪。
      *
      * @return {@link ThreadLocalRandom}
      */

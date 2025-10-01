@@ -104,7 +104,7 @@
         </template>
       </el-table-column>
       <el-table-column :show-overflow-tooltip="true" align="center" label="呼叫目標字串" prop="invokeTarget"/>
-      <el-table-column :show-overflow-tooltip="true" align="center" label="cron執行表達式" prop="cronExpression"/>
+      <el-table-column :show-overflow-tooltip="true" align="center" label="Cron執行表達式" prop="cronExpression"/>
       <el-table-column align="center" label="狀態">
         <template slot-scope="scope">
           <el-switch
@@ -196,8 +196,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="cron表達式" prop="cronExpression">
-              <el-input v-model="form.cronExpression" placeholder="請輸入cron執行表達式">
+            <el-form-item label="Cron表達式" prop="cronExpression">
+              <el-input v-model="form.cronExpression" placeholder="請輸入Cron執行表達式">
                 <template slot="append">
                   <el-button type="primary" @click="handleShowCron">
                     產生表達式
@@ -223,12 +223,12 @@
               <el-radio-group v-model="form.misfirePolicy" size="small">
                 <el-radio-button label="1">立即執行</el-radio-button>
                 <el-radio-button label="2">執行一次</el-radio-button>
-                <el-radio-button label="3">放弃執行</el-radio-button>
+                <el-radio-button label="3">放棄執行</el-radio-button>
               </el-radio-group>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="是否並發" prop="concurrent">
+            <el-form-item label="是否併發" prop="concurrent">
               <el-radio-group v-model="form.concurrent" size="small">
                 <el-radio-button label="0">允許</el-radio-button>
                 <el-radio-button label="1">禁止</el-radio-button>
@@ -260,7 +260,7 @@
             <el-form-item label="建立時間：">{{ form.createTime }}</el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="cron表達式：">{{ form.cronExpression }}</el-form-item>
+            <el-form-item label="Cron表達式：">{{ form.cronExpression }}</el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="下次執行時間：">{{ parseTime(form.nextValidTime) }}</el-form-item>
@@ -275,7 +275,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="是否並發：">
+            <el-form-item label="是否併發：">
               <div v-if="form.concurrent == 0">允許</div>
               <div v-else-if="form.concurrent == 1">禁止</div>
             </el-form-item>
@@ -285,7 +285,7 @@
               <div v-if="form.misfirePolicy == 0">預設策略</div>
               <div v-else-if="form.misfirePolicy == 1">立即執行</div>
               <div v-else-if="form.misfirePolicy == 2">執行一次</div>
-              <div v-else-if="form.misfirePolicy == 3">放弃執行</div>
+              <div v-else-if="form.misfirePolicy == 3">放棄執行</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -350,7 +350,7 @@ export default {
           {required: true, message: "呼叫目標字串不能為空", trigger: "blur"}
         ],
         cronExpression: [
-          {required: true, message: "cron執行表達式不能為空", trigger: "blur"}
+          {required: true, message: "Cron執行表達式不能為空", trigger: "blur"}
         ]
       }
     }
@@ -449,7 +449,7 @@ export default {
         this.openView = true
       })
     },
-    /** cron表達式按鈕操作 */
+    /** Cron表達式按鈕操作 */
     handleShowCron() {
       this.expression = this.form.cronExpression
       this.openCron = true
