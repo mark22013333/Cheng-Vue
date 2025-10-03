@@ -2,6 +2,7 @@ package com.cheng.common.exception.base;
 
 import com.cheng.common.utils.MessageUtils;
 import com.cheng.common.utils.StringUtils;
+import lombok.Getter;
 
 import java.io.Serial;
 
@@ -10,6 +11,7 @@ import java.io.Serial;
  *
  * @author cheng
  */
+@Getter
 public class BaseException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -69,19 +71,4 @@ public class BaseException extends RuntimeException {
         return message;
     }
 
-    public String getModule() {
-        return module;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public Object[] getArgs() {
-        return args;
-    }
-
-    public String getDefaultMessage() {
-        return defaultMessage;
-    }
 }

@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 防盗鏈過濾器
+ * 防盜鏈過濾器
  *
  * @author cheng
  */

@@ -62,6 +62,12 @@
             <artifactId>cheng-generator</artifactId>
         </dependency>
 
+        <!-- 爬蟲模組 -->
+        <dependency>
+            <groupId>com.cheng</groupId>
+            <artifactId>cheng-crawler</artifactId>
+        </dependency>
+
         <!-- Spring Boot Tomcat 依賴（WAR 部署需要） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

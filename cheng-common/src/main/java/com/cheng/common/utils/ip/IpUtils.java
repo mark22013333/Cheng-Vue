@@ -21,7 +21,7 @@ public class IpUtils {
     public final static String REGX_IP_SEG = "(" + REGX_IP + "-" + REGX_IP + ")";
 
     /**
-     * 取得客户端IP
+     * 取得客戶端IP
      *
      * @return IP位置
      */
@@ -30,7 +30,7 @@ public class IpUtils {
     }
 
     /**
-     * 取得客户端IP
+     * 取得客戶端IP
      *
      * @param request 請求物件
      * @return IP位置

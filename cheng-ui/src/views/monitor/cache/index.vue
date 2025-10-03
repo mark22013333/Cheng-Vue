@@ -24,7 +24,7 @@
                   </td>
                   <td class="el-table__cell is-leaf"><div class="cell" v-if="cache.info">{{ cache.info.tcp_port }}</div></td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">客户端數</div>
+                    <div class="cell">客戶端數</div>
                   </td>
                   <td class="el-table__cell is-leaf"><div class="cell" v-if="cache.info">{{ cache.info.connected_clients }}</div></td>
                 </tr>

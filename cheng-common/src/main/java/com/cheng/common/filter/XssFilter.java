@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class XssFilter implements Filter {
     /**
-     * 排除鏈接
+     * 排除連結
      */
     public List<String> excludes = new ArrayList<>();
 

@@ -196,7 +196,7 @@ public class ExcelUtil<T> {
             if (StringUtils.containsAny(propertyValue, separator)) {
                 for (String value : propertyValue.split(separator)) {
                     if (itemArray[1].equals(value)) {
-                        propertyString.append(itemArray[0] + separator);
+                        propertyString.append(itemArray[0]).append(separator);
                         break;
                     }
                 }
@@ -266,11 +266,9 @@ public class ExcelUtil<T> {
     public static Map<String, List<PictureData>> getSheetPictures07(XSSFSheet sheet, XSSFWorkbook workbook) {
         Map<String, List<PictureData>> sheetIndexPicMap = new HashMap<>();
         for (POIXMLDocumentPart dr : sheet.getRelations()) {
-            if (dr instanceof XSSFDrawing) {
-                XSSFDrawing drawing = (XSSFDrawing) dr;
+            if (dr instanceof XSSFDrawing drawing) {
                 for (XSSFShape shape : drawing.getShapes()) {
-                    if (shape instanceof XSSFPicture) {
-                        XSSFPicture pic = (XSSFPicture) shape;
+                    if (shape instanceof XSSFPicture pic) {
                         XSSFClientAnchor anchor = pic.getPreferredSize();
                         CTMarker ctMarker = anchor.getFrom();
                         String picIndex = ctMarker.getRow() + "_" + ctMarker.getCol();

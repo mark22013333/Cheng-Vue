@@ -46,4 +46,6 @@ nbdist/
 !*/build/*.java
 !*/build/*.html
 !*/build/*.xml
-/cheng.deploy/
+/cheng.deploy/deploy
+/cheng.deploy/logs
+/cheng.deploy/frontend-dist

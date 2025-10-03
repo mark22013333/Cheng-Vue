@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.cheng</groupId>
     <artifactId>cheng</artifactId>
@@ -11,7 +11,7 @@
     <name>cheng</name>
     <url>http://www.cheng.vip</url>
     <description>CoolApps管理系統</description>
-    
+
     <properties>
         <cheng.version>3.9.0</cheng.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -41,7 +41,7 @@
     <dependencyManagement>
         <dependencies>
 
-            <!-- SpringBoot的依賴設定-->
+            <!-- SpringBoot的依賴設定 -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -57,7 +57,7 @@
                 <version>${druid.version}</version>
             </dependency>
 
-            <!-- 解析客户端作業系統、瀏覽器等 -->
+            <!-- 解析客戶端作業系統、瀏覽器等 -->
             <dependency>
                 <groupId>eu.bitwalker</groupId>
                 <artifactId>UserAgentUtils</artifactId>
@@ -137,7 +137,7 @@
                 <version>${fastjson.version}</version>
             </dependency>
 
-            <!-- Token產生與解析-->
+            <!-- Token產生與解析 -->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt</artifactId>
@@ -151,39 +151,46 @@
                 <version>${kaptcha.version}</version>
             </dependency>
 
-            <!-- 定時任務-->
+            <!-- 定時任務 -->
             <dependency>
                 <groupId>com.cheng</groupId>
                 <artifactId>cheng-quartz</artifactId>
                 <version>${cheng.version}</version>
             </dependency>
 
-            <!-- 程式碼產生-->
+            <!-- 程式碼產生 -->
             <dependency>
                 <groupId>com.cheng</groupId>
                 <artifactId>cheng-generator</artifactId>
                 <version>${cheng.version}</version>
             </dependency>
 
-            <!-- 核心模組-->
+            <!-- 核心模組 -->
             <dependency>
                 <groupId>com.cheng</groupId>
                 <artifactId>cheng-framework</artifactId>
                 <version>${cheng.version}</version>
             </dependency>
 
-            <!-- 系統模組-->
+            <!-- 系統模組 -->
             <dependency>
                 <groupId>com.cheng</groupId>
                 <artifactId>cheng-system</artifactId>
                 <version>${cheng.version}</version>
             </dependency>
 
-            <!-- 共用工具-->
+            <!-- 共用工具 -->
             <dependency>
                 <groupId>com.cheng</groupId>
                 <artifactId>cheng-common</artifactId>
                 <version>${cheng.version}</version>
+            </dependency>
+
+            <!-- 爬蟲模組 -->
+            <dependency>
+                <groupId>com.cheng</groupId>
+                <artifactId>cheng-crawler</artifactId>
+                <version>3.9.0</version>
             </dependency>
 
             <!-- Lombok (managed version) -->
@@ -196,6 +203,14 @@
         </dependencies>
     </dependencyManagement>
 
+    <dependencies>
+        <!-- Provide SLF4J API to all modules -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+    </dependencies>
+
     <modules>
         <module>cheng-admin</module>
         <module>cheng-framework</module>
@@ -203,6 +218,7 @@
         <module>cheng-quartz</module>
         <module>cheng-generator</module>
         <module>cheng-common</module>
+        <module>cheng-crawler</module>
     </modules>
     <packaging>pom</packaging>
 

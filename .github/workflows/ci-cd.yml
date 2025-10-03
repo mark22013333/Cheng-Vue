@@ -32,7 +32,7 @@ jobs:
         working-directory: cheng-ui            # <- 若前端不在 cheng-ui，請調整路徑
         run: npm ci
 
-      - name: Build frontend
+      - name: Build frontend (repo script)
         run: bash cheng.deploy/build-frontend.sh
 
       - name: Upload frontend artifact
@@ -40,7 +40,7 @@ jobs:
         with:
           name: frontend-dist
           path: |
-            cheng-ui/dist                     # <- 若輸出路徑不同，請調整
+            cheng.deploy/frontend-dist       # 與 deploy-to-server.sh 的預設相符
 
   build-backend:
     name: Build Backend (Maven)
@@ -80,7 +80,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-dist
-          path: frontend-dist
+          path: frontend-dist                 # deploy-to-server.sh 預設 LOCAL_FRONTEND_DIR=frontend-dist
 
       - name: Download backend artifact
         uses: actions/download-artifact@v4
@@ -88,72 +88,44 @@ jobs:
           name: backend-wars
           path: backend-wars
 
-      - name: Ensure deploy scripts are executable
-        run: |
-          chmod +x cheng.deploy/*.sh
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Use pre-provided known_hosts (optional)
-        if: ${{ secrets.SSH_KNOWN_HOSTS }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
-
-      - name: Add server to known_hosts via ssh-keyscan (fallback)
-        if: ${{ !secrets.SSH_KNOWN_HOSTS }}
+      - name: Manage known_hosts (secret or ssh-keyscan)
         env:
+          KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           SERVER_PORT: ${{ secrets.SSH_PORT }}
         run: |
+          set -e
           mkdir -p ~/.ssh
-          SERVER_PORT=${SERVER_PORT:-22}
-          ssh-keyscan -p "$SERVER_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          if [ -n "$KNOWN_HOSTS" ]; then
+            echo "$KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          else
+            SERVER_PORT=${SERVER_PORT:-22}
+            ssh-keyscan -p "$SERVER_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          fi
 
-      - name: Deploy backend WAR to server (no rebuild)
+      - name: Deploy backend WAR to server (script)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          SERVER_PORT: ${{ secrets.SSH_PORT }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
           TOMCAT_WEBAPPS_DIR: ${{ secrets.TOMCAT_WEBAPPS_DIR }}
-        run: |
-          set -e
-          SERVER_PORT=${SERVER_PORT:-22}
-          TOMCAT_WEBAPPS_DIR=${TOMCAT_WEBAPPS_DIR:-/usr/libexec/tomcat10/webapps}
-          APP_NAME=apps
+          APP_NAME: apps
+          WAR_FILE: backend-wars/apps.war
+          HEALTH_PROTOCOL: https
+          HEALTH_PATH: /prod-api/system/user/profile
+        run: bash cheng.deploy/deploy-backend.sh
 
-          echo "Uploading backend-wars/${APP_NAME}.war to ${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/${APP_NAME}-new.war"
-          scp -P "$SERVER_PORT" backend-wars/${APP_NAME}.war "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/${APP_NAME}-new.war"
-
-          echo "Deploying on remote Tomcat..."
-          ssh -p "$SERVER_PORT" "${DEPLOY_USER}@${DEPLOY_HOST}" <<EOF
-            set -e
-            echo "Stopping Tomcat..."
-            sudo systemctl stop tomcat10
-
-            echo "Backing up existing WAR if exists..."
-            if [ -f "${TOMCAT_WEBAPPS_DIR}/${APP_NAME}.war" ]; then
-              sudo mv "${TOMCAT_WEBAPPS_DIR}/${APP_NAME}.war" "${TOMCAT_WEBAPPS_DIR}/${APP_NAME}.war.backup.$(date +%Y%m%d_%H%M%S)"
-            fi
-
-            echo "Removing exploded app directory..."
-            sudo rm -rf "${TOMCAT_WEBAPPS_DIR}/${APP_NAME}/"
-
-            echo "Placing new WAR..."
-            sudo cp "/tmp/${APP_NAME}-new.war" "${TOMCAT_WEBAPPS_DIR}/${APP_NAME}.war"
-            sudo chown tomcat:tomcat "${TOMCAT_WEBAPPS_DIR}/${APP_NAME}.war"
-
-            echo "Starting Tomcat..."
-            sudo systemctl start tomcat10
-
-            echo "Cleaning up temp WAR..."
-            rm -f "/tmp/${APP_NAME}-new.war"
-          EOF
-
-      # 若部署前端需要把 frontend-dist 傳上去，可在腳本內處理，或示範如下：
-      # - name: Deploy frontend static files (optional)
-      #   run: |
-      #     (cd frontend-dist && bash ../cheng.deploy/deploy-to-server.sh)
+      - name: Deploy frontend static files (script)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          LOCAL_FRONTEND_DIR: frontend-dist
+          FRONTEND_DIR: /var/www/cheng-vue/frontend
+        run: bash cheng.deploy/deploy-to-server.sh

@@ -9,6 +9,7 @@ import com.cheng.common.utils.DateUtils;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.uuid.IdUtils;
 import com.cheng.common.utils.uuid.Seq;
+import lombok.Getter;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,14 +37,11 @@ public class FileUploadUtils {
     /**
      * 預設上傳的地址
      */
+    @Getter
     private static String defaultBaseDir = CoolAppsConfig.getProfile();
 
     public static void setDefaultBaseDir(String defaultBaseDir) {
         FileUploadUtils.defaultBaseDir = defaultBaseDir;
-    }
-
-    public static String getDefaultBaseDir() {
-        return defaultBaseDir;
     }
 
     /**
@@ -51,9 +49,8 @@ public class FileUploadUtils {
      *
      * @param file 上傳的檔案
      * @return 檔案名稱
-     * @throws Exception
      */
-    public static final String upload(MultipartFile file) throws IOException {
+    public static String upload(MultipartFile file) throws IOException {
         try {
             return upload(getDefaultBaseDir(), file, MimeTypeUtils.DEFAULT_ALLOWED_EXTENSION);
         } catch (Exception e) {
@@ -67,7 +64,6 @@ public class FileUploadUtils {
      * @param baseDir 相對應用的基目錄
      * @param file    上傳的檔案
      * @return 檔案名稱
-     * @throws IOException
      */
     public static String upload(String baseDir, MultipartFile file) throws IOException {
         try {
@@ -160,9 +156,7 @@ public class FileUploadUtils {
      * 檔案大小校驗
      *
      * @param file 上傳的檔案
-     * @return
      * @throws FileSizeLimitExceededException 如果超出最大大小
-     * @throws InvalidExtensionException
      */
     public static void assertAllowed(MultipartFile file, String[] allowedExtension)
             throws FileSizeLimitExceededException, InvalidExtensionException {

@@ -49,9 +49,9 @@ public class AsyncFactory {
                         LogUtils.getBlock(message);
                 // 印出訊息到日誌
                 sys_user_logger.info(s, args);
-                // 取得客户端作業系統
+                // 取得客戶端作業系統
                 String os = userAgent.getOperatingSystem().getName();
-                // 取得客户端瀏覽器
+                // 取得客戶端瀏覽器
                 String browser = userAgent.getBrowser().getName();
                 // 封裝物件
                 SysLogininfor logininfor = new SysLogininfor();

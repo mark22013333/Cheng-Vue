@@ -318,7 +318,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     /**
      * 是否為http(s)://開頭
      *
-     * @param link 鏈接
+     * @param link 連結
      * @return 結果
      */
     public static boolean ishttp(String link) {

@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 客户端工具類
+ * 客戶端工具類
  *
  * @author cheng
  */
@@ -117,7 +117,7 @@ public class ServletUtils {
     }
 
     /**
-     * 將字串渲染到客户端
+     * 將字串渲染到客戶端
      *
      * @param response 渲染物件
      * @param string   待渲染的字串

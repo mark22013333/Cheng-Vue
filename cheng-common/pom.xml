@@ -122,7 +122,7 @@
             <artifactId>commons-pool2</artifactId>
         </dependency>
 
-        <!-- 解析客户端作業系統、瀏覽器等 -->
+        <!-- 解析客戶端作業系統、瀏覽器等 -->
         <dependency>
             <groupId>eu.bitwalker</groupId>
             <artifactId>UserAgentUtils</artifactId>

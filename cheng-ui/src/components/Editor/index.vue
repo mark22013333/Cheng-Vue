@@ -83,7 +83,7 @@ export default {
             [{color: []}, {background: []}],             // 字體顏色、字體背景顏色
             [{align: []}],                                 // 對齊方式
             ["clean"],                                       // 清除文字格式
-            ["link", "image", "video"]                       // 鏈接、圖片、影片
+            ["link", "image", "video"]                       // 連結、圖片、影片
           ],
         },
         placeholder: "請輸入内容",
@@ -228,7 +228,7 @@ export default {
   display: none;
 }
 .ql-snow .ql-tooltip[data-mode="link"]::before {
-  content: "請輸入鏈接地址:";
+  content: "請輸入連結地址:";
 }
 .ql-snow .ql-tooltip.ql-editing a.ql-action::after {
   border-right: 0px;
