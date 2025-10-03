@@ -95,11 +95,7 @@
             <if test="damagedQty != null">damaged_qty,</if>
             <if test="lastInTime != null">last_in_time,</if>
             <if test="lastOutTime != null">last_out_time,</if>
-            <if test="createBy != null">create_by,</if>
-            <if test="createTime != null">create_time,</if>
-            <if test="updateBy != null">update_by,</if>
             <if test="updateTime != null">update_time,</if>
-            <if test="remark != null">remark,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="itemId != null">#{itemId},</if>
@@ -110,11 +106,7 @@
             <if test="damagedQty != null">#{damagedQty},</if>
             <if test="lastInTime != null">#{lastInTime},</if>
             <if test="lastOutTime != null">#{lastOutTime},</if>
-            <if test="createBy != null">#{createBy},</if>
-            <if test="createTime != null">#{createTime},</if>
-            <if test="updateBy != null">#{updateBy},</if>
             <if test="updateTime != null">#{updateTime},</if>
-            <if test="remark != null">#{remark},</if>
         </trim>
     </insert>
 
@@ -129,11 +121,7 @@
             <if test="damagedQty != null">damaged_qty = #{damagedQty},</if>
             <if test="lastInTime != null">last_in_time = #{lastInTime},</if>
             <if test="lastOutTime != null">last_out_time = #{lastOutTime},</if>
-            <if test="createBy != null">create_by = #{createBy},</if>
-            <if test="createTime != null">create_time = #{createTime},</if>
-            <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
-            <if test="remark != null">remark = #{remark},</if>
         </trim>
         where stock_id = #{stockId}
     </update>

@@ -66,15 +66,17 @@
 
       <!-- 掃描結果 -->
       <div class="scan-result" v-if="scanResult">
-        <el-divider content-position="left">掃描結果</el-divider>
-        <el-card shadow="never" class="result-card">
+        <el-divider content-position="left">
+          <i class="el-icon-tickets"></i> 掃描結果
+        </el-divider>
+        <el-card shadow="hover" class="result-card">
           <el-row :gutter="20">
             <el-col :span="6">
               <div class="item-image">
                 <el-image
-                  :src="scanResult.imageUrl || '/static/images/default-item.png'"
+                  :src="scanResult.imageUrl || require('@/assets/images/profile.jpg')"
                   fit="cover"
-                  style="width: 150px; height: 150px;"
+                  style="width: 180px; height: 180px; border-radius: 8px;"
                 >
                   <div slot="error" class="image-slot">
                     <i class="el-icon-picture-outline"></i>
@@ -84,29 +86,45 @@
             </el-col>
             <el-col :span="18">
               <div class="item-info">
-                <h3>{{ scanResult.itemName }}</h3>
-                <el-descriptions :column="2" border>
-                  <el-descriptions-item label="物品編碼">{{ scanResult.itemCode }}</el-descriptions-item>
-                  <el-descriptions-item label="分類">{{ scanResult.categoryName }}</el-descriptions-item>
-                  <el-descriptions-item label="規格">{{ scanResult.specification }}</el-descriptions-item>
-                  <el-descriptions-item label="單位">{{ scanResult.unit }}</el-descriptions-item>
-                  <el-descriptions-item label="品牌">{{ scanResult.brand }}</el-descriptions-item>
-                  <el-descriptions-item label="型號">{{ scanResult.model }}</el-descriptions-item>
+                <h3>
+                  {{ scanResult.itemName }}
+                  <el-tag v-if="scanResult.barcode && isValidIsbn(scanResult.barcode)" 
+                          type="warning" size="small" style="margin-left: 10px;">
+                    <i class="el-icon-reading"></i> 書籍
+                  </el-tag>
+                </h3>
+                <el-descriptions :column="2" border size="medium">
+                  <el-descriptions-item label="物品編碼">
+                    <el-tag size="small">{{ scanResult.itemCode }}</el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="分類">{{ scanResult.categoryName || '未分類' }}</el-descriptions-item>
+                  <el-descriptions-item label="條碼/ISBN">{{ scanResult.barcode || '-' }}</el-descriptions-item>
+                  <el-descriptions-item label="規格">{{ scanResult.specification || '-' }}</el-descriptions-item>
+                  <el-descriptions-item label="單位">{{ scanResult.unit || '個' }}</el-descriptions-item>
+                  <el-descriptions-item label="品牌">{{ scanResult.brand || '-' }}</el-descriptions-item>
+                  <el-descriptions-item label="型號">{{ scanResult.model || '-' }}</el-descriptions-item>
                   <el-descriptions-item label="庫存數量">
                     <span :class="{'text-danger': scanResult.stockQuantity <= scanResult.minStock}">
-                      {{ scanResult.stockQuantity }}
+                      <strong>{{ scanResult.stockQuantity || 0 }}</strong>
                     </span>
                   </el-descriptions-item>
-                  <el-descriptions-item label="可用數量">{{ scanResult.availableQuantity }}</el-descriptions-item>
-                  <el-descriptions-item label="存放位置">{{ scanResult.location }}</el-descriptions-item>
-                  <el-descriptions-item label="供應商">{{ scanResult.supplier }}</el-descriptions-item>
+                  <el-descriptions-item label="可用數量">
+                    <span class="text-success">
+                      <strong>{{ scanResult.availableQuantity || 0 }}</strong>
+                    </span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="存放位置">
+                    <el-tag type="info" size="small">{{ scanResult.location || '未設定' }}</el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="供應商">{{ scanResult.supplier || '-' }}</el-descriptions-item>
+                  <el-descriptions-item label="說明" :span="2">{{ scanResult.description || scanResult.remark || '無' }}</el-descriptions-item>
                 </el-descriptions>
 
                 <div class="action-buttons" style="margin-top: 20px;">
-                  <el-button type="primary" @click="handleBorrow">借出物品</el-button>
-                  <el-button type="success" @click="handleStockIn">入庫</el-button>
-                  <el-button type="warning" @click="handleStockOut">出庫</el-button>
-                  <el-button type="info" @click="handleViewDetail">查看詳情</el-button>
+                  <el-button type="primary" icon="el-icon-sold-out" @click="handleBorrow">借出物品</el-button>
+                  <el-button type="success" icon="el-icon-download" @click="handleStockIn">入庫</el-button>
+                  <el-button type="warning" icon="el-icon-upload2" @click="handleStockOut">出庫</el-button>
+                  <el-button type="info" icon="el-icon-view" @click="handleViewDetail">查看詳情</el-button>
                 </div>
               </div>
             </el-col>
@@ -117,31 +135,40 @@
       <!-- 掃描歷史 -->
       <div class="scan-history" v-if="scanHistory.length > 0">
         <el-divider content-position="left">掃描歷史</el-divider>
-        <el-table :data="scanHistory" style="width: 100%">
+        <el-table :data="scanHistory" style="width: 100%" stripe>
           <el-table-column prop="scanTime" label="掃描時間" width="180">
             <template slot-scope="scope">
               {{ parseTime(scope.row.scanTime, '{y}-{m}-{d} {h}:{i}:{s}') }}
             </template>
           </el-table-column>
-          <el-table-column prop="scanType" label="掃描類型" width="100">
+          <el-table-column prop="codeType" label="類型" width="80">
             <template slot-scope="scope">
-              <el-tag :type="scope.row.scanType === '1' ? 'primary' : 'success'">
+              <el-tag :type="scope.row.codeType === 'ISBN' ? 'warning' : 'info'" size="small">
+                {{ scope.row.codeType || '一般' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="scanType" label="掃描方式" width="100">
+            <template slot-scope="scope">
+              <el-tag :type="scope.row.scanType === '1' ? 'primary' : 'success'" size="small">
                 {{ scope.row.scanType === '1' ? '條碼' : 'QR碼' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="scanCode" label="掃描內容"/>
-          <el-table-column prop="itemName" label="物品名稱"/>
-          <el-table-column prop="scanResult" label="掃描結果" width="100">
+          <el-table-column prop="scanCode" label="掃描內容" width="180"/>
+          <el-table-column prop="itemName" label="物品名稱" show-overflow-tooltip/>
+          <el-table-column prop="scanResult" label="結果" width="80">
             <template slot-scope="scope">
-              <el-tag :type="scope.row.scanResult === '0' ? 'success' : 'danger'">
+              <el-tag :type="scope.row.scanResult === '0' ? 'success' : 'danger'" size="small">
                 {{ scope.row.scanResult === '0' ? '成功' : '失敗' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="150">
+          <el-table-column label="操作" width="150" fixed="right">
             <template slot-scope="scope">
-              <el-button size="mini" @click="handleRescan(scope.row)">重新掃描</el-button>
+              <el-button size="mini" type="primary" @click="handleRescan(scope.row)">
+                <i class="el-icon-refresh"></i> 重新掃描
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -218,7 +245,8 @@
 
 <script>
 import {Html5QrcodeScanner, Html5QrcodeScanType} from "html5-qrcode";
-import {scanItem} from "@/api/inventory/item";
+import {scanIsbn, scanCode} from "@/api/inventory/scan";
+import {getItem} from "@/api/inventory/item";
 import {borrowItem} from "@/api/inventory/borrow";
 import {stockIn, stockOut} from "@/api/inventory/stock";
 import {parseTime} from "@/utils";
@@ -365,7 +393,7 @@ export default {
     handleScanSuccess(decodedText) {
       this.scanForm.scanCode = decodedText;
       this.stopScan();
-      this.handleScan(decodedText);
+      this.performScan(decodedText, this.scanForm.scanType);
       this.$message.success(`掃描成功: ${decodedText}`);
     },
 
@@ -380,29 +408,87 @@ export default {
 
     /** 執行掃描 */
     performScan(scanCode, scanType) {
-      const scanData = {
-        scanCode: scanCode,
-        scanType: scanType
-      };
+      // 檢查是否為 ISBN 格式（10位或13位數字）
+      const isIsbn = this.isValidIsbn(scanCode);
+      
+      if (isIsbn) {
+        // 使用 ISBN 掃描 API（會自動爬取書籍資訊）
+        this.performIsbnScan(scanCode, scanType);
+      } else {
+        // 使用一般掃描 API
+        this.performNormalScan(scanCode, scanType);
+      }
+    },
 
-      scanItem(scanData).then(response => {
-        this.scanResult = response.data;
-        this.addToHistory(scanCode, scanType, '0', response.data.itemName);
-        this.$message.success('掃描成功！');
+    /** 執行 ISBN 掃描 */
+    performIsbnScan(code, scanType) {
+      const loading = this.$loading({
+        lock: true,
+        text: '正在爬取書籍資訊...',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.7)'
+      });
+
+      scanIsbn({ isbn: code }).then(response => {
+        loading.close();
+        
+        if (response.code === 200 && response.data && response.data.item) {
+          this.scanResult = response.data.item;
+          this.addToHistory(code, scanType, '0', response.data.item.itemName, 'ISBN');
+          
+          const message = response.data.message || '書籍掃描成功';
+          this.$notify({
+            title: '成功',
+            message: message,
+            type: 'success',
+            duration: 3000
+          });
+        } else {
+          this.addToHistory(code, scanType, '1', '', 'ISBN');
+          this.$message.error('ISBN 掃描失敗');
+        }
       }).catch(error => {
-        this.addToHistory(scanCode, scanType, '1', '');
+        loading.close();
+        this.addToHistory(code, scanType, '1', '', 'ISBN');
+        this.$message.error('ISBN 掃描失敗：' + (error.msg || '無法取得書籍資訊'));
+      });
+    },
+
+    /** 執行一般掃描 */
+    performNormalScan(code, scanType) {
+      scanCode({ scanCode: code, scanType: scanType }).then(response => {
+        if (response.code === 200 && response.data) {
+          this.scanResult = response.data;
+          this.addToHistory(code, scanType, '0', response.data.itemName, '一般');
+          this.$message.success('掃描成功！');
+        } else {
+          this.addToHistory(code, scanType, '1', '', '一般');
+          this.$message.error('掃描失敗：未找到對應物品');
+        }
+      }).catch(error => {
+        this.addToHistory(code, scanType, '1', '', '一般');
         this.$message.error('掃描失敗：' + (error.msg || '未找到對應物品'));
       });
     },
 
+    /** 驗證 ISBN 格式 */
+    isValidIsbn(code) {
+      if (!code) return false;
+      // 移除可能的連字號或空格
+      const cleanCode = code.replace(/[-\s]/g, '');
+      // 檢查是否為10位或13位數字
+      return /^\d{10}$/.test(cleanCode) || /^\d{13}$/.test(cleanCode);
+    },
+
     /** 添加到掃描歷史 */
-    addToHistory(scanCode, scanType, result, itemName) {
+    addToHistory(scanCode, scanType, result, itemName, codeType = '一般') {
       const historyItem = {
         scanTime: new Date(),
         scanCode: scanCode,
         scanType: scanType,
         scanResult: result,
-        itemName: itemName
+        itemName: itemName,
+        codeType: codeType  // ISBN 或 一般
       };
       this.scanHistory.unshift(historyItem);
 
@@ -575,6 +661,12 @@ export default {
 
 .text-danger {
   color: #f56c6c;
+  font-weight: bold;
+}
+
+.text-success {
+  color: #67c23a;
+  font-weight: bold;
 }
 
 .image-slot {
@@ -586,6 +678,11 @@ export default {
   background: #f5f7fa;
   color: #909399;
   font-size: 30px;
+}
+
+.result-card {
+  border: 2px solid #409eff;
+  box-shadow: 0 2px 12px 0 rgba(64, 158, 255, 0.2);
 }
 
 #qr-reader {

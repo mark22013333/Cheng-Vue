@@ -8,3 +8,21 @@ export function submitScan(data) {
     data: data
   })
 }
+
+// ISBN 掃描（書籍專用）
+export function scanIsbn(data) {
+  return request({
+    url: '/inventory/scan/isbn',
+    method: 'post',
+    data: data
+  })
+}
+
+// 掃描條碼或QR碼（通用）
+export function scanCode(data) {
+  return request({
+    url: '/inventory/item/scan',
+    method: 'post',
+    data: data
+  })
+}

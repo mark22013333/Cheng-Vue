@@ -25,10 +25,16 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- 共用工具-->
+        <!-- 共用工具 -->
         <dependency>
             <groupId>com.cheng</groupId>
             <artifactId>cheng-common</artifactId>
+        </dependency>
+
+        <!-- 爬蟲模組 -->
+        <dependency>
+            <groupId>com.cheng</groupId>
+            <artifactId>cheng-crawler</artifactId>
         </dependency>
 
     </dependencies>

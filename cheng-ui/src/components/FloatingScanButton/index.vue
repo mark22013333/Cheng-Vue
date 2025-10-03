@@ -62,17 +62,24 @@
         <!-- 掃描結果 -->
         <div class="scan-result" v-if="scanResult">
           <el-divider>掃描結果</el-divider>
-          <el-card shadow="never">
+          <el-card shadow="hover" class="result-card">
             <div class="result-info">
-              <h4>{{ scanResult.itemName }}</h4>
+              <h4>
+                {{ scanResult.itemName }}
+                <el-tag v-if="scanResult.barcode && isValidIsbn(scanResult.barcode)" 
+                        type="warning" size="mini" style="margin-left: 8px;">
+                  <i class="el-icon-reading"></i> 書籍
+                </el-tag>
+              </h4>
               <p><strong>編碼：</strong>{{ scanResult.itemCode }}</p>
-              <p><strong>庫存：</strong>{{ scanResult.stockQuantity }}</p>
-              <p><strong>可用：</strong>{{ scanResult.availableQuantity }}</p>
+              <p v-if="scanResult.barcode"><strong>條碼/ISBN：</strong>{{ scanResult.barcode }}</p>
+              <p><strong>庫存：</strong><span class="stock-num">{{ scanResult.stockQuantity || 0 }}</span></p>
+              <p><strong>可用：</strong><span class="available-num">{{ scanResult.availableQuantity || 0 }}</span></p>
             </div>
             <div class="result-actions">
-              <el-button size="small" type="primary" @click="handleQuickBorrow">借出</el-button>
-              <el-button size="small" type="success" @click="handleQuickStockIn">入庫</el-button>
-              <el-button size="small" type="info" @click="goToDetail">詳情</el-button>
+              <el-button size="small" type="primary" icon="el-icon-sold-out" @click="handleQuickBorrow">借出</el-button>
+              <el-button size="small" type="success" icon="el-icon-download" @click="handleQuickStockIn">入庫</el-button>
+              <el-button size="small" type="info" icon="el-icon-view" @click="goToDetail">詳情</el-button>
             </div>
           </el-card>
         </div>
@@ -102,7 +109,7 @@
 
 <script>
 import {Html5QrcodeScanner, Html5QrcodeScanType} from "html5-qrcode";
-import {scanItem} from "@/api/inventory/item";
+import {scanIsbn, scanCode} from "@/api/inventory/scan";
 
 export default {
   name: "FloatingScanButton",
@@ -289,18 +296,74 @@ export default {
     },
 
     /** 執行快速掃描 */
-    performQuickScan(scanCode) {
-      const scanData = {
-        scanCode: scanCode,
-        scanType: '2' // 預設為QR碼
-      };
+    performQuickScan(code) {
+      // 檢查是否為 ISBN 格式
+      const isIsbn = this.isValidIsbn(code);
+      
+      if (isIsbn) {
+        // 使用 ISBN 掃描 API（會自動爬取書籍資訊）
+        this.performIsbnQuickScan(code);
+      } else {
+        // 使用一般掃描 API
+        this.performNormalQuickScan(code);
+      }
+    },
 
-      scanItem(scanData).then(response => {
-        this.scanResult = response.data;
-        this.$message.success('掃描成功！');
+    /** 執行 ISBN 快速掃描 */
+    performIsbnQuickScan(code) {
+      const loading = this.$loading({
+        lock: true,
+        text: '正在爬取書籍資訊...',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.7)'
+      });
+
+      scanIsbn({ isbn: code }).then(response => {
+        loading.close();
+        
+        if (response.code === 200 && response.data && response.data.item) {
+          this.scanResult = response.data.item;
+          
+          const message = response.data.message || '書籍掃描成功';
+          this.$notify({
+            title: '成功',
+            message: message,
+            type: 'success',
+            duration: 3000
+          });
+        } else {
+          this.$message.error('ISBN 掃描失敗');
+        }
+      }).catch(error => {
+        loading.close();
+        this.$message.error('ISBN 掃描失敗：' + (error.msg || '無法取得書籍資訊'));
+      });
+    },
+
+    /** 執行一般快速掃描 */
+    performNormalQuickScan(code) {
+      scanCode({ 
+        scanCode: code, 
+        scanType: '2' // 預設為QR碼
+      }).then(response => {
+        if (response.code === 200 && response.data) {
+          this.scanResult = response.data;
+          this.$message.success('掃描成功！');
+        } else {
+          this.$message.error('掃描失敗：未找到對應物品');
+        }
       }).catch(error => {
         this.$message.error('掃描失敗：' + (error.msg || '未找到對應物品'));
       });
+    },
+
+    /** 驗證 ISBN 格式 */
+    isValidIsbn(code) {
+      if (!code) return false;
+      // 移除可能的連字號或空格
+      const cleanCode = code.replace(/[-\s]/g, '');
+      // 檢查是否為10位或13位數字
+      return /^\d{10}$/.test(cleanCode) || /^\d{13}$/.test(cleanCode);
     },
 
     /** 快速借出 */
@@ -434,6 +497,11 @@ export default {
   margin-top: 20px;
 }
 
+.result-card {
+  border: 2px solid #409eff;
+  box-shadow: 0 2px 12px 0 rgba(64, 158, 255, 0.2);
+}
+
 .result-info {
   margin-bottom: 15px;
 }
@@ -441,12 +509,24 @@ export default {
 .result-info h4 {
   margin: 0 0 10px 0;
   color: #303133;
+  display: flex;
+  align-items: center;
 }
 
 .result-info p {
   margin: 5px 0;
   color: #606266;
   font-size: 14px;
+}
+
+.stock-num {
+  color: #409eff;
+  font-weight: bold;
+}
+
+.available-num {
+  color: #67c23a;
+  font-weight: bold;
 }
 
 .result-actions {

@@ -49,6 +49,11 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.2.0 - 2025-10-03">
+              <ol>
+                <li>整合 ISBN 掃描與書籍資訊爬蟲功能。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.1.1 - 2025-09-23">
               <ol>
                 <li>新增「庫存管理」模組，包含物品管理、庫存查詢、借出管理、掃描功能與庫存報表等頁面。</li>
