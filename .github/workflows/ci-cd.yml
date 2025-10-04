@@ -25,8 +25,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: cheng-ui/package-lock.json
 
       - name: Install frontend dependencies
         working-directory: cheng-ui            # <- 若前端不在 cheng-ui，請調整路徑
@@ -56,8 +54,11 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: 'maven'
 
-      - name: Build backend (Maven)
-        working-directory: cheng-admin        # <- 後端主模組
+      - name: Build all modules (Maven install)
+        run: mvn -B -DskipTests clean install
+
+      - name: Build backend WAR (Maven package)
+        working-directory: cheng-admin
         run: mvn -B -DskipTests package
 
       - name: Upload backend artifact
