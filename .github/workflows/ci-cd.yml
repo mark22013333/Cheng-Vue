@@ -25,10 +25,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: cheng-ui/package.json
 
       - name: Install frontend dependencies
-        working-directory: cheng-ui            # <- 若前端不在 cheng-ui，請調整路徑
-        run: npm ci
+        working-directory: cheng-ui
+        run: npm install --legacy-peer-deps
 
       - name: Build frontend (repo script)
         run: bash cheng.deploy/build-frontend.sh
