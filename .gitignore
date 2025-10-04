@@ -49,3 +49,5 @@ nbdist/
 /cheng.deploy/deploy
 /cheng.deploy/logs
 /cheng.deploy/frontend-dist
+/cheng.deploy/temp
+/cheng.deploy/docs
