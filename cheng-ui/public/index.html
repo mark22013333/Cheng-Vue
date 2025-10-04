@@ -30,59 +30,101 @@
       width: 100%;
       height: 100%;
       z-index: 999999;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
     #loader {
       display: block;
-      position: relative;
+      position: absolute;
       left: 50%;
       top: 50%;
-      width: 150px;
-      height: 150px;
-      margin: -75px 0 0 -75px;
-      border-radius: 50%;
-      border: 3px solid transparent;
-      border-top-color: #FFF;
-      -webkit-animation: spin 2s linear infinite;
-      -ms-animation: spin 2s linear infinite;
-      -moz-animation: spin 2s linear infinite;
-      -o-animation: spin 2s linear infinite;
-      animation: spin 2s linear infinite;
+      width: 80px;
+      height: 80px;
+      margin: -40px 0 0 -40px;
       z-index: 1001;
+      transition: transform 0.3s ease-out;
+      pointer-events: none;
     }
 
-    #loader:before {
-      content: "";
+    #loader .dot {
       position: absolute;
-      top: 5px;
-      left: 5px;
-      right: 5px;
-      bottom: 5px;
+      width: 16px;
+      height: 16px;
+      background: rgba(255, 255, 255, 0.9);
       border-radius: 50%;
-      border: 3px solid transparent;
-      border-top-color: #FFF;
-      -webkit-animation: spin 3s linear infinite;
-      -moz-animation: spin 3s linear infinite;
-      -o-animation: spin 3s linear infinite;
-      -ms-animation: spin 3s linear infinite;
-      animation: spin 3s linear infinite;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
     }
 
-    #loader:after {
-      content: "";
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      right: 15px;
-      bottom: 15px;
+    #loader .dot:nth-child(1) {
+      top: 0;
+      left: 32px;
+      animation: dotPulse 1.4s ease-in-out 0s infinite;
+    }
+
+    #loader .dot:nth-child(2) {
+      top: 11px;
+      right: 11px;
+      animation: dotPulse 1.4s ease-in-out 0.175s infinite;
+    }
+
+    #loader .dot:nth-child(3) {
+      right: 0;
+      top: 32px;
+      animation: dotPulse 1.4s ease-in-out 0.35s infinite;
+    }
+
+    #loader .dot:nth-child(4) {
+      bottom: 11px;
+      right: 11px;
+      animation: dotPulse 1.4s ease-in-out 0.525s infinite;
+    }
+
+    #loader .dot:nth-child(5) {
+      bottom: 0;
+      left: 32px;
+      animation: dotPulse 1.4s ease-in-out 0.7s infinite;
+    }
+
+    #loader .dot:nth-child(6) {
+      bottom: 11px;
+      left: 11px;
+      animation: dotPulse 1.4s ease-in-out 0.875s infinite;
+    }
+
+    #loader .dot:nth-child(7) {
+      left: 0;
+      top: 32px;
+      animation: dotPulse 1.4s ease-in-out 1.05s infinite;
+    }
+
+    #loader .dot:nth-child(8) {
+      top: 11px;
+      left: 11px;
+      animation: dotPulse 1.4s ease-in-out 1.225s infinite;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.5);
+        opacity: 0.5;
+      }
+    }
+
+    .mouse-glow {
+      position: fixed;
+      width: 300px;
+      height: 300px;
       border-radius: 50%;
-      border: 3px solid transparent;
-      border-top-color: #FFF;
-      -moz-animation: spin 1.5s linear infinite;
-      -o-animation: spin 1.5s linear infinite;
-      -ms-animation: spin 1.5s linear infinite;
-      -webkit-animation: spin 1.5s linear infinite;
-      animation: spin 1.5s linear infinite;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+      opacity: 0;
     }
 
 
@@ -113,41 +155,10 @@
     }
 
 
-    #loader-wrapper .loader-section {
-      position: fixed;
-      top: 0;
-      width: 51%;
-      height: 100%;
-      background: #7171C6;
-      z-index: 1000;
-      -webkit-transform: translateX(0);
-      -ms-transform: translateX(0);
-      transform: translateX(0);
-    }
-
-    #loader-wrapper .loader-section.section-left {
-      left: 0;
-    }
-
-    #loader-wrapper .loader-section.section-right {
-      right: 0;
-    }
-
-
-    .loaded #loader-wrapper .loader-section.section-left {
-      -webkit-transform: translateX(-100%);
-      -ms-transform: translateX(-100%);
-      transform: translateX(-100%);
-      -webkit-transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
-      transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
-    }
-
-    .loaded #loader-wrapper .loader-section.section-right {
-      -webkit-transform: translateX(100%);
-      -ms-transform: translateX(100%);
-      transform: translateX(100%);
-      -webkit-transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
-      transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+    .loaded #loader-wrapper {
+      opacity: 0;
+      -webkit-transition: all 0.5s ease-out;
+      transition: all 0.5s ease-out;
     }
 
     .loaded #loader {
@@ -174,9 +185,10 @@
     }
 
     #loader-wrapper .load_title {
-      font-family: 'Open Sans';
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       color: #FFF;
-      font-size: 19px;
+      font-size: 22px;
+      font-weight: 600;
       width: 100%;
       text-align: center;
       z-index: 9999999999999;
@@ -184,25 +196,81 @@
       top: 60%;
       opacity: 1;
       line-height: 30px;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      -webkit-animation: fadeInOut 2s ease-in-out infinite;
+      animation: fadeInOut 2s ease-in-out infinite;
     }
 
     #loader-wrapper .load_title span {
-      font-weight: normal;
-      font-style: italic;
-      font-size: 13px;
-      color: #FFF;
-      opacity: 0.5;
+      display: block;
+      margin-top: 12px;
+      font-weight: 400;
+      font-style: normal;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+      opacity: 0.85;
+      letter-spacing: 0.5px;
+    }
+
+    @-webkit-keyframes fadeInOut {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
     }
   </style>
   </head>
   <body>
     <div id="app">
 	    <div id="loader-wrapper">
-		    <div id="loader"></div>
-		    <div class="loader-section section-left"></div>
-		    <div class="loader-section section-right"></div>
-        <div class="load_title">正在載入系統資源，請耐心等待</div>
+        <div class="mouse-glow" id="mouseGlow"></div>
+		    <div id="loader">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
         </div>
-	</div>
+        <div class="load_title">CoolApps 管理系統<span>正在鋪設網路地毯，馬上就好！</span></div>
+      </div>
+	  </div>
+    <script>
+      // 滑鼠跟隨效果
+      document.addEventListener('DOMContentLoaded', function() {
+        var loaderWrapper = document.getElementById('loader-wrapper');
+        var loader = document.getElementById('loader');
+        var mouseGlow = document.getElementById('mouseGlow');
+
+        if (loaderWrapper && loader && mouseGlow) {
+          loaderWrapper.addEventListener('mousemove', function(e) {
+            // 滑鼠光暈效果
+            mouseGlow.style.left = e.clientX + 'px';
+            mouseGlow.style.top = e.clientY + 'px';
+            mouseGlow.style.opacity = '1';
+
+            // Loading 圖示跟隨滑鼠（輕微偏移）
+            var rect = loaderWrapper.getBoundingClientRect();
+            var centerX = rect.width / 2;
+            var centerY = rect.height / 2;
+            var moveX = (e.clientX - centerX) * 0.05;
+            var moveY = (e.clientY - centerY) * 0.05;
+
+            loader.style.transform = 'translate(' + moveX + 'px, ' + moveY + 'px)';
+          });
+
+          loaderWrapper.addEventListener('mouseleave', function() {
+            mouseGlow.style.opacity = '0';
+            loader.style.transform = 'translate(0, 0)';
+          });
+        }
+      });
+    </script>
   </body>
 </html>

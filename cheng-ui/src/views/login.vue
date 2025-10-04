@@ -46,8 +46,11 @@
           style="width:100%;"
           @click.native.prevent="handleLogin"
         >
-          <span v-if="!loading">登 入</span>
-          <span v-else>登 入 中...</span>
+          <span v-if="!loading">
+            <i class="el-icon-user-solid" style="margin-right: 5px;"></i>
+            登入
+          </span>
+          <span v-else>驗證中，請稍候...</span>
         </el-button>
         <div style="float: right;" v-if="register">
           <router-link :to="'/register'" class="link-type">立即註冊</router-link>
@@ -56,7 +59,7 @@
     </el-form>
     <!--  底部  -->
     <div class="el-login-footer">
-      <span>Copyright © 2018-2025 cheng.vip All Rights Reserved.</span>
+      <span>Copyright © 2018-2025 Cool-Apps All Rights Reserved.</span>
     </div>
   </div>
 </template>
