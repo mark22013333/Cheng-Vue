@@ -32,8 +32,15 @@ jobs:
         working-directory: cheng-ui
         run: npm install --legacy-peer-deps
 
-      - name: Build frontend (repo script)
-        run: bash cheng.deploy/build-frontend.sh
+      - name: Build frontend production
+        working-directory: cheng-ui
+        run: NODE_OPTIONS=--openssl-legacy-provider npm run build:prod
+
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p cheng.deploy/frontend-dist
+          cp -r cheng-ui/dist/* cheng.deploy/frontend-dist/
+          echo "建置時間: $(date '+%Y-%m-%d %H:%M:%S')" > cheng.deploy/frontend-dist/build-info.txt
 
       - name: Upload frontend artifact
         uses: actions/upload-artifact@v4
