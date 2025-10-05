@@ -88,6 +88,7 @@ jobs:
     name: Deploy (needs build jobs)
     needs: [build-frontend, build-backend]
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     environment: production                   # <- 可選：若要使用 Environment 的審核機制
     steps:
       - name: Checkout repository
