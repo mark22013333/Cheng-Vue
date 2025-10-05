@@ -4,7 +4,8 @@ const state = {
   sidebar: {
     opened: Cookies.get('sidebarStatus') ? !!+Cookies.get('sidebarStatus') : true,
     withoutAnimation: false,
-    hide: false
+    hide: false,
+    width: parseInt(Cookies.get('sidebarWidth')) || 200 // 預設寬度 200px
   },
   device: 'desktop',
   size: Cookies.get('size') || 'medium'
@@ -37,6 +38,10 @@ const mutations = {
   },
   SET_SIDEBAR_HIDE: (state, status) => {
     state.sidebar.hide = status
+  },
+  SET_SIDEBAR_WIDTH: (state, width) => {
+    state.sidebar.width = width
+    Cookies.set('sidebarWidth', width)
   }
 }
 
@@ -55,6 +60,9 @@ const actions = {
   },
   toggleSideBarHide({ commit }, status) {
     commit('SET_SIDEBAR_HIDE', status)
+  },
+  setSidebarWidth({ commit }, width) {
+    commit('SET_SIDEBAR_WIDTH', width)
   }
 }
 

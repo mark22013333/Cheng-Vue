@@ -172,16 +172,24 @@ export const dynamicRoutes = [
     },
     children: [
       {
-        path: 'item',
-        component: () => import('@/views/inventory/item/index'),
-        name: 'Item',
-        meta: { title: '物品管理', icon: 'goods' }
+        path: 'management',
+        component: () => import('@/views/inventory/management/index'),
+        name: 'Management',
+        meta: { title: '物品與庫存管理', icon: 'table' }
       },
       {
-        path: 'stock',
-        component: () => import('@/views/inventory/stock/index'),
-        name: 'Stock',
-        meta: { title: '庫存查詢', icon: 'list' }
+        path: 'item/add',
+        component: () => import('@/views/inventory/item/index'),
+        name: 'ItemAdd',
+        meta: { title: '新增物品', icon: 'plus', activeMenu: '/inventory/management' },
+        hidden: true
+      },
+      {
+        path: 'item/edit/:itemId(\\d+)',
+        component: () => import('@/views/inventory/item/index'),
+        name: 'ItemEdit',
+        meta: { title: '修改物品', icon: 'edit', activeMenu: '/inventory/management' },
+        hidden: true
       },
       {
         path: 'borrow',

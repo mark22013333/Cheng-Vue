@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * 確認應用登出時能關閉後台執行緒
+ * 確認服務停止時能關閉後台執行緒
  *
  * @author cheng
  */
@@ -24,7 +24,7 @@ public class ShutdownManager {
      */
     private void shutdownAsyncManager() {
         try {
-            logger.info("====關閉後台任務任務執行緒池====");
+            logger.info("====關閉後台任務執行緒池====");
             AsyncManager.me().shutdown();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
