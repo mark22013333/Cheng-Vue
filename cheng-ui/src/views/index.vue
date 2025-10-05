@@ -49,6 +49,11 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.2.1 - 2025-10-05">
+              <ol>
+                <li>整合物品與庫存管理，並新增可拖曳調整寬度的側邊選單。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.2.0 - 2025-10-03">
               <ol>
                 <li>整合 ISBN 掃描與書籍資訊爬蟲功能。</li>
@@ -102,7 +107,7 @@ export default {
   data() {
     return {
       // 版本號
-      version: "1.0.1"
+      version: "1.2.1"
     }
   },
   methods: {

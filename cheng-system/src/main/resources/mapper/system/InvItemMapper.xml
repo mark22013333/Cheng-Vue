@@ -89,8 +89,142 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectInvItemVo"/>
         where i.barcode = #{barcode} limit 1
     </select>
-    <select id="selectInvItemByQrCode" resultType="com.cheng.system.domain.InvItem">
+    <select id="selectInvItemByQrCode" parameterType="String" resultMap="InvItemResult">
+        <include refid="selectInvItemVo"/>
+        where i.qr_code = #{qrCode}
+    </select>
 
+    <!-- 物品與庫存整合查詢 ResultMap -->
+    <resultMap type="com.cheng.system.dto.InvItemWithStockDTO" id="InvItemWithStockResult">
+        <!-- 物品資訊 -->
+        <result property="itemId"           column="item_id"           />
+        <result property="itemCode"         column="item_code"         />
+        <result property="itemName"         column="item_name"         />
+        <result property="categoryId"       column="category_id"       />
+        <result property="categoryName"     column="category_name"     />
+        <result property="barcode"          column="barcode"           />
+        <result property="qrCode"           column="qr_code"           />
+        <result property="specification"    column="specification"     />
+        <result property="unit"             column="unit"              />
+        <result property="brand"            column="brand"             />
+        <result property="model"            column="model"             />
+        <result property="purchasePrice"    column="purchase_price"    />
+        <result property="currentPrice"     column="current_price"     />
+        <result property="supplier"         column="supplier"          />
+        <result property="minStock"         column="min_stock"         />
+        <result property="maxStock"         column="max_stock"         />
+        <result property="location"         column="location"          />
+        <result property="description"      column="description"       />
+        <result property="imageUrl"         column="image_url"         />
+        <result property="status"           column="status"            />
+        <result property="remark"           column="remark"            />
+        
+        <!-- 庫存資訊 -->
+        <result property="stockId"          column="stock_id"          />
+        <result property="totalQuantity"    column="total_quantity"    />
+        <result property="availableQty"     column="available_qty"     />
+        <result property="borrowedQty"      column="borrowed_qty"      />
+        <result property="reservedQty"      column="reserved_qty"      />
+        <result property="damagedQty"       column="damaged_qty"       />
+        <result property="lastInTime"       column="last_in_time"      />
+        <result property="lastOutTime"      column="last_out_time"     />
+        <result property="stockUpdateTime"  column="stock_update_time" />
+    </resultMap>
+
+    <sql id="selectItemWithStockVo">
+        select 
+            i.item_id, i.item_code, i.item_name, i.category_id, c.category_name,
+            i.barcode, i.qr_code, i.specification, i.unit, i.brand, i.model,
+            i.purchase_price, i.current_price, i.supplier, i.min_stock, i.max_stock,
+            i.location, i.description, i.image_url, i.status, i.remark,
+            s.stock_id, s.total_quantity, s.available_qty, s.borrowed_qty,
+            s.reserved_qty, s.damaged_qty, s.last_in_time, s.last_out_time,
+            s.update_time as stock_update_time
+        from inv_item i
+        left join inv_category c on i.category_id = c.category_id
+        left join inv_stock s on i.item_id = s.item_id
+    </sql>
+
+    <select id="selectItemWithStockList" parameterType="com.cheng.system.dto.InvItemWithStockDTO" resultMap="InvItemWithStockResult">
+        <include refid="selectItemWithStockVo"/>
+        <where>
+            i.del_flag = '0'
+            <if test="itemCode != null and itemCode != ''"> and i.item_code like concat('%', #{itemCode}, '%')</if>
+            <if test="itemName != null and itemName != ''"> and i.item_name like concat('%', #{itemName}, '%')</if>
+            <if test="categoryId != null"> and i.category_id = #{categoryId}</if>
+            <if test="brand != null and brand != ''"> and i.brand like concat('%', #{brand}, '%')</if>
+            <if test="model != null and model != ''"> and i.model like concat('%', #{model}, '%')</if>
+            <if test="supplier != null and supplier != ''"> and i.supplier like concat('%', #{supplier}, '%')</if>
+            <if test="status != null and status != ''"> and i.status = #{status}</if>
+            <if test="stockStatus != null and stockStatus != ''">
+                <choose>
+                    <!-- 無庫存：可用數量為 null 或 <= 0 -->
+                    <when test="stockStatus == 2">
+                        and (s.available_qty is null or s.available_qty &lt;= 0)
+                    </when>
+                    <!-- 低庫存：可用數量 > 0 且低於閾值 -->
+                    <when test="stockStatus == 1">
+                        and s.available_qty > 0
+                        <choose>
+                            <!-- 使用自訂閾值 -->
+                            <when test="lowStockThreshold != null">
+                                and s.available_qty &lt;= #{lowStockThreshold}
+                            </when>
+                            <!-- 使用物品的最低庫存設定 -->
+                            <otherwise>
+                                and i.min_stock is not null
+                                and s.available_qty &lt;= i.min_stock
+                            </otherwise>
+                        </choose>
+                    </when>
+                    <!-- 正常：可用數量 > 0 且高於閾值 -->
+                    <when test="stockStatus == 0">
+                        and s.available_qty > 0
+                        <choose>
+                            <!-- 使用自訂閾值 -->
+                            <when test="lowStockThreshold != null">
+                                and s.available_qty > #{lowStockThreshold}
+                            </when>
+                            <!-- 使用物品的最低庫存設定，或無設定時所有 > 0 都算正常 -->
+                            <otherwise>
+                                and (i.min_stock is null or s.available_qty > i.min_stock)
+                            </otherwise>
+                        </choose>
+                    </when>
+                </choose>
+            </if>
+        </where>
+        <choose>
+            <when test="orderByColumn != null and orderByColumn != ''">
+                order by 
+                <choose>
+                    <when test="orderByColumn == 'itemCode'">i.item_code</when>
+                    <when test="orderByColumn == 'itemName'">i.item_name</when>
+                    <when test="orderByColumn == 'location'">i.location</when>
+                    <otherwise>i.create_time</otherwise>
+                </choose>
+                <choose>
+                    <when test="isAsc == 'asc'">asc</when>
+                    <otherwise>desc</otherwise>
+                </choose>
+            </when>
+            <otherwise>
+                order by i.create_time desc
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="selectItemWithStockByItemId" parameterType="Long" resultMap="InvItemWithStockResult">
+        <include refid="selectItemWithStockVo"/>
+        where i.item_id = #{itemId} and i.del_flag = '0'
+    </select>
+
+    <select id="selectLowStockItemWithStockList" resultMap="InvItemWithStockResult">
+        <include refid="selectItemWithStockVo"/>
+        where i.del_flag = '0'
+          and s.total_quantity > 0
+          and s.available_qty &lt;= i.min_stock
+        order by s.available_qty asc, i.item_name asc
     </select>
 
     <insert id="insertInvItem" parameterType="InvItem" useGeneratedKeys="true" keyProperty="itemId">
@@ -115,7 +249,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateBy != null">update_by,</if>
             <if test="updateTime != null">update_time,</if>
             <if test="remark != null">remark,</if>
-         </trim>
+        </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="itemCode != null and itemCode != ''">#{itemCode},</if>
             <if test="itemName != null and itemName != ''">#{itemName},</if>
@@ -136,7 +270,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateBy != null">#{updateBy},</if>
             <if test="updateTime != null">#{updateTime},</if>
             <if test="remark != null">#{remark},</if>
-         </trim>
+        </trim>
     </insert>
 
     <update id="updateInvItem" parameterType="InvItem">

@@ -3,6 +3,8 @@ name: Cheng-Vue CI/CD
 on:
   push:
     branches: [ main, master ]
+  pull_request:
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 concurrency:
@@ -86,6 +88,7 @@ jobs:
     name: Deploy (needs build jobs)
     needs: [build-frontend, build-backend]
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     environment: production                   # <- 可選：若要使用 Environment 的審核機制
     steps:
       - name: Checkout repository

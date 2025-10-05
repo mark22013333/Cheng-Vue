@@ -20,6 +20,13 @@
                 />
             </el-menu>
         </el-scrollbar>
+        <!-- 可拖曳的分隔條 -->
+        <div
+            v-if="!isCollapse"
+            class="sidebar-resizer"
+            @mousedown="startResize"
+            :title="'拖曳調整選單寬度 (目前: ' + sidebar.width + 'px)'"
+        ></div>
     </div>
 </template>
 
@@ -31,6 +38,11 @@ import variables from "@/assets/styles/variables.scss"
 
 export default {
     components: { SidebarItem, Logo },
+    data() {
+        return {
+            isResizing: false
+        }
+    },
     computed: {
         ...mapState(["settings"]),
         ...mapGetters(["sidebarRouters", "sidebar"]),
@@ -52,6 +64,61 @@ export default {
         isCollapse() {
             return !this.sidebar.opened
         }
+    },
+    methods: {
+        startResize(e) {
+            this.isResizing = true
+            const startX = e.clientX
+            const startWidth = this.sidebar.width
+
+            const handleMouseMove = (e) => {
+                if (!this.isResizing) return
+
+                const deltaX = e.clientX - startX
+                let newWidth = startWidth + deltaX
+
+                // 限制最小和最大寬度
+                newWidth = Math.max(180, Math.min(400, newWidth))
+
+                // 更新 Vuex 狀態
+                this.$store.dispatch('app/setSidebarWidth', newWidth)
+            }
+
+            const handleMouseUp = () => {
+                this.isResizing = false
+                document.removeEventListener('mousemove', handleMouseMove)
+                document.removeEventListener('mouseup', handleMouseUp)
+                document.body.style.cursor = ''
+                document.body.style.userSelect = ''
+            }
+
+            document.addEventListener('mousemove', handleMouseMove)
+            document.addEventListener('mouseup', handleMouseUp)
+            document.body.style.cursor = 'ew-resize'
+            document.body.style.userSelect = 'none'
+        }
     }
 }
 </script>
+
+<style lang="scss" scoped>
+.sidebar-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    cursor: ew-resize;
+    background-color: transparent;
+    z-index: 1002;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: rgba(64, 158, 255, 0.5);
+    }
+
+    &:active {
+        background-color: rgba(64, 158, 255, 0.8);
+    }
+}
+</style>
