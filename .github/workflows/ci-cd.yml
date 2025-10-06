@@ -1,10 +1,17 @@
 name: Cheng-Vue CI/CD
 
 on:
+  # 只在直接推送到 main 分支時觸發
   push:
-    branches: [ main, master ]
+    branches:
+      - 'main'
+      - 'master'
+  # 只在 PR 開啟、同步 (推送新 commit) 或重開時觸發
   pull_request:
-    branches: [ "main", "master" ]
+    types: [ opened, synchronize, reopened ]
+    branches:
+      - 'main'
+      - 'master'
   workflow_dispatch:
 
 concurrency:
