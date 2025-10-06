@@ -1,14 +1,13 @@
 name: Cheng-Vue CI/CD
 
 on:
-  # 只在直接推送到 main 分支時觸發
+  # 只在有程式碼合併/推送到 main 分支時觸發
   push:
     branches:
       - 'main'
       - 'master'
-  # 只在 PR 開啟、同步 (推送新 commit) 或重開時觸發
+  # 只在 PR 指向 main 或 master 分支時觸發
   pull_request:
-    types: [ opened, synchronize, reopened ]
     branches:
       - 'main'
       - 'master'
@@ -93,7 +92,7 @@ jobs:
 
   deploy:
     name: Deploy (needs build jobs)
-    needs: [build-frontend, build-backend]
+    needs: [ build-frontend, build-backend ]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: production                   # <- 可選：若要使用 Environment 的審核機制
