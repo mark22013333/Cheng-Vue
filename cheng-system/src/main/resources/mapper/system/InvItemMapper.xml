@@ -286,6 +286,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="supplier != null">supplier = #{supplier},</if>
             <if test="purchasePrice != null">purchase_price = #{purchasePrice},</if>
             <if test="currentPrice != null">current_price = #{currentPrice},</if>
+            <if test="minStock != null">min_stock = #{minStock},</if>
+            <if test="maxStock != null">max_stock = #{maxStock},</if>
+            <if test="location != null">location = #{location},</if>
+            <if test="description != null">description = #{description},</if>
             <if test="imageUrl != null">image_url = #{imageUrl},</if>
             <if test="barcode != null">barcode = #{barcode},</if>
             <if test="qrCode != null">qr_code = #{qrCode},</if>

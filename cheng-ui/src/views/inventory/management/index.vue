@@ -93,7 +93,7 @@
     <el-table v-loading="loading" :data="managementList" @selection-change="handleSelectionChange"
               @sort-change="handleSortChange">
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="物品編碼" align="center" prop="itemCode" width="140" sortable="custom"
+      <el-table-column label="物品編碼" align="center" prop="itemCode" min-width="180" sortable="custom"
                        :show-overflow-tooltip="true"/>
       <el-table-column label="物品名稱" align="center" prop="itemName" min-width="150" sortable="custom"
                        :show-overflow-tooltip="true"/>
@@ -103,7 +103,6 @@
           {{ scope.row.brand }} {{ scope.row.model }}
         </template>
       </el-table-column>
-      <el-table-column label="單位" align="center" prop="unit" width="60"/>
 
       <!-- 庫存資訊 -->
       <el-table-column label="總數量" align="center" prop="totalQuantity" width="80">
@@ -221,8 +220,8 @@
         <el-descriptions-item label="型號">{{ detailData.model }}</el-descriptions-item>
         <el-descriptions-item label="單位">{{ detailData.unit }}</el-descriptions-item>
         <el-descriptions-item label="供應商">{{ detailData.supplier }}</el-descriptions-item>
-        <el-descriptions-item label="採購價格">{{ detailData.purchasePrice }}</el-descriptions-item>
-        <el-descriptions-item label="現價">{{ detailData.currentPrice }}</el-descriptions-item>
+        <el-descriptions-item label="採購價格">{{ formatMoney(detailData.purchasePrice) }}</el-descriptions-item>
+        <el-descriptions-item label="現價">{{ formatMoney(detailData.currentPrice) }}</el-descriptions-item>
         <el-descriptions-item label="存放位置">{{ detailData.location }}</el-descriptions-item>
         <el-descriptions-item label="條碼">{{ detailData.barcode }}</el-descriptions-item>
 
@@ -236,12 +235,25 @@
         <el-descriptions-item label="借出數量">{{ detailData.borrowedQty }}</el-descriptions-item>
         <el-descriptions-item label="預留數量">{{ detailData.reservedQty }}</el-descriptions-item>
         <el-descriptions-item label="損壞數量">{{ detailData.damagedQty }}</el-descriptions-item>
-        <el-descriptions-item label="庫存總價值">{{
-            detailData.stockValue ? '¥' + detailData.stockValue : '-'
-          }}
-        </el-descriptions-item>
         <el-descriptions-item label="最低庫存">{{ detailData.minStock }}</el-descriptions-item>
         <el-descriptions-item label="最高庫存">{{ detailData.maxStock }}</el-descriptions-item>
+
+        <el-descriptions-item label="成本總價值" :span="2">
+          <span style="color: #E6A23C; font-weight: bold;">{{ formatMoney(detailData.costValue) }}</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="庫存總價值" :span="2">
+          <span style="color: #409EFF; font-weight: bold;">{{ formatMoney(detailData.stockValue) }}</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="預期利潤" :span="2">
+          <span :style="{color: detailData.expectedProfit >= 0 ? '#67C23A' : '#F56C6C', fontWeight: 'bold'}">
+            {{ formatMoney(detailData.expectedProfit) }}
+          </span>
+        </el-descriptions-item>
+        <el-descriptions-item label="利潤率" :span="2">
+          <span :style="{color: detailData.profitRate >= 0 ? '#67C23A' : '#F56C6C', fontWeight: 'bold'}">
+            {{ formatPercent(detailData.profitRate) }}
+          </span>
+        </el-descriptions-item>
         <el-descriptions-item label="最後入庫時間" :span="2">{{
             parseTime(detailData.lastInTime)
           }}
@@ -250,8 +262,100 @@
             parseTime(detailData.lastOutTime)
           }}
         </el-descriptions-item>
+        <el-descriptions-item label="描述" :span="2">{{ detailData.description }}</el-descriptions-item>
         <el-descriptions-item label="備註" :span="2">{{ detailData.remark }}</el-descriptions-item>
       </el-descriptions>
+    </el-dialog>
+
+    <!-- 編輯對話框 -->
+    <el-dialog title="修改物品資訊" :visible.sync="editDialogVisible" width="800px" append-to-body>
+      <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="100px">
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="物品編碼" prop="itemCode">
+              <el-input v-model="editForm.itemCode" disabled placeholder="請輸入物品編碼"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="物品名稱" prop="itemName">
+              <el-input v-model="editForm.itemName" placeholder="請輸入物品名稱"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="條碼" prop="barcode">
+              <el-input v-model="editForm.barcode" disabled placeholder="條碼不可修改"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="規格" prop="specification">
+              <el-input v-model="editForm.specification" placeholder="請輸入規格"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="單位" prop="unit">
+              <el-input v-model="editForm.unit" placeholder="請輸入單位"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="品牌" prop="brand">
+              <el-input v-model="editForm.brand" placeholder="請輸入品牌"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="型號" prop="model">
+              <el-input v-model="editForm.model" placeholder="請輸入型號"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="供應商" prop="supplier">
+              <el-input v-model="editForm.supplier" placeholder="請輸入供應商"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="採購價格" prop="purchasePrice">
+              <el-input-number v-model="editForm.purchasePrice" :precision="2" :min="0" style="width: 100%"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="現價" prop="currentPrice">
+              <el-input-number v-model="editForm.currentPrice" :precision="2" :min="0" style="width: 100%"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="最低庫存" prop="minStock">
+              <el-input-number v-model="editForm.minStock" :min="0" style="width: 100%"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="最高庫存" prop="maxStock">
+              <el-input-number v-model="editForm.maxStock" :min="0" style="width: 100%"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="存放位置" prop="location">
+          <el-input v-model="editForm.location" placeholder="請輸入存放位置"/>
+        </el-form-item>
+        <el-form-item label="描述" prop="description">
+          <el-input v-model="editForm.description" type="textarea" :rows="3" placeholder="請輸入描述"/>
+        </el-form-item>
+        <el-form-item label="備註" prop="remark">
+          <el-input v-model="editForm.remark" type="textarea" :rows="2" placeholder="請輸入備註"/>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitEdit">確定</el-button>
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -265,6 +369,7 @@ import {
   stockIn,
   stockOut
 } from "@/api/inventory/management"
+import {getItem, updateItem} from "@/api/inventory/item"
 
 export default {
   name: "InvManagement",
@@ -329,7 +434,21 @@ export default {
       stockOutDialogVisible: false,
       detailDialogVisible: false,
       // 詳情資料
-      detailData: null
+      detailData: null,
+      // 編輯對話框
+      editDialogVisible: false,
+      editForm: {},
+      editRules: {
+        itemCode: [
+          {required: true, message: "物品編碼不能為空", trigger: "blur"}
+        ],
+        itemName: [
+          {required: true, message: "物品名稱不能為空", trigger: "blur"}
+        ],
+        categoryId: [
+          {required: true, message: "分類不能為空", trigger: "change"}
+        ]
+      }
     };
   },
   created() {
@@ -368,7 +487,10 @@ export default {
     /** 修改按鈕操作 */
     handleUpdate(row) {
       const itemId = row.itemId || this.ids
-      this.$router.push("/inventory/item/edit/" + itemId);
+      this.editDialogVisible = true;
+      getManagement(itemId).then(response => {
+        this.editForm = response.data;
+      });
     },
     /** 查看詳情 */
     handleView(row) {
@@ -464,6 +586,43 @@ export default {
         this.queryParams.lowStockThreshold = null;
       }
       this.handleQuery();
+    },
+    /** 格式化金錢顯示 */
+    formatMoney(value) {
+      if (value == null || value === '') {
+        return '-';
+      }
+      const num = parseFloat(value);
+      if (isNaN(num)) {
+        return '-';
+      }
+      return '$' + num.toLocaleString('zh-TW', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    },
+    /** 格式化百分比顯示 */
+    formatPercent(value) {
+      if (value == null || value === '') {
+        return '-';
+      }
+      const num = parseFloat(value);
+      if (isNaN(num)) {
+        return '-';
+      }
+      return num.toFixed(2) + '%';
+    },
+    /** 提交編輯 */
+    submitEdit() {
+      this.$refs["editForm"].validate(valid => {
+        if (valid) {
+          updateItem(this.editForm).then(response => {
+            this.$modal.msgSuccess("修改成功");
+            this.editDialogVisible = false;
+            this.getList();
+          });
+        }
+      });
     }
   }
 };
