@@ -6,6 +6,7 @@ import lombok.Data;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 
 /**
@@ -177,6 +178,12 @@ public class InvItemWithStockDTO implements Serializable {
     private Integer damagedQty;
 
     /**
+     * 遺失數量
+     */
+    @Excel(name = "遺失數量")
+    private Integer lostQty;
+
+    /**
      * 最後入庫時間
      */
     @Excel(name = "最後入庫時間", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
@@ -235,6 +242,49 @@ public class InvItemWithStockDTO implements Serializable {
     private BigDecimal profitRate;
 
     /**
+     * 遺失損失金額（採購價 × 遺失數量）
+     */
+    @Excel(name = "遺失損失")
+    private BigDecimal lostValue;
+
+    /**
+     * 損壞損失金額（採購價 × 損壞數量）
+     */
+    @Excel(name = "損壞損失")
+    private BigDecimal damagedValue;
+
+    /**
+     * 實際可用庫存價值（現價 × 可用數量）
+     */
+    @Excel(name = "可用庫存價值")
+    private BigDecimal availableValue;
+
+    /**
+     * 歷史採購成本（採購價 × 原始採購總數量）
+     * 包含已遺失和損壞的物品成本
+     */
+    @Excel(name = "歷史採購成本")
+    private BigDecimal historicalCost;
+
+    /**
+     * 累計損失（遺失損失 + 損壞損失）
+     */
+    @Excel(name = "累計損失")
+    private BigDecimal totalLoss;
+
+    /**
+     * 可用庫存成本（採購價 × 可用數量）
+     */
+    @Excel(name = "可用庫存成本")
+    private BigDecimal availableCost;
+
+    /**
+     * 可實現利潤（可用庫存市值 - 可用庫存成本）
+     */
+    @Excel(name = "可實現利潤")
+    private BigDecimal realizableProfit;
+
+    /**
      * 計算庫存狀態
      * 邏輯與 SQL 查詢條件完全一致
      */
@@ -248,7 +298,7 @@ public class InvItemWithStockDTO implements Serializable {
         }
 
         // 低庫存：可用數量 > 0 且有設定最低庫存，且低於最低庫存
-        if (minStock != null && availableQty > 0 && availableQty <= minStock) {
+        if (minStock != null && availableQty <= minStock) {
             this.stockStatus = "1";
             this.stockStatusText = "低庫存";
             this.isBelowMinStock = true;
@@ -265,25 +315,59 @@ public class InvItemWithStockDTO implements Serializable {
      * 計算庫存總價值和財務指標
      */
     public void calculateStockValue() {
-        if (currentPrice != null && totalQuantity != null) {
-            // 庫存總價值 = 現價 × 總數量
-            this.stockValue = currentPrice.multiply(BigDecimal.valueOf(totalQuantity));
+        // 初始化為 0，避免 null
+        this.lostValue = BigDecimal.ZERO;
+        this.damagedValue = BigDecimal.ZERO;
+        this.totalLoss = BigDecimal.ZERO;
+        
+        if (purchasePrice == null || currentPrice == null) {
+            return;
         }
 
-        if (purchasePrice != null && totalQuantity != null) {
-            // 成本總價值 = 採購價 × 總數量
+        // 1. 計算歷史採購成本（原始採購總數 = 現存 + 遺失 + 損壞）
+        int originalQuantity = (totalQuantity != null ? totalQuantity : 0) 
+                             + (lostQty != null ? lostQty : 0);
+        this.historicalCost = purchasePrice.multiply(BigDecimal.valueOf(originalQuantity));
+
+        // 2. 計算當前庫存相關價值（現存物品）
+        if (totalQuantity != null) {
+            // 當前庫存成本 = 採購價 × 現存數量
             this.costValue = purchasePrice.multiply(BigDecimal.valueOf(totalQuantity));
+            // 當前庫存市值 = 現價 × 現存數量
+            this.stockValue = currentPrice.multiply(BigDecimal.valueOf(totalQuantity));
+            // 預期利潤 = 當前庫存市值 - 當前庫存成本
+            this.expectedProfit = this.stockValue.subtract(this.costValue);
         }
 
-        // 計算預期利潤
-        if (stockValue != null && costValue != null) {
-            this.expectedProfit = stockValue.subtract(costValue);
+        // 3. 計算可用庫存相關價值（可售物品）
+        if (availableQty != null) {
+            // 可用庫存成本 = 採購價 × 可用數量
+            this.availableCost = purchasePrice.multiply(BigDecimal.valueOf(availableQty));
+            // 可用庫存市值 = 現價 × 可用數量
+            this.availableValue = currentPrice.multiply(BigDecimal.valueOf(availableQty));
+            // 可實現利潤 = 可用庫存市值 - 可用庫存成本
+            this.realizableProfit = this.availableValue.subtract(this.availableCost);
         }
 
-        // 計算利潤率
-        if (currentPrice != null && purchasePrice != null && purchasePrice.compareTo(BigDecimal.ZERO) > 0) {
+        // 4. 計算損失
+        if (lostQty != null && lostQty > 0) {
+            // 遺失損失 = 採購價 × 遺失數量
+            this.lostValue = purchasePrice.multiply(BigDecimal.valueOf(lostQty));
+        }
+
+        if (damagedQty != null && damagedQty > 0) {
+            // 損壞損失 = 採購價 × 損壞數量
+            this.damagedValue = purchasePrice.multiply(BigDecimal.valueOf(damagedQty));
+        }
+
+        // 累計損失 = 遺失損失 + 損壞損失
+        this.totalLoss = this.lostValue.add(this.damagedValue);
+
+        // 5. 計算利潤率（基於可實現利潤）
+        if (purchasePrice.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal priceDiff = currentPrice.subtract(purchasePrice);
-            this.profitRate = priceDiff.divide(purchasePrice, 4, BigDecimal.ROUND_HALF_UP)
+            this.profitRate = priceDiff
+                    .divide(purchasePrice, 4, RoundingMode.FLOOR)
                     .multiply(BigDecimal.valueOf(100));
         }
     }

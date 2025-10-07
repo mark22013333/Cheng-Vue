@@ -118,6 +118,12 @@ public class InvStock implements Serializable {
     private Integer damagedQty;
 
     /**
+     * 遺失數量
+     */
+    @Excel(name = "遺失數量")
+    private Integer lostQty;
+
+    /**
      * 最後入庫時間
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -164,6 +170,7 @@ public class InvStock implements Serializable {
                 .append("borrowedQty", getBorrowedQty())
                 .append("reservedQty", getReservedQty())
                 .append("damagedQty", getDamagedQty())
+                .append("lostQty", getLostQty())
                 .append("lastInTime", getLastInTime())
                 .append("lastOutTime", getLastOutTime())
                 .append("updateTime", getUpdateTime())

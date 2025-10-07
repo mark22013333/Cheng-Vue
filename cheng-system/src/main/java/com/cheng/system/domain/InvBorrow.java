@@ -2,7 +2,9 @@ package com.cheng.system.domain;
 
 import com.cheng.common.annotation.Excel;
 import com.cheng.common.core.domain.BaseEntity;
+import com.cheng.system.domain.enums.BorrowStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -31,10 +33,9 @@ public class InvBorrow extends BaseEntity {
     private Long borrowId;
 
     /**
-     * 借出單號
+     * 借出單號（系統自動產生）
      */
     @Excel(name = "借出單號")
-    @NotBlank(message = "借出單號不能為空")
     @Size(min = 0, max = 50, message = "借出單號長度不能超過50個字元")
     private String borrowNo;
 
@@ -58,10 +59,9 @@ public class InvBorrow extends BaseEntity {
     private String itemCode;
 
     /**
-     * 借出人ID
+     * 借出人ID（系統自動設定為當前使用者）
      */
     @Excel(name = "借出人ID")
-    @NotNull(message = "借出人ID不能為空")
     private Long borrowerId;
 
     /**
@@ -92,11 +92,10 @@ public class InvBorrow extends BaseEntity {
     private Integer quantity;
 
     /**
-     * 借出時間
+     * 借出時間（系統自動設定為當前時間）
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Excel(name = "借出時間", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
-    @NotNull(message = "借出時間不能為空")
     private Date borrowTime;
 
     /**
@@ -120,9 +119,12 @@ public class InvBorrow extends BaseEntity {
     private Integer returnQuantity;
 
     /**
-     * 狀態（0借出中 1已歸還 2逾期 3部分歸還）
+     * 狀態
+     * 0=待審核, 1=已借出, 2=審核拒絕, 3=已歸還, 4=部分歸還, 5=逾期
+     *
+     * @see BorrowStatus
      */
-    @Excel(name = "狀態", readConverterExp = "0=借出中,1=已歸還,2=逾期,3=部分歸還")
+    @Excel(name = "狀態", readConverterExp = "0=待審核,1=已借出,2=審核拒絕,3=已歸還,4=部分歸還,5=逾期")
     private String status;
 
     /**
@@ -156,11 +158,65 @@ public class InvBorrow extends BaseEntity {
 
     private String categoryName;
 
+    /**
+     * 查詢用：開始借出時間
+     */
+    @JsonIgnore
+    private String beginBorrowTime;
+
+    /**
+     * 查詢用：結束借出時間
+     */
+    @JsonIgnore
+    private String endBorrowTime;
+
     public InvBorrow() {
     }
 
     public InvBorrow(Long borrowId) {
         this.borrowId = borrowId;
+    }
+
+    /**
+     * 取得借出狀態 Enum
+     *
+     * @return BorrowStatus
+     */
+    public BorrowStatus getStatusEnum() {
+        return BorrowStatus.getByCode(this.status);
+    }
+
+    /**
+     * 設定借出狀態 Enum
+     *
+     * @param statusEnum 借出狀態
+     */
+    public void setStatusEnum(BorrowStatus statusEnum) {
+        this.status = statusEnum != null ? statusEnum.getCode() : null;
+    }
+
+    /**
+     * 檢查是否為待審核狀態
+     */
+    public boolean isPending() {
+        BorrowStatus statusEnum = getStatusEnum();
+        return statusEnum != null && statusEnum.isPending();
+    }
+
+    /**
+     * 檢查是否為已借出狀態
+     */
+    public boolean isBorrowed() {
+        BorrowStatus statusEnum = getStatusEnum();
+        return statusEnum != null && statusEnum.isBorrowed();
+    }
+
+    /**
+     * 檢查是否需要歸還
+     */
+    public boolean needsReturn() {
+        BorrowStatus statusEnum = getStatusEnum();
+        return statusEnum != null && statusEnum.needsReturn();
     }
 
     @Override

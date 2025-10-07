@@ -157,6 +157,7 @@ public class InvItemServiceImpl implements IInvItemService {
             stock.setBorrowedQty(0);
             stock.setReservedQty(0);
             stock.setDamagedQty(0);
+            stock.setLostQty(0);
             stock.setUpdateTime(DateUtils.getNowDate());
             invStockMapper.insertInvStock(stock);
         }

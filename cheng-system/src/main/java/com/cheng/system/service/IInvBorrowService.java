@@ -90,10 +90,11 @@ public interface IInvBorrowService {
      * @param conditionDesc  物品狀況描述
      * @param isDamaged      是否損壞
      * @param damageDesc     損壞描述
+     * @param remark         說明/備註
      * @return 結果
      */
     int returnItem(Long borrowId, Integer returnQuantity, Long returnerId,
-                   String conditionDesc, String isDamaged, String damageDesc);
+                   String conditionDesc, String isDamaged, String damageDesc, String remark);
 
     /**
      * 審核借出申請
