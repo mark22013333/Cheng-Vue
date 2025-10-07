@@ -220,28 +220,37 @@
         <el-descriptions-item label="型號">{{ detailData.model }}</el-descriptions-item>
         <el-descriptions-item label="單位">{{ detailData.unit }}</el-descriptions-item>
         <el-descriptions-item label="供應商">{{ detailData.supplier }}</el-descriptions-item>
-        <el-descriptions-item label="採購價格">{{ formatMoney(detailData.purchasePrice) }}</el-descriptions-item>
-        <el-descriptions-item label="現價">{{ formatMoney(detailData.currentPrice) }}</el-descriptions-item>
         <el-descriptions-item label="存放位置">{{ detailData.location }}</el-descriptions-item>
         <el-descriptions-item label="條碼">{{ detailData.barcode }}</el-descriptions-item>
+        <el-descriptions-item label="最低庫存">{{ detailData.minStock }}</el-descriptions-item>
+        <el-descriptions-item label="最高庫存">{{ detailData.maxStock }}</el-descriptions-item>
 
         <el-descriptions-item label="庫存狀態" :span="2">
           <el-tag v-if="detailData.stockStatus === '0'" type="success">{{ detailData.stockStatusText }}</el-tag>
           <el-tag v-else-if="detailData.stockStatus === '1'" type="warning">{{ detailData.stockStatusText }}</el-tag>
           <el-tag v-else type="danger">{{ detailData.stockStatusText }}</el-tag>
         </el-descriptions-item>
+        <el-descriptions-item label="採購價格">{{ formatMoney(detailData.purchasePrice) }}</el-descriptions-item>
+        <el-descriptions-item label="現價">{{ formatMoney(detailData.currentPrice) }}</el-descriptions-item>
         <el-descriptions-item label="總數量">{{ detailData.totalQuantity }}</el-descriptions-item>
         <el-descriptions-item label="可用數量">{{ detailData.availableQty }}</el-descriptions-item>
         <el-descriptions-item label="借出數量">{{ detailData.borrowedQty }}</el-descriptions-item>
-        <el-descriptions-item label="預留數量">{{ detailData.reservedQty }}</el-descriptions-item>
         <el-descriptions-item label="損壞數量">{{ detailData.damagedQty }}</el-descriptions-item>
-        <el-descriptions-item label="最低庫存">{{ detailData.minStock }}</el-descriptions-item>
-        <el-descriptions-item label="最高庫存">{{ detailData.maxStock }}</el-descriptions-item>
+        <el-descriptions-item label="遺失數量">{{ detailData.lostQty || 0 }}</el-descriptions-item>
 
-        <el-descriptions-item label="成本總價值" :span="2">
-          <span style="color: #E6A23C; font-weight: bold;">{{ formatMoney(detailData.costValue) }}</span>
+        <!-- ========== 財務分析 ========== -->
+        <!-- 歷史成本 -->
+        <el-descriptions-item label="歷史採購成本" :span="2">
+          <span style="color: #909399; font-weight: bold;">{{ formatMoney(detailData.historicalCost) }}</span>
+          <el-tag type="info" size="mini" style="margin-left: 8px;">已支付總成本</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="庫存總價值" :span="2">
+
+        <!-- 當前庫存資產 -->
+        <el-descriptions-item label="當前庫存成本" :span="2">
+          <span style="color: #E6A23C; font-weight: bold;">{{ formatMoney(detailData.costValue) }}</span>
+          <span style="color: #909399; font-size: 12px; margin-left: 8px;">（現存 {{ detailData.totalQuantity }} 件）</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="當前庫存市值" :span="2">
           <span style="color: #409EFF; font-weight: bold;">{{ formatMoney(detailData.stockValue) }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="預期利潤" :span="2">
@@ -249,11 +258,36 @@
             {{ formatMoney(detailData.expectedProfit) }}
           </span>
         </el-descriptions-item>
-        <el-descriptions-item label="利潤率" :span="2">
-          <span :style="{color: detailData.profitRate >= 0 ? '#67C23A' : '#F56C6C', fontWeight: 'bold'}">
-            {{ formatPercent(detailData.profitRate) }}
-          </span>
+
+        <!-- 可用庫存資產 -->
+        <el-descriptions-item label="可用庫存成本" :span="2">
+          <span style="color: #E6A23C; font-weight: bold;">{{ formatMoney(detailData.availableCost) }}</span>
+          <span style="color: #909399; font-size: 12px; margin-left: 8px;">（可售 {{ detailData.availableQty }} 件）</span>
         </el-descriptions-item>
+        <el-descriptions-item label="可用庫存市值" :span="2">
+          <span style="color: #67C23A; font-weight: bold;">{{ formatMoney(detailData.availableValue) }}</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="可實現利潤" :span="2">
+          <span :style="{color: detailData.realizableProfit >= 0 ? '#67C23A' : '#F56C6C', fontWeight: 'bold'}">
+            {{ formatMoney(detailData.realizableProfit) }}
+          </span>
+          <span style="color: #909399; font-size: 12px; margin-left: 8px;">（利潤率: {{ formatPercent(detailData.profitRate) }}）</span>
+        </el-descriptions-item>
+
+        <!-- 損失明細 -->
+        <el-descriptions-item label="損壞損失" :span="2" v-if="detailData.damagedQty > 0">
+          <span style="color: #E6A23C; font-weight: bold;">-{{ formatMoney(detailData.damagedValue) }}</span>
+          <el-tag type="warning" size="mini" style="margin-left: 8px;">{{ detailData.damagedQty }} 件損壞</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="遺失損失" :span="2" v-if="detailData.lostQty > 0">
+          <span style="color: #F56C6C; font-weight: bold;">-{{ formatMoney(detailData.lostValue) }}</span>
+          <el-tag type="danger" size="mini" style="margin-left: 8px;">{{ detailData.lostQty }} 件遺失</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="累計損失" :span="2" v-if="detailData.totalLoss > 0">
+          <span style="color: #F56C6C; font-weight: bold; font-size: 16px;">-{{ formatMoney(detailData.totalLoss) }}</span>
+          <el-tag type="danger" size="mini" style="margin-left: 8px;">⚠️ 總損失</el-tag>
+        </el-descriptions-item>
+
         <el-descriptions-item label="最後入庫時間" :span="2">{{
             parseTime(detailData.lastInTime)
           }}
@@ -268,12 +302,12 @@
     </el-dialog>
 
     <!-- 編輯對話框 -->
-    <el-dialog title="修改物品資訊" :visible.sync="editDialogVisible" width="800px" append-to-body>
+    <el-dialog :title="editDialogTitle" :visible.sync="editDialogVisible" width="800px" append-to-body>
       <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="100px">
         <el-row>
           <el-col :span="12">
             <el-form-item label="物品編碼" prop="itemCode">
-              <el-input v-model="editForm.itemCode" disabled placeholder="請輸入物品編碼"/>
+              <el-input v-model="editForm.itemCode" :disabled="isEdit" placeholder="請輸入物品編碼"/>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -283,9 +317,23 @@
           </el-col>
         </el-row>
         <el-row>
+          <el-col :span="24">
+            <el-form-item label="物品分類" prop="categoryId">
+              <el-select v-model="editForm.categoryId" placeholder="請選擇分類" style="width: 100%">
+                <el-option
+                  v-for="category in categoryList"
+                  :key="category.categoryId"
+                  :label="category.categoryName"
+                  :value="category.categoryId"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
           <el-col :span="12">
             <el-form-item label="條碼" prop="barcode">
-              <el-input v-model="editForm.barcode" disabled placeholder="條碼不可修改"/>
+              <el-input v-model="editForm.barcode" :disabled="isEdit" :placeholder="isEdit ? '條碼不可修改' : '請輸入條碼'"/>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -365,11 +413,13 @@ import {
   listManagement,
   getManagement,
   delManagement,
+  addManagement,
+  updateManagement,
   exportManagement,
   stockIn,
   stockOut
 } from "@/api/inventory/management"
-import {getItem, updateItem} from "@/api/inventory/item"
+import { listCategory } from "@/api/inventory/category"
 
 export default {
   name: "InvManagement",
@@ -437,6 +487,8 @@ export default {
       detailData: null,
       // 編輯對話框
       editDialogVisible: false,
+      editDialogTitle: "修改物品資訊",
+      isEdit: true,
       editForm: {},
       editRules: {
         itemCode: [
@@ -448,11 +500,14 @@ export default {
         categoryId: [
           {required: true, message: "分類不能為空", trigger: "change"}
         ]
-      }
+      },
+      // 分類列表
+      categoryList: []
     };
   },
   created() {
     this.getList();
+    this.getCategoryList();
   },
   methods: {
     /** 查詢物品與庫存整合列表 */
@@ -482,14 +537,19 @@ export default {
     },
     /** 新增按鈕操作 */
     handleAdd() {
-      this.$router.push("/inventory/item/add");
+      this.resetEditForm();
+      this.editDialogTitle = "新增物品";
+      this.isEdit = false;
+      this.editDialogVisible = true;
     },
     /** 修改按鈕操作 */
     handleUpdate(row) {
-      const itemId = row.itemId || this.ids
-      this.editDialogVisible = true;
+      const itemId = row.itemId || this.ids;
+      this.editDialogTitle = "修改物品資訊";
+      this.isEdit = true;
       getManagement(itemId).then(response => {
         this.editForm = response.data;
+        this.editDialogVisible = true;
       });
     },
     /** 查看詳情 */
@@ -612,15 +672,54 @@ export default {
       }
       return num.toFixed(2) + '%';
     },
+    /** 重置編輯表單 */
+    resetEditForm() {
+      this.editForm = {
+        itemId: null,
+        itemCode: null,
+        itemName: null,
+        categoryId: null,
+        barcode: null,
+        specification: null,
+        unit: "個",
+        brand: null,
+        model: null,
+        purchasePrice: 0,
+        currentPrice: 0,
+        supplier: null,
+        minStock: 0,
+        maxStock: 0,
+        location: null,
+        description: null,
+        status: "0",
+        remark: null
+      };
+    },
+    /** 取得分類列表 */
+    getCategoryList() {
+      listCategory({ status: '0' }).then(response => {
+        this.categoryList = response.rows || [];
+      });
+    },
     /** 提交編輯 */
     submitEdit() {
       this.$refs["editForm"].validate(valid => {
         if (valid) {
-          updateItem(this.editForm).then(response => {
-            this.$modal.msgSuccess("修改成功");
-            this.editDialogVisible = false;
-            this.getList();
-          });
+          if (this.isEdit) {
+            // 修改物品
+            updateManagement(this.editForm).then(response => {
+              this.$modal.msgSuccess("修改成功");
+              this.editDialogVisible = false;
+              this.getList();
+            });
+          } else {
+            // 新增物品
+            addManagement(this.editForm).then(response => {
+              this.$modal.msgSuccess("新增成功");
+              this.editDialogVisible = false;
+              this.getList();
+            });
+          }
         }
       });
     }

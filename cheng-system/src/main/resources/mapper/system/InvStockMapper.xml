@@ -21,6 +21,7 @@
         <result property="borrowedQty" column="borrowed_qty"/>
         <result property="reservedQty" column="reserved_qty"/>
         <result property="damagedQty" column="damaged_qty"/>
+        <result property="lostQty" column="lost_qty"/>
         <result property="lastInTime" column="last_in_time"/>
         <result property="lastOutTime" column="last_out_time"/>
         <result property="updateTime" column="update_time"/>
@@ -43,6 +44,7 @@
                IFNULL(s.borrowed_qty, 0)   as borrowed_qty,
                IFNULL(s.reserved_qty, 0)   as reserved_qty,
                IFNULL(s.damaged_qty, 0)    as damaged_qty,
+               IFNULL(s.lost_qty, 0)       as lost_qty,
                s.last_in_time,
                s.last_out_time,
                s.update_time
@@ -93,6 +95,7 @@
             <if test="borrowedQty != null">borrowed_qty,</if>
             <if test="reservedQty != null">reserved_qty,</if>
             <if test="damagedQty != null">damaged_qty,</if>
+            <if test="lostQty != null">lost_qty,</if>
             <if test="lastInTime != null">last_in_time,</if>
             <if test="lastOutTime != null">last_out_time,</if>
             <if test="updateTime != null">update_time,</if>
@@ -104,6 +107,7 @@
             <if test="borrowedQty != null">#{borrowedQty},</if>
             <if test="reservedQty != null">#{reservedQty},</if>
             <if test="damagedQty != null">#{damagedQty},</if>
+            <if test="lostQty != null">#{lostQty},</if>
             <if test="lastInTime != null">#{lastInTime},</if>
             <if test="lastOutTime != null">#{lastOutTime},</if>
             <if test="updateTime != null">#{updateTime},</if>
@@ -119,6 +123,7 @@
             <if test="borrowedQty != null">borrowed_qty = #{borrowedQty},</if>
             <if test="reservedQty != null">reserved_qty = #{reservedQty},</if>
             <if test="damagedQty != null">damaged_qty = #{damagedQty},</if>
+            <if test="lostQty != null">lost_qty = #{lostQty},</if>
             <if test="lastInTime != null">last_in_time = #{lastInTime},</if>
             <if test="lastOutTime != null">last_out_time = #{lastOutTime},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>

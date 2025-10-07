@@ -7,6 +7,9 @@ import com.cheng.common.core.page.TableDataInfo;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.system.domain.InvBorrow;
+import com.cheng.system.domain.InvReturn;
+import com.cheng.system.domain.enums.BorrowStatus;
+import com.cheng.system.mapper.InvReturnMapper;
 import com.cheng.system.service.IInvBorrowService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +32,9 @@ import java.util.Map;
 public class InvBorrowController extends BaseController {
     @Autowired
     private IInvBorrowService invBorrowService;
+
+    @Autowired
+    private InvReturnMapper invReturnMapper;
 
     /**
      * 查詢借出記錄列表
@@ -85,25 +91,32 @@ public class InvBorrowController extends BaseController {
             // 取得借出統計資料
             Map<String, Object> stats = new HashMap<>();
 
-            // 總借出記錄數
-            int totalBorrows = invBorrowService.selectInvBorrowList(new InvBorrow()).size();
-            stats.put("totalBorrows", totalBorrows);
-
             // 待審核數量
             InvBorrow pendingQuery = new InvBorrow();
-            pendingQuery.setStatus("0");
+            pendingQuery.setStatusEnum(BorrowStatus.PENDING);
             int pendingCount = invBorrowService.selectInvBorrowList(pendingQuery).size();
-            stats.put("pendingCount", pendingCount);
+            stats.put("pending", pendingCount);
 
-            // 已借出數量
+            // 已借出數量（包含部分歸還）
             InvBorrow borrowedQuery = new InvBorrow();
-            borrowedQuery.setStatus("1");
+            borrowedQuery.setStatusEnum(BorrowStatus.BORROWED);
             int borrowedCount = invBorrowService.selectInvBorrowList(borrowedQuery).size();
-            stats.put("borrowedCount", borrowedCount);
+            
+            InvBorrow partialReturnQuery = new InvBorrow();
+            partialReturnQuery.setStatusEnum(BorrowStatus.PARTIAL_RETURNED);
+            int partialReturnCount = invBorrowService.selectInvBorrowList(partialReturnQuery).size();
+            
+            stats.put("borrowed", borrowedCount + partialReturnCount);
+
+            // 已歸還數量
+            InvBorrow returnedQuery = new InvBorrow();
+            returnedQuery.setStatusEnum(BorrowStatus.RETURNED);
+            int returnedCount = invBorrowService.selectInvBorrowList(returnedQuery).size();
+            stats.put("returned", returnedCount);
 
             // 逾期數量
             int overdueCount = invBorrowService.selectOverdueBorrowList().size();
-            stats.put("overdueCount", overdueCount);
+            stats.put("overdue", overdueCount);
 
             return success(stats);
         } catch (Exception e) {
@@ -135,19 +148,41 @@ public class InvBorrowController extends BaseController {
     }
 
     /**
-     * 新增借出記錄
+     * 新增借出申請（提交待審核）
      */
     @PreAuthorize("@ss.hasPermi('inventory:borrow:add')")
-    @Log(title = "借出記錄", businessType = BusinessType.INSERT)
+    @Log(title = "借出申請", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody InvBorrow invBorrow) {
-        if (!invBorrowService.checkBorrowNoUnique(invBorrow)) {
-            return error("新增借出記錄失敗，借出單號已存在");
+        try {
+            // 自動填充借出人資訊為當前登入使用者
+            if (invBorrow.getBorrowerId() == null) {
+                invBorrow.setBorrowerId(getUserId());
+            }
+
+            // 如果沒有提供借出單號，自動產生
+            if (invBorrow.getBorrowNo() == null || invBorrow.getBorrowNo().isEmpty()) {
+                invBorrow.setBorrowNo(invBorrowService.generateBorrowNo());
+            }
+
+            // 如果沒有提供借出時間，使用當前時間
+            if (invBorrow.getBorrowTime() == null) {
+                invBorrow.setBorrowTime(new java.util.Date());
+            }
+
+            // 設定初始狀態為待審核
+            invBorrow.setStatusEnum(BorrowStatus.PENDING);
+
+            if (!invBorrowService.checkBorrowNoUnique(invBorrow)) {
+                return error("新增借出申請失敗，借出單號已存在");
+            }
+
+            // 提交借出申請（不扣減庫存，等待審核）
+            int result = invBorrowService.borrowItem(invBorrow);
+            return toAjax(result);
+        } catch (Exception e) {
+            return error("新增借出申請失敗：" + e.getMessage());
         }
-        if (!invBorrowService.checkItemAvailable(invBorrow.getItemId(), invBorrow.getQuantity())) {
-            return error("新增借出記錄失敗，物品庫存不足");
-        }
-        return toAjax(invBorrowService.insertInvBorrow(invBorrow));
     }
 
     /**
@@ -179,8 +214,7 @@ public class InvBorrowController extends BaseController {
     public AjaxResult returnItem(@RequestBody ReturnRequest request) {
         try {
             int result = invBorrowService.returnItem(request.getBorrowId(), request.getReturnQuantity(),
-                    getUserId(), request.getConditionDesc(),
-                    request.getIsDamaged(), request.getDamageDesc());
+                    getUserId(), request.getConditionDesc(), request.getIsDamaged(), request.getDamageDesc(), request.getRemark());
             return toAjax(result);
         } catch (Exception e) {
             return error(e.getMessage());
@@ -210,17 +244,26 @@ public class InvBorrowController extends BaseController {
     @Log(title = "借出記錄", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody InvBorrow invBorrow) {
-        return toAjax(invBorrowService.updateInvBorrow(invBorrow));
+        try {
+            return toAjax(invBorrowService.updateInvBorrow(invBorrow));
+        } catch (Exception e) {
+            return error("修改借出記錄失敗：" + e.getMessage());
+        }
     }
 
     /**
      * 刪除借出記錄
+     * 刪除未歸還的記錄時會自動恢復庫存
      */
     @PreAuthorize("@ss.hasPermi('inventory:borrow:remove')")
     @Log(title = "借出記錄", businessType = BusinessType.DELETE)
     @DeleteMapping("/{borrowIds}")
     public AjaxResult remove(@PathVariable Long[] borrowIds) {
-        return toAjax(invBorrowService.deleteInvBorrowByBorrowIds(borrowIds));
+        try {
+            return toAjax(invBorrowService.deleteInvBorrowByBorrowIds(borrowIds));
+        } catch (Exception e) {
+            return error("刪除借出記錄失敗：" + e.getMessage());
+        }
     }
 
     /**
@@ -244,6 +287,20 @@ public class InvBorrowController extends BaseController {
     }
 
     /**
+     * 查詢借出記錄的歸還記錄
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:borrow:query')")
+    @GetMapping("/returnRecords/{borrowId}")
+    public AjaxResult getReturnRecords(@PathVariable Long borrowId) {
+        try {
+            List<InvReturn> returnRecords = invReturnMapper.selectInvReturnByBorrowId(borrowId);
+            return success(returnRecords);
+        } catch (Exception e) {
+            return error("查詢歸還記錄失敗：" + e.getMessage());
+        }
+    }
+
+    /**
      * 歸還請求物件
      */
     public static class ReturnRequest {
@@ -252,6 +309,7 @@ public class InvBorrowController extends BaseController {
         private String conditionDesc;
         private String isDamaged;
         private String damageDesc;
+        private String remark;
 
         public Long getBorrowId() {
             return borrowId;
@@ -291,6 +349,14 @@ public class InvBorrowController extends BaseController {
 
         public void setDamageDesc(String damageDesc) {
             this.damageDesc = damageDesc;
+        }
+
+        public String getRemark() {
+            return remark;
+        }
+
+        public void setRemark(String remark) {
+            this.remark = remark;
         }
     }
 

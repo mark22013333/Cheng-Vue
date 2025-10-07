@@ -88,7 +88,7 @@
               <div class="item-info">
                 <h3>
                   {{ scanResult.itemName }}
-                  <el-tag v-if="scanResult.barcode && isValidIsbn(scanResult.barcode)" 
+                  <el-tag v-if="scanResult.barcode && isValidIsbn(scanResult.barcode)"
                           type="warning" size="small" style="margin-left: 10px;">
                     <i class="el-icon-reading"></i> 書籍
                   </el-tag>
@@ -410,7 +410,7 @@ export default {
     performScan(scanCode, scanType) {
       // 檢查是否為 ISBN 格式（10位或13位數字）
       const isIsbn = this.isValidIsbn(scanCode);
-      
+
       if (isIsbn) {
         // 使用 ISBN 掃描 API（會自動爬取書籍資訊）
         this.performIsbnScan(scanCode, scanType);
@@ -431,11 +431,11 @@ export default {
 
       scanIsbn({ isbn: code }).then(response => {
         loading.close();
-        
+
         if (response.code === 200 && response.data && response.data.item) {
           this.scanResult = response.data.item;
           this.addToHistory(code, scanType, '0', response.data.item.itemName, 'ISBN');
-          
+
           const message = response.data.message || '書籍掃描成功';
           this.$notify({
             title: '成功',
@@ -480,7 +480,7 @@ export default {
       return /^\d{10}$/.test(cleanCode) || /^\d{13}$/.test(cleanCode);
     },
 
-    /** 添加到掃描歷史 */
+    /** 新增到掃描歷史 */
     addToHistory(scanCode, scanType, result, itemName, codeType = '一般') {
       const historyItem = {
         scanTime: new Date(),

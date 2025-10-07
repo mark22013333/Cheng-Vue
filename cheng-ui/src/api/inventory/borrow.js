@@ -55,7 +55,7 @@ export function borrowItem(data) {
 // 歸還物品
 export function returnBorrow(data) {
   return request({
-    url: '/inventory/borrow/return',
+    url: '/inventory/borrow/returnItem',
     method: 'post',
     data: data
   })
@@ -93,5 +93,13 @@ export function exportBorrow(query) {
     url: '/inventory/borrow/export',
     method: 'get',
     params: query
+  })
+}
+
+// 查詢借出記錄的歸還記錄
+export function getReturnRecords(borrowId) {
+  return request({
+    url: '/inventory/borrow/returnRecords/' + borrowId,
+    method: 'get'
   })
 }

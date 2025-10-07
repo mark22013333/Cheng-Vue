@@ -144,6 +144,7 @@ public class BookItemServiceImpl implements IBookItemService {
             stock.setBorrowedQty(0);
             stock.setReservedQty(0);
             stock.setDamagedQty(0);
+            stock.setLostQty(0);
             stock.setUpdateTime(new Date());
 
             int stockResult = invStockMapper.insertInvStock(stock);

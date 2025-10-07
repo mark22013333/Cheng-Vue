@@ -72,11 +72,11 @@
                 '%')
             </if>
             <if test="status != null and status != ''">and b.status = #{status}</if>
-            <if test="params.beginBorrowTime != null and params.beginBorrowTime != ''"><!-- 開始借出時間 -->
-                and date_format(b.borrow_time,'%y%m%d') &gt;= date_format(#{params.beginBorrowTime},'%y%m%d')
+            <if test="beginBorrowTime != null and beginBorrowTime != ''"><!-- 開始借出時間 -->
+                and date_format(b.borrow_time,'%Y%m%d') &gt;= date_format(#{beginBorrowTime},'%Y%m%d')
             </if>
-            <if test="params.endBorrowTime != null and params.endBorrowTime != ''"><!-- 結束借出時間 -->
-                and date_format(b.borrow_time,'%y%m%d') &lt;= date_format(#{params.endBorrowTime},'%y%m%d')
+            <if test="endBorrowTime != null and endBorrowTime != ''"><!-- 結束借出時間 -->
+                and date_format(b.borrow_time,'%Y%m%d') &lt;= date_format(#{endBorrowTime},'%Y%m%d')
             </if>
         </where>
         order by b.create_time desc
@@ -130,7 +130,6 @@
             <if test="quantity != null">quantity,</if>
             <if test="borrowerId != null">borrower_id,</if>
             <if test="borrowerName != null and borrowerName != ''">borrower_name,</if>
-            <if test="borrowerPhone != null">borrower_phone,</if>
             <if test="borrowTime != null">borrow_time,</if>
             <if test="expectedReturn != null">expected_return,</if>
             <if test="actualReturn != null">actual_return,</if>
@@ -152,7 +151,6 @@
             <if test="quantity != null">#{quantity},</if>
             <if test="borrowerId != null">#{borrowerId},</if>
             <if test="borrowerName != null and borrowerName != ''">#{borrowerName},</if>
-            <if test="borrowerPhone != null">#{borrowerPhone},</if>
             <if test="borrowTime != null">#{borrowTime},</if>
             <if test="expectedReturn != null">#{expectedReturn},</if>
             <if test="actualReturn != null">#{actualReturn},</if>
@@ -179,7 +177,6 @@
             <if test="quantity != null">quantity = #{quantity},</if>
             <if test="borrowerId != null">borrower_id = #{borrowerId},</if>
             <if test="borrowerName != null and borrowerName != ''">borrower_name = #{borrowerName},</if>
-            <if test="borrowerPhone != null">borrower_phone = #{borrowerPhone},</if>
             <if test="borrowTime != null">borrow_time = #{borrowTime},</if>
             <if test="expectedReturn != null">expected_return = #{expectedReturn},</if>
             <if test="actualReturn != null">actual_return = #{actualReturn},</if>

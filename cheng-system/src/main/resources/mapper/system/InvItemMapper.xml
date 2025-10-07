@@ -126,6 +126,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="borrowedQty"      column="borrowed_qty"      />
         <result property="reservedQty"      column="reserved_qty"      />
         <result property="damagedQty"       column="damaged_qty"       />
+        <result property="lostQty"          column="lost_qty"          />
         <result property="lastInTime"       column="last_in_time"      />
         <result property="lastOutTime"      column="last_out_time"     />
         <result property="stockUpdateTime"  column="stock_update_time" />
@@ -138,7 +139,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             i.purchase_price, i.current_price, i.supplier, i.min_stock, i.max_stock,
             i.location, i.description, i.image_url, i.status, i.remark,
             s.stock_id, s.total_quantity, s.available_qty, s.borrowed_qty,
-            s.reserved_qty, s.damaged_qty, s.last_in_time, s.last_out_time,
+            s.reserved_qty, s.damaged_qty, s.lost_qty, s.last_in_time, s.last_out_time,
             s.update_time as stock_update_time
         from inv_item i
         left join inv_category c on i.category_id = c.category_id
