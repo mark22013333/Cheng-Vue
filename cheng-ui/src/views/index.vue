@@ -49,6 +49,12 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.2.2 - 2025-10-10">
+              <ol>
+                <li>個人中心 (User Profile) UI/UX 全面升級。</li>
+                <li>庫存管理 (Inventory) 新增圖片功能。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.2.1 - 2025-10-05">
               <ol>
                 <li>整合物品與庫存管理，並新增可拖曳調整寬度的側邊選單。</li>
