@@ -95,6 +95,22 @@
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="物品編碼" align="center" prop="itemCode" min-width="180" sortable="custom"
                        :show-overflow-tooltip="true"/>
+      <el-table-column label="圖片" align="center" width="80">
+        <template slot-scope="scope">
+          <el-image
+            v-if="scope.row.imageUrl"
+            :src="getImageUrl(scope.row.imageUrl)"
+            :preview-src-list="[getImageUrl(scope.row.imageUrl)]"
+            fit="cover"
+            style="width: 50px; height: 50px; border-radius: 4px; cursor: pointer;"
+          >
+            <div slot="error" class="image-slot">
+              <i class="el-icon-picture-outline" style="font-size: 30px; color: #ccc;"></i>
+            </div>
+          </el-image>
+          <span v-else style="color: #ccc;">無圖</span>
+        </template>
+      </el-table-column>
       <el-table-column label="物品名稱" align="center" prop="itemName" min-width="150" sortable="custom"
                        :show-overflow-tooltip="true"/>
       <el-table-column label="規格" align="center" prop="specification" width="120"/>
@@ -296,6 +312,20 @@
             parseTime(detailData.lastOutTime)
           }}
         </el-descriptions-item>
+        <el-descriptions-item label="圖片" :span="2">
+          <el-image
+            v-if="detailData.imageUrl"
+            :src="getImageUrl(detailData.imageUrl)"
+            :preview-src-list="[getImageUrl(detailData.imageUrl)]"
+            fit="contain"
+            style="max-width: 200px; max-height: 200px; border-radius: 4px; cursor: pointer;"
+          >
+            <div slot="error" class="image-slot">
+              <i class="el-icon-picture-outline" style="font-size: 50px; color: #ccc;"></i>
+            </div>
+          </el-image>
+          <span v-else style="color: #999;">無圖片</span>
+        </el-descriptions-item>
         <el-descriptions-item label="描述" :span="2">{{ detailData.description }}</el-descriptions-item>
         <el-descriptions-item label="備註" :span="2">{{ detailData.remark }}</el-descriptions-item>
       </el-descriptions>
@@ -393,6 +423,9 @@
         <el-form-item label="存放位置" prop="location">
           <el-input v-model="editForm.location" placeholder="請輸入存放位置"/>
         </el-form-item>
+        <el-form-item label="圖片" prop="imageUrl">
+          <image-upload v-model="editForm.imageUrl" :limit="1"/>
+        </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input v-model="editForm.description" type="textarea" :rows="3" placeholder="請輸入描述"/>
         </el-form-item>
@@ -420,9 +453,13 @@ import {
   stockOut
 } from "@/api/inventory/management"
 import { listCategory } from "@/api/inventory/category"
+import ImageUpload from '@/components/ImageUpload'
 
 export default {
   name: "InvManagement",
+  components: {
+    ImageUpload
+  },
   data() {
     return {
       // 遮罩層
@@ -691,9 +728,40 @@ export default {
         maxStock: 0,
         location: null,
         description: null,
+        imageUrl: null,
         status: "0",
         remark: null
       };
+    },
+    /** 取得圖片 URL */
+    getImageUrl(imagePath) {
+      if (!imagePath) return '';
+      
+      // 如果是完整 URL，直接返回
+      if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+        return imagePath;
+      }
+      
+      // 如果路徑以 /profile 開頭，直接使用
+      if (imagePath.startsWith('/profile')) {
+        return process.env.VUE_APP_BASE_API + imagePath;
+      }
+      
+      // 如果是絕對路徑（本機檔案系統路徑），需要轉換
+      // 例如: /Users/cheng/uploadPath/book-covers/... 或 /opt/cool-apps/uploadFile/book-covers/...
+      if (imagePath.includes('/book-covers/') || imagePath.includes('/upload/')) {
+        // 擷取檔案名稱部分
+        const fileName = imagePath.split('/').pop();
+        // 根據路徑類型判斷
+        if (imagePath.includes('/book-covers/')) {
+          return process.env.VUE_APP_BASE_API + '/profile/book-covers/' + fileName;
+        } else {
+          return process.env.VUE_APP_BASE_API + '/profile/upload/' + fileName;
+        }
+      }
+      
+      // 其他情況，假設是相對路徑
+      return process.env.VUE_APP_BASE_API + '/profile/' + imagePath;
     },
     /** 取得分類列表 */
     getCategoryList() {

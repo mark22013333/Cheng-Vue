@@ -2,7 +2,7 @@ package com.cheng.crawler.service.impl;
 
 import com.cheng.crawler.dto.BookInfoDTO;
 import com.cheng.crawler.service.IIsbnCrawlerService;
-import com.cheng.crawler.util.ImageDownloadUtil;
+import com.cheng.crawler.utils.ImageDownloadUtil;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -152,7 +152,7 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
      *
      * @param imageUrl 圖片 URL
      * @param isbn     ISBN
-     * @return 儲存路徑
+     * @return 儲存路徑（相對於 /profile 的路徑）
      */
     private String downloadCoverImage(String imageUrl, String isbn) {
         try {
@@ -163,6 +163,14 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
             String savedPath = ImageDownloadUtil.downloadImage(imageUrl, bookCoverPath, fileName);
             if (savedPath != null) {
                 log.info("封面圖片下載成功: {}", savedPath);
+                
+                // 轉換為相對路徑（相對於 /profile）
+                // 例如: /Users/cheng/uploadPath/book-covers/isbn_xxx.jpg -> /profile/book-covers/isbn_xxx.jpg
+                if (savedPath.contains("/book-covers/")) {
+                    String relativePath = "/profile/book-covers/" + savedPath.substring(savedPath.lastIndexOf("/") + 1);
+                    log.info("圖片相對路徑: {}", relativePath);
+                    return relativePath;
+                }
                 return savedPath;
             }
         } catch (Exception e) {

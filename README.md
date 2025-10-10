@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![CoolApps Logo](https://img.shields.io/badge/CoolApps-v3.9.0-blue.svg)
+![CoolApps Logo](https://img.shields.io/badge/CoolApps-v1.2.2-blue.svg)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.4-brightgreen.svg)
 ![Vue](https://img.shields.io/badge/Vue-2.6.12-4fc08d.svg)
 ![Element UI](https://img.shields.io/badge/Element%20UI-2.15.14-409EFF.svg)
