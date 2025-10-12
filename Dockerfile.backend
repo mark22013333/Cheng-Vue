@@ -1,0 +1,26 @@
+# ---- Backend (Spring Boot) Multi-stage Build ----
+# Builder stage: use Maven with JDK 17 to build the multi-module project
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
+WORKDIR /workspace
+# Copy all source to build the multi-module project (cheng-admin depends on sibling modules)
+COPY . .
+# Speed up: don't run tests in container build
+RUN mvn -q -DskipTests -pl cheng-admin -am package
+
+# Runtime stage: slim JRE 17 image
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+# Copy the built jar from builder stage (name may vary); keep single app.jar
+COPY --from=builder /workspace/cheng-admin/target/*.jar /app/app.jar
+# Default port; Zeabur will provide PORT env
+ENV PORT=8080
+# Health-friendly timezone & UTF-8
+ENV TZ=Asia/Taipei
+ENV LANG=zh_TW.UTF-8
+ENV LANGUAGE=zh_TW:zh
+ENV LC_ALL=zh_TW.UTF-8
+# Expose for local run (not required by Zeabur but helpful)
+EXPOSE 8080
+# Jasypt password should be provided via env JASYPT_PASSWORD
+# You can also provide extra JVM options via JAVA_OPTS
+ENTRYPOINT ["/bin/sh","-c","exec java -Dserver.port=${PORT:-8080} -Djasypt.encryptor.password=${JASYPT_PASSWORD:-} $JAVA_OPTS -jar /app/app.jar"]

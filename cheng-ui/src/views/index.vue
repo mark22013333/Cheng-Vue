@@ -49,6 +49,11 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.2.3 - 2025-10-13">
+              <ol>
+                <li>Docker 容器化部署流程，進行了全面的架構調整與功能增強。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.2.2 - 2025-10-10">
               <ol>
                 <li>個人中心 (User Profile) UI/UX 全面升級。</li>
@@ -113,7 +118,7 @@ export default {
   data() {
     return {
       // 版本號
-      version: "1.2.1"
+      version: "1.2.3"
     }
   },
   methods: {

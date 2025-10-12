@@ -1,0 +1,21 @@
+# Global dockerignore for project root
+.git
+.gitignore
+**/.git
+**/.DS_Store
+**/node_modules
+**/dist
+**/target
+**/.idea
+**/.junie
+**/.vscode
+**/logs
+**/*.iml
+
+# Maven caches (we rely on image layer cache instead)
+.mvn/
+.settings/
+
+# Build outputs
+cheng-admin/target/
+cheng-ui/dist/

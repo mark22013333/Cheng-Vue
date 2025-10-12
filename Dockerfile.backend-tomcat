@@ -1,0 +1,22 @@
+# ---- Backend WAR on External Tomcat (Spring Boot 3.x, JDK17, Jakarta EE) ----
+
+# 1) Build stage: produce WAR (apps.war) from multi-module project
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
+WORKDIR /workspace
+COPY . .
+RUN mvn -q -DskipTests -pl cheng-admin -am package
+
+# 2) Runtime stage: Tomcat 10.1 on JDK17 (Jakarta namespace)
+FROM tomcat:10.1-jdk17-temurin
+
+# Clean default webapps
+RUN rm -rf /usr/local/tomcat/webapps/*
+
+# Deploy our WAR as ROOT.war
+COPY --from=builder /workspace/cheng-admin/target/apps.war /usr/local/tomcat/webapps/ROOT.war
+
+# Timezone（JVM 參數與解密密碼改由執行環境提供，例如設置 JASYPT_ENCRYPTOR_PASSWORD 或 JAVA_OPTS）
+ENV TZ=Asia/Taipei
+
+EXPOSE 8080
+CMD ["catalina.sh", "run"]
