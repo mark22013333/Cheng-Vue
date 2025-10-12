@@ -3,7 +3,7 @@ cheng:
   # 名稱
   name: CoolApps
   # 版本
-  version: 1.2.1
+  version: 1.2.3
   # 版權年份
   copyrightYear: 2025
   # 檔案路徑 - 由環境特定設定檔案設定 (application-local.yml 或 application-prod.yml)
@@ -13,10 +13,14 @@ cheng:
   # 驗證碼類型 math 數字計算 char 字元驗證
   captchaType: math
 
+jasypt:
+  encryptor:
+    password: ${JASYPT_ENCRYPTOR_PASSWORD:${JASYPT_PASSWORD:}}
+
 # 開發環境設定
 server:
   # 伺服器的HTTP埠號，預設為8080
-  port: 8080
+  port: ${PORT:8080}
   servlet:
     # 應用程式的存取路徑
     context-path: /
@@ -52,8 +56,7 @@ spring:
     # 國際化資源檔案路徑
     basename: i18n/messages
   profiles:
-    active: prod
-#    active: local
+    active: ${SPRING_PROFILES_ACTIVE:prod}
   # 文件上傳
   servlet:
     multipart:

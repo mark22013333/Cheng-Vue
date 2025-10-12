@@ -1,0 +1,65 @@
+# VM 環境專用設定
+spring:
+  data:
+    # redis 設定（可用 VM_REDIS_* 覆寫）
+    redis:
+      host: ${VM_REDIS_HOST:localhost}
+      port: ${VM_REDIS_PORT:6379}
+      database: 0
+      password: ${VM_REDIS_PASSWORD:}
+      timeout: 10s
+      lettuce:
+        pool:
+          min-idle: 0
+          max-idle: 8
+          max-active: 8
+          max-wait: -1ms
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    druid:
+      master:
+        # 優先使用 VM_DB_URL；否則依 VM_DB_* 變數組合
+        url: ${VM_DB_URL:jdbc:mysql://${VM_DB_HOST:localhost}:${VM_DB_PORT:3306}/${VM_DB_NAME:cool-apps}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Taipei&useSSL=false&allowPublicKeyRetrieval=true&allowMultiQueries=true}
+        username: ${VM_DB_USERNAME:root}
+        password: ${VM_DB_PASSWORD:}
+      slave:
+        enabled: false
+        url:
+        username:
+        password:
+      initialSize: 5
+      minIdle: 10
+      maxActive: 20
+      maxWait: 60000
+      connectTimeout: 30000
+      socketTimeout: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      maxEvictableIdleTimeMillis: 900000
+      validationQuery: SELECT 1 FROM DUAL
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      webStatFilter:
+        enabled: true
+      statViewServlet:
+        enabled: true
+      filter:
+        stat:
+          enabled: true
+          log-slow-sql: true
+          slow-sql-millis: 1000
+          merge-sql: true
+        wall:
+          config:
+            multi-statement-allow: true
+
+# VM環境專用設定
+logging:
+  file:
+    path: /opt/cool-apps/logs
+
+# 專案相關設定 - VM環境
+cheng:
+  profile: /opt/cool-apps/uploadFile
