@@ -74,7 +74,7 @@
             <el-col :span="6">
               <div class="item-image">
                 <el-image
-                  :src="scanResult.imageUrl || require('@/assets/images/profile.jpg')"
+                  :src="getImageUrl(scanResult.imageUrl) || require('@/assets/images/profile.jpg')"
                   fit="cover"
                   style="width: 180px; height: 180px; border-radius: 8px;"
                 >
@@ -250,6 +250,7 @@ import {getItem} from "@/api/inventory/item";
 import {borrowItem} from "@/api/inventory/borrow";
 import {stockIn, stockOut} from "@/api/inventory/stock";
 import {parseTime} from "@/utils";
+import {getImageUrl} from "@/utils/image";
 
 export default {
   name: "Scan",
@@ -313,6 +314,7 @@ export default {
   },
   methods: {
     parseTime,
+    getImageUrl,
 
     /** 初始化QR掃描器 */
     initQrScanner() {

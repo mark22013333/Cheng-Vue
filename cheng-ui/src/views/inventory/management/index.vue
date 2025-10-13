@@ -454,6 +454,7 @@ import {
 } from "@/api/inventory/management"
 import { listCategory } from "@/api/inventory/category"
 import ImageUpload from '@/components/ImageUpload'
+import { getImageUrl } from '@/utils/image'
 
 export default {
   name: "InvManagement",
@@ -733,36 +734,8 @@ export default {
         remark: null
       };
     },
-    /** 取得圖片 URL */
-    getImageUrl(imagePath) {
-      if (!imagePath) return '';
-      
-      // 如果是完整 URL，直接返回
-      if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-        return imagePath;
-      }
-      
-      // 如果路徑以 /profile 開頭，直接使用
-      if (imagePath.startsWith('/profile')) {
-        return process.env.VUE_APP_BASE_API + imagePath;
-      }
-      
-      // 如果是絕對路徑（本機檔案系統路徑），需要轉換
-      // 例如: /Users/cheng/uploadPath/book-covers/... 或 /opt/cool-apps/uploadFile/book-covers/...
-      if (imagePath.includes('/book-covers/') || imagePath.includes('/upload/')) {
-        // 擷取檔案名稱部分
-        const fileName = imagePath.split('/').pop();
-        // 根據路徑類型判斷
-        if (imagePath.includes('/book-covers/')) {
-          return process.env.VUE_APP_BASE_API + '/profile/book-covers/' + fileName;
-        } else {
-          return process.env.VUE_APP_BASE_API + '/profile/upload/' + fileName;
-        }
-      }
-      
-      // 其他情況，假設是相對路徑
-      return process.env.VUE_APP_BASE_API + '/profile/' + imagePath;
-    },
+    /** 取得圖片 URL（使用統一工具函數） */
+    getImageUrl,
     /** 取得分類列表 */
     getCategoryList() {
       listCategory({ status: '0' }).then(response => {

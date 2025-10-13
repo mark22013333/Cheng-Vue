@@ -13,7 +13,7 @@ set -e  # 遇到錯誤立即退出
 # ============================================
 REGISTRY="android106"
 IMAGE_NAME="coolapps-frontend"
-BASE_VERSION="v1.2.2"
+BASE_VERSION="v1.2.3"
 DOCKERFILE="cheng-ui/Dockerfile"
 BUILD_CONTEXT="cheng-ui"
 
@@ -118,7 +118,7 @@ confirm_build() {
 # ============================================
 build_image() {
     print_separator
-    print_info "開始建置前端映像..."
+    print_info "開始建置前端映像（使用詳細輸出模式）..."
     print_separator
     
     local BUILD_ARGS=""
@@ -129,6 +129,7 @@ build_image() {
     docker buildx build \
         -f "$DOCKERFILE" \
         --platform linux/amd64 \
+        --progress=plain \
         $BUILD_ARGS \
         -t "${REGISTRY}/${IMAGE_NAME}:${VERSION_TAG}" \
         -t "${REGISTRY}/${IMAGE_NAME}:latest" \

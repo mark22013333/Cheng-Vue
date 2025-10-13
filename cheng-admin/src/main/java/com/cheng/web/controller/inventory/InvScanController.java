@@ -45,7 +45,7 @@ public class InvScanController extends BaseController {
     /**
      * 接收掃描結果，記錄掃描日誌，並觸發爬蟲取得外部資料。
      */
-    @PreAuthorize("@ss.hasPermi('inventory:scan:submit')")
+    @PreAuthorize("@ss.hasPermi('inventory:scan:use')")
     @Log(title = "掃描提交", businessType = BusinessType.OTHER)
     @PostMapping("/submit")
     public AjaxResult submit(@RequestBody @Validated ScanRequest request) {
@@ -83,7 +83,7 @@ public class InvScanController extends BaseController {
      * 3. 不存在則爬取並建立書籍物品
      * 4. 回傳書籍物品資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:scan:isbn')")
+    @PreAuthorize("@ss.hasPermi('inventory:scan:use')")
     @Log(title = "ISBN掃描", businessType = BusinessType.INSERT)
     @PostMapping("/isbn")
     public AjaxResult scanIsbn(@RequestBody @Validated IsbnScanRequest request) {
