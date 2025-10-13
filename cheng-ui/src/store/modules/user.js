@@ -65,7 +65,14 @@ const user = {
           const user = res.user
           let avatar = user.avatar || ""
           if (!isHttp(avatar)) {
-            avatar = (isEmpty(avatar)) ? defAva : process.env.VUE_APP_BASE_API + avatar
+            // 如果 avatar 已經是以 /profile 開頭的完整路徑，直接使用
+            // 否則如果為空則使用預設頭像，如果有值則加上 API 前綴
+            if (avatar && avatar.startsWith('/profile')) {
+              // 已經是完整路徑，不需要加前綴
+              avatar = avatar
+            } else {
+              avatar = (isEmpty(avatar)) ? defAva : (process.env.VUE_APP_BASE_API || '') + avatar
+            }
           }
           if (res.roles && res.roles.length > 0) { // 驗證返回的roles是否是一個非空陣列
             commit('SET_ROLES', res.roles)

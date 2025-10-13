@@ -5,8 +5,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
+# Ensure .env.production is present and log it for debugging
+RUN ls -la .env* || echo "No .env files found"
+RUN cat .env.production || echo ".env.production not found"
 # Use production build (package.json already sets NODE_OPTIONS)
 RUN npm run build:prod
+# Verify VUE_APP_BASE_API was properly embedded
+RUN grep -r "VUE_APP_BASE_API" dist/ || echo "VUE_APP_BASE_API not found in build"
 
 # Runtime stage
 FROM nginx:1.27-alpine

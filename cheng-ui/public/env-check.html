@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>-環境變數檢查-</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .info { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>CoolApps 環境變數檢查</h1>
+    <div class="info">
+        <p><strong>當前時間：</strong><span id="time"></span></p>
+        <p><strong>API 基礎路徑：</strong><span id="baseApi"></span></p>
+        <p><strong>測試圖片路徑：</strong></p>
+        <p id="imagePath"></p>
+        <p><strong>測試圖片顯示：</strong></p>
+        <img id="testImage" style="max-width: 200px; border: 1px solid #ccc;"  alt="測試" src=""/>
+    </div>
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString();
+
+        // 這個頁面在建置後會顯示實際的路徑
+        // 如果看到 /prod-api 表示正確，如果看到空白或 undefined 表示有問題
+        const baseApi = '/prod-api'; // 這應該在建置時被替換
+        document.getElementById('baseApi').textContent = baseApi || '❌ 未設定';
+
+        // 測試路徑
+        const testPath = '/profile/avatar/2025/10/13/test.jpg';
+        const fullPath = baseApi ? baseApi + testPath : testPath;
+        document.getElementById('imagePath').textContent = fullPath;
+
+        // 嘗試載入圖片
+        document.getElementById('testImage').src = fullPath;
+        document.getElementById('testImage').onerror = function() {
+            this.style.display = 'none';
+            const msg = document.createElement('p');
+            msg.className = 'error';
+            msg.textContent = '❌ 圖片載入失敗（這是正常的，因為測試圖片不存在）';
+            document.getElementById('imagePath').appendChild(msg);
+        };
+    </script>
+</body>
+</html>
