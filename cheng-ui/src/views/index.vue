@@ -49,6 +49,13 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.3.4 - 2025-10-14">
+              <ol>
+                <li>全面更新登入頁面視覺設計，提升使用者體驗。</li>
+                <li>增強手機端掃描功能，支援快速入庫與詳情檢視。</li>
+                <li>針對庫存管理主頁面進行響應式設計（RWD）優化，改善在手機等小螢幕裝置上的表格與操作按鈕佈局，提升行動裝置操作體驗。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.2.3 - 2025-10-13">
               <ol>
                 <li>Docker 容器化部署流程，進行了全面的架構調整與功能增強。</li>
@@ -118,7 +125,7 @@ export default {
   data() {
     return {
       // 版本號
-      version: "1.2.3"
+      version: "1.3.4"
     }
   },
   methods: {

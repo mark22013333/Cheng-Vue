@@ -7,6 +7,8 @@ import com.cheng.common.core.page.TableDataInfo;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.system.domain.InvItem;
+import com.cheng.system.dto.InvItemWithStockDTO;
+import com.cheng.system.mapper.InvItemMapper;
 import com.cheng.system.service.IInvItemService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,9 @@ import java.util.List;
 public class InvItemController extends BaseController {
     @Autowired
     private IInvItemService invItemService;
+
+    @Autowired
+    private InvItemMapper invItemMapper;
 
     /**
      * 查詢物品資訊列表
@@ -87,14 +92,32 @@ public class InvItemController extends BaseController {
     }
 
     /**
-     * 掃描條碼或QR碼取得物品資訊
+     * 掃描條碼或QR碼取得物品資訊（包含庫存信息）
+     * 權限：需要掃描功能權限（手機端使用）
      */
-    @PreAuthorize("@ss.hasPermi('inventory:item:scan')")
+    @PreAuthorize("@ss.hasPermi('inventory:scan:use')")
     @PostMapping("/scan")
     public AjaxResult scanItem(@RequestBody ScanRequest scanRequest) {
         try {
+            // 1. 先透過條碼或QR碼查找物品
             InvItem item = invItemService.scanItemByCode(scanRequest.getScanCode(), scanRequest.getScanType());
-            return success(item);
+            
+            if (item == null) {
+                return error("未找到對應的物品");
+            }
+            
+            // 2. 查詢包含庫存信息的完整資料
+            InvItemWithStockDTO itemWithStock = invItemMapper.selectItemWithStockByItemId(item.getItemId());
+            
+            // 3. 計算庫存狀態和價值
+            if (itemWithStock != null) {
+                itemWithStock.calculateStockStatus();
+                itemWithStock.calculateStockValue();
+                return success(itemWithStock);
+            } else {
+                // 如果沒有庫存記錄，返回物品基本信息
+                return success(item);
+            }
         } catch (Exception e) {
             return error(e.getMessage());
         }

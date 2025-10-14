@@ -11,6 +11,7 @@ import com.cheng.crawler.dto.CrawledData;
 import com.cheng.crawler.service.ICrawlerService;
 import com.cheng.system.domain.InvItem;
 import com.cheng.system.domain.InvScanLog;
+import com.cheng.system.dto.InvItemWithStockDTO;
 import com.cheng.system.service.IBookItemService;
 import com.cheng.system.service.IInvScanLogService;
 import jakarta.validation.constraints.NotBlank;
@@ -41,6 +42,9 @@ public class InvScanController extends BaseController {
 
     @Autowired
     private IBookItemService bookItemService;
+
+    @Autowired
+    private com.cheng.system.mapper.InvItemMapper invItemMapper;
 
     /**
      * 接收掃描結果，記錄掃描日誌，並觸發爬蟲取得外部資料。
@@ -116,9 +120,18 @@ public class InvScanController extends BaseController {
             // 3. 建立或取得書籍物品
             InvItem bookItem = bookItemService.createOrGetBookItem(isbn);
 
-            // 4. 組裝回傳資料
+            // 4. 查詢包含庫存信息的完整資料
+            InvItemWithStockDTO itemWithStock = invItemMapper.selectItemWithStockByItemId(bookItem.getItemId());
+            
+            // 計算庫存狀態和價值
+            if (itemWithStock != null) {
+                itemWithStock.calculateStockStatus();
+                itemWithStock.calculateStockValue();
+            }
+
+            // 5. 組裝回傳資料
             Map<String, Object> result = new HashMap<>();
-            result.put("item", bookItem);
+            result.put("item", itemWithStock != null ? itemWithStock : bookItem);
             result.put("message", bookItem.getCreateTime().getTime() > System.currentTimeMillis() - 5000
                     ? "書籍建立成功" : "書籍已存在");
 

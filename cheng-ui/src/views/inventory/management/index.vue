@@ -139,7 +139,7 @@
       <el-table-column label="存放位置" align="center" prop="location" width="140" sortable="custom"
                        :show-overflow-tooltip="true"/>
 
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="280" fixed="right">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column" min-width="120" fixed="right">
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -767,3 +767,161 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+/* 操作欄位自適應 */
+.operation-column {
+  /* 讓操作欄根據內容自動調整寬度 */
+  width: auto !important;
+}
+
+.operation-column .cell {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* 手機端響應式優化 */
+@media (max-width: 768px) {
+  /* 縮小表單整體間距 */
+  .app-container {
+    padding: 10px !important;
+  }
+
+  /* 操作欄按鈕優化 */
+  .operation-column .el-button--mini {
+    padding: 3px 5px !important;
+    margin: 2px !important;
+  }
+
+  .operation-column .el-button--mini + .el-button--mini {
+    margin-left: 3px !important;
+  }
+
+  /* 查詢表單優化 */
+  .el-form--inline .el-form-item {
+    margin-right: 8px !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* 表單項標籤縮小 */
+  .el-form-item__label {
+    padding: 0 8px 0 0 !important;
+    font-size: 13px !important;
+    width: 70px !important;
+  }
+
+  /* 輸入框縮小 */
+  .el-form-item__content .el-input,
+  .el-form-item__content .el-select {
+    width: 140px !important;
+  }
+
+  /* 輸入數字框縮小 */
+  .el-input-number {
+    width: 120px !important;
+  }
+
+  /* 按鈕組間距縮小 */
+  .mb8 {
+    margin-bottom: 8px !important;
+  }
+
+  .el-row {
+    margin-left: -5px !important;
+    margin-right: -5px !important;
+  }
+
+  .el-col {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+  }
+
+  /* 按鈕文字和圖標縮小 */
+  .el-button--mini {
+    padding: 5px 8px !important;
+    font-size: 12px !important;
+  }
+
+  /* 表格行高縮小 */
+  .el-table td,
+  .el-table th {
+    padding: 6px 0 !important;
+  }
+
+  /* 表格字體縮小 */
+  .el-table {
+    font-size: 12px !important;
+  }
+
+  /* 對話框在手機端全屏 */
+  .el-dialog {
+    width: 95% !important;
+    margin-top: 5vh !important;
+  }
+
+  .el-dialog__body {
+    padding: 15px !important;
+  }
+
+  /* 標籤縮小 */
+  .el-tag {
+    padding: 0 5px !important;
+    height: 22px !important;
+    line-height: 22px !important;
+    font-size: 11px !important;
+  }
+
+  /* 圖片縮小 */
+  .el-image {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  /* 工具提示框優化 */
+  .el-tooltip {
+    width: 100%;
+  }
+}
+
+/* 小屏幕進一步優化 */
+@media (max-width: 480px) {
+  .app-container {
+    padding: 5px !important;
+  }
+
+  .el-form-item__label {
+    width: 60px !important;
+    font-size: 12px !important;
+  }
+
+  .el-form-item__content .el-input,
+  .el-form-item__content .el-select {
+    width: 120px !important;
+  }
+
+  .el-button--mini {
+    padding: 4px 6px !important;
+    font-size: 11px !important;
+  }
+
+  /* 隱藏部分非必要按鈕文字，只顯示圖標 */
+  .el-button--mini span:not(.el-icon) {
+    display: none;
+  }
+
+  .el-button--mini i {
+    margin: 0 !important;
+  }
+
+  /* 操作欄在小螢幕上進一步縮小 */
+  .operation-column {
+    min-width: 80px !important;
+  }
+
+  .operation-column .el-button--mini {
+    padding: 2px 4px !important;
+    margin: 1px !important;
+    min-width: 28px;
+  }
+}
+</style>

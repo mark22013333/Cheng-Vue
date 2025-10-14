@@ -65,13 +65,21 @@ const user = {
           const user = res.user
           let avatar = user.avatar || ""
           if (!isHttp(avatar)) {
-            // 如果 avatar 已經是以 /profile 開頭的完整路徑，直接使用
-            // 否則如果為空則使用預設頭像，如果有值則加上 API 前綴
-            if (avatar && avatar.startsWith('/profile')) {
-              // 已經是完整路徑，不需要加前綴
-              avatar = avatar
+            if (isEmpty(avatar)) {
+              // 使用預設頭像
+              avatar = defAva
+            } else if (avatar.startsWith('/profile')) {
+              // 處理以 /profile 開頭的路徑
+              // 開發環境需要加上 API 前綴才能被 proxy 轉發到後端
+              // 生產環境由 Nginx 直接處理，不需要前綴
+              const baseApi = process.env.VUE_APP_BASE_API || ''
+              if (baseApi && process.env.NODE_ENV === 'development') {
+                avatar = baseApi + avatar
+              }
+              // 生產環境直接使用 avatar（/profile/xxx），由 Nginx 處理
             } else {
-              avatar = (isEmpty(avatar)) ? defAva : (process.env.VUE_APP_BASE_API || '') + avatar
+              // 其他路徑格式，加上 API 前綴
+              avatar = (process.env.VUE_APP_BASE_API || '') + avatar
             }
           }
           if (res.roles && res.roles.length > 0) { // 驗證返回的roles是否是一個非空陣列

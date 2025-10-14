@@ -105,6 +105,9 @@ export function filterDynamicRoutes(routes) {
       if (auth.hasRoleOr(route.roles)) {
         res.push(route)
       }
+    } else {
+      // 沒有權限限制的路由也允許訪問（例如 inventory 相關路由）
+      res.push(route)
     }
   })
   return res

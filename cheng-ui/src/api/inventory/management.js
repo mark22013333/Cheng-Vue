@@ -70,6 +70,15 @@ export function stockIn(data) {
   })
 }
 
+// 手機端快速入庫（只需掃描權限）
+export function quickStockIn(data) {
+  return request({
+    url: '/inventory/management/quickStockIn',
+    method: 'post',
+    data: data
+  })
+}
+
 // 出庫操作
 export function stockOut(data) {
   return request({
