@@ -242,8 +242,18 @@ export default {
         formData.append("avatarfile", data, this.options.filename)
         uploadAvatar(formData).then(response => {
           this.open = false
-          this.options.img = process.env.VUE_APP_BASE_API + response.imgUrl
-          store.commit('SET_AVATAR', this.options.img)
+          // 處理頭像 URL：開發環境需要加上 API 前綴才能被 proxy 轉發
+          let avatarUrl = response.imgUrl
+          if (avatarUrl && avatarUrl.startsWith('/profile')) {
+            const baseApi = process.env.VUE_APP_BASE_API || ''
+            if (baseApi && process.env.NODE_ENV === 'development') {
+              avatarUrl = baseApi + avatarUrl
+            }
+          } else {
+            avatarUrl = (process.env.VUE_APP_BASE_API || '') + avatarUrl
+          }
+          this.options.img = avatarUrl
+          store.commit('SET_AVATAR', avatarUrl)
           this.$modal.msgSuccess("頭像更新成功")
           this.visible = false
           this.uploading = false
