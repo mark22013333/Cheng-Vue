@@ -242,15 +242,22 @@ export default {
         formData.append("avatarfile", data, this.options.filename)
         uploadAvatar(formData).then(response => {
           this.open = false
-          // 處理頭像 URL：開發環境需要加上 API 前綴才能被 proxy 轉發
+          // 處理頭像 URL：無論開發或生產環境，都需要加上 API 前綴
           let avatarUrl = response.imgUrl
           if (avatarUrl && avatarUrl.startsWith('/profile')) {
+            // /profile 開頭的路徑需要加上 API 前綴
+            // 開發環境：/dev-api/profile/xxx -> proxy 轉發
+            // 生產環境：/prod-api/profile/xxx -> Nginx 代理
             const baseApi = process.env.VUE_APP_BASE_API || ''
-            if (baseApi && process.env.NODE_ENV === 'development') {
+            if (baseApi) {
               avatarUrl = baseApi + avatarUrl
             }
-          } else {
-            avatarUrl = (process.env.VUE_APP_BASE_API || '') + avatarUrl
+          } else if (!avatarUrl.startsWith('http')) {
+            // 其他相對路徑也加上 API 前綴
+            const baseApi = process.env.VUE_APP_BASE_API || ''
+            if (baseApi) {
+              avatarUrl = baseApi + avatarUrl
+            }
           }
           this.options.img = avatarUrl
           store.commit('SET_AVATAR', avatarUrl)
