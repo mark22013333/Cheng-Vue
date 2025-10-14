@@ -169,6 +169,23 @@ public class InvManagementController extends BaseController {
     }
 
     /**
+     * 手機端快速入庫（掃碼後使用）
+     * 權限要求：只需掃描權限即可
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:scan:use')")
+    @Log(title = "手機端快速入庫", businessType = BusinessType.UPDATE)
+    @PostMapping("/quickStockIn")
+    public AjaxResult quickStockIn(@RequestBody StockOperationRequest request) {
+        try {
+            int result = invStockService.stockIn(request.getItemId(), request.getQuantity(),
+                    getUserId(), request.getReason());
+            return toAjax(result);
+        } catch (Exception e) {
+            return error(e.getMessage());
+        }
+    }
+
+    /**
      * 出庫操作
      */
     @PreAuthorize("@ss.hasPermi('inventory:management:stockOut')")

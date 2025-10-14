@@ -28,10 +28,10 @@
       <div class="quick-scan-container">
         <!-- 攝影機掃描區域 -->
         <div class="camera-area">
-          <div id="floating-qr-reader" style="width: 100%; height: 250px;"></div>
+          <div id="floating-qr-reader" style="width: 100%; min-height: 300px;"></div>
           <div class="scan-tips">
-            <p><i class="el-icon-info"></i> 將QR碼或條碼對準攝影機</p>
-            <p><i class="el-icon-warning"></i> 請保持適當距離以取得最佳掃描效果</p>
+            <p><i class="el-icon-info"></i> 自動使用後置鏡頭掃描</p>
+            <p><i class="el-icon-success"></i> 將條碼或QR碼放在掃描框內</p>
           </div>
         </div>
 
@@ -73,13 +73,12 @@
               </h4>
               <p><strong>編碼：</strong>{{ scanResult.itemCode }}</p>
               <p v-if="scanResult.barcode"><strong>條碼/ISBN：</strong>{{ scanResult.barcode }}</p>
-              <p><strong>庫存：</strong><span class="stock-num">{{ scanResult.stockQuantity || 0 }}</span></p>
-              <p><strong>可用：</strong><span class="available-num">{{ scanResult.availableQuantity || 0 }}</span></p>
+              <p><strong>庫存：</strong><span class="stock-num">{{ scanResult.totalQuantity || 0 }}</span></p>
+              <p><strong>可用：</strong><span class="available-num">{{ scanResult.availableQty || 0 }}</span></p>
             </div>
             <div class="result-actions">
-              <el-button size="small" type="primary" icon="el-icon-sold-out" @click="handleQuickBorrow">借出</el-button>
-              <el-button size="small" type="success" icon="el-icon-download" @click="handleQuickStockIn">入庫</el-button>
-              <el-button size="small" type="info" icon="el-icon-view" @click="goToDetail">詳情</el-button>
+              <el-button size="small" type="success" icon="el-icon-download" @click="handleQuickStockIn" :loading="stockInLoading">快速入庫 +1</el-button>
+              <el-button size="small" type="info" icon="el-icon-view" @click="showDetailDialog">查看詳情</el-button>
             </div>
           </el-card>
         </div>
@@ -104,12 +103,73 @@
         <el-button type="primary" @click="goToFullScan">完整掃描頁面</el-button>
       </div>
     </el-dialog>
+
+    <!-- 物品詳情對話框 -->
+    <el-dialog
+      title="物品詳情"
+      :visible.sync="detailDialogVisible"
+      width="90%"
+      :modal="false"
+      custom-class="mobile-detail-dialog"
+      append-to-body
+    >
+      <div v-if="itemDetail" class="detail-content">
+        <el-descriptions :column="1" border size="medium">
+          <el-descriptions-item label="物品名稱">
+            <strong>{{ itemDetail.itemName }}</strong>
+          </el-descriptions-item>
+          <el-descriptions-item label="物品編碼">
+            {{ itemDetail.itemCode }}
+          </el-descriptions-item>
+          <el-descriptions-item label="條碼/ISBN" v-if="itemDetail.barcode">
+            {{ itemDetail.barcode }}
+          </el-descriptions-item>
+          <el-descriptions-item label="分類">
+            {{ itemDetail.categoryName || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="庫存狀態">
+            <el-tag :type="itemDetail.stockStatus === '0' ? 'success' : itemDetail.stockStatus === '1' ? 'warning' : 'danger'">
+              {{ itemDetail.stockStatusText }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="總數量">
+            <span style="font-size: 18px; font-weight: bold; color: #409eff;">
+              {{ itemDetail.totalQuantity || 0 }}
+            </span>
+          </el-descriptions-item>
+          <el-descriptions-item label="可用數量">
+            <span style="font-size: 18px; font-weight: bold; color: #67c23a;">
+              {{ itemDetail.availableQty || 0 }}
+            </span>
+          </el-descriptions-item>
+          <el-descriptions-item label="借出數量" v-if="itemDetail.borrowedQty">
+            <span style="color: #e6a23c;">{{ itemDetail.borrowedQty }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="規格" v-if="itemDetail.specification">
+            {{ itemDetail.specification }}
+          </el-descriptions-item>
+          <el-descriptions-item label="單位" v-if="itemDetail.unit">
+            {{ itemDetail.unit }}
+          </el-descriptions-item>
+          <el-descriptions-item label="存放位置" v-if="itemDetail.location">
+            {{ itemDetail.location }}
+          </el-descriptions-item>
+          <el-descriptions-item label="描述" v-if="itemDetail.description">
+            {{ itemDetail.description }}
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="detailDialogVisible = false">關閉</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import {Html5QrcodeScanner, Html5QrcodeScanType} from "html5-qrcode";
 import {scanIsbn, scanCode} from "@/api/inventory/scan";
+import {quickStockIn, getManagement} from "@/api/inventory/management";
 
 export default {
   name: "FloatingScanButton",
@@ -122,7 +182,10 @@ export default {
       manualCode: '',
       scanResult: null,
       html5QrCode: null,
-      currentCamera: 'environment' // 'environment' 或 'user'
+      currentCamera: 'environment', // 'environment' 或 'user'
+      stockInLoading: false, // 入庫加載狀態
+      detailDialogVisible: false, // 詳情對話框顯示
+      itemDetail: null // 物品詳細資訊
     };
   },
   mounted() {
@@ -154,6 +217,10 @@ export default {
       this.quickScanVisible = true;
       this.$nextTick(() => {
         this.initQuickScanner();
+        // 延遲自動啟動掃描（給予初始化時間）
+        setTimeout(() => {
+          this.startQuickScan();
+        }, 800);
       });
     },
 
@@ -164,22 +231,22 @@ export default {
         setTimeout(() => {
           const config = {
             fps: 10,
-            qrbox: {width: 380, height: 280},
+            qrbox: {width: 250, height: 250},
             aspectRatio: 1.0,
-            // 手機端優化設定
+            // 手機端優化設定：預設使用後置鏡頭
             videoConstraints: {
-              facingMode: this.currentCamera,
+              facingMode: { exact: this.currentCamera },
               focusMode: "continuous",
-              advanced: [
-                {zoom: 3}, // 先嘗試設到最大或中間值，看裝置支援度
-                {focusMode: "continuous"},
-                {focusDistance: {min: 0.1, max: 10}},
-                {zoom: {min: 1, max: 3}}
-              ]
+              // 手機端zoom設定（提高掃描距離和清晰度）
+              zoom: 1.5
             },
             // 確保攝影機權限請求不被阻擋
             rememberLastUsedCamera: true,
-            showTorchButtonIfSupported: true
+            showTorchButtonIfSupported: true,
+            // 優化掃描設定
+            experimentalFeatures: {
+              useBarCodeDetectorIfSupported: true
+            }
           };
 
           // 檢查元素是否存在
@@ -219,11 +286,14 @@ export default {
       this.isScanning = true;
 
       try {
-        // 請求攝影機權限
+        // 請求攝影機權限（優先使用後置鏡頭）
         navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: this.currentCamera,
-            focusMode: "continuous"
+            facingMode: { ideal: this.currentCamera },
+            focusMode: "continuous",
+            zoom: 1.5,
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
           }
         }).then(() => {
           // 權限取得成功後啟動掃描
@@ -366,34 +436,95 @@ export default {
       return /^\d{10}$/.test(cleanCode) || /^\d{13}$/.test(cleanCode);
     },
 
-    /** 快速借出 */
-    handleQuickBorrow() {
-      if (this.scanResult) {
-        this.$router.push({
-          path: '/inventory/borrow/add',
-          query: {itemId: this.scanResult.itemId}
-        });
-        this.closeQuickScan();
-      }
-    },
-
-    /** 快速入庫 */
+    /** 快速入庫 +1 */
     handleQuickStockIn() {
-      if (this.scanResult) {
-        this.$router.push({
-          path: '/inventory/stock/in',
-          query: {itemId: this.scanResult.itemId}
-        });
-        this.closeQuickScan();
+      if (!this.scanResult || !this.scanResult.itemId) {
+        this.$message.error('物品ID不存在，無法入庫');
+        return;
       }
+
+      this.$confirm(`確定要為「${this.scanResult.itemName}」入庫 1 個嗎？`, '確認入庫', {
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }).then(() => {
+        this.stockInLoading = true;
+        
+        const stockInData = {
+          itemId: this.scanResult.itemId,
+          quantity: 1,
+          reason: `手機端掃碼 + ${this.$store.getters.name || '登入者'}`
+        };
+
+        quickStockIn(stockInData).then(response => {
+          this.stockInLoading = false;
+          this.$notify({
+            title: '入庫成功',
+            message: `「${this.scanResult.itemName}」已入庫 1 個`,
+            type: 'success',
+            duration: 2000
+          });
+          
+          // 更新庫存顯示（使用 $set 確保響應式更新）
+          if (this.scanResult.totalQuantity !== undefined && this.scanResult.totalQuantity !== null) {
+            this.$set(this.scanResult, 'totalQuantity', this.scanResult.totalQuantity + 1);
+          }
+          if (this.scanResult.availableQty !== undefined && this.scanResult.availableQty !== null) {
+            this.$set(this.scanResult, 'availableQty', this.scanResult.availableQty + 1);
+          }
+          
+          console.log('入庫後更新庫存：', {
+            totalQuantity: this.scanResult.totalQuantity,
+            availableQty: this.scanResult.availableQty
+          });
+        }).catch(error => {
+          this.stockInLoading = false;
+          
+          // 檢查是否為權限錯誤
+          if (error.code === 403 || error.code === 401 || 
+              (error.msg && (error.msg.includes('權限') || error.msg.includes('Access Denied')))) {
+            this.$alert(
+              '您沒有掃碼入庫的權限，請聯絡系統管理員開通「掃描功能」權限（inventory:scan:use）。',
+              '權限不足',
+              {
+                confirmButtonText: '確定',
+                type: 'warning',
+                dangerouslyUseHTMLString: false
+              }
+            );
+          } else {
+            // 其他錯誤
+            const errorMsg = error.msg || error.message || '請稍後再試';
+            this.$message.error('入庫失敗：' + errorMsg);
+          }
+        });
+      }).catch(() => {
+        // 取消入庫
+      });
     },
 
-    /** 查看詳情 */
-    goToDetail() {
-      if (this.scanResult) {
-        this.$router.push('/inventory/item/detail/' + this.scanResult.itemId);
-        this.closeQuickScan();
+    /** 顯示詳情對話框 */
+    showDetailDialog() {
+      if (!this.scanResult || !this.scanResult.itemId) {
+        this.$message.error('物品ID不存在，無法查看詳情');
+        return;
       }
+
+      const loading = this.$loading({
+        lock: true,
+        text: '載入中...',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.7)'
+      });
+
+      getManagement(this.scanResult.itemId).then(response => {
+        loading.close();
+        this.itemDetail = response.data;
+        this.detailDialogVisible = true;
+      }).catch(error => {
+        loading.close();
+        this.$message.error('獲取詳情失敗：' + (error.msg || '請稍後再試'));
+      });
     },
 
     /** 前往完整掃描頁面 */
@@ -538,9 +669,33 @@ export default {
 }
 
 #floating-qr-reader {
-  border: 2px dashed #d9d9d9;
-  border-radius: 6px;
-  background-color: #fafafa;
+  border: 2px dashed #409eff;
+  border-radius: 8px;
+  background-color: #000;
+  overflow: hidden;
+}
+
+#floating-qr-reader video {
+  border-radius: 8px;
+}
+
+/* 物品詳情對話框 */
+.mobile-detail-dialog {
+  margin: 5vh auto !important;
+}
+
+.detail-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.detail-content .el-descriptions {
+  margin-top: 10px;
+}
+
+.detail-content .el-descriptions-item__label {
+  width: 100px;
+  font-weight: bold;
 }
 
 /* 響應式設計 */
@@ -559,6 +714,24 @@ export default {
   .mobile-scan-dialog {
     margin: 2vh auto !important;
     width: 95% !important;
+  }
+
+  .mobile-detail-dialog {
+    margin: 2vh auto !important;
+    width: 95% !important;
+  }
+
+  #floating-qr-reader {
+    min-height: 350px !important;
+  }
+
+  .camera-area {
+    margin-bottom: 20px;
+  }
+  
+  .result-actions .el-button {
+    margin: 5px 3px !important;
+    font-size: 13px;
   }
 }
 </style>
