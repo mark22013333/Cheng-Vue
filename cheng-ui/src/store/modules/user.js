@@ -70,13 +70,13 @@ const user = {
               avatar = defAva
             } else if (avatar.startsWith('/profile')) {
               // 處理以 /profile 開頭的路徑
-              // 開發環境需要加上 API 前綴才能被 proxy 轉發到後端
-              // 生產環境由 Nginx 直接處理，不需要前綴
+              // 無論開發或生產環境，都需要加上 API 前綴才能正確存取
+              // 開發環境：/dev-api/profile/xxx -> proxy 轉發到後端
+              // 生產環境：/prod-api/profile/xxx -> Nginx 代理到後端
               const baseApi = process.env.VUE_APP_BASE_API || ''
-              if (baseApi && process.env.NODE_ENV === 'development') {
+              if (baseApi) {
                 avatar = baseApi + avatar
               }
-              // 生產環境直接使用 avatar（/profile/xxx），由 Nginx 處理
             } else {
               // 其他路徑格式，加上 API 前綴
               avatar = (process.env.VUE_APP_BASE_API || '') + avatar
