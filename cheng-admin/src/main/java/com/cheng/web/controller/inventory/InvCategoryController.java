@@ -5,6 +5,7 @@ import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
 import com.cheng.common.enums.BusinessType;
+import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.system.domain.InvCategory;
 import com.cheng.system.service.IInvCategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -73,5 +75,17 @@ public class InvCategoryController extends BaseController {
     @DeleteMapping("/{categoryIds}")
     public AjaxResult remove(@PathVariable Long[] categoryIds) {
         return toAjax(invCategoryService.deleteInvCategoryByCategoryIds(categoryIds));
+    }
+
+    /**
+     * 匯出物品分類列表
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:category:export')")
+    @Log(title = "物品分類", businessType = BusinessType.EXPORT)
+    @PostMapping("/export")
+    public void export(HttpServletResponse response, InvCategory invCategory) {
+        List<InvCategory> list = invCategoryService.selectInvCategoryList(invCategory);
+        ExcelUtil<InvCategory> util = new ExcelUtil<InvCategory>(InvCategory.class);
+        util.exportExcel(response, list, "分類資料");
     }
 }

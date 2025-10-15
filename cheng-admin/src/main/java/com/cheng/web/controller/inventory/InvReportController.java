@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.time.LocalDate;
 import java.time.ZoneId;
 
+import com.cheng.common.core.page.TableDataInfo;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +21,11 @@ import com.cheng.common.enums.BusinessType;
 import com.cheng.system.domain.InvStock;
 import com.cheng.system.domain.InvBorrow;
 import com.cheng.system.domain.InvStockRecord;
+import com.cheng.system.domain.InvScanLog;
 import com.cheng.system.service.IInvStockService;
 import com.cheng.system.service.IInvBorrowService;
 import com.cheng.system.service.IInvStockRecordService;
+import com.cheng.system.service.IInvScanLogService;
 import com.cheng.common.utils.poi.ExcelUtil;
 
 /**
@@ -43,26 +46,35 @@ public class InvReportController extends BaseController {
     @Autowired
     private IInvStockRecordService invStockRecordService;
 
+    @Autowired
+    private IInvScanLogService invScanLogService;
+
     /**
      * 取得庫存報表資料
      */
     @PreAuthorize("@ss.hasPermi('inventory:report:view')")
     @GetMapping("/stock")
-    public AjaxResult getStockReport(InvStock invStock) {
+    public TableDataInfo getStockReport(InvStock invStock) {
+        startPage();
         List<InvStock> list = invStockService.selectInvStockList(invStock);
 
-        // 統計資料
+        // 統計資料（使用全部資料）
+        List<InvStock> allList = invStockService.selectInvStockList(new InvStock());
         Map<String, Object> statistics = new HashMap<>();
-        statistics.put("totalItems", list.size());
-        statistics.put("totalQuantity", list.stream().mapToInt(InvStock::getTotalQuantity).sum());
-        statistics.put("availableQuantity", list.stream().mapToInt(InvStock::getAvailableQty).sum());
-        statistics.put("borrowedQuantity", list.stream().mapToInt(InvStock::getBorrowedQty).sum());
+        statistics.put("totalItems", allList.size());
+        statistics.put("totalQuantity", allList.stream().mapToInt(InvStock::getTotalQuantity).sum());
+        long lowStockItems = allList.stream()
+            .filter(s -> s.getTotalQuantity() > 0 && s.getTotalQuantity() <= s.getMinStock())
+            .count();
+        long outOfStockItems = allList.stream()
+            .filter(s -> s.getTotalQuantity() <= 0)
+            .count();
+        statistics.put("lowStockItems", lowStockItems);
+        statistics.put("outOfStockItems", outOfStockItems);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("data", list);
-        result.put("statistics", statistics);
-
-        return success(result);
+        TableDataInfo dataInfo = getDataTable(list);
+        dataInfo.put("statistics", statistics);
+        return dataInfo;
     }
 
     /**
@@ -70,22 +82,22 @@ public class InvReportController extends BaseController {
      */
     @PreAuthorize("@ss.hasPermi('inventory:report:view')")
     @GetMapping("/borrow")
-    public AjaxResult getBorrowReport(InvBorrow invBorrow) {
+    public TableDataInfo getBorrowReport(InvBorrow invBorrow) {
+        startPage();
         List<InvBorrow> list = invBorrowService.selectInvBorrowList(invBorrow);
 
-        // 統計資料
+        // 統計資料（使用全部資料）
+        List<InvBorrow> allList = invBorrowService.selectInvBorrowList(new InvBorrow());
         Map<String, Object> statistics = new HashMap<>();
-        statistics.put("totalBorrows", list.size());
-        statistics.put("pendingBorrows", list.stream().filter(b -> "0".equals(b.getStatus())).count());
-        statistics.put("approvedBorrows", list.stream().filter(b -> "1".equals(b.getStatus())).count());
-        statistics.put("returnedBorrows", list.stream().filter(b -> "2".equals(b.getStatus())).count());
+        statistics.put("totalBorrows", allList.size());
+        statistics.put("pendingBorrows", allList.stream().filter(b -> "0".equals(b.getStatus())).count());
+        statistics.put("approvedBorrows", allList.stream().filter(b -> "1".equals(b.getStatus())).count());
+        statistics.put("returnedBorrows", allList.stream().filter(b -> "3".equals(b.getStatus())).count());
         statistics.put("overdueBorrows", invBorrowService.selectOverdueBorrowList().size());
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("data", list);
-        result.put("statistics", statistics);
-
-        return success(result);
+        TableDataInfo dataInfo = getDataTable(list);
+        dataInfo.put("statistics", statistics);
+        return dataInfo;
     }
 
     /**
@@ -93,21 +105,21 @@ public class InvReportController extends BaseController {
      */
     @PreAuthorize("@ss.hasPermi('inventory:report:view')")
     @GetMapping("/movement")
-    public AjaxResult getMovementReport(InvStockRecord invStockRecord) {
+    public TableDataInfo getMovementReport(InvStockRecord invStockRecord) {
+        startPage();
         List<InvStockRecord> list = invStockRecordService.selectInvStockRecordList(invStockRecord);
 
-        // 統計資料
+        // 統計資料（使用全部資料）
+        List<InvStockRecord> allList = invStockRecordService.selectInvStockRecordList(new InvStockRecord());
         Map<String, Object> statistics = new HashMap<>();
-        statistics.put("totalRecords", list.size());
-        statistics.put("inRecords", list.stream().filter(r -> "1".equals(r.getRecordType())).count());
-        statistics.put("outRecords", list.stream().filter(r -> "2".equals(r.getRecordType())).count());
-        statistics.put("checkRecords", list.stream().filter(r -> "5".equals(r.getRecordType())).count());
+        statistics.put("totalRecords", allList.size());
+        statistics.put("inRecords", allList.stream().filter(r -> "1".equals(r.getRecordType())).count());
+        statistics.put("outRecords", allList.stream().filter(r -> "2".equals(r.getRecordType())).count());
+        statistics.put("checkRecords", allList.stream().filter(r -> "5".equals(r.getRecordType())).count());
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("data", list);
-        result.put("statistics", statistics);
-
-        return success(result);
+        TableDataInfo dataInfo = getDataTable(list);
+        dataInfo.put("statistics", statistics);
+        return dataInfo;
     }
 
 
@@ -145,6 +157,41 @@ public class InvReportController extends BaseController {
         List<InvStockRecord> list = invStockRecordService.selectInvStockRecordList(invStockRecord);
         ExcelUtil<InvStockRecord> util = new ExcelUtil<InvStockRecord>(InvStockRecord.class);
         util.exportExcel(response, list, "異動報表資料");
+    }
+
+    /**
+     * 取得掃描記錄報表資料
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:report:view')")
+    @GetMapping("/scan")
+    public TableDataInfo getScanReport(InvScanLog invScanLog) {
+        startPage();
+        List<InvScanLog> list = invScanLogService.selectInvScanLogList(invScanLog);
+
+        // 統計資料（使用全部資料）
+        List<InvScanLog> allList = invScanLogService.selectInvScanLogList(new InvScanLog());
+        Map<String, Object> statistics = new HashMap<>();
+        statistics.put("totalScans", allList.size());
+        statistics.put("successScans", allList.stream().filter(s -> "0".equals(s.getScanResult())).count());
+        statistics.put("failedScans", allList.stream().filter(s -> "1".equals(s.getScanResult())).count());
+        statistics.put("barcodeScans", allList.stream().filter(s -> "1".equals(s.getScanType())).count());
+        statistics.put("qrcodeScans", allList.stream().filter(s -> "2".equals(s.getScanType())).count());
+
+        TableDataInfo dataInfo = getDataTable(list);
+        dataInfo.put("statistics", statistics);
+        return dataInfo;
+    }
+
+    /**
+     * 匯出掃描報表
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:report:export')")
+    @Log(title = "掃描報表", businessType = BusinessType.EXPORT)
+    @PostMapping("/scan/export")
+    public void exportScanReport(HttpServletResponse response, InvScanLog invScanLog) {
+        List<InvScanLog> list = invScanLogService.selectInvScanLogList(invScanLog);
+        ExcelUtil<InvScanLog> util = new ExcelUtil<InvScanLog>(InvScanLog.class);
+        util.exportExcel(response, list, "掃描報表資料");
     }
 
 

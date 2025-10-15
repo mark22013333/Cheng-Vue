@@ -6,9 +6,9 @@
       </div>
 
       <!-- 報表類型選擇 -->
-      <el-row :gutter="20" class="mb8">
+      <el-row :gutter="10" class="mb8">
         <el-col :span="6">
-          <el-card shadow="hover" class="report-card" @click.native="handleStockReport">
+          <el-card shadow="hover" :class="['report-card', {'report-card-active': currentReport === 'stock'}]" @click.native="handleStockReport">
             <div class="report-icon">
               <i class="el-icon-goods"></i>
             </div>
@@ -17,7 +17,7 @@
           </el-card>
         </el-col>
         <el-col :span="6">
-          <el-card shadow="hover" class="report-card" @click.native="handleBorrowReport">
+          <el-card shadow="hover" :class="['report-card', {'report-card-active': currentReport === 'borrow'}]" @click.native="handleBorrowReport">
             <div class="report-icon">
               <i class="el-icon-edit"></i>
             </div>
@@ -26,7 +26,7 @@
           </el-card>
         </el-col>
         <el-col :span="6">
-          <el-card shadow="hover" class="report-card" @click.native="handleMovementReport">
+          <el-card shadow="hover" :class="['report-card', {'report-card-active': currentReport === 'movement'}]" @click.native="handleMovementReport">
             <div class="report-icon">
               <i class="el-icon-refresh"></i>
             </div>
@@ -35,7 +35,7 @@
           </el-card>
         </el-col>
         <el-col :span="6">
-          <el-card shadow="hover" class="report-card" @click.native="handleScanReport">
+          <el-card shadow="hover" :class="['report-card', {'report-card-active': currentReport === 'scan'}]" @click.native="handleScanReport">
             <div class="report-icon">
               <i class="el-icon-search"></i>
             </div>
@@ -50,34 +50,106 @@
         <el-divider content-position="left">{{ reportTitle }}</el-divider>
 
         <!-- 篩選條件 -->
-        <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="80px">
-          <el-form-item label="時間範圍">
-            <el-date-picker
-              v-model="dateRange"
-              style="width: 240px"
-              value-format="yyyy-MM-dd"
-              type="daterange"
-              range-separator="-"
-              start-placeholder="開始日期"
-              end-placeholder="結束日期"
-              @change="handleDateChange"
-            ></el-date-picker>
-          </el-form-item>
-          <el-form-item label="分類" v-if="currentReport === 'stock'">
-            <el-select v-model="queryParams.categoryId" placeholder="請選擇分類" clearable>
-              <el-option
-                v-for="category in categoryOptions"
-                :key="category.categoryId"
-                :label="category.categoryName"
-                :value="category.categoryId"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" icon="el-icon-search" @click="generateReport">產生報表</el-button>
-            <el-button icon="el-icon-download" @click="exportReport">匯出Excel</el-button>
-            <el-button icon="el-icon-printer" @click="printReport">列印報表</el-button>
-          </el-form-item>
+        <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="100px">
+          <!-- 庫存報表的篩選 -->
+          <template v-if="currentReport === 'stock'">
+            <el-form-item label="最後進貨時間">
+              <el-date-picker
+                v-model="dateRange"
+                style="width: 240px"
+                value-format="yyyy-MM-dd"
+                type="daterange"
+                range-separator="-"
+                start-placeholder="開始日期"
+                end-placeholder="結束日期"
+                @change="handleDateChange"
+              ></el-date-picker>
+            </el-form-item>
+            <el-form-item label="分類">
+              <el-select v-model="queryParams.categoryId" placeholder="請選擇分類" clearable style="width: 150px">
+                <el-option
+                  v-for="category in categoryOptions"
+                  :key="category.categoryId"
+                  :label="category.categoryName"
+                  :value="category.categoryId"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label-width="0px">
+              <el-button type="primary" icon="el-icon-search" @click="handleQuery">查詢</el-button>
+              <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+              <el-button icon="el-icon-download" @click="exportReport">匯出Excel</el-button>
+            </el-form-item>
+          </template>
+
+          <!-- 借出報表的篩選 -->
+          <template v-if="currentReport === 'borrow'">
+            <el-form-item label="時間類型">
+              <el-select v-model="queryParams.dateType" placeholder="選擇時間類型" style="width: 120px">
+                <el-option label="借出時間" value="borrow" />
+                <el-option label="歸還時間" value="return" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="時間範圍">
+              <el-date-picker
+                v-model="dateRange"
+                style="width: 240px"
+                value-format="yyyy-MM-dd"
+                type="daterange"
+                range-separator="-"
+                start-placeholder="開始日期"
+                end-placeholder="結束日期"
+                @change="handleDateChange"
+              ></el-date-picker>
+            </el-form-item>
+            <el-form-item label-width="0px">
+              <el-button type="primary" icon="el-icon-search" @click="handleQuery">查詢</el-button>
+              <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+              <el-button icon="el-icon-download" @click="exportReport">匯出Excel</el-button>
+            </el-form-item>
+          </template>
+
+          <!-- 異動報表的篩選 -->
+          <template v-if="currentReport === 'movement'">
+            <el-form-item label="異動時間">
+              <el-date-picker
+                v-model="dateRange"
+                style="width: 240px"
+                value-format="yyyy-MM-dd"
+                type="daterange"
+                range-separator="-"
+                start-placeholder="開始日期"
+                end-placeholder="結束日期"
+                @change="handleDateChange"
+              ></el-date-picker>
+            </el-form-item>
+            <el-form-item label-width="0px">
+              <el-button type="primary" icon="el-icon-search" @click="handleQuery">查詢</el-button>
+              <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+              <el-button icon="el-icon-download" @click="exportReport">匯出Excel</el-button>
+            </el-form-item>
+          </template>
+
+          <!-- 掃描報表的篩選 -->
+          <template v-if="currentReport === 'scan'">
+            <el-form-item label="掃描時間">
+              <el-date-picker
+                v-model="dateRange"
+                style="width: 240px"
+                value-format="yyyy-MM-dd"
+                type="daterange"
+                range-separator="-"
+                start-placeholder="開始日期"
+                end-placeholder="結束日期"
+                @change="handleDateChange"
+              ></el-date-picker>
+            </el-form-item>
+            <el-form-item label-width="0px">
+              <el-button type="primary" icon="el-icon-search" @click="handleQuery">查詢</el-button>
+              <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+              <el-button icon="el-icon-download" @click="exportReport">匯出Excel</el-button>
+            </el-form-item>
+          </template>
         </el-form>
 
         <!-- 報表統計卡片 -->
@@ -113,17 +185,21 @@
         </el-row>
 
         <!-- 報表表格 -->
-        <el-table v-loading="loading" :data="reportData" style="width: 100%">
+        <el-table v-loading="loading" :data="reportData" class="report-table">
           <!-- 庫存報表欄位 -->
           <template v-if="currentReport === 'stock'">
-            <el-table-column prop="itemCode" label="物品編碼" />
-            <el-table-column prop="itemName" label="物品名稱" />
-            <el-table-column prop="categoryName" label="分類" />
-            <el-table-column prop="stockQuantity" label="庫存數量" />
-            <el-table-column prop="availableQuantity" label="可用數量" />
-            <el-table-column prop="borrowedQuantity" label="借出數量" />
-            <el-table-column prop="minStock" label="最小庫存" />
-            <el-table-column label="庫存狀態">
+            <el-table-column prop="itemCode" label="物品編碼" min-width="120" />
+            <el-table-column prop="itemName" label="物品名稱" min-width="150" />
+            <el-table-column prop="categoryName" label="分類" min-width="100" />
+            <el-table-column prop="specification" label="規格" min-width="120" />
+<!--            <el-table-column prop="unit" label="單位" min-width="80" />-->
+            <el-table-column prop="totalQuantity" label="總數量" min-width="90" />
+            <el-table-column prop="availableQty" label="可用數量" min-width="90" />
+            <el-table-column prop="borrowedQty" label="借出數量" min-width="90" />
+            <el-table-column prop="minStock" label="最小庫存" min-width="90" />
+            <el-table-column prop="lastInTime" label="最後進貨時間" min-width="160" />
+            <el-table-column prop="location" label="存放位置" min-width="120" />
+            <el-table-column label="庫存狀態" min-width="100">
               <template slot-scope="scope">
                 <el-tag :type="getStockStatusType(scope.row)">
                   {{ getStockStatusText(scope.row) }}
@@ -134,14 +210,14 @@
 
           <!-- 借出報表欄位 -->
           <template v-if="currentReport === 'borrow'">
-            <el-table-column prop="borrowCode" label="借出編號" />
-            <el-table-column prop="itemName" label="物品名稱" />
-            <el-table-column prop="borrowerName" label="借用人" />
-            <el-table-column prop="quantity" label="借出數量" />
-            <el-table-column prop="borrowTime" label="借出時間" />
-            <el-table-column prop="expectedReturn" label="預計歸還" />
-            <el-table-column prop="actualReturn" label="實際歸還" />
-            <el-table-column label="狀態">
+            <el-table-column prop="borrowNo" label="借出編號" min-width="140" />
+            <el-table-column prop="itemName" label="物品名稱" min-width="150" />
+            <el-table-column prop="borrowerName" label="借用人" min-width="100" />
+            <el-table-column prop="quantity" label="借出數量" min-width="90" />
+            <el-table-column prop="borrowTime" label="借出時間" min-width="160" />
+            <el-table-column prop="expectedReturn" label="預計歸還" min-width="160" />
+            <el-table-column prop="actualReturn" label="實際歸還" min-width="160" />
+            <el-table-column label="狀態" min-width="100">
               <template slot-scope="scope">
                 <el-tag :type="getBorrowStatusType(scope.row.status)">
                   {{ getBorrowStatusText(scope.row.status) }}
@@ -152,30 +228,36 @@
 
           <!-- 異動報表欄位 -->
           <template v-if="currentReport === 'movement'">
-            <el-table-column prop="itemName" label="物品名稱" />
-            <el-table-column prop="operationType" label="操作類型" />
-            <el-table-column prop="quantity" label="數量" />
-            <el-table-column prop="beforeQuantity" label="操作前數量" />
-            <el-table-column prop="afterQuantity" label="操作後數量" />
-            <el-table-column prop="operatorName" label="操作人" />
-            <el-table-column prop="operationTime" label="操作時間" />
-            <el-table-column prop="reason" label="原因" />
+            <el-table-column prop="itemName" label="物品名稱" min-width="150" />
+            <el-table-column prop="recordType" label="操作類型" min-width="100">
+              <template slot-scope="scope">
+                <el-tag :type="getRecordTypeTag(scope.row.recordType)">
+                  {{ getRecordTypeText(scope.row.recordType) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="quantity" label="數量" min-width="80" />
+            <el-table-column prop="beforeQty" label="操作前數量" min-width="110" />
+            <el-table-column prop="afterQty" label="操作後數量" min-width="110" />
+            <el-table-column prop="operatorName" label="操作人" min-width="100" />
+            <el-table-column prop="recordTime" label="操作時間" min-width="160" />
+            <el-table-column prop="reason" label="原因" min-width="150" />
           </template>
 
           <!-- 掃描報表欄位 -->
           <template v-if="currentReport === 'scan'">
-            <el-table-column prop="scanTime" label="掃描時間" />
-            <el-table-column prop="scanType" label="掃描類型">
+            <el-table-column prop="scanTime" label="掃描時間" min-width="160" />
+            <el-table-column prop="scanType" label="掃描類型" min-width="100">
               <template slot-scope="scope">
                 <el-tag :type="scope.row.scanType === '1' ? 'primary' : 'success'">
                   {{ scope.row.scanType === '1' ? '條碼' : 'QR碼' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="scanCode" label="掃描內容" />
-            <el-table-column prop="itemName" label="物品名稱" />
-            <el-table-column prop="scannerName" label="掃描人" />
-            <el-table-column prop="scanResult" label="掃描結果">
+            <el-table-column prop="scanCode" label="掃描內容" min-width="150" />
+            <el-table-column prop="itemName" label="物品名稱" min-width="150" />
+            <el-table-column prop="operatorName" label="掃描人" min-width="100" />
+            <el-table-column prop="scanResult" label="掃描結果" min-width="100">
               <template slot-scope="scope">
                 <el-tag :type="scope.row.scanResult === '0' ? 'success' : 'danger'">
                   {{ scope.row.scanResult === '0' ? '成功' : '失敗' }}
@@ -190,7 +272,7 @@
           :total="total"
           :page.sync="queryParams.pageNum"
           :limit.sync="queryParams.pageSize"
-          @pagination="generateReport"
+          @pagination="loadReportData"
         />
       </div>
     </el-card>
@@ -202,13 +284,11 @@ import {
   getStockReport,
   getBorrowReport,
   getMovementReport,
-  getScanReport,
-  exportStockReport,
-  exportBorrowReport,
-  exportMovementReport,
-  exportScanReport
+  getScanReport
 } from "@/api/inventory/report";
-import { listCategory } from "@/api/inventory/item";
+import { listCategory } from "@/api/inventory/category";
+import { download } from '@/utils/request';
+import * as echarts from 'echarts';
 
 export default {
   name: "Report",
@@ -237,9 +317,17 @@ export default {
         pageNum: 1,
         pageSize: 10,
         categoryId: null,
+        dateType: 'borrow', // 借出報表的時間類型：borrow=借出時間, return=歸還時間
         beginTime: null,
-        endTime: null
-      }
+        endTime: null,
+        beginBorrowTime: null,
+        endBorrowTime: null,
+        beginActualReturn: null,
+        endActualReturn: null,
+        params: {}
+      },
+      // 下載方法
+      download: download
     };
   },
   created() {
@@ -258,7 +346,8 @@ export default {
       this.currentReport = 'stock';
       this.reportTitle = '庫存狀況報表';
       this.showChart = true;
-      this.generateReport();
+      this.queryParams.pageNum = 1;
+      this.loadReportData();
     },
 
     /** 借出報表 */
@@ -266,7 +355,8 @@ export default {
       this.currentReport = 'borrow';
       this.reportTitle = '借出歸還報表';
       this.showChart = true;
-      this.generateReport();
+      this.queryParams.pageNum = 1;
+      this.loadReportData();
     },
 
     /** 異動報表 */
@@ -274,7 +364,8 @@ export default {
       this.currentReport = 'movement';
       this.reportTitle = '庫存異動報表';
       this.showChart = false;
-      this.generateReport();
+      this.queryParams.pageNum = 1;
+      this.loadReportData();
     },
 
     /** 掃描報表 */
@@ -282,22 +373,101 @@ export default {
       this.currentReport = 'scan';
       this.reportTitle = '掃描記錄報表';
       this.showChart = false;
-      this.generateReport();
+      this.queryParams.pageNum = 1;
+      this.loadReportData();
     },
 
     /** 日期變更 */
     handleDateChange(dates) {
       if (dates && dates.length === 2) {
-        this.queryParams.beginTime = dates[0];
-        this.queryParams.endTime = dates[1];
+        const begin = dates[0];
+        const end = dates[1];
+
+        // 根據不同報表類型設置不同的時間參數
+        switch (this.currentReport) {
+          case 'stock':
+            // 庫存報表 - 最後進貨時間
+            if (!this.queryParams.params) {
+              this.queryParams.params = {};
+            }
+            this.queryParams.params.beginTime = begin;
+            this.queryParams.params.endTime = end;
+            break;
+          case 'borrow':
+            // 借出報表 - 根據 dateType 設置不同欄位
+            if (this.queryParams.dateType === 'return') {
+              this.queryParams.beginActualReturn = begin;
+              this.queryParams.endActualReturn = end;
+              this.queryParams.beginBorrowTime = null;
+              this.queryParams.endBorrowTime = null;
+            } else {
+              this.queryParams.beginBorrowTime = begin;
+              this.queryParams.endBorrowTime = end;
+              this.queryParams.beginActualReturn = null;
+              this.queryParams.endActualReturn = null;
+            }
+            break;
+          case 'movement':
+            // 異動報表 - 使用 params
+            if (!this.queryParams.params) {
+              this.queryParams.params = {};
+            }
+            this.queryParams.params.beginRecordTime = begin;
+            this.queryParams.params.endRecordTime = end;
+            break;
+          case 'scan':
+            // 掃描報表 - 使用 params
+            if (!this.queryParams.params) {
+              this.queryParams.params = {};
+            }
+            this.queryParams.params.beginTime = begin;
+            this.queryParams.params.endTime = end;
+            break;
+        }
       } else {
+        // 清空所有時間參數
         this.queryParams.beginTime = null;
         this.queryParams.endTime = null;
+        this.queryParams.beginBorrowTime = null;
+        this.queryParams.endBorrowTime = null;
+        this.queryParams.beginActualReturn = null;
+        this.queryParams.endActualReturn = null;
+        if (this.queryParams.params) {
+          this.queryParams.params.beginRecordTime = null;
+          this.queryParams.params.endRecordTime = null;
+          this.queryParams.params.beginTime = null;
+          this.queryParams.params.endTime = null;
+        }
       }
     },
 
-    /** 產生報表 */
-    generateReport() {
+    /** 查詢 */
+    handleQuery() {
+      this.queryParams.pageNum = 1;
+      this.loadReportData();
+    },
+
+    /** 重置 */
+    resetQuery() {
+      this.dateRange = [];
+      this.queryParams = {
+        pageNum: 1,
+        pageSize: 10,
+        categoryId: null,
+        dateType: 'borrow',
+        beginTime: null,
+        endTime: null,
+        beginBorrowTime: null,
+        endBorrowTime: null,
+        beginActualReturn: null,
+        endActualReturn: null,
+        params: {}
+      };
+      this.loadReportData();
+    },
+
+    /** 載入報表資料 */
+    loadReportData() {
       if (!this.currentReport) return;
 
       this.loading = true;
@@ -321,11 +491,10 @@ export default {
     /** 產生庫存報表 */
     generateStockReport() {
       getStockReport(this.queryParams).then(response => {
-        const result = response.data;
-        this.reportData = result.data;
-        this.total = result.data.length;
+        this.reportData = response.rows;
+        this.total = response.total;
 
-        const stats = result.statistics;
+        const stats = response.extra.statistics;
         this.reportStats = [
           { label: '總物品數', value: stats.totalItems },
           { label: '總庫存量', value: stats.totalQuantity },
@@ -334,6 +503,11 @@ export default {
         ];
 
         this.loading = false;
+
+        // 初始化圖表
+        this.$nextTick(() => {
+          this.initStockCharts(response.rows);
+        });
       }).catch(() => {
         this.loading = false;
       });
@@ -342,11 +516,10 @@ export default {
     /** 產生借出報表 */
     generateBorrowReport() {
       getBorrowReport(this.queryParams).then(response => {
-        const result = response.data;
-        this.reportData = result.data;
-        this.total = result.data.length;
+        this.reportData = response.rows;
+        this.total = response.total;
 
-        const stats = result.statistics;
+        const stats = response.extra.statistics;
         this.reportStats = [
           { label: '總借出數', value: stats.totalBorrows },
           { label: '待審核', value: stats.pendingBorrows },
@@ -356,6 +529,11 @@ export default {
         ];
 
         this.loading = false;
+
+        // 初始化圖表
+        this.$nextTick(() => {
+          this.initBorrowCharts(stats);
+        });
       }).catch(() => {
         this.loading = false;
       });
@@ -364,11 +542,10 @@ export default {
     /** 產生異動報表 */
     generateMovementReport() {
       getMovementReport(this.queryParams).then(response => {
-        const result = response.data;
-        this.reportData = result.data;
-        this.total = result.data.length;
+        this.reportData = response.rows;
+        this.total = response.total;
 
-        const stats = result.statistics;
+        const stats = response.extra.statistics;
         this.reportStats = [
           { label: '總記錄數', value: stats.totalRecords },
           { label: '入庫記錄', value: stats.inRecords },
@@ -385,11 +562,10 @@ export default {
     /** 產生掃描報表 */
     generateScanReport() {
       getScanReport(this.queryParams).then(response => {
-        const result = response.data;
-        this.reportData = result.data;
-        this.total = result.data.length;
+        this.reportData = response.rows;
+        this.total = response.total;
 
-        const stats = result.statistics;
+        const stats = response.extra.statistics;
         const successRate = stats.totalScans > 0 ?
           ((stats.successScans / stats.totalScans) * 100).toFixed(2) + '%' : '0%';
 
@@ -406,7 +582,6 @@ export default {
       }).catch(() => {
         this.loading = false;
       });
-      this.loading = false;
     },
 
     /** 匯出報表 */
@@ -416,48 +591,35 @@ export default {
         return;
       }
 
-      let exportFunction;
+      let fileName = '';
       switch (this.currentReport) {
         case 'stock':
-          exportFunction = exportStockReport;
+          fileName = '庫存狀況報表';
           break;
         case 'borrow':
-          exportFunction = exportBorrowReport;
+          fileName = '借出歸還報表';
           break;
         case 'movement':
-          exportFunction = exportMovementReport;
+          fileName = '庫存異動報表';
           break;
         case 'scan':
-          exportFunction = exportScanReport;
+          fileName = '掃描記錄報表';
           break;
         default:
           this.$message.error('不支援的報表類型');
           return;
       }
 
-      this.$message.loading('正在匯出報表...');
-      exportFunction(this.queryParams).then(() => {
-        this.$message.success('報表匯出成功');
-      }).catch(() => {
-        this.$message.error('報表匯出失敗');
-      });
-    },
-
-    /** 列印報表 */
-    printReport() {
-      if (!this.currentReport) {
-        this.$message.warning('請先選擇報表類型');
-        return;
-      }
-
-      window.print();
+      this.download('/inventory/report/' + this.currentReport + '/export', {
+        ...this.queryParams
+      }, fileName + '.xlsx');
     },
 
     /** 取得庫存狀態類型 */
     getStockStatusType(row) {
-      if (row.stockQuantity <= 0) {
+      if (row.totalQuantity <= 0) {
         return 'danger';
-      } else if (row.stockQuantity <= row.minStock) {
+      } else if (row.totalQuantity <= row.minStock) {
         return 'warning';
       }
       return 'success';
@@ -465,9 +627,9 @@ export default {
 
     /** 取得庫存狀態文字 */
     getStockStatusText(row) {
-      if (row.stockQuantity <= 0) {
+      if (row.totalQuantity <= 0) {
         return '缺貨';
-      } else if (row.stockQuantity <= row.minStock) {
+      } else if (row.totalQuantity <= row.minStock) {
         return '低庫存';
       }
       return '正常';
@@ -490,11 +652,167 @@ export default {
       const statusMap = {
         '0': '待審核',
         '1': '已借出',
-        '2': '已歸還',
-        '3': '已拒絕',
-        '4': '逾期'
+        '2': '審核拒絕',
+        '3': '已歸還',
+        '4': '部分歸還',
+        '5': '逾期'
       };
       return statusMap[status] || '未知';
+    },
+
+    /** 取得操作類型文字 */
+    getRecordTypeText(type) {
+      const typeMap = {
+        '1': '入庫',
+        '2': '出庫',
+        '3': '借出',
+        '4': '歸還',
+        '5': '盤點',
+        '6': '損耗',
+        '7': '遺失'
+      };
+      return typeMap[type] || '未知';
+    },
+
+    /** 取得操作類型標籤 */
+    getRecordTypeTag(type) {
+      const tagMap = {
+        '1': 'success',
+        '2': 'warning',
+        '3': 'primary',
+        '4': 'success',
+        '5': 'info',
+        '6': 'danger',
+        '7': 'danger'
+      };
+      return tagMap[type] || 'info';
+    },
+
+    /** 初始化庫存圖表 */
+    initStockCharts(data) {
+      if (!data || data.length === 0) return;
+
+      // 趨勢圖表 - 庫存數量前10項
+      const trendChart = echarts.init(document.getElementById('trendChart'));
+      const top10 = data.slice(0, 10);
+      trendChart.setOption({
+        tooltip: {
+          trigger: 'axis'
+        },
+        xAxis: {
+          type: 'category',
+          data: top10.map(item => item.itemName),
+          axisLabel: {
+            rotate: 45,
+            interval: 0
+          }
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [{
+          name: '庫存數量',
+          type: 'bar',
+          data: top10.map(item => item.totalQuantity),
+          itemStyle: {
+            color: '#409EFF'
+          }
+        }]
+      });
+
+      // 分布圖表 - 庫存狀態分布
+      const pieChart = echarts.init(document.getElementById('pieChart'));
+      const normal = data.filter(item => item.totalQuantity > item.minStock).length;
+      const low = data.filter(item => item.totalQuantity > 0 && item.totalQuantity <= item.minStock).length;
+      const out = data.filter(item => item.totalQuantity <= 0).length;
+
+      pieChart.setOption({
+        tooltip: {
+          trigger: 'item'
+        },
+        legend: {
+          orient: 'vertical',
+          left: 'left'
+        },
+        series: [{
+          name: '庫存狀態',
+          type: 'pie',
+          radius: '50%',
+          data: [
+            { value: normal, name: '正常' },
+            { value: low, name: '低庫存' },
+            { value: out, name: '缺貨' }
+          ],
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
+            }
+          }
+        }]
+      });
+    },
+
+    /** 初始化借出圖表 */
+    initBorrowCharts(stats) {
+      // 趨勢圖表 - 借出狀態統計
+      const trendChart = echarts.init(document.getElementById('trendChart'));
+      trendChart.setOption({
+        tooltip: {
+          trigger: 'axis'
+        },
+        xAxis: {
+          type: 'category',
+          data: ['待審核', '已批准', '已歸還', '逾期']
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [{
+          name: '數量',
+          type: 'bar',
+          data: [
+            stats.pendingBorrows,
+            stats.approvedBorrows,
+            stats.returnedBorrows,
+            stats.overdueBorrows
+          ],
+          itemStyle: {
+            color: '#67C23A'
+          }
+        }]
+      });
+
+      // 分布圖表 - 借出狀態分布
+      const pieChart = echarts.init(document.getElementById('pieChart'));
+      pieChart.setOption({
+        tooltip: {
+          trigger: 'item'
+        },
+        legend: {
+          orient: 'vertical',
+          left: 'left'
+        },
+        series: [{
+          name: '借出狀態',
+          type: 'pie',
+          radius: '50%',
+          data: [
+            { value: stats.pendingBorrows, name: '待審核' },
+            { value: stats.approvedBorrows, name: '已批准' },
+            { value: stats.returnedBorrows, name: '已歸還' },
+            { value: stats.overdueBorrows, name: '逾期' }
+          ],
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
+            }
+          }
+        }]
+      });
     }
   }
 };
@@ -504,32 +822,49 @@ export default {
 .report-card {
   cursor: pointer;
   text-align: center;
-  padding: 20px;
+  padding: 8px 6px;
   transition: all 0.3s;
+  border: 2px solid transparent;
 }
 
 .report-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
+  border-color: #409eff;
+}
+
+.report-card-active {
+  border-color: #409eff;
+  background-color: #ecf5ff;
+}
+
+.report-card-active .report-icon {
+  color: #409eff;
+}
+
+.report-card-active .report-title {
+  color: #409eff;
 }
 
 .report-icon {
-  font-size: 48px;
-  color: #409eff;
-  margin-bottom: 15px;
+  font-size: 28px;
+  color: #909399;
+  margin-bottom: 6px;
+  transition: color 0.3s;
 }
 
 .report-title {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: bold;
   color: #303133;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
+  transition: color 0.3s;
 }
 
 .report-desc {
-  font-size: 12px;
+  font-size: 10px;
   color: #909399;
-  line-height: 1.5;
+  line-height: 1.3;
 }
 
 .report-content {
@@ -538,22 +873,46 @@ export default {
 
 .stat-card {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.report-table {
+  width: 100% !important;
+}
+
+/* 讓表格欄位自適應 */
+::v-deep .el-table {
+  width: 100%;
+}
+
+::v-deep .el-table__body-wrapper {
+  overflow-x: auto;
+}
+
+::v-deep .el-table td,
+::v-deep .el-table th {
+  white-space: nowrap;
 }
 
 .stat-content {
-  padding: 20px;
+  padding: 12px 10px;
 }
 
 .stat-number {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: bold;
   color: #409eff;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 12px;
   color: #606266;
 }
 

@@ -1,6 +1,7 @@
 package com.cheng.system.domain;
 
 import com.cheng.common.annotation.Excel;
+import com.cheng.common.core.domain.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +9,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.io.Serial;
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -19,7 +19,7 @@ import java.util.Date;
  */
 @Setter
 @Getter
-public class InvStockRecord implements Serializable {
+public class InvStockRecord extends BaseEntity {
     @Serial
     private static final long serialVersionUID = 1L;
 

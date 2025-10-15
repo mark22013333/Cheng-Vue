@@ -29,9 +29,9 @@ import java.util.Date;
 public class BookItemServiceImpl implements IBookItemService {
 
     /**
-     * 書籍分類 ID（需要在資料庫中預先建立）
+     * 書籍分類 ID（對應資料庫 inv_category 表中的「書籍」分類）
      */
-    private static final Long BOOK_CATEGORY_ID = 2000L;
+    private static final Long BOOK_CATEGORY_ID = 1000L;
 
     @Autowired
     private IIsbnCrawlerService isbnCrawlerService;
@@ -57,13 +57,30 @@ public class BookItemServiceImpl implements IBookItemService {
 
         // 1. 檢查 ISBN 是否已存在
         InvBookInfo existingBook = invBookInfoService.selectInvBookInfoByIsbn(isbn);
-        if (existingBook != null && existingBook.getItemId() != null) {
-            log.info("書籍已存在，ISBN: {}, ItemId: {}", isbn, existingBook.getItemId());
-            return invItemMapper.selectInvItemByItemId(existingBook.getItemId());
+        if (existingBook != null) {
+            if (existingBook.getItemId() != null) {
+                log.info("書籍已存在，ISBN: {}, ItemId: {}", isbn, existingBook.getItemId());
+                InvItem existingItem = invItemMapper.selectInvItemByItemId(existingBook.getItemId());
+                if (existingItem != null) {
+                    return existingItem;
+                }
+                log.warn("書籍資訊存在但物品不存在，ItemId: {}，將重新建立物品並關聯", existingBook.getItemId());
+            }
+            
+            // 如果書籍資訊存在但物品不存在或已刪除，重新爬取並建立物品
+            log.info("開始爬取書籍資訊以重建物品，ISBN: {}", isbn);
+            BookInfoDTO bookInfoDTO = isbnCrawlerService.crawlByIsbn(isbn);
+            
+            if (!bookInfoDTO.getSuccess()) {
+                throw new ServiceException("爬取書籍資訊失敗: " + bookInfoDTO.getErrorMessage());
+            }
+            
+            // 建立新物品並更新現有書籍資訊的關聯
+            return recreateItemForExistingBook(existingBook, bookInfoDTO);
         }
 
-        // 2. 爬取書籍資訊
-        log.info("開始爬取書籍資訊，ISBN: {}", isbn);
+        // 2. 書籍資訊不存在，爬取新書籍資訊
+        log.info("開始爬取新書籍資訊，ISBN: {}", isbn);
         BookInfoDTO bookInfoDTO = isbnCrawlerService.crawlByIsbn(isbn);
 
         if (!bookInfoDTO.getSuccess()) {
@@ -72,6 +89,109 @@ public class BookItemServiceImpl implements IBookItemService {
 
         // 3. 建立物品和書籍資訊
         return createBookItemFromDTO(bookInfoDTO);
+    }
+
+    /**
+     * 為已存在的書籍資訊重新建立物品
+     * 用於處理書籍資訊存在但物品已被刪除的髒資料情況
+     */
+    @Transactional
+    private InvItem recreateItemForExistingBook(InvBookInfo existingBook, BookInfoDTO bookInfoDTO) {
+        try {
+            // 1. 建立新物品記錄
+            InvItem item = new InvItem();
+            item.setItemCode("BOOK-" + bookInfoDTO.getIsbn());
+            item.setItemName(bookInfoDTO.getTitle());
+            item.setCategoryId(BOOK_CATEGORY_ID);
+            item.setBarcode(bookInfoDTO.getIsbn());
+            item.setSpecification(buildSpecification(bookInfoDTO));
+            item.setUnit("本");
+            item.setBrand(bookInfoDTO.getPublisher());
+            item.setModel(bookInfoDTO.getEdition());
+            item.setDescription(truncateDescription(bookInfoDTO.getIntroduction()));
+            item.setImageUrl(bookInfoDTO.getCoverImagePath());
+            item.setStatus("0");
+            item.setDelFlag("0");
+            item.setCreateBy(SecurityUtils.getUsername());
+            item.setCreateTime(new Date());
+            item.setRemark("重新建立（原物品已刪除）");
+
+            int itemResult = invItemMapper.insertInvItem(item);
+            if (itemResult <= 0) {
+                throw new ServiceException("建立物品記錄失敗");
+            }
+            log.info("重新建立物品成功，ItemId: {}, ISBN: {}", item.getItemId(), bookInfoDTO.getIsbn());
+
+            // 2. 更新現有書籍資訊的 item_id 關聯
+            existingBook.setItemId(item.getItemId());
+            existingBook.setTitle(bookInfoDTO.getTitle());
+            existingBook.setAuthor(bookInfoDTO.getAuthor());
+            existingBook.setPublisher(bookInfoDTO.getPublisher());
+            existingBook.setPublishDate(bookInfoDTO.getPublishDate());
+            existingBook.setPublishLocation(bookInfoDTO.getPublishLocation());
+            existingBook.setLanguage(bookInfoDTO.getLanguage());
+            existingBook.setEdition(bookInfoDTO.getEdition());
+            existingBook.setBinding(bookInfoDTO.getBinding());
+            existingBook.setClassification(bookInfoDTO.getClassification());
+            existingBook.setCoverImagePath(bookInfoDTO.getCoverImagePath());
+            existingBook.setIntroduction(bookInfoDTO.getIntroduction());
+            existingBook.setSourceUrl(bookInfoDTO.getSourceUrl());
+            existingBook.setCrawlTime(new Date());
+            existingBook.setUpdateBy(SecurityUtils.getUsername());
+            existingBook.setUpdateTime(new Date());
+
+            int bookInfoResult = invBookInfoService.updateInvBookInfo(existingBook);
+            if (bookInfoResult <= 0) {
+                throw new ServiceException("更新書籍資訊失敗");
+            }
+            log.info("更新書籍資訊關聯成功，BookInfoId: {}, 新 ItemId: {}", 
+                existingBook.getBookInfoId(), item.getItemId());
+
+            // 3. 初始化或更新庫存記錄
+            // 先檢查是否已存在庫存記錄（可能是舊物品的殘留）
+            InvStock existingStock = invStockMapper.selectInvStockByItemId(item.getItemId());
+            
+            if (existingStock != null) {
+                // 更新現有庫存記錄
+                log.info("發現舊庫存記錄，StockId: {}，將重置為初始狀態", existingStock.getStockId());
+                existingStock.setTotalQuantity(0);
+                existingStock.setAvailableQty(0);
+                existingStock.setBorrowedQty(0);
+                existingStock.setReservedQty(0);
+                existingStock.setDamagedQty(0);
+                existingStock.setLostQty(0);
+                existingStock.setUpdateTime(new Date());
+                
+                int stockResult = invStockMapper.updateInvStock(existingStock);
+                if (stockResult <= 0) {
+                    throw new ServiceException("更新庫存記錄失敗");
+                }
+                log.info("庫存記錄已重置，StockId: {}", existingStock.getStockId());
+            } else {
+                // 建立新庫存記錄
+                InvStock stock = new InvStock();
+                stock.setItemId(item.getItemId());
+                stock.setTotalQuantity(0);
+                stock.setAvailableQty(0);
+                stock.setBorrowedQty(0);
+                stock.setReservedQty(0);
+                stock.setDamagedQty(0);
+                stock.setLostQty(0);
+                stock.setUpdateTime(new Date());
+
+                int stockResult = invStockMapper.insertInvStock(stock);
+                if (stockResult <= 0) {
+                    throw new ServiceException("初始化庫存記錄失敗");
+                }
+                log.info("初始化庫存成功，StockId: {}", stock.getStockId());
+            }
+
+            return item;
+
+        } catch (Exception e) {
+            log.error("重新建立書籍物品時發生錯誤: {}", e.getMessage(), e);
+            throw new ServiceException("重新建立書籍物品失敗: " + e.getMessage());
+        }
     }
 
     /**

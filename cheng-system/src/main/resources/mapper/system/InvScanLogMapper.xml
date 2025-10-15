@@ -2,6 +2,45 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.cheng.system.mapper.InvScanLogMapper">
 
+    <resultMap type="InvScanLog" id="InvScanLogResult">
+        <result property="scanId" column="scan_id"/>
+        <result property="scanType" column="scan_type"/>
+        <result property="scanCode" column="scan_code"/>
+        <result property="itemId" column="item_id"/>
+        <result property="itemName" column="item_name"/>
+        <result property="scanResult" column="scan_result"/>
+        <result property="operatorId" column="operator_id"/>
+        <result property="operatorName" column="operator_name"/>
+        <result property="scanTime" column="scan_time"/>
+        <result property="ipAddress" column="ip_address"/>
+        <result property="userAgent" column="user_agent"/>
+        <result property="errorMsg" column="error_msg"/>
+    </resultMap>
+
+    <sql id="selectInvScanLogVo">
+        select s.scan_id, s.scan_type, s.scan_code, s.item_id, i.item_name, s.scan_result, 
+               s.operator_id, s.operator_name, s.scan_time, s.ip_address, s.user_agent, s.error_msg
+        from inv_scan_log s
+        left join inv_item i on s.item_id = i.item_id
+    </sql>
+
+    <select id="selectInvScanLogList" parameterType="InvScanLog" resultMap="InvScanLogResult">
+        <include refid="selectInvScanLogVo"/>
+        <where>
+            <if test="scanType != null and scanType != ''"> and s.scan_type = #{scanType}</if>
+            <if test="scanCode != null and scanCode != ''"> and s.scan_code like concat('%', #{scanCode}, '%')</if>
+            <if test="scanResult != null and scanResult != ''"> and s.scan_result = #{scanResult}</if>
+            <if test="operatorName != null and operatorName != ''"> and s.operator_name like concat('%', #{operatorName}, '%')</if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                and date_format(s.scan_time,'%y%m%d') &gt;= date_format(#{params.beginTime},'%y%m%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and date_format(s.scan_time,'%y%m%d') &lt;= date_format(#{params.endTime},'%y%m%d')
+            </if>
+        </where>
+        order by s.scan_time desc
+    </select>
+
     <insert id="insertInvScanLog" parameterType="com.cheng.system.domain.InvScanLog" useGeneratedKeys="true" keyProperty="scanId">
         insert into inv_scan_log
         (scan_type, scan_code, item_id, scan_result, operator_id, operator_name, scan_time, ip_address, user_agent, error_msg)

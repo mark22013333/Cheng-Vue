@@ -15,7 +15,7 @@
         <result property="borrowerId" column="borrower_id"/>
         <result property="borrowerName" column="borrower_name"/>
         <result property="borrowerDept" column="borrower_dept"/>
-        <result property="quantity" column="quantity"/>
+        <result property="borrowerDeptName" column="borrower_dept_name"/>
         <result property="borrowTime" column="borrow_time"/>
         <result property="expectedReturn" column="expected_return"/>
         <result property="actualReturn" column="actual_return"/>
@@ -43,6 +43,7 @@
                b.borrower_id,
                b.borrower_name,
                b.borrower_dept,
+               d.dept_name as borrower_dept_name,
                b.quantity,
                b.borrow_time,
                b.expected_return,
@@ -61,6 +62,7 @@
         from inv_borrow b
                  left join inv_item i on b.item_id = i.item_id
                  left join inv_category c on i.category_id = c.category_id
+                 left join sys_dept d on b.borrower_dept = d.dept_id
     </sql>
 
     <select id="selectInvBorrowList" parameterType="InvBorrow" resultMap="InvBorrowResult">
@@ -77,6 +79,12 @@
             </if>
             <if test="endBorrowTime != null and endBorrowTime != ''"><!-- 結束借出時間 -->
                 and date_format(b.borrow_time,'%Y%m%d') &lt;= date_format(#{endBorrowTime},'%Y%m%d')
+            </if>
+            <if test="beginActualReturn != null and beginActualReturn != ''"><!-- 開始實際歸還時間 -->
+                and date_format(b.actual_return,'%Y%m%d') &gt;= date_format(#{beginActualReturn},'%Y%m%d')
+            </if>
+            <if test="endActualReturn != null and endActualReturn != ''"><!-- 結束實際歸還時間 -->
+                and date_format(b.actual_return,'%Y%m%d') &lt;= date_format(#{endActualReturn},'%Y%m%d')
             </if>
         </where>
         order by b.create_time desc

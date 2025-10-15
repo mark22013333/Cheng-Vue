@@ -108,7 +108,7 @@ public class InvScanController extends BaseController {
             log.setOperatorName(getUsername());
             log.setScanTime(new Date());
             log.setIpAddress(IpUtils.getIpAddr());
-            String ua = ServletUtils.getRequest() != null ? ServletUtils.getRequest().getHeader("User-Agent") : null;
+            String ua = ServletUtils.getRequest().getHeader("User-Agent");
             log.setUserAgent(ua);
 
             try {
@@ -119,6 +119,11 @@ public class InvScanController extends BaseController {
 
             // 3. 建立或取得書籍物品
             InvItem bookItem = bookItemService.createOrGetBookItem(isbn);
+            
+            // 檢查 bookItem 是否為 null
+            if (bookItem == null) {
+                return AjaxResult.error("無法建立或取得書籍物品，請檢查 ISBN 是否正確");
+            }
 
             // 4. 查詢包含庫存信息的完整資料
             InvItemWithStockDTO itemWithStock = invItemMapper.selectItemWithStockByItemId(bookItem.getItemId());
@@ -132,7 +137,8 @@ public class InvScanController extends BaseController {
             // 5. 組裝回傳資料
             Map<String, Object> result = new HashMap<>();
             result.put("item", itemWithStock != null ? itemWithStock : bookItem);
-            result.put("message", bookItem.getCreateTime().getTime() > System.currentTimeMillis() - 5000
+            result.put("message", bookItem.getCreateTime() != null && 
+                    bookItem.getCreateTime().getTime() > System.currentTimeMillis() - 5000
                     ? "書籍建立成功" : "書籍已存在");
 
             return AjaxResult.success(result);

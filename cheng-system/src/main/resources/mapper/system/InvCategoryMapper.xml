@@ -9,6 +9,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="categoryName" column="category_name"/>
         <result property="categoryCode" column="category_code"/>
         <result property="parentId" column="parent_id"/>
+        <result property="sortOrder" column="sort_order"/>
         <result property="status" column="status"/>
         <result property="delFlag" column="del_flag"/>
         <result property="createBy" column="create_by"/>
@@ -19,18 +20,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectInvCategoryVo">
-        select category_id, category_name, category_code, parent_id, status, del_flag, create_by, create_time, update_by, update_time, remark from inv_category
+        select category_id, category_name, category_code, parent_id, sort_order, status, del_flag, create_by, create_time, update_by, update_time, remark from inv_category
     </sql>
 
     <select id="selectInvCategoryList" parameterType="InvCategory" resultMap="InvCategoryResult">
         <include refid="selectInvCategoryVo"/>
         <where>
+            del_flag = '0'
             <if test="categoryName != null  and categoryName != ''"> and category_name like concat('%', #{categoryName}, '%')</if>
             <if test="categoryCode != null  and categoryCode != ''"> and category_code = #{categoryCode}</if>
             <if test="parentId != null "> and parent_id = #{parentId}</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
         </where>
-        order by parent_id
+        order by parent_id, sort_order
     </select>
 
     <select id="selectInvCategoryByCategoryId" parameterType="Long" resultMap="InvCategoryResult">
@@ -43,7 +45,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="categoryName != null and categoryName != ''">category_name,</if>
             <if test="categoryCode != null and categoryCode != ''">category_code,</if>
-            <if test="parentId != null">parent_id,</if>
+            parent_id,
+            <if test="sortOrder != null">sort_order,</if>
             <if test="status != null">status,</if>
             <if test="delFlag != null">del_flag,</if>
             <if test="createBy != null">create_by,</if>
@@ -55,7 +58,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="categoryName != null and categoryName != ''">#{categoryName},</if>
             <if test="categoryCode != null and categoryCode != ''">#{categoryCode},</if>
-            <if test="parentId != null">#{parentId},</if>
+            0,
+            <if test="sortOrder != null">#{sortOrder},</if>
             <if test="status != null">#{status},</if>
             <if test="delFlag != null">#{delFlag},</if>
             <if test="createBy != null">#{createBy},</if>
@@ -72,6 +76,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="categoryName != null and categoryName != ''">category_name = #{categoryName},</if>
             <if test="categoryCode != null and categoryCode != ''">category_code = #{categoryCode},</if>
             <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
             <if test="status != null">status = #{status},</if>
             <if test="delFlag != null">del_flag = #{delFlag},</if>
             <if test="createBy != null">create_by = #{createBy},</if>
@@ -83,16 +88,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where category_id = #{categoryId}
     </update>
 
-    <delete id="deleteInvCategoryByCategoryId" parameterType="Long">
-        delete from inv_category where category_id = #{categoryId}
-    </delete>
+    <update id="deleteInvCategoryByCategoryId" parameterType="Long">
+        update inv_category set del_flag = '2' where category_id = #{categoryId}
+    </update>
 
-    <delete id="deleteInvCategoryByCategoryIds" parameterType="String">
-        delete from inv_category where category_id in
+    <update id="deleteInvCategoryByCategoryIds" parameterType="String">
+        update inv_category set del_flag = '2' where category_id in
         <foreach item="categoryId" collection="array" open="(" separator="," close=")">
             #{categoryId}
         </foreach>
-    </delete>
+    </update>
 
     <select id="selectChildrenCategoryById" parameterType="Long" resultMap="InvCategoryResult">
         select * from inv_category where find_in_set(#{categoryId}, ancestors)
