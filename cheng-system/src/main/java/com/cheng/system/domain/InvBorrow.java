@@ -170,6 +170,18 @@ public class InvBorrow extends BaseEntity {
     @JsonIgnore
     private String endBorrowTime;
 
+    /**
+     * 查詢用：開始實際歸還時間
+     */
+    @JsonIgnore
+    private String beginActualReturn;
+
+    /**
+     * 查詢用：結束實際歸還時間
+     */
+    @JsonIgnore
+    private String endActualReturn;
+
     public InvBorrow() {
     }
 

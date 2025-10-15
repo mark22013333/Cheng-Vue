@@ -66,7 +66,7 @@
             <div class="result-info">
               <h4>
                 {{ scanResult.itemName }}
-                <el-tag v-if="scanResult.barcode && isValidIsbn(scanResult.barcode)" 
+                <el-tag v-if="scanResult.barcode && isValidIsbn(scanResult.barcode)"
                         type="warning" size="mini" style="margin-left: 8px;">
                   <i class="el-icon-reading"></i> 書籍
                 </el-tag>
@@ -369,7 +369,7 @@ export default {
     performQuickScan(code) {
       // 檢查是否為 ISBN 格式
       const isIsbn = this.isValidIsbn(code);
-      
+
       if (isIsbn) {
         // 使用 ISBN 掃描 API（會自動爬取書籍資訊）
         this.performIsbnQuickScan(code);
@@ -390,10 +390,10 @@ export default {
 
       scanIsbn({ isbn: code }).then(response => {
         loading.close();
-        
+
         if (response.code === 200 && response.data && response.data.item) {
           this.scanResult = response.data.item;
-          
+
           const message = response.data.message || '書籍掃描成功';
           this.$notify({
             title: '成功',
@@ -412,8 +412,8 @@ export default {
 
     /** 執行一般快速掃描 */
     performNormalQuickScan(code) {
-      scanCode({ 
-        scanCode: code, 
+      scanCode({
+        scanCode: code,
         scanType: '2' // 預設為QR碼
       }).then(response => {
         if (response.code === 200 && response.data) {
@@ -449,11 +449,11 @@ export default {
         type: 'info'
       }).then(() => {
         this.stockInLoading = true;
-        
+
         const stockInData = {
           itemId: this.scanResult.itemId,
           quantity: 1,
-          reason: `手機端掃碼 + ${this.$store.getters.name || '登入者'}`
+          reason: `手機端掃碼_ ${this.$store.getters.name || '登入者'}`
         };
 
         quickStockIn(stockInData).then(response => {
@@ -464,7 +464,7 @@ export default {
             type: 'success',
             duration: 2000
           });
-          
+
           // 更新庫存顯示（使用 $set 確保響應式更新）
           if (this.scanResult.totalQuantity !== undefined && this.scanResult.totalQuantity !== null) {
             this.$set(this.scanResult, 'totalQuantity', this.scanResult.totalQuantity + 1);
@@ -472,16 +472,16 @@ export default {
           if (this.scanResult.availableQty !== undefined && this.scanResult.availableQty !== null) {
             this.$set(this.scanResult, 'availableQty', this.scanResult.availableQty + 1);
           }
-          
+
           console.log('入庫後更新庫存：', {
             totalQuantity: this.scanResult.totalQuantity,
             availableQty: this.scanResult.availableQty
           });
         }).catch(error => {
           this.stockInLoading = false;
-          
+
           // 檢查是否為權限錯誤
-          if (error.code === 403 || error.code === 401 || 
+          if (error.code === 403 || error.code === 401 ||
               (error.msg && (error.msg.includes('權限') || error.msg.includes('Access Denied')))) {
             this.$alert(
               '您沒有掃碼入庫的權限，請聯絡系統管理員開通「掃描功能」權限（inventory:scan:use）。',
@@ -728,7 +728,7 @@ export default {
   .camera-area {
     margin-bottom: 20px;
   }
-  
+
   .result-actions .el-button {
     margin: 5px 3px !important;
     font-size: 13px;

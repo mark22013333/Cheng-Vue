@@ -1,5 +1,8 @@
 <template>
   <div class="app-container">
+    <el-tabs v-model="activeTab" type="card">
+      <!-- 物品管理頁籤 -->
+      <el-tab-pane label="物品管理" name="items">
     <!-- 搜尋表單 -->
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="88px">
       <el-form-item label="物品編碼" prop="itemCode">
@@ -438,6 +441,13 @@
         <el-button type="primary" @click="submitEdit">確定</el-button>
       </div>
     </el-dialog>
+      </el-tab-pane>
+
+      <!-- 分類管理頁籤 -->
+      <el-tab-pane label="分類管理" name="categories">
+        <CategoryManagement />
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
@@ -455,14 +465,18 @@ import {
 import { listCategory } from "@/api/inventory/category"
 import ImageUpload from '@/components/ImageUpload'
 import { getImageUrl } from '@/utils/image'
+import CategoryManagement from './components/CategoryManagement'
 
 export default {
   name: "InvManagement",
   components: {
-    ImageUpload
+    ImageUpload,
+    CategoryManagement
   },
   data() {
     return {
+      // 當前頁籤
+      activeTab: 'items',
       // 遮罩層
       loading: true,
       // 選中陣列
@@ -544,6 +558,10 @@ export default {
     };
   },
   created() {
+    // 檢查路由，如果是從分類管理選單進來，自動切換到分類管理頁籤
+    if (this.$route.path === '/inventory/category') {
+      this.activeTab = 'categories';
+    }
     this.getList();
     this.getCategoryList();
   },

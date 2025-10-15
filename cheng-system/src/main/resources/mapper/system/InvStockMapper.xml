@@ -28,17 +28,17 @@
     </resultMap>
 
     <sql id="selectInvStockVo">
-        select s.stock_id,
+        select IFNULL(s.stock_id, 0) as stock_id,
                i.item_id,
                i.item_code,
                i.item_name,
                i.category_id,
-               c.category_name,
-               i.specification,
-               i.unit,
-               i.min_stock,
-               i.max_stock,
-               i.location,
+               IFNULL(c.category_name, '') as category_name,
+               IFNULL(i.specification, '') as specification,
+               IFNULL(i.unit, '') as unit,
+               IFNULL(i.min_stock, 0) as min_stock,
+               IFNULL(i.max_stock, 0) as max_stock,
+               IFNULL(i.location, '') as location,
                IFNULL(s.total_quantity, 0) as total_quantity,
                IFNULL(s.available_qty, 0)  as available_qty,
                IFNULL(s.borrowed_qty, 0)   as borrowed_qty,
@@ -47,7 +47,7 @@
                IFNULL(s.lost_qty, 0)       as lost_qty,
                s.last_in_time,
                s.last_out_time,
-               s.update_time
+               IFNULL(s.update_time, i.update_time) as update_time
         from inv_item i
                  left join inv_stock s on s.item_id = i.item_id
                  left join inv_category c on i.category_id = c.category_id
@@ -56,11 +56,18 @@
     <select id="selectInvStockList" parameterType="InvStock" resultMap="InvStockResult">
         <include refid="selectInvStockVo"/>
         <where>
+            i.del_flag = '0'
             <if test="itemCode != null and itemCode != ''">and i.item_code like concat('%', #{itemCode}, '%')</if>
             <if test="itemName != null and itemName != ''">and i.item_name like concat('%', #{itemName}, '%')</if>
             <if test="categoryId != null">and i.category_id = #{categoryId}</if>
+            <if test="params.beginTime != null and params.beginTime != ''"><!-- 開始最後進貨時間 -->
+                and date_format(s.last_in_time,'%Y%m%d') &gt;= date_format(#{params.beginTime},'%Y%m%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''"><!-- 結束最後進貨時間 -->
+                and date_format(s.last_in_time,'%Y%m%d') &lt;= date_format(#{params.endTime},'%Y%m%d')
+            </if>
         </where>
-        order by s.update_time desc
+        order by IFNULL(s.update_time, i.update_time) desc
     </select>
 
     <select id="selectInvStockByStockId" parameterType="Long" resultMap="InvStockResult">

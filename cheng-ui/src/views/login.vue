@@ -66,6 +66,8 @@
                 </div>
                 <el-input
                   v-model="loginForm.code"
+                  type="tel"
+                  pattern="[0-9]*"
                   auto-complete="off"
                   placeholder="請輸入驗證碼"
                   class="custom-input"

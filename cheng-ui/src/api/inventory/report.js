@@ -40,7 +40,7 @@ export function getScanReport(query) {
 export function exportStockReport(query) {
   return request({
     url: '/inventory/report/stock/export',
-    method: 'get',
+    method: 'post',
     params: query
   })
 }
@@ -49,7 +49,7 @@ export function exportStockReport(query) {
 export function exportBorrowReport(query) {
   return request({
     url: '/inventory/report/borrow/export',
-    method: 'get',
+    method: 'post',
     params: query
   })
 }
@@ -58,7 +58,7 @@ export function exportBorrowReport(query) {
 export function exportMovementReport(query) {
   return request({
     url: '/inventory/report/movement/export',
-    method: 'get',
+    method: 'post',
     params: query
   })
 }
@@ -67,7 +67,7 @@ export function exportMovementReport(query) {
 export function exportScanReport(query) {
   return request({
     url: '/inventory/report/scan/export',
-    method: 'get',
+    method: 'post',
     params: query
   })
 }

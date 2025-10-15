@@ -24,7 +24,7 @@ Vue.use(Router)
  icon: 'svg-name'                // 設定該路由的圖標，對應路徑src/assets/icons/svg
  breadcrumb: false               // 如果設定為false，則不會在breadcrumb麵包屑中顯示
  activeMenu: '/system/user'      // 當路由設定了該屬性，則會高亮相對應的側邊欄。
-  }
+ }
  */
 
 // 公開路由
@@ -101,7 +101,7 @@ export const dynamicRoutes = [
         path: 'role/:userId(\\d+)',
         component: () => import('@/views/system/user/authRole'),
         name: 'AuthRole',
-        meta: { title: '分配角色', activeMenu: '/system/user' }
+        meta: {title: '分配角色', activeMenu: '/system/user'}
       }
     ]
   },
@@ -175,39 +175,45 @@ export const dynamicRoutes = [
         path: 'management',
         component: () => import('@/views/inventory/management/index'),
         name: 'Management',
-        meta: { title: '物品與庫存管理', icon: 'table' }
+        meta: {title: '物品與庫存管理', icon: 'table'}
       },
       {
         path: 'item/add',
         component: () => import('@/views/inventory/item/index'),
         name: 'ItemAdd',
-        meta: { title: '新增物品', icon: 'plus', activeMenu: '/inventory/management' },
+        meta: {title: '新增物品', icon: 'plus', activeMenu: '/inventory/management'},
         hidden: true
       },
       {
         path: 'item/edit/:itemId(\\d+)',
         component: () => import('@/views/inventory/item/index'),
         name: 'ItemEdit',
-        meta: { title: '修改物品', icon: 'edit', activeMenu: '/inventory/management' },
+        meta: {title: '修改物品', icon: 'edit', activeMenu: '/inventory/management'},
         hidden: true
+      },
+      {
+        path: 'category',
+        component: () => import('@/views/inventory/management/index'),
+        name: 'Category',
+        meta: {title: '分類管理', icon: 'tree', activeMenu: '/inventory/management'}
       },
       {
         path: 'borrow',
         component: () => import('@/views/inventory/borrow/index'),
         name: 'Borrow',
-        meta: { title: '借出管理', icon: 'edit' }
+        meta: {title: '借出管理', icon: 'edit'}
       },
       {
         path: 'scan',
         component: () => import('@/views/inventory/scan/index'),
         name: 'Scan',
-        meta: { title: '掃描功能', icon: 'search' }
+        meta: {title: '掃描功能', icon: 'search'}
       },
       {
         path: 'report',
         component: () => import('@/views/inventory/report/index'),
         name: 'Report',
-        meta: { title: '庫存報表', icon: 'chart' }
+        meta: {title: '庫存報表', icon: 'chart'}
       }
     ]
   }
@@ -227,6 +233,6 @@ Router.prototype.replace = function push(location) {
 
 export default new Router({
   mode: 'history', // 去掉url中的#
-  scrollBehavior: () => ({ y: 0 }),
+  scrollBehavior: () => ({y: 0}),
   routes: constantRoutes
 })

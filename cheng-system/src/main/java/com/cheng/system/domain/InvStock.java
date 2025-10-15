@@ -2,6 +2,7 @@ package com.cheng.system.domain;
 
 import com.cheng.common.annotation.Excel;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -10,6 +11,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 庫存表 inv_stock
@@ -144,11 +147,19 @@ public class InvStock implements Serializable {
     @Excel(name = "更新時間", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
     private Date updateTime;
 
+    /**
+     * 查詢參數（用於額外的查詢條件）
+     */
+    @JsonIgnore
+    private Map<String, Object> params;
+
     public InvStock() {
+        this.params = new HashMap<>();
     }
 
     public InvStock(Long itemId) {
         this.itemId = itemId;
+        this.params = new HashMap<>();
     }
 
     @Override

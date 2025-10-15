@@ -28,9 +28,8 @@ public class InvCategory extends BaseEntity {
     private Long categoryId;
 
     /**
-     * 父分類ID
+     * 父分類ID（保留欄位但不使用，預設為0）
      */
-    @Excel(name = "父分類ID")
     private Long parentId;
 
     /**
