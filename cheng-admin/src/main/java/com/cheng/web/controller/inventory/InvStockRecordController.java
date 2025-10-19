@@ -3,8 +3,8 @@ package com.cheng.web.controller.inventory;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -30,9 +30,9 @@ import com.cheng.common.core.page.TableDataInfo;
  */
 @RestController
 @RequestMapping("/inventory/stockRecord")
+@RequiredArgsConstructor
 public class InvStockRecordController extends BaseController {
-    @Autowired
-    private IInvStockRecordService invStockRecordService;
+    private final IInvStockRecordService invStockRecordService;
 
     /**
      * 查詢庫存異動記錄列表

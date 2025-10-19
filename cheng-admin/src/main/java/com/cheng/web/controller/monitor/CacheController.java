@@ -24,16 +24,16 @@ public class CacheController {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
-    private final static List<SysCache> caches = new ArrayList<SysCache>();
+    private final static List<SysCache> CACHES = new ArrayList<>();
 
     {
-        caches.add(new SysCache(CacheConstants.LOGIN_TOKEN_KEY, "使用者訊息"));
-        caches.add(new SysCache(CacheConstants.SYS_CONFIG_KEY, "設定訊息"));
-        caches.add(new SysCache(CacheConstants.SYS_DICT_KEY, "數據字典"));
-        caches.add(new SysCache(CacheConstants.CAPTCHA_CODE_KEY, "驗證碼"));
-        caches.add(new SysCache(CacheConstants.REPEAT_SUBMIT_KEY, "防重提交"));
-        caches.add(new SysCache(CacheConstants.RATE_LIMIT_KEY, "限流處理"));
-        caches.add(new SysCache(CacheConstants.PWD_ERR_CNT_KEY, "密碼錯誤次數"));
+        CACHES.add(new SysCache(CacheConstants.LOGIN_TOKEN_KEY, "使用者訊息"));
+        CACHES.add(new SysCache(CacheConstants.SYS_CONFIG_KEY, "設定訊息"));
+        CACHES.add(new SysCache(CacheConstants.SYS_DICT_KEY, "數據字典"));
+        CACHES.add(new SysCache(CacheConstants.CAPTCHA_CODE_KEY, "驗證碼"));
+        CACHES.add(new SysCache(CacheConstants.REPEAT_SUBMIT_KEY, "防重提交"));
+        CACHES.add(new SysCache(CacheConstants.RATE_LIMIT_KEY, "限流處理"));
+        CACHES.add(new SysCache(CacheConstants.PWD_ERR_CNT_KEY, "密碼錯誤次數"));
     }
 
     @SuppressWarnings("deprecation")
@@ -63,7 +63,7 @@ public class CacheController {
     @PreAuthorize("@ss.hasPermi('monitor:cache:list')")
     @GetMapping("/getNames")
     public AjaxResult cache() {
-        return AjaxResult.success(caches);
+        return AjaxResult.success(CACHES);
     }
 
     @PreAuthorize("@ss.hasPermi('monitor:cache:list')")

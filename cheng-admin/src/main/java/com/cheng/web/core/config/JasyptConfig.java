@@ -1,11 +1,10 @@
 package com.cheng.web.core.config;
 
 import com.cheng.common.utils.JasyptUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.jasypt.encryption.StringEncryptor;
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,9 +12,9 @@ import org.springframework.context.annotation.Configuration;
  * @author cheng
  * @since 2023/12/3 12:35
  **/
+@Slf4j
 @Configuration
 public class JasyptConfig {
-    private static final Logger log = LoggerFactory.getLogger(JasyptConfig.class);
 
     @Bean(name = "jasyptStringEncryptor")
     public StringEncryptor stringEncryptor() {

@@ -27,12 +27,25 @@ public class ImageDownloadUtil {
     /**
      * 從網址下載圖片到指定目錄
      *
-     * @param imageUrl  圖片網址
-     * @param savePath  儲存路徑（資料夾）
-     * @param fileName  檔案名稱（不含副檔名）
+     * @param imageUrl 圖片網址
+     * @param savePath 儲存路徑（資料夾）
+     * @param fileName 檔案名稱（不含副檔名）
      * @return 儲存後的完整路徑，失敗回傳 null
      */
     public static String downloadImage(String imageUrl, String savePath, String fileName) {
+        return downloadImage(imageUrl, savePath, fileName, null);
+    }
+
+    /**
+     * 從網址下載圖片到指定目錄（可指定 Referer）
+     *
+     * @param imageUrl 圖片網址
+     * @param savePath 儲存路徑（資料夾）
+     * @param fileName 檔案名稱（不含副檔名）
+     * @param referer  Referer 標頭（可為 null）
+     * @return 儲存後的完整路徑，失敗回傳 null
+     */
+    public static String downloadImage(String imageUrl, String savePath, String fileName, String referer) {
         HttpURLConnection connection = null;
         InputStream inputStream = null;
         FileOutputStream outputStream = null;
@@ -51,9 +64,12 @@ public class ImageDownloadUtil {
                 extension = "jpg"; // 預設
             }
 
-            // 完整檔案路徑
-            String fullFileName = fileName + "." + extension;
+            // 產生帶時間戳記的檔案名稱
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            String fullFileName = timestamp + "_" + fileName + "." + extension;
             String fullPath = savePath + File.separator + fullFileName;
+
+            log.info("準備下載圖片: {} -> {}", imageUrl, fullPath);
 
             // 建立 URL 連接
             URL url = new URL(imageUrl);
@@ -62,7 +78,20 @@ public class ImageDownloadUtil {
             connection.setReadTimeout(READ_TIMEOUT);
             connection.setRequestMethod("GET");
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-            connection.setRequestProperty("Referer", "https://isbn.tw/");
+
+            // 設定 Referer，如果沒有提供則根據圖片 URL 自動判斷
+            if (referer != null && !referer.isEmpty()) {
+                connection.setRequestProperty("Referer", referer);
+            } else {
+                // 自動判斷 Referer
+                if (imageUrl.contains("nicebooks.com")) {
+                    connection.setRequestProperty("Referer", "https://us.nicebooks.com/");
+                } else if (imageUrl.contains("googleapis.com") || imageUrl.contains("googleusercontent.com")) {
+                    connection.setRequestProperty("Referer", "https://books.google.com/");
+                } else {
+                    connection.setRequestProperty("Referer", "https://isbn.tw/");
+                }
+            }
 
             // 檢查回應碼
             int responseCode = connection.getResponseCode();
@@ -109,16 +138,48 @@ public class ImageDownloadUtil {
         if (url == null || url.isEmpty()) {
             return null;
         }
-        // 移除查詢參數
-        int queryIndex = url.indexOf('?');
-        if (queryIndex > 0) {
-            url = url.substring(0, queryIndex);
+
+        try {
+            // 移除查詢參數
+            int queryIndex = url.indexOf('?');
+            if (queryIndex > 0) {
+                url = url.substring(0, queryIndex);
+            }
+
+            // 移除 fragment (#)
+            int fragmentIndex = url.indexOf('#');
+            if (fragmentIndex > 0) {
+                url = url.substring(0, fragmentIndex);
+            }
+
+            // 取得 URL 路徑部分（移除協議和域名）
+            // 例如: https://images.nicebooks.com/images/abc.jpg -> /images/abc.jpg
+            if (url.contains("://")) {
+                int pathStart = url.indexOf('/', url.indexOf("://") + 3);
+                if (pathStart > 0) {
+                    url = url.substring(pathStart);
+                }
+            }
+
+            // 取得最後一個斜線之後的檔案名稱
+            int lastSlash = url.lastIndexOf('/');
+            if (lastSlash >= 0) {
+                url = url.substring(lastSlash + 1);
+            }
+
+            // 取得副檔名
+            int dotIndex = url.lastIndexOf('.');
+            if (dotIndex > 0 && dotIndex < url.length() - 1) {
+                String ext = url.substring(dotIndex + 1).toLowerCase();
+                // 驗證副檔名是否合理（只包含字母和數字，長度 2-5）
+                if (ext.matches("[a-z0-9]{2,5}")) {
+                    return ext;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("解析圖片副檔名失敗: {}", url, e);
         }
-        // 取得最後一個點之後的內容
-        int dotIndex = url.lastIndexOf('.');
-        if (dotIndex > 0 && dotIndex < url.length() - 1) {
-            return url.substring(dotIndex + 1).toLowerCase();
-        }
+
         return null;
     }
 

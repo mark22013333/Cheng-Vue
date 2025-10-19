@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * 目前在線會話
+ * 目前線上會話
  *
  * @author cheng
  */

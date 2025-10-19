@@ -11,7 +11,9 @@ import com.cheng.system.dto.InvItemWithStockDTO;
 import com.cheng.system.mapper.InvItemMapper;
 import com.cheng.system.service.IInvItemService;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,12 +29,11 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/inventory/item")
+@RequiredArgsConstructor
 public class InvItemController extends BaseController {
-    @Autowired
-    private IInvItemService invItemService;
 
-    @Autowired
-    private InvItemMapper invItemMapper;
+    private final IInvItemService invItemService;
+    private final InvItemMapper invItemMapper;
 
     /**
      * 查詢物品資訊列表
@@ -101,14 +102,14 @@ public class InvItemController extends BaseController {
         try {
             // 1. 先透過條碼或QR碼查找物品
             InvItem item = invItemService.scanItemByCode(scanRequest.getScanCode(), scanRequest.getScanType());
-            
+
             if (item == null) {
                 return error("未找到對應的物品");
             }
-            
+
             // 2. 查詢包含庫存信息的完整資料
             InvItemWithStockDTO itemWithStock = invItemMapper.selectItemWithStockByItemId(item.getItemId());
-            
+
             // 3. 計算庫存狀態和價值
             if (itemWithStock != null) {
                 itemWithStock.calculateStockStatus();
@@ -191,24 +192,10 @@ public class InvItemController extends BaseController {
     /**
      * 掃描請求物件
      */
+    @Setter
+    @Getter
     public static class ScanRequest {
         private String scanCode;
         private String scanType; // 1條碼 2QR碼
-
-        public String getScanCode() {
-            return scanCode;
-        }
-
-        public void setScanCode(String scanCode) {
-            this.scanCode = scanCode;
-        }
-
-        public String getScanType() {
-            return scanType;
-        }
-
-        public void setScanType(String scanType) {
-            this.scanType = scanType;
-        }
     }
 }

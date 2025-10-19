@@ -10,7 +10,9 @@ import com.cheng.system.domain.InvStock;
 import com.cheng.system.service.IInvStockService;
 import com.cheng.system.dto.InvStockStatisticsDTO;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -25,9 +27,9 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/inventory/stock")
+@RequiredArgsConstructor
 public class InvStockController extends BaseController {
-    @Autowired
-    private IInvStockService invStockService;
+    private final IInvStockService invStockService;
 
     /**
      * 查詢庫存列表
@@ -177,66 +179,22 @@ public class InvStockController extends BaseController {
     /**
      * 庫存操作請求物件
      */
+    @Setter
+    @Getter
     public static class StockOperationRequest {
         private Long itemId;
         private Integer quantity;
         private String reason;
-
-        public Long getItemId() {
-            return itemId;
-        }
-
-        public void setItemId(Long itemId) {
-            this.itemId = itemId;
-        }
-
-        public Integer getQuantity() {
-            return quantity;
-        }
-
-        public void setQuantity(Integer quantity) {
-            this.quantity = quantity;
-        }
-
-        public String getReason() {
-            return reason;
-        }
-
-        public void setReason(String reason) {
-            this.reason = reason;
-        }
     }
 
     /**
      * 盤點請求物件
      */
+    @Setter
+    @Getter
     public static class StockCheckRequest {
         private Long itemId;
         private Integer actualQuantity;
         private String reason;
-
-        public Long getItemId() {
-            return itemId;
-        }
-
-        public void setItemId(Long itemId) {
-            this.itemId = itemId;
-        }
-
-        public Integer getActualQuantity() {
-            return actualQuantity;
-        }
-
-        public void setActualQuantity(Integer actualQuantity) {
-            this.actualQuantity = actualQuantity;
-        }
-
-        public String getReason() {
-            return reason;
-        }
-
-        public void setReason(String reason) {
-            this.reason = reason;
-        }
     }
 }

@@ -8,7 +8,7 @@ import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.system.domain.InvBookInfo;
 import com.cheng.system.service.IInvBookInfoService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,10 +23,10 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/inventory/bookInfo")
+@RequiredArgsConstructor
 public class InvBookInfoController extends BaseController {
 
-    @Autowired
-    private IInvBookInfoService invBookInfoService;
+    private final IInvBookInfoService invBookInfoService;
 
     /**
      * 查詢書籍資訊列表

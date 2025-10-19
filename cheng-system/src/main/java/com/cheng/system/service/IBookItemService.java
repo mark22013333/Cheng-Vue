@@ -12,7 +12,7 @@ import com.cheng.system.domain.InvItem;
 public interface IBookItemService {
 
     /**
-     * 根據 ISBN 建立或更新書籍物品
+     * 根據 ISBN 建立或更新書籍物品（會自動爬取書籍資訊）
      * 1. 檢查 ISBN 是否已存在
      * 2. 不存在則爬取書籍資訊並建立物品
      * 3. 存在則回傳既有物品資訊
@@ -21,6 +21,18 @@ public interface IBookItemService {
      * @return 物品資訊（包含書籍資訊）
      */
     InvItem createOrGetBookItem(String isbn);
+
+    /**
+     * 根據 ISBN 和已爬取的書籍資訊建立或取得物品
+     * 1. 檢查 ISBN 是否已存在
+     * 2. 不存在則使用提供的書籍資訊建立物品
+     * 3. 存在則更新書籍資訊並回傳既有物品
+     *
+     * @param isbn        ISBN 編號
+     * @param bookInfoDTO 已爬取的書籍資訊
+     * @return 物品資訊
+     */
+    InvItem createOrGetBookItem(String isbn, BookInfoDTO bookInfoDTO);
 
     /**
      * 根據爬取的書籍資訊建立物品

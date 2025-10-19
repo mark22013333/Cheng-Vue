@@ -12,7 +12,9 @@ import com.cheng.system.domain.enums.BorrowStatus;
 import com.cheng.system.mapper.InvReturnMapper;
 import com.cheng.system.service.IInvBorrowService;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,12 +31,11 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/inventory/borrow")
+@RequiredArgsConstructor
 public class InvBorrowController extends BaseController {
-    @Autowired
-    private IInvBorrowService invBorrowService;
 
-    @Autowired
-    private InvReturnMapper invReturnMapper;
+    private final IInvBorrowService invBorrowService;
+    private final InvReturnMapper invReturnMapper;
 
     /**
      * 查詢借出記錄列表
@@ -101,11 +102,11 @@ public class InvBorrowController extends BaseController {
             InvBorrow borrowedQuery = new InvBorrow();
             borrowedQuery.setStatusEnum(BorrowStatus.BORROWED);
             int borrowedCount = invBorrowService.selectInvBorrowList(borrowedQuery).size();
-            
+
             InvBorrow partialReturnQuery = new InvBorrow();
             partialReturnQuery.setStatusEnum(BorrowStatus.PARTIAL_RETURNED);
             int partialReturnCount = invBorrowService.selectInvBorrowList(partialReturnQuery).size();
-            
+
             stats.put("borrowed", borrowedCount + partialReturnCount);
 
             // 已歸還數量
@@ -303,6 +304,8 @@ public class InvBorrowController extends BaseController {
     /**
      * 歸還請求物件
      */
+    @Setter
+    @Getter
     public static class ReturnRequest {
         private Long borrowId;
         private Integer returnQuantity;
@@ -310,77 +313,15 @@ public class InvBorrowController extends BaseController {
         private String isDamaged;
         private String damageDesc;
         private String remark;
-
-        public Long getBorrowId() {
-            return borrowId;
-        }
-
-        public void setBorrowId(Long borrowId) {
-            this.borrowId = borrowId;
-        }
-
-        public Integer getReturnQuantity() {
-            return returnQuantity;
-        }
-
-        public void setReturnQuantity(Integer returnQuantity) {
-            this.returnQuantity = returnQuantity;
-        }
-
-        public String getConditionDesc() {
-            return conditionDesc;
-        }
-
-        public void setConditionDesc(String conditionDesc) {
-            this.conditionDesc = conditionDesc;
-        }
-
-        public String getIsDamaged() {
-            return isDamaged;
-        }
-
-        public void setIsDamaged(String isDamaged) {
-            this.isDamaged = isDamaged;
-        }
-
-        public String getDamageDesc() {
-            return damageDesc;
-        }
-
-        public void setDamageDesc(String damageDesc) {
-            this.damageDesc = damageDesc;
-        }
-
-        public String getRemark() {
-            return remark;
-        }
-
-        public void setRemark(String remark) {
-            this.remark = remark;
-        }
     }
 
     /**
      * 審核請求物件
      */
+    @Setter
+    @Getter
     public static class ApproveRequest {
         private Long borrowId;
         private boolean approved;
-
-        public Long getBorrowId() {
-            return borrowId;
-        }
-
-        public void setBorrowId(Long borrowId) {
-            this.borrowId = borrowId;
-        }
-
-        public boolean isApproved() {
-            return approved;
-        }
-
-        public void setApproved(boolean approved) {
-            this.approved = approved;
-        }
     }
 }

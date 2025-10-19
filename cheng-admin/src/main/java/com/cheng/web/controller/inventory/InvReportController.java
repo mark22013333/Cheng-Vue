@@ -8,8 +8,8 @@ import java.time.ZoneId;
 
 import com.cheng.common.core.page.TableDataInfo;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,18 +36,13 @@ import com.cheng.common.utils.poi.ExcelUtil;
  */
 @RestController
 @RequestMapping("/inventory/report")
+@RequiredArgsConstructor
 public class InvReportController extends BaseController {
-    @Autowired
-    private IInvStockService invStockService;
 
-    @Autowired
-    private IInvBorrowService invBorrowService;
-
-    @Autowired
-    private IInvStockRecordService invStockRecordService;
-
-    @Autowired
-    private IInvScanLogService invScanLogService;
+    private final IInvStockService invStockService;
+    private final IInvBorrowService invBorrowService;
+    private final IInvStockRecordService invStockRecordService;
+    private final IInvScanLogService invScanLogService;
 
     /**
      * 取得庫存報表資料
@@ -64,11 +59,11 @@ public class InvReportController extends BaseController {
         statistics.put("totalItems", allList.size());
         statistics.put("totalQuantity", allList.stream().mapToInt(InvStock::getTotalQuantity).sum());
         long lowStockItems = allList.stream()
-            .filter(s -> s.getTotalQuantity() > 0 && s.getTotalQuantity() <= s.getMinStock())
-            .count();
+                .filter(s -> s.getTotalQuantity() > 0 && s.getTotalQuantity() <= s.getMinStock())
+                .count();
         long outOfStockItems = allList.stream()
-            .filter(s -> s.getTotalQuantity() <= 0)
-            .count();
+                .filter(s -> s.getTotalQuantity() <= 0)
+                .count();
         statistics.put("lowStockItems", lowStockItems);
         statistics.put("outOfStockItems", outOfStockItems);
 

@@ -8,12 +8,13 @@ import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.system.domain.InvCategory;
 import com.cheng.system.service.IInvCategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.List;
 
 /**
@@ -23,9 +24,9 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/inventory/category")
+@RequiredArgsConstructor
 public class InvCategoryController extends BaseController {
-    @Autowired
-    private IInvCategoryService invCategoryService;
+    private final IInvCategoryService invCategoryService;
 
     /**
      * 查詢物品分類列表

@@ -7,7 +7,7 @@ import com.cheng.system.service.ISysUserOnlineService;
 import org.springframework.stereotype.Service;
 
 /**
- * 在線使用者 服務層處理
+ * 線上使用者 服務層處理
  *
  * @author cheng
  */
@@ -18,7 +18,7 @@ public class SysUserOnlineServiceImpl implements ISysUserOnlineService {
      *
      * @param ipaddr 登入地址
      * @param user   使用者訊息
-     * @return 在線使用者訊息
+     * @return 線上使用者訊息
      */
     @Override
     public SysUserOnline selectOnlineByIpaddr(String ipaddr, LoginUser user) {
@@ -33,7 +33,7 @@ public class SysUserOnlineServiceImpl implements ISysUserOnlineService {
      *
      * @param userName 使用者名稱
      * @param user     使用者訊息
-     * @return 在線使用者訊息
+     * @return 線上使用者訊息
      */
     @Override
     public SysUserOnline selectOnlineByUserName(String userName, LoginUser user) {
@@ -49,7 +49,7 @@ public class SysUserOnlineServiceImpl implements ISysUserOnlineService {
      * @param ipaddr   登入地址
      * @param userName 使用者名稱
      * @param user     使用者訊息
-     * @return 在線使用者訊息
+     * @return 線上使用者訊息
      */
     @Override
     public SysUserOnline selectOnlineByInfo(String ipaddr, String userName, LoginUser user) {
@@ -60,10 +60,10 @@ public class SysUserOnlineServiceImpl implements ISysUserOnlineService {
     }
 
     /**
-     * 設定在線使用者訊息
+     * 設定線上使用者訊息
      *
      * @param user 使用者訊息
-     * @return 在線使用者
+     * @return 線上使用者
      */
     @Override
     public SysUserOnline loginUserToUserOnline(LoginUser user) {
