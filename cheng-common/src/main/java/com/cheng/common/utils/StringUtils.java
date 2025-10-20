@@ -19,7 +19,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     private static final String NULLSTR = "";
 
     /**
-     * 下畫線
+     * 底線
      */
     private static final char SEPARATOR = '_';
 
@@ -420,7 +420,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     }
 
     /**
-     * 駝峰轉下畫線命名
+     * 駝峰轉底線命名
      */
     public static String toUnderScoreCase(String str) {
         if (str == null) {
@@ -477,9 +477,9 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     }
 
     /**
-     * 將下畫線大寫方式命名的字串轉換為駝峰式。如果轉換前的下畫線大寫方式命名的字串為空，則返回空字串。 例如：HELLO_WORLD->HelloWorld
+     * 將底線大寫方式命名的字串轉換為駝峰式。如果轉換前的底線大寫方式命名的字串為空，則返回空字串。 例如：HELLO_WORLD->HelloWorld
      *
-     * @param name 轉換前的下畫線大寫方式命名的字串
+     * @param name 轉換前的底線大寫方式命名的字串
      * @return 轉換後的駝峰式命名的字串
      */
     public static String convertToCamelCase(String name) {
@@ -489,13 +489,13 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
             // 沒必要轉換
             return "";
         } else if (!name.contains("_")) {
-            // 不含下畫線，僅將首字母大寫
+            // 不含底線，僅將首字母大寫
             return name.substring(0, 1).toUpperCase() + name.substring(1);
         }
-        // 用下畫線將原始字串分割
+        // 用底線將原始字串分割
         String[] camels = name.split("_");
         for (String camel : camels) {
-            // 跳過原始字串中開頭、結尾的下換線或雙重下畫線
+            // 跳過原始字串中開頭、結尾的下換線或雙重底線
             if (camel.isEmpty()) {
                 continue;
             }

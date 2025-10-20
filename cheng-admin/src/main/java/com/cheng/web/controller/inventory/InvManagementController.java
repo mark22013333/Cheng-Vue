@@ -13,9 +13,10 @@ import com.cheng.system.mapper.InvItemMapper;
 import com.cheng.system.service.IInvItemService;
 import com.cheng.system.service.IInvStockService;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -220,66 +221,22 @@ public class InvManagementController extends BaseController {
     /**
      * 庫存操作請求類
      */
+    @Setter
+    @Getter
     public static class StockOperationRequest {
         private Long itemId;
         private Integer quantity;
         private String reason;
-
-        public Long getItemId() {
-            return itemId;
-        }
-
-        public void setItemId(Long itemId) {
-            this.itemId = itemId;
-        }
-
-        public Integer getQuantity() {
-            return quantity;
-        }
-
-        public void setQuantity(Integer quantity) {
-            this.quantity = quantity;
-        }
-
-        public String getReason() {
-            return reason;
-        }
-
-        public void setReason(String reason) {
-            this.reason = reason;
-        }
     }
 
     /**
      * 盤點請求類
      */
+    @Setter
+    @Getter
     public static class StockCheckRequest {
         private Long itemId;
         private Integer actualQuantity;
         private String reason;
-
-        public Long getItemId() {
-            return itemId;
-        }
-
-        public void setItemId(Long itemId) {
-            this.itemId = itemId;
-        }
-
-        public Integer getActualQuantity() {
-            return actualQuantity;
-        }
-
-        public void setActualQuantity(Integer actualQuantity) {
-            this.actualQuantity = actualQuantity;
-        }
-
-        public String getReason() {
-            return reason;
-        }
-
-        public void setReason(String reason) {
-            this.reason = reason;
-        }
     }
 }

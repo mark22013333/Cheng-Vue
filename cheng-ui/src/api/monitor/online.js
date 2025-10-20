@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 查詢在線使用者列表
+// 查詢線上使用者列表
 export function list(query) {
   return request({
     url: '/monitor/online/list',

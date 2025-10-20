@@ -18,8 +18,11 @@ import java.util.Arrays;
 @AllArgsConstructor
 public enum CrawlerType {
 
-    CA101("全國新書資訊網", ""),
-
+    CA101("ISBN書籍查詢", "書籍庫存"),
+    CA102("範例爬蟲", "通用資料"),
+    // CA103("商品爬蟲", "電商商品"),
+    // CA104("新聞爬蟲", "新聞資訊"),
+    
     ;
 
     private final String category;

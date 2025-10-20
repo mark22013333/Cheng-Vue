@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * 在線使用者監控
+ * 線上使用者監控
  *
  * @author cheng
  */
@@ -60,7 +60,7 @@ public class SysUserOnlineController extends BaseController {
      * 強制登出使用者
      */
     @PreAuthorize("@ss.hasPermi('monitor:online:forceLogout')")
-    @Log(title = "在線使用者", businessType = BusinessType.FORCE)
+    @Log(title = "線上使用者", businessType = BusinessType.FORCE)
     @DeleteMapping("/{tokenId}")
     public AjaxResult forceLogout(@PathVariable String tokenId) {
         redisCache.deleteObject(CacheConstants.LOGIN_TOKEN_KEY + tokenId);

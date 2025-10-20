@@ -92,11 +92,70 @@ public class BookItemServiceImpl implements IBookItemService {
     }
 
     /**
+     * 根據 ISBN 和已爬取的書籍資訊建立或取得物品
+     * 使用已爬取的 BookInfoDTO，避免重複爬取
+     */
+    @Override
+    @Transactional
+    public InvItem createOrGetBookItem(String isbn, BookInfoDTO bookInfoDTO) {
+        if (StringUtils.isEmpty(isbn)) {
+            throw new ServiceException("ISBN 不能為空");
+        }
+        
+        if (bookInfoDTO == null || !bookInfoDTO.getSuccess()) {
+            throw new ServiceException("書籍資訊無效");
+        }
+
+        // 1. 檢查 ISBN 是否已存在
+        InvBookInfo existingBook = invBookInfoService.selectInvBookInfoByIsbn(isbn);
+        if (existingBook != null) {
+            if (existingBook.getItemId() != null) {
+                log.info("書籍已存在，ISBN: {}, ItemId: {}", isbn, existingBook.getItemId());
+                InvItem existingItem = invItemMapper.selectInvItemByItemId(existingBook.getItemId());
+                if (existingItem != null) {
+                    // 更新書籍資訊（可能有更新）
+                    updateExistingBookInfo(existingBook, bookInfoDTO);
+                    return existingItem;
+                }
+                log.warn("書籍資訊存在但物品不存在，ItemId: {}，將重新建立物品並關聯", existingBook.getItemId());
+            }
+            
+            // 如果書籍資訊存在但物品不存在或已刪除，重新建立物品
+            return recreateItemForExistingBook(existingBook, bookInfoDTO);
+        }
+
+        // 2. 書籍資訊不存在，使用提供的 DTO 建立新物品
+        log.info("使用提供的書籍資訊建立新物品，ISBN: {}", isbn);
+        return createBookItemFromDTO(bookInfoDTO);
+    }
+
+    /**
+     * 更新現有書籍資訊
+     */
+    private void updateExistingBookInfo(InvBookInfo existingBook, BookInfoDTO bookInfoDTO) {
+        existingBook.setTitle(bookInfoDTO.getTitle());
+        existingBook.setAuthor(bookInfoDTO.getAuthor());
+        existingBook.setPublisher(bookInfoDTO.getPublisher());
+        existingBook.setPublishDate(bookInfoDTO.getPublishDate());
+        existingBook.setPublishLocation(bookInfoDTO.getPublishLocation());
+        existingBook.setLanguage(bookInfoDTO.getLanguage());
+        existingBook.setEdition(bookInfoDTO.getEdition());
+        existingBook.setBinding(bookInfoDTO.getBinding());
+        existingBook.setClassification(bookInfoDTO.getClassification());
+        existingBook.setCoverImagePath(bookInfoDTO.getCoverImagePath());
+        existingBook.setIntroduction(bookInfoDTO.getIntroduction());
+        existingBook.setSourceUrl(bookInfoDTO.getSourceUrl());
+        existingBook.setCrawlTime(new Date());
+        invBookInfoService.updateInvBookInfo(existingBook);
+        log.info("更新書籍資訊成功，ISBN: {}", existingBook.getIsbn());
+    }
+
+    /**
      * 為已存在的書籍資訊重新建立物品
      * 用於處理書籍資訊存在但物品已被刪除的髒資料情況
      */
     @Transactional
-    private InvItem recreateItemForExistingBook(InvBookInfo existingBook, BookInfoDTO bookInfoDTO) {
+    protected InvItem recreateItemForExistingBook(InvBookInfo existingBook, BookInfoDTO bookInfoDTO) {
         try {
             // 1. 建立新物品記錄
             InvItem item = new InvItem();

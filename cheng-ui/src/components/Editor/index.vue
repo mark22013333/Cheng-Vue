@@ -74,7 +74,7 @@ export default {
         modules: {
           // 工具欄設定
           toolbar: [
-            ["bold", "italic", "underline", "strike"],       // 加粗 斜體 下畫線 刪除線
+            ["bold", "italic", "underline", "strike"],       // 加粗 斜體 底線 刪除線
             ["blockquote", "code-block"],                    // 引用  程式碼塊
             [{list: "ordered"}, {list: "bullet"}],       // 有序、無序列表
             [{indent: "-1"}, {indent: "+1"}],            // 縮進

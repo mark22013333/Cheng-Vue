@@ -18,7 +18,7 @@ public class CrawledData implements Serializable {
     /**
      * 爬蟲種類代號
      */
-    private CrawlerType sourceType;
+    private CrawlerType crawlerType;
     /**
      * 簡要標題或名稱
      */

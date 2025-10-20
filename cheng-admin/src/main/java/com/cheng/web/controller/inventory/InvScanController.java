@@ -7,15 +7,20 @@ import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.ServletUtils;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.ip.IpUtils;
-import com.cheng.crawler.dto.CrawledData;
-import com.cheng.crawler.service.ICrawlerService;
+import com.cheng.crawler.CrawlerHandler;
+import com.cheng.crawler.dto.BookInfoDTO;
+import com.cheng.crawler.enums.CrawlerType;
 import com.cheng.system.domain.InvItem;
 import com.cheng.system.domain.InvScanLog;
 import com.cheng.system.dto.InvItemWithStockDTO;
+import com.cheng.system.mapper.InvItemMapper;
 import com.cheng.system.service.IBookItemService;
 import com.cheng.system.service.IInvScanLogService;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,123 +34,95 @@ import java.util.Map;
  *
  * @author cheng
  */
+@Validated
 @RestController
 @RequestMapping("/inventory/scan")
-@Validated
+@RequiredArgsConstructor
 public class InvScanController extends BaseController {
 
-    @Autowired
-    private IInvScanLogService invScanLogService;
-
-    @Autowired
-    private ICrawlerService crawlerService;
-
-    @Autowired
-    private IBookItemService bookItemService;
-
-    @Autowired
-    private com.cheng.system.mapper.InvItemMapper invItemMapper;
-
-    /**
-     * 接收掃描結果，記錄掃描日誌，並觸發爬蟲取得外部資料。
-     */
-    @PreAuthorize("@ss.hasPermi('inventory:scan:use')")
-    @Log(title = "掃描提交", businessType = BusinessType.OTHER)
-    @PostMapping("/submit")
-    public AjaxResult submit(@RequestBody @Validated ScanRequest request) {
-        // 1. 寫入掃描記錄
-        InvScanLog log = new InvScanLog();
-        log.setScanType(request.getScanType());
-        log.setScanCode(request.getScanCode());
-        log.setItemId(request.getItemId());
-        log.setScanResult("0"); // 預設成功
-        log.setOperatorId(getUserId());
-        log.setOperatorName(getUsername());
-        log.setScanTime(new Date());
-        log.setIpAddress(IpUtils.getIpAddr());
-        String ua = ServletUtils.getRequest() != null ? ServletUtils.getRequest().getHeader("User-Agent") : null;
-        log.setUserAgent(ua);
-        try {
-            invScanLogService.insertInvScanLog(log);
-        } catch (Exception e) {
-            // 如果寫入失敗，標註為失敗但仍繼續後續流程
-            log.setScanResult("1");
-            log.setErrorMsg(e.getMessage());
-        }
-
-        // 2. 觸發爬蟲模組
-        CrawledData data = crawlerService.crawl(request.getScanCode());
-
-        // 3. 回傳爬蟲結果
-        return AjaxResult.success(data);
-    }
+    private final IInvScanLogService invScanLogService;
+    private final IBookItemService bookItemService;
+    private final InvItemMapper invItemMapper;
 
     /**
      * ISBN 掃描處理（專門用於書籍）
      * 1. 驗證 ISBN 格式
-     * 2. 檢查書籍是否已存在
-     * 3. 不存在則爬取並建立書籍物品
+     * 2. 透過 CA101WHandler 爬取書籍資訊
+     * 3. 透過 BookItemService 儲存到資料庫
      * 4. 回傳書籍物品資訊
      */
     @PreAuthorize("@ss.hasPermi('inventory:scan:use')")
     @Log(title = "ISBN掃描", businessType = BusinessType.INSERT)
     @PostMapping("/isbn")
     public AjaxResult scanIsbn(@RequestBody @Validated IsbnScanRequest request) {
-        try {
-            String isbn = request.getIsbn().trim();
+        String isbn = request.getIsbn().trim();
 
-            // 1. 驗證 ISBN 格式（簡單驗證：10位或13位數字）
+        try {
+            // 1. 驗證 ISBN 格式
             if (!isValidIsbn(isbn)) {
                 return AjaxResult.error("ISBN 格式不正確，請輸入10位或13位數字");
             }
 
             // 2. 寫入掃描記錄
-            InvScanLog log = new InvScanLog();
-            log.setScanType("1"); // 條碼類型
-            log.setScanCode(isbn);
-            log.setScanResult("0");
-            log.setOperatorId(getUserId());
-            log.setOperatorName(getUsername());
-            log.setScanTime(new Date());
-            log.setIpAddress(IpUtils.getIpAddr());
-            String ua = ServletUtils.getRequest().getHeader("User-Agent");
-            log.setUserAgent(ua);
+            saveScanLog(isbn);
 
-            try {
-                invScanLogService.insertInvScanLog(log);
-            } catch (Exception e) {
-                logger.warn("寫入掃描記錄失敗: {}", e.getMessage());
+            // 3. 透過 CA101 Handler 爬取書籍資訊
+            CrawlerHandler<?, ?> handler = CrawlerHandler.getHandler(CrawlerType.CA101);
+            if (handler == null) {
+                return AjaxResult.error("CA101 爬蟲服務未初始化");
             }
 
-            // 3. 建立或取得書籍物品
-            InvItem bookItem = bookItemService.createOrGetBookItem(isbn);
-            
-            // 檢查 bookItem 是否為 null
-            if (bookItem == null) {
-                return AjaxResult.error("無法建立或取得書籍物品，請檢查 ISBN 是否正確");
-            }
+            BookInfoDTO bookInfo = handler.crawlSingleAndSave(isbn, BookInfoDTO.class);
 
-            // 4. 查詢包含庫存信息的完整資料
+            // 4. 透過 BookItemService 儲存到資料庫
+            InvItem bookItem = bookItemService.createOrGetBookItem(isbn, bookInfo);
+
+            // 5. 查詢包含庫存資訊的完整資料
             InvItemWithStockDTO itemWithStock = invItemMapper.selectItemWithStockByItemId(bookItem.getItemId());
-            
-            // 計算庫存狀態和價值
+
+            // 6. 計算庫存狀態和價值
             if (itemWithStock != null) {
                 itemWithStock.calculateStockStatus();
                 itemWithStock.calculateStockValue();
             }
 
-            // 5. 組裝回傳資料
+            // 7. 判斷是新建還是已存在
+            boolean isNewItem = bookItem.getCreateTime() != null &&
+                    bookItem.getCreateTime().getTime() > System.currentTimeMillis() - 5000;
+
+            // 8. 組裝回傳資料
             Map<String, Object> result = new HashMap<>();
             result.put("item", itemWithStock != null ? itemWithStock : bookItem);
-            result.put("message", bookItem.getCreateTime() != null && 
-                    bookItem.getCreateTime().getTime() > System.currentTimeMillis() - 5000
-                    ? "書籍建立成功" : "書籍已存在");
+            result.put("message", isNewItem ? "書籍建立成功" : "書籍已存在");
+            result.put("isNew", isNewItem);
 
             return AjaxResult.success(result);
 
         } catch (Exception e) {
-            logger.error("ISBN 掃描處理失敗: {}", e.getMessage(), e);
+            logger.error("ISBN 掃描處理失敗 - ISBN: {}, 錯誤: {}", isbn, e.getMessage(), e);
             return AjaxResult.error("處理失敗: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 儲存掃描記錄
+     */
+    private void saveScanLog(String isbn) {
+        try {
+            InvScanLog log = new InvScanLog();
+            log.setScanType("1"); // 條碼類型
+            log.setScanCode(isbn);
+            log.setScanResult("0"); // 成功
+            log.setOperatorId(getUserId());
+            log.setOperatorName(getUsername());
+            log.setScanTime(new Date());
+            log.setIpAddress(IpUtils.getIpAddr());
+            log.setUserAgent(ServletUtils.getRequest().getHeader(HttpHeaders.USER_AGENT));
+
+            invScanLogService.insertInvScanLog(log);
+        } catch (Exception e) {
+            logger.warn("寫入掃描記錄失敗: {}", e.getMessage());
+            // 不中斷主流程
         }
     }
 
@@ -165,6 +142,8 @@ public class InvScanController extends BaseController {
     /**
      * 掃描提交請求物件
      */
+    @Setter
+    @Getter
     public static class ScanRequest {
         /**
          * 掃描類型（1條碼 2QR碼）
@@ -180,48 +159,18 @@ public class InvScanController extends BaseController {
          * 可選：若前端已解析到 itemId 可帶上
          */
         private Long itemId;
-
-        public String getScanType() {
-            return scanType;
-        }
-
-        public void setScanType(String scanType) {
-            this.scanType = scanType;
-        }
-
-        public String getScanCode() {
-            return scanCode;
-        }
-
-        public void setScanCode(String scanCode) {
-            this.scanCode = scanCode;
-        }
-
-        public Long getItemId() {
-            return itemId;
-        }
-
-        public void setItemId(Long itemId) {
-            this.itemId = itemId;
-        }
     }
 
     /**
      * ISBN 掃描請求物件
      */
+    @Setter
+    @Getter
     public static class IsbnScanRequest {
         /**
          * ISBN 編號
          */
         @NotBlank(message = "ISBN不能為空")
         private String isbn;
-
-        public String getIsbn() {
-            return isbn;
-        }
-
-        public void setIsbn(String isbn) {
-            this.isbn = isbn;
-        }
     }
 }
