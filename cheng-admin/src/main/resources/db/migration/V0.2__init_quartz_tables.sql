@@ -1,3 +1,10 @@
+-- ============================
+-- Quartz 調度器資料表
+-- 版本：V0.2
+-- 說明：建立 Spring Boot Quartz 排程系統所需的所有資料表
+-- 用於：定時任務調度、任務持久化、叢集支援
+-- ============================
+
 DROP TABLE IF EXISTS QRTZ_FIRED_TRIGGERS;
 DROP TABLE IF EXISTS QRTZ_PAUSED_TRIGGER_GRPS;
 DROP TABLE IF EXISTS QRTZ_SCHEDULER_STATE;
@@ -160,7 +167,7 @@ create table QRTZ_LOCKS
 ) engine=innodb comment = '儲存的悲觀鎖資訊表';
 
 -- ----------------------------
--- 11、 Quartz集群實現同步機製的行鎖表
+-- 11、 Quartz集群實現同步機制的行鎖表
 -- ----------------------------
 create table QRTZ_SIMPROP_TRIGGERS
 (
@@ -180,7 +187,7 @@ create table QRTZ_SIMPROP_TRIGGERS
     bool_prop_2   varchar(1) null                comment 'Boolean類型的trigger的第二個參數',
     primary key (sched_name, trigger_name, trigger_group),
     foreign key (sched_name, trigger_name, trigger_group) references QRTZ_TRIGGERS (sched_name, trigger_name, trigger_group)
-) engine=innodb comment = '同步機製的行鎖表';
+) engine=innodb comment = '同步機制的行鎖表';
 
 commit;
 

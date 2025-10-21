@@ -286,7 +286,7 @@ import {
   getMovementReport,
   getScanReport
 } from "@/api/inventory/report";
-import { listCategory } from "@/api/inventory/category";
+import { listUsedCategory } from "@/api/inventory/category";
 import { download } from '@/utils/request';
 import * as echarts from 'echarts';
 
@@ -336,7 +336,7 @@ export default {
   methods: {
     /** 查詢分類列表 */
     getCategoryList() {
-      listCategory().then(response => {
+      listUsedCategory().then(response => {
         this.categoryOptions = response.data;
       });
     },

@@ -1,3 +1,10 @@
+-- ============================
+-- CoolApps 管理系統 - 系統核心資料表
+-- 版本：V0.1
+-- 說明：建立系統核心功能所需的所有資料表和初始資料
+-- 包含：部門、使用者、角色、選單、權限、字典、參數、通知、日誌等
+-- ============================
+
 -- ----------------------------
 -- 1、部門表
 -- ----------------------------
@@ -25,40 +32,42 @@ create table sys_dept
 -- 初始化-部門表資料
 -- ----------------------------
 insert into sys_dept
-values (100, 0, '0', 'CoolApps科技', 0, 'CoolApps', '0932313520', 'ry@yahoo.com', '0', '0', 'admin', sysdate(), '',
+values (100, 0, '0', 'CoolApps科技', 0, 'CoolApps', '0932313520', 'cheng@yahoo.com', '0', '0', 'admin', sysdate(), '',
         null);
 insert into sys_dept
-values (101, 100, '0,100', '台中總公司', 1, 'CoolApps', '0932313520', 'ry@yahoo.com', '0', '0', 'admin', sysdate(), '',
-        null);
-insert into sys_dept
-values (102, 100, '0,100', '台南分公司', 2, 'CoolApps', '0932313520', 'ry@yahoo.com', '0', '0', 'admin', sysdate(), '',
-        null);
-insert into sys_dept
-values (103, 101, '0,100,101', '研發部門', 1, 'CoolApps', '0932313520', 'ry@yahoo.com', '0', '0', 'admin', sysdate(),
+values (101, 100, '0,100', '台北總公司', 1, 'CoolApps', '0932313520', 'cheng@yahoo.com', '0', '0', 'admin', sysdate(),
         '',
         null);
 insert into sys_dept
-values (104, 101, '0,100,101', '市場部門', 2, 'CoolApps', '0932313520', 'ry@yahoo.com', '0', '0', 'admin', sysdate(),
+values (102, 100, '0,100', '台南分公司', 2, 'CoolApps', '0932313520', 'cheng@yahoo.com', '0', '0', 'admin', sysdate(),
         '',
         null);
 insert into sys_dept
-values (105, 101, '0,100,101', '測試部門', 3, 'CoolApps', '0932313520', 'ry@yahoo.com', '0', '0', 'admin', sysdate(),
+values (103, 101, '0,100,101', '研發部門', 1, 'CoolApps', '0932313520', 'cheng@yahoo.com', '0', '0', 'admin', sysdate(),
         '',
         null);
 insert into sys_dept
-values (106, 101, '0,100,101', '財務部門', 4, 'CoolApps', '0932313520', 'ry@yahoo.com', '0', '0', 'admin', sysdate(),
+values (104, 101, '0,100,101', '市場部門', 2, 'CoolApps', '0932313520', 'cheng@yahoo.com', '0', '0', 'admin', sysdate(),
         '',
         null);
 insert into sys_dept
-values (107, 101, '0,100,101', '維運部門', 5, 'CoolApps', '0932313520', 'ry@yahoo.com', '0', '0', 'admin', sysdate(),
+values (105, 101, '0,100,101', '測試部門', 3, 'CoolApps', '0932313520', 'cheng@yahoo.com', '0', '0', 'admin', sysdate(),
         '',
         null);
 insert into sys_dept
-values (108, 102, '0,100,102', '市場部門', 1, 'CoolApps', '0932313520', 'ry@yahoo.com', '0', '0', 'admin', sysdate(),
+values (106, 101, '0,100,101', '財務部門', 4, 'CoolApps', '0932313520', 'cheng@yahoo.com', '0', '0', 'admin', sysdate(),
         '',
         null);
 insert into sys_dept
-values (109, 102, '0,100,102', '財務部門', 2, 'CoolApps', '0932313520', 'ry@yahoo.com', '0', '0', 'admin', sysdate(),
+values (107, 101, '0,100,101', '維運部門', 5, 'CoolApps', '0932313520', 'cheng@yahoo.com', '0', '0', 'admin', sysdate(),
+        '',
+        null);
+insert into sys_dept
+values (108, 102, '0,100,102', '市場部門', 1, 'CoolApps', '0932313520', 'cheng@yahoo.com', '0', '0', 'admin', sysdate(),
+        '',
+        null);
+insert into sys_dept
+values (109, 102, '0,100,102', '財務部門', 2, 'CoolApps', '0932313520', 'cheng@yahoo.com', '0', '0', 'admin', sysdate(),
         '',
         null);
 
@@ -96,11 +105,11 @@ create table sys_user
 -- 初始化-使用者資訊表資料
 -- ----------------------------
 insert into sys_user
-values (1, 103, 'admin', 'CoolApps', '00', 'ry@gmail.com', '0932313520', '1', '',
-        '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', sysdate(), sysdate(),
+values (1, 103, 'admin', 'CoolApps', '00', 'cheng@gmail.com', '0932313520', '0', '',
+        '$2a$10$kIUq2hMhRQ.AfH2.RdVgTORnEks1C/jVb2Io9ALSbCvh60ovt7diu', '0', '0', '127.0.0.1', sysdate(), sysdate(),
         'admin', sysdate(), '', null, '管理員');
 insert into sys_user
-values (2, 105, 'ry', 'CoolApps', '00', 'ry@yahoo.com', '0912345678', '1', '',
+values (2, 105, 'yu', 'CoolApps', '00', 'cheng@yahoo.com', '0912345678', '0', '',
         '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', sysdate(), sysdate(),
         'admin', sysdate(), '', null, '測試員');
 
@@ -212,7 +221,8 @@ insert into sys_menu
 values ('3', '系統工具', '0', '3', 'tool', null, '', '', 1, 0, 'M', '0', '0', '', 'tool', 'admin', sysdate(), '', null,
         '系統工具目錄');
 insert into sys_menu
-values ('4', 'CoolApps官網', '0', '4', 'http://cheng.vip', null, '', '', 0, 0, 'M', '0', '0', '', 'guide', 'admin',
+values ('4', 'CoolApps官網', '0', '4', 'https://cool-apps.zeabur.app', null, '', '', 0, 0, 'M', '0', '0', '', 'guide',
+        'admin',
         sysdate(), '', null, 'CoolApps官網地址');
 -- 二級選單
 insert into sys_menu
@@ -966,14 +976,16 @@ create table sys_job
 ) engine=innodb auto_increment=100 comment = '定時任務呼叫表';
 
 insert into sys_job
-values (1, '系統預設（無參數）', 'DEFAULT', 'ryTask.ryNoParams', '0/10 * * * * ?', '3', '1', '1', 'admin', sysdate(), '',
+values (1, '系統預設（無參數）', 'DEFAULT', 'coolTask.coolNoParams', '0/10 * * * * ?', '3', '1', '1', 'admin', sysdate(),
+        '',
         null, '');
 insert into sys_job
-values (2, '系統預設（有參數）', 'DEFAULT', 'ryTask.ryParams(\'ry\')', '0/15 * * * * ?', '3', '1', '1', 'admin',
+values (2, '系統預設（有參數）', 'DEFAULT', 'coolTask.coolParams(\'cool\')', '0/15 * * * * ?', '3', '1', '1', 'admin',
         sysdate(),
         '', null, '');
 insert into sys_job
-values (3, '系統預設（多參數）', 'DEFAULT', 'ryTask.ryMultipleParams(\'ry\', true, 2000L, 316.50D, 100)', '0/20 * * * * ?',
+values (3, '系統預設（多參數）', 'DEFAULT', 'coolTask.coolMultipleParams(\'cool\', true, 2000L, 316.50D, 100)',
+        '0/20 * * * * ?',
         '3', '1', '1', 'admin', sysdate(), '', null, '');
 
 
@@ -1018,10 +1030,10 @@ create table sys_notice
 -- 初始化-公告資訊表資料
 -- ----------------------------
 insert into sys_notice
-values ('1', '溫馨提醒：2018-07-01 CoolApps新版本發佈啦', '2', '新版本內容', '0', 'admin', sysdate(), '', null,
+values ('1', '溫馨提醒：2025-07-01 CoolApps新版本發佈啦', '2', '新版本內容', '0', 'admin', sysdate(), '', null,
         '管理員');
 insert into sys_notice
-values ('2', '維護通知：2018-07-01 CoolApps系統淩晨維護', '1', '維護內容', '0', 'admin', sysdate(), '', null, '管理員');
+values ('2', '維護通知：2025-07-01 CoolApps系統淩晨維護', '1', '維護內容', '0', 'admin', sysdate(), '', null, '管理員');
 
 
 -- ----------------------------

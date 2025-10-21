@@ -9,6 +9,14 @@ export function listCategory(query) {
   })
 }
 
+// 查詢已使用的物品分類列表（用於下拉選單）
+export function listUsedCategory() {
+  return request({
+    url: '/inventory/category/used',
+    method: 'get'
+  })
+}
+
 // 查詢物品分類詳細
 export function getCategory(categoryId) {
   return request({

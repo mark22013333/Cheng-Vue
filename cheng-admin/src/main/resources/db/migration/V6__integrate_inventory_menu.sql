@@ -1,8 +1,8 @@
--- ========================================
--- 庫存管理選單整合更新 SQL
--- 將「物品管理」和「庫存查詢」整合為「物品與庫存管理」
--- 執行日期：2025-10-04
--- ========================================
+-- ============================
+-- 庫存管理選單整合
+-- 版本：V6
+-- 說明：將「物品管理」和「庫存查詢」整合為「物品與庫存管理」
+-- ============================
 
 -- 1. 新增「物品與庫存管理」選單
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
@@ -63,31 +63,3 @@ WHERE menu_name = '物品與庫存管理' AND menu_type = 'C';
 UPDATE sys_menu SET visible = '1', order_num = 99, remark = CONCAT(IFNULL(remark, ''), ' [已整合至物品與庫存管理]')
 WHERE menu_name IN ('物品管理', '庫存查詢') 
   AND parent_id = (SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name = '庫存管理' AND menu_type = 'M') tmp);
-
--- 4. 查詢更新結果
-SELECT 
-    m.menu_id,
-    m.menu_name,
-    m.parent_id,
-    p.menu_name AS parent_menu_name,
-    m.order_num,
-    m.path,
-    m.component,
-    m.menu_type,
-    m.visible,
-    m.status,
-    m.perms,
-    m.remark
-FROM sys_menu m
-LEFT JOIN sys_menu p ON m.parent_id = p.menu_id
-WHERE p.menu_name = '庫存管理' OR m.menu_name = '庫存管理'
-ORDER BY m.parent_id, m.order_num;
-
--- ========================================
--- 執行完成後，請重新登入系統以載入新選單
--- ========================================
-
--- 如需復原，執行以下SQL：
--- UPDATE sys_menu SET visible = '0', order_num = 1, remark = REPLACE(remark, ' [已整合至物品與庫存管理]', '')
--- WHERE menu_name IN ('物品管理', '庫存查詢');
--- DELETE FROM sys_menu WHERE menu_name = '物品與庫存管理';

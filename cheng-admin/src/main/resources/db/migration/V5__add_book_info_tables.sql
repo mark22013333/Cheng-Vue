@@ -1,11 +1,13 @@
 -- ============================
--- 書籍資訊表（擴充庫存系統）
+-- 庫存管理系統 - 書籍資訊擴充
+-- 版本：V5
+-- 說明：新增書籍相關分類和書籍詳細資訊表
 -- ============================
 
 -- ----------------------------
--- 1、新增書籍分類
+-- 新增書籍分類（使用 INSERT IGNORE 避免重複執行錯誤）
 -- ----------------------------
-INSERT INTO inv_category (category_id, parent_id, category_name, category_code, sort_order, status, del_flag, create_by, create_time, remark)
+INSERT IGNORE INTO inv_category (category_id, parent_id, category_name, category_code, sort_order, status, del_flag, create_by, create_time, remark)
 VALUES (2000, 0, '圖書', 'BOOK', 10, '0', '0', 'system', NOW(), '圖書類別'),
        (2001, 2000, '文學小說', 'BOOK_FICTION', 1, '0', '0', 'system', NOW(), '文學與小說類'),
        (2002, 2000, '商業理財', 'BOOK_BUSINESS', 2, '0', '0', 'system', NOW(), '商業理財類'),
@@ -15,10 +17,9 @@ VALUES (2000, 0, '圖書', 'BOOK', 10, '0', '0', 'system', NOW(), '圖書類別'
        (2006, 2000, '其他圖書', 'BOOK_OTHER', 99, '0', '0', 'system', NOW(), '其他圖書類別');
 
 -- ----------------------------
--- 2、書籍詳細資訊表
+-- 書籍詳細資訊表
 -- ----------------------------
-DROP TABLE IF EXISTS inv_book_info;
-CREATE TABLE inv_book_info
+CREATE TABLE IF NOT EXISTS inv_book_info
 (
     book_info_id       BIGINT(20)   NOT NULL AUTO_INCREMENT COMMENT '書籍資訊ID',
     item_id            BIGINT(20)            DEFAULT NULL COMMENT '關聯物品ID',
@@ -52,11 +53,11 @@ CREATE TABLE inv_book_info
   COLLATE = utf8mb4_unicode_ci COMMENT = '書籍詳細資訊表';
 
 -- ----------------------------
--- 初始化範例資料
+-- 初始化範例書籍資料
 -- ----------------------------
-INSERT INTO inv_book_info
+INSERT INTO inv_book_info (book_info_id, item_id, isbn, title, author, publisher, publish_date, publish_location, language, edition, binding, classification, cover_image_path, introduction, source_url, crawl_time, status, create_by, create_time, remark)
 VALUES (1, NULL, '9789865406417', '地表最強告解室',
         'Cherng, 地表最強敗犬', '大塊文化', '2020年01月17日',
         '台灣', '繁體中文', '初版', '平裝', '普通級',
         '', '2020地表最強壞話小本本...', 'https://isbn.tw/9789865406417',
-        NOW(), '0', 'system', NOW(), '', NULL, '範例書籍資料');
+        NOW(), '0', 'system', NOW(), '範例書籍資料');

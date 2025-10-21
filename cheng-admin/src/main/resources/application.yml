@@ -69,6 +69,22 @@ spring:
     restart:
       # 熱部署開關
       enabled: true
+  # Flyway 資料庫遷移配置
+  flyway:
+    # 啟用 Flyway
+    enabled: true
+    # SQL 遷移檔案位置
+    locations: classpath:db/migration
+    # 基準版本號（用於已存在的資料庫）
+    baseline-version: 0
+    # 首次執行時是否自動建立基準版本
+    baseline-on-migrate: true
+    # 是否驗證遷移檔案的 checksum
+    validate-on-migrate: true
+    # 遷移檔案的編碼
+    encoding: UTF-8
+    # 資料庫 schema（預設為連線的 schema）
+    # default-schema: cool_apps
 
 # token設定
 token:
