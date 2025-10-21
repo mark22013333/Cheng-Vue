@@ -9,8 +9,9 @@ import com.cheng.common.utils.StringUtils;
 import com.cheng.system.mapper.SysDictDataMapper;
 import com.cheng.system.mapper.SysDictTypeMapper;
 import com.cheng.system.service.ISysDictTypeService;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,8 +35,9 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService {
 
     /**
      * 專案啟動時，初始化字典到暫存
+     * 使用 ApplicationReadyEvent 確保在應用完全啟動（包括 Flyway 執行完畢）後才執行
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         loadingDictCache();
     }

@@ -49,6 +49,12 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.4.0 - 2025-10-22">
+              <ol>
+                <li>導入 Flyway 實作資料庫版本控制與自動化遷移。</li>
+                <li>優化報表篩選，僅顯示已使用的物品分類。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.3.4 - 2025-10-14">
               <ol>
                 <li>全面更新登入頁面視覺設計，提升使用者體驗。</li>
