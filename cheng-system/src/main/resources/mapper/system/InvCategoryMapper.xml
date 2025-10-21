@@ -40,6 +40,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where category_id = #{categoryId}
     </select>
 
+    <select id="selectUsedCategoryList" resultMap="InvCategoryResult">
+        select distinct c.category_id, c.category_name, c.category_code, c.parent_id, c.sort_order, c.status, c.del_flag, c.create_by, c.create_time, c.update_by, c.update_time, c.remark
+        from inv_category c
+        inner join inv_item i on c.category_id = i.category_id
+        where c.del_flag = '0'
+        order by c.sort_order, c.category_id
+    </select>
+
     <insert id="insertInvCategory" parameterType="InvCategory" useGeneratedKeys="true" keyProperty="categoryId">
         insert into inv_category
         <trim prefix="(" suffix=")" suffixOverrides=",">

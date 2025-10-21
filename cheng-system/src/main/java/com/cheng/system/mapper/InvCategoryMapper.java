@@ -26,6 +26,13 @@ public interface InvCategoryMapper {
      */
     List<InvCategory> selectInvCategoryList(InvCategory invCategory);
 
+    /**
+     * 查詢已使用的物品分類列表（只返回在 inv_item 中有使用的分類）
+     *
+     * @return 物品分類集合
+     */
+    List<InvCategory> selectUsedCategoryList();
+
 //    /**
 //     * 查詢子分類數量
 //     *

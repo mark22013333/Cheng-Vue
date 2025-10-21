@@ -40,6 +40,15 @@ public class InvCategoryController extends BaseController {
     }
 
     /**
+     * 查詢已使用的物品分類列表（用於下拉選單）
+     */
+    @GetMapping("/used")
+    public AjaxResult listUsed() {
+        List<InvCategory> list = invCategoryService.selectUsedCategoryList();
+        return success(list);
+    }
+
+    /**
      * 取得物品分類詳細訊息
      */
     @PreAuthorize("@ss.hasPermi('inventory:category:query')")

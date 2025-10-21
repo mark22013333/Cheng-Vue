@@ -68,9 +68,11 @@
                   v-model="loginForm.code"
                   type="tel"
                   pattern="[0-9]*"
+                  maxlength="4"
                   auto-complete="off"
                   placeholder="請輸入驗證碼"
                   class="custom-input"
+                  @input="handleCodeInput"
                   @keyup.enter.native="handleLogin"
                 />
               </div>
@@ -172,6 +174,10 @@ export default {
   methods: {
     togglePassword() {
       this.showPassword = !this.showPassword
+    },
+    handleCodeInput() {
+      // 自動過濾非數字字元，並限制為4位數
+      this.loginForm.code = this.loginForm.code.replace(/\D/g, '').slice(0, 4)
     },
     getBubbleStyle(index) {
       const colors = [

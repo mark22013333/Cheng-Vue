@@ -50,6 +50,16 @@ public class InvCategoryServiceImpl implements IInvCategoryService {
     }
 
     /**
+     * 查詢已使用的物品分類列表（只返回在 inv_item 中有使用的分類）
+     *
+     * @return 物品分類
+     */
+    @Override
+    public List<InvCategory> selectUsedCategoryList() {
+        return invCategoryMapper.selectUsedCategoryList();
+    }
+
+    /**
      * 新增物品分類
      *
      * @param invCategory 物品分類
