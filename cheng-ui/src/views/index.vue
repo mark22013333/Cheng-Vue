@@ -49,6 +49,13 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.5.1 - 2025-10-22">
+              <ol>
+                <li>建立爬蟲模組並整合 Quartz 定時任務排程。</li>
+                <li>更新「定時任務」模組的新增/修改彈窗。</li>
+                <li>新增「設定方式」切換功能：「從範本選擇」或「手動輸入」。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.4.0 - 2025-10-22">
               <ol>
                 <li>導入 Flyway 實作資料庫版本控制與自動化遷移。</li>

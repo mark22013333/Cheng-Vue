@@ -1,10 +1,9 @@
 package com.cheng.crawler.repository;
 
 import com.cheng.crawler.dto.BookInfoDTO;
-import com.cheng.crawler.dto.CrawledData;
+import com.cheng.crawler.enums.CrawlerType;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,23 +18,21 @@ import java.util.List;
  */
 @Slf4j
 @Repository
+@RequiredArgsConstructor
 public class BookInventoryRepository implements CrawlerDataRepository<BookInfoDTO> {
-    
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-    
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int batchSave(List<BookInfoDTO> dataList, CrawledData crawledData) throws Exception {
+    public int batchSave(List<BookInfoDTO> dataList, CrawlerType crawlerType) throws Exception {
         if (dataList == null || dataList.isEmpty()) {
             log.warn("書籍資料列表為空，跳過儲存");
             return 0;
         }
-        
+
         int savedCount = 0;
         for (BookInfoDTO data : dataList) {
             try {
-                if (save(data, crawledData)) {
+                if (save(data, crawlerType)) {
                     savedCount++;
                 }
             } catch (Exception e) {
@@ -43,13 +40,13 @@ public class BookInventoryRepository implements CrawlerDataRepository<BookInfoDT
                 // 繼續處理下一筆，不中斷整個批次
             }
         }
-        
+
         log.info("書籍資料批次儲存完成，成功: {}/{}", savedCount, dataList.size());
         return savedCount;
     }
-    
+
     @Override
-    public boolean save(BookInfoDTO book, CrawledData crawledData) throws Exception {
+    public boolean save(BookInfoDTO book, CrawlerType crawlerType) throws Exception {
         // TODO: 根據實際的書籍資料結構實作儲存邏輯
         // 範例（類型安全，不需要 instanceof 檢查）：
         //
@@ -80,7 +77,7 @@ public class BookInventoryRepository implements CrawlerDataRepository<BookInfoDT
         // }
         // 
         // return true;
-        
+
         log.warn("BookInventoryRepository.save() 方法尚未實作");
         return false;
     }

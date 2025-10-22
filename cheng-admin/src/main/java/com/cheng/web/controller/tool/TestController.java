@@ -3,6 +3,8 @@ package com.cheng.web.controller.tool;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.R;
 import com.cheng.common.utils.StringUtils;
+import com.cheng.crawler.CrawlerHandler;
+import com.cheng.crawler.enums.CrawlerType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +29,12 @@ public class TestController extends BaseController {
     {
         users.put(1, new UserEntity(1, "admin", "admin123", "15888888888"));
         users.put(2, new UserEntity(2, "ry", "admin123", "15666666666"));
+    }
+
+    @GetMapping("crawler/")
+    public R<String> crawler() {
+        CrawlerHandler.getHandler(CrawlerType.CA102).execute();
+        return R.ok(" crawler");
     }
 
     @Operation(summary = "取得使用者列表")
