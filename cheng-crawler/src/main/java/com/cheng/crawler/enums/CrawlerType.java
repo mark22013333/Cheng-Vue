@@ -19,10 +19,10 @@ import java.util.Arrays;
 public enum CrawlerType {
 
     CA101("ISBN書籍查詢", "書籍庫存"),
-    CA102("範例爬蟲", "通用資料"),
+    CA102("臺灣證券交易所", "即時重大訊息"),
     // CA103("商品爬蟲", "電商商品"),
     // CA104("新聞爬蟲", "新聞資訊"),
-    
+
     ;
 
     private final String category;

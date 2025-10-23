@@ -43,6 +43,12 @@
             <artifactId>cheng-common</artifactId>
         </dependency>
 
+        <!-- 爬蟲模組 -->
+        <dependency>
+            <groupId>com.cheng</groupId>
+            <artifactId>cheng-crawler</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>
