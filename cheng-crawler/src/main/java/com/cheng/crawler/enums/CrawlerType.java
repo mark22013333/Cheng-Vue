@@ -20,9 +20,7 @@ public enum CrawlerType {
 
     CA101("ISBN書籍查詢", "書籍庫存"),
     CA102("臺灣證券交易所", "即時重大訊息"),
-    // CA103("商品爬蟲", "電商商品"),
-    // CA104("新聞爬蟲", "新聞資訊"),
-
+    CA103("臺灣證券交易所", "上市公司每日收盤價")
     ;
 
     private final String category;

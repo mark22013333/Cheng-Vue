@@ -278,7 +278,7 @@ DELETE FROM flyway_schema_history WHERE version = '版本號' AND success = 0;
 
 ### 4. 環境隔離
 - **本地開發**：使用 `application-local.yml` 配置
-- **生產環境**：使用 `application-prod.yml` 配置
+- **正式環境**：使用 `application-prod.yml` 配置
 - 不同環境的資料庫應該獨立管理
 
 ## 📖 相關文件

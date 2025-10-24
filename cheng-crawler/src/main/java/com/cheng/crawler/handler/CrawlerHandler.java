@@ -1,5 +1,6 @@
-package com.cheng.crawler;
+package com.cheng.crawler.handler;
 
+import com.cheng.crawler.config.CrawlerProperties;
 import com.cheng.crawler.dto.CrawlerParams;
 import com.cheng.crawler.dto.CrawlerResult;
 import com.cheng.crawler.enums.CrawlerType;
@@ -9,7 +10,6 @@ import com.cheng.crawler.utils.SeleniumUtil;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -50,6 +50,13 @@ public abstract class CrawlerHandler<R, P> implements ApplicationContextAware {
      */
     @Autowired
     protected JdbcSqlTemplate jdbcSqlTemplate;
+
+    /**
+     * 爬蟲配置屬性
+     * 用於讀取 Selenium 相關配置（remote/local 模式）
+     */
+    @Autowired
+    protected CrawlerProperties crawlerProperties;
 
     @PostConstruct
     public void handlerInit() {
@@ -311,9 +318,18 @@ public abstract class CrawlerHandler<R, P> implements ApplicationContextAware {
 
     /**
      * 建立 WebDriver（可覆寫以自訂配置）
+     * 根據配置自動選擇 Remote 或 Local 模式
      */
     protected WebDriver createWebDriver() {
-        return SeleniumUtil.createWebDriver();
+        if (crawlerProperties != null) {
+            log.info("[{}] 使用 {} 模式建立 WebDriver", 
+                getCrawlerType().name(), 
+                crawlerProperties.getMode());
+            return SeleniumUtil.createWebDriver(crawlerProperties);
+        } else {
+            log.warn("[{}] CrawlerProperties 未注入，使用預設本地模式", getCrawlerType().name());
+            return SeleniumUtil.createWebDriver();
+        }
     }
 
     /**

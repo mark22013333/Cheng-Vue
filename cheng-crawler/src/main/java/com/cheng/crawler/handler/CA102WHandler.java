@@ -1,6 +1,5 @@
 package com.cheng.crawler.handler;
 
-import com.cheng.crawler.CrawlerHandler;
 import com.cheng.crawler.dto.CompanyNewsDTO;
 import com.cheng.crawler.dto.CrawlerParams;
 import com.cheng.crawler.enums.CrawlerType;

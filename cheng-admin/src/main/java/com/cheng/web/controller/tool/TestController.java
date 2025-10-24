@@ -2,12 +2,23 @@ package com.cheng.web.controller.tool;
 
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.R;
+import com.cheng.common.core.domain.model.LoginUser;
 import com.cheng.common.utils.StringUtils;
-import com.cheng.crawler.CrawlerHandler;
+import com.cheng.crawler.handler.CrawlerHandler;
 import com.cheng.crawler.enums.CrawlerType;
+import com.cheng.framework.security.context.AuthenticationContextHolder;
+import com.cheng.framework.web.service.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -22,19 +33,64 @@ import java.util.Map;
  */
 @Tag(name = "使用者訊息管理")
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/test/user")
 public class TestController extends BaseController {
-    private final static Map<Integer, UserEntity> users = new LinkedHashMap<Integer, UserEntity>();
+    private final static Map<Integer, UserEntity> users = new LinkedHashMap<>();
+
+    private final AuthenticationManager authenticationManager;
+    private final TokenService tokenService;
 
     {
         users.put(1, new UserEntity(1, "admin", "admin123", "15888888888"));
-        users.put(2, new UserEntity(2, "ry", "admin123", "15666666666"));
+        users.put(2, new UserEntity(2, "yu", "admin123", "15666666666"));
     }
 
-    @GetMapping("crawler/")
-    public R<String> crawler() {
-        CrawlerHandler.getHandler(CrawlerType.CA102).execute();
-        return R.ok(" crawler");
+    @Operation(
+            summary = "測試登入取得 Token",
+            description = "用於測試的快速登入介面，無需驗證碼。預設帳號: admin / 密碼: admin123"
+    )
+    @PostMapping("/test-login")
+    public R<TokenResponse> testLogin(
+            @Parameter(description = "登入請求參數", required = true)
+            @RequestBody TestLoginRequest request) {
+        try {
+            // 建立身份驗證令牌
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
+
+            // 設定到 Context（重要：讓 Spring Security 能正確處理）
+            AuthenticationContextHolder.setContext(authenticationToken);
+
+            // 進行身份驗證
+            Authentication authentication = authenticationManager.authenticate(authenticationToken);
+
+            // 取得登入使用者資訊
+            LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+
+            // 產生 Token
+            String token = tokenService.createToken(loginUser);
+
+            TokenResponse response = new TokenResponse();
+            response.setToken(token);
+            response.setMessage("登入成功！請複製 Token 到 Swagger 的 Authorize 按鈕中使用");
+            response.setUsername(loginUser.getUsername());
+            response.setUserId(loginUser.getUserId());
+
+            return R.ok(response, "登入成功");
+        } catch (Exception e) {
+            return R.fail("登入失敗: " + e.getMessage());
+        } finally {
+            // 清除 Context（確保不會影響其他請求）
+            AuthenticationContextHolder.clearContext();
+        }
+    }
+
+    @Operation(summary = "執行爬蟲（簡易版）", description = "快速執行指定類型的爬蟲任務")
+    @GetMapping("crawler/{crawlerType}")
+    public R<String> crawler(@PathVariable(name = "crawlerType") CrawlerType crawlerType) {
+        CrawlerHandler.getHandler(crawlerType).execute();
+        return R.ok("爬蟲執行完成: " + crawlerType.name());
     }
 
     @Operation(summary = "取得使用者列表")
@@ -67,8 +123,7 @@ public class TestController extends BaseController {
 
     @Operation(summary = "更新使用者")
     @PutMapping("/update")
-    public R<String> update(@RequestBody
-                            UserEntity user) {
+    public R<String> update(@RequestBody UserEntity user) {
         if (StringUtils.isNull(user) || StringUtils.isNull(user.getUserId())) {
             return R.fail("使用者ID不能為空");
         }
@@ -93,6 +148,9 @@ public class TestController extends BaseController {
     }
 }
 
+@Setter
+@Getter
+@AllArgsConstructor
 @Schema(description = "使用者實體")
 class UserEntity {
     @Schema(title = "使用者ID")
@@ -107,46 +165,38 @@ class UserEntity {
     @Schema(title = "使用者手機")
     private String mobile;
 
-    public UserEntity() {
+}
 
-    }
+/**
+ * 測試登入請求
+ */
+@Setter
+@Getter
+@Schema(description = "測試登入請求參數")
+class TestLoginRequest {
+    @Schema(description = "使用者名稱", example = "admin", required = true)
+    private String username;
 
-    public UserEntity(Integer userId, String username, String password, String mobile) {
-        this.userId = userId;
-        this.username = username;
-        this.password = password;
-        this.mobile = mobile;
-    }
+    @Schema(description = "密碼", example = "admin123", required = true)
+    private String password;
+}
 
-    public Integer getUserId() {
-        return userId;
-    }
+/**
+ * Token 回應
+ */
+@Setter
+@Getter
+@Schema(description = "Token 回應")
+class TokenResponse {
+    @Schema(description = "JWT Token", example = "eyJhbGciOiJIUzI1NiJ9...")
+    private String token;
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
+    @Schema(description = "提示訊息")
+    private String message;
 
-    public String getUsername() {
-        return username;
-    }
+    @Schema(description = "使用者名稱")
+    private String username;
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getMobile() {
-        return mobile;
-    }
-
-    public void setMobile(String mobile) {
-        this.mobile = mobile;
-    }
+    @Schema(description = "使用者ID")
+    private Long userId;
 }
