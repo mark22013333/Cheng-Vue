@@ -91,3 +91,9 @@ logging:
 # 專案相關設定 - 本地環境
 cheng:
   profile: /Users/cheng/uploadPath
+
+# 爬蟲設定 - 本地環境（使用 Docker Selenium）
+crawler:
+  selenium:
+    mode: remote
+    remote-url: http://localhost:9515

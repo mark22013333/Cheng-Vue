@@ -7,7 +7,7 @@ import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.ServletUtils;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.ip.IpUtils;
-import com.cheng.crawler.CrawlerHandler;
+import com.cheng.crawler.handler.CrawlerHandler;
 import com.cheng.crawler.dto.BookInfoDTO;
 import com.cheng.crawler.enums.CrawlerType;
 import com.cheng.system.domain.InvItem;

@@ -15,19 +15,19 @@
     </div>
 
     <!-- 頭像編輯對話框 -->
-    <el-dialog 
-      :title="title" 
-      :visible.sync="open" 
-      width="900px" 
-      append-to-body 
-      @opened="modalOpened" 
+    <el-dialog
+      :title="title"
+      :visible.sync="open"
+      width="900px"
+      append-to-body
+      @opened="modalOpened"
       @close="closeDialog"
       custom-class="avatar-dialog">
       <div class="dialog-content">
         <!-- 左側裁剪區 -->
         <div class="cropper-section">
-          <div class="cropper-wrapper" 
-               @drop.prevent="handleDrop" 
+          <div class="cropper-wrapper"
+               @drop.prevent="handleDrop"
                @dragover.prevent="isDragging = true"
                @dragleave="isDragging = false"
                :class="{ 'is-dragging': isDragging }">
@@ -53,14 +53,14 @@
               <p>放開以上傳圖片</p>
             </div>
           </div>
-          
+
           <!-- 操作按鈕 -->
           <div class="cropper-controls">
             <div class="control-group">
-              <el-upload 
-                action="#" 
-                :http-request="requestUpload" 
-                :show-file-list="false" 
+              <el-upload
+                action="#"
+                :http-request="requestUpload"
+                :show-file-list="false"
                 :before-upload="beforeUpload">
                 <el-button type="primary" icon="el-icon-folder-opened" size="medium">
                   選擇圖片
@@ -110,7 +110,7 @@
               <span>小頭像 (50x50)</span>
             </div>
           </div>
-          
+
           <div class="upload-tips">
             <el-alert
               title="操作說明"
@@ -127,7 +127,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- 底部按鈕 -->
       <div slot="footer" class="dialog-footer">
         <el-button @click="open = false" size="medium">取消</el-button>
@@ -242,12 +242,12 @@ export default {
         formData.append("avatarfile", data, this.options.filename)
         uploadAvatar(formData).then(response => {
           this.open = false
-          // 處理頭像 URL：無論開發或生產環境，都需要加上 API 前綴
+          // 處理頭像 URL：無論開發或正式環境，都需要加上 API 前綴
           let avatarUrl = response.imgUrl
           if (avatarUrl && avatarUrl.startsWith('/profile')) {
             // /profile 開頭的路徑需要加上 API 前綴
             // 開發環境：/dev-api/profile/xxx -> proxy 轉發
-            // 生產環境：/prod-api/profile/xxx -> Nginx 代理
+            // 正式環境：/prod-api/profile/xxx -> Nginx 代理
             const baseApi = process.env.VUE_APP_BASE_API || ''
             if (baseApi) {
               avatarUrl = baseApi + avatarUrl

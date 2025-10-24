@@ -1,13 +1,16 @@
 package com.cheng.crawler.utils;
 
+import com.cheng.crawler.config.CrawlerProperties;
 import com.cheng.crawler.enums.Constant;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.net.URL;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,12 +40,13 @@ public class SeleniumUtil {
 
     /**
      * 建立預設的 ChromeOptions 配置，包含無頭模式、反爬蟲設定和隨機 User-Agent
+     * 使用本地模式（需要設定 ChromeDriver 路徑）
      *
      * @return 配置好的 ChromeOptions
      */
     public static ChromeOptions createChromeOptions() {
-        // 使用預設值呼叫參數化版本：啟用無頭模式、啟用隨機User-Agent、啟用反偵測
-        return createChromeOptions(true, true, true);
+        // 使用預設值呼叫參數化版本：啟用無頭模式、啟用隨機User-Agent、啟用反偵測、本地模式
+        return createChromeOptions(true, true, true, false);
     }
 
     /**
@@ -54,7 +58,23 @@ public class SeleniumUtil {
      * @return 配置好的 ChromeOptions
      */
     public static ChromeOptions createChromeOptions(boolean headless, boolean randomUserAgent, boolean antiDetection) {
-        System.setProperty("webdriver.chrome.driver", Constant.getChromeDriverPath());
+        return createChromeOptions(headless, randomUserAgent, antiDetection, false);
+    }
+
+    /**
+     * 建立自訂的 ChromeOptions 配置（支援 Remote/Local 模式）
+     *
+     * @param headless        是否使用無頭模式
+     * @param randomUserAgent 是否使用隨機 User-Agent
+     * @param antiDetection   是否啟用反偵測功能
+     * @param isRemote        是否為遠端模式（Docker Selenium）
+     * @return 配置好的 ChromeOptions
+     */
+    public static ChromeOptions createChromeOptions(boolean headless, boolean randomUserAgent, boolean antiDetection, boolean isRemote) {
+        // 只有本地模式才需要設定 ChromeDriver 路徑
+        if (!isRemote) {
+            System.setProperty("webdriver.chrome.driver", Constant.getChromeDriverPath());
+        }
         ChromeOptions options = new ChromeOptions();
 
         // 基本配置
@@ -112,12 +132,76 @@ public class SeleniumUtil {
     }
 
     /**
-     * 建立 WebDriver 實例，使用預設配置
+     * 建立 WebDriver 實例，使用預設配置（本地模式）
      *
      * @return WebDriver 實例
      */
     public static WebDriver createWebDriver() {
         return new ChromeDriver(createChromeOptions());
+    }
+
+    /**
+     * 根據配置建立 WebDriver 實例
+     * 自動判斷使用 Remote 或 Local 模式
+     *
+     * @param properties 爬蟲配置屬性
+     * @return WebDriver 實例
+     */
+    public static WebDriver createWebDriver(CrawlerProperties properties) {
+        return createWebDriver(properties, true, true, true);
+    }
+
+    /**
+     * 根據配置建立 WebDriver 實例（完整參數版本）
+     *
+     * @param properties      爬蟲配置屬性
+     * @param headless        是否使用無頭模式
+     * @param randomUserAgent 是否使用隨機 User-Agent
+     * @param antiDetection   是否啟用反偵測功能
+     * @return WebDriver 實例
+     */
+    public static WebDriver createWebDriver(CrawlerProperties properties, boolean headless, boolean randomUserAgent, boolean antiDetection) {
+        if (properties.isRemoteMode()) {
+            return createRemoteWebDriver(properties.getRemoteUrl(), headless, randomUserAgent, antiDetection);
+        } else {
+            return createLocalWebDriver(properties.getChromeDriverPath(), headless, randomUserAgent, antiDetection);
+        }
+    }
+
+    /**
+     * 建立遠端 WebDriver（Docker Selenium）
+     *
+     * @param remoteUrl       遠端 Selenium URL
+     * @param headless        是否使用無頭模式
+     * @param randomUserAgent 是否使用隨機 User-Agent
+     * @param antiDetection   是否啟用反偵測功能
+     * @return RemoteWebDriver 實例
+     */
+    public static WebDriver createRemoteWebDriver(String remoteUrl, boolean headless, boolean randomUserAgent, boolean antiDetection) {
+        try {
+            ChromeOptions options = createChromeOptions(headless, randomUserAgent, antiDetection, true);
+            log.info("建立遠端 WebDriver，URL: {}", remoteUrl);
+            return new RemoteWebDriver(new URL(remoteUrl), options);
+        } catch (Exception e) {
+            log.error("建立遠端 WebDriver 失敗: {}", e.getMessage(), e);
+            throw new RuntimeException("無法連接到遠端 Selenium: " + remoteUrl, e);
+        }
+    }
+
+    /**
+     * 建立本地 WebDriver
+     *
+     * @param chromeDriverPath ChromeDriver 路徑
+     * @param headless         是否使用無頭模式
+     * @param randomUserAgent  是否使用隨機 User-Agent
+     * @param antiDetection    是否啟用反偵測功能
+     * @return ChromeDriver 實例
+     */
+    public static WebDriver createLocalWebDriver(String chromeDriverPath, boolean headless, boolean randomUserAgent, boolean antiDetection) {
+        System.setProperty("webdriver.chrome.driver", chromeDriverPath);
+        ChromeOptions options = createChromeOptions(headless, randomUserAgent, antiDetection, false);
+        log.info("建立本地 WebDriver，路徑: {}", chromeDriverPath);
+        return new ChromeDriver(options);
     }
 
     /**

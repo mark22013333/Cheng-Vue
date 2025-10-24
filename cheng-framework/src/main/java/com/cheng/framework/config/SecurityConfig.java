@@ -4,7 +4,7 @@ import com.cheng.framework.config.properties.PermitAllUrlProperties;
 import com.cheng.framework.security.filter.JwtAuthenticationTokenFilter;
 import com.cheng.framework.security.handle.AuthenticationEntryPointImpl;
 import com.cheng.framework.security.handle.LogoutSuccessHandlerImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,37 +27,33 @@ import org.springframework.web.filter.CorsFilter;
  * @author cheng
  */
 @Configuration
+@RequiredArgsConstructor
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfig {
     /**
      * 認證失敗處理類
      */
-    @Autowired
-    private AuthenticationEntryPointImpl unauthorizedHandler;
+    private final AuthenticationEntryPointImpl unauthorizedHandler;
 
     /**
      * 登出處理類
      */
-    @Autowired
-    private LogoutSuccessHandlerImpl logoutSuccessHandler;
+    private final LogoutSuccessHandlerImpl logoutSuccessHandler;
 
     /**
      * token認證過濾器
      */
-    @Autowired
-    private JwtAuthenticationTokenFilter authenticationTokenFilter;
+    private final JwtAuthenticationTokenFilter authenticationTokenFilter;
 
     /**
      * 跨域過濾器
      */
-    @Autowired
-    private CorsFilter corsFilter;
+    private final CorsFilter corsFilter;
 
     /**
      * 允許匿名訪問的地址
      */
-    @Autowired
-    private PermitAllUrlProperties permitAllUrl;
+    private final PermitAllUrlProperties permitAllUrl;
 
     /**
      * 身份驗證實現
@@ -100,6 +96,8 @@ public class SecurityConfig {
                     permitAllUrl.getUrls().forEach(url -> requests.requestMatchers(url).permitAll());
                     // 對於登入login 註冊register 驗證碼captchaImage 允許匿名訪問
                     requests.requestMatchers("/login", "/register", "/captchaImage").permitAll()
+                            // 測試用登入 API，允許匿名訪問
+                            .requestMatchers("/test/user/test-login").permitAll()
                             // 靜態資源，可匿名訪問
                             .requestMatchers(HttpMethod.GET, "/", "/*.html", "/**.html", "/**.css", "/**.js", "/profile/**").permitAll()
                             .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**", "/druid/**").permitAll()

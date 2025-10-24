@@ -49,6 +49,13 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.5.2 - 2025-10-25">
+              <ol>
+                <li>整合 Selenium 爬蟲框架。</li>
+                <li>新增 CA102 爬蟲 (臺灣證券交易所-即時重大訊息)。</li>
+                <li>新增 CA103 爬蟲 (臺灣證券交易所-上市公司每日收盤價)。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.5.1 - 2025-10-22">
               <ol>
                 <li>建立爬蟲模組並整合 Quartz 定時任務排程。</li>
@@ -138,7 +145,7 @@ export default {
   data() {
     return {
       // 版本號
-      version: "1.3.4"
+      version: "1.5.2"
     }
   },
   methods: {

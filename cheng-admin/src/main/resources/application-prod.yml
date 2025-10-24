@@ -92,3 +92,9 @@ logging:
 # 專案相關設定 - 正式環境
 cheng:
   profile: /opt/cool-apps/uploadFile
+
+# 爬蟲設定 - 正式環境（Chrome 安裝在容器內）
+crawler:
+  selenium:
+    mode: local
+    chrome-driver-path: /usr/bin/chromedriver

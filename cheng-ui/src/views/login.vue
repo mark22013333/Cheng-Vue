@@ -137,7 +137,7 @@ export default {
       showPassword: false,
       loginForm: {
         username: "admin",
-        password: "admin123",
+        password: "",
         rememberMe: false,
         code: "",
         uuid: ""

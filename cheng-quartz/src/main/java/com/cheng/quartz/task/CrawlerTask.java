@@ -1,6 +1,6 @@
 package com.cheng.quartz.task;
 
-import com.cheng.crawler.CrawlerHandler;
+import com.cheng.crawler.handler.CrawlerHandler;
 import com.cheng.crawler.dto.CrawlerParams;
 import com.cheng.crawler.dto.CrawlerResult;
 import com.cheng.crawler.enums.CrawlerType;

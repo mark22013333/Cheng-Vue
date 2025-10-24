@@ -70,9 +70,9 @@ const user = {
               avatar = defAva
             } else if (avatar.startsWith('/profile')) {
               // 處理以 /profile 開頭的路徑
-              // 無論開發或生產環境，都需要加上 API 前綴才能正確存取
+              // 無論開發或正式環境，都需要加上 API 前綴才能正確存取
               // 開發環境：/dev-api/profile/xxx -> proxy 轉發到後端
-              // 生產環境：/prod-api/profile/xxx -> Nginx 代理到後端
+              // 正式環境：/prod-api/profile/xxx -> Nginx 代理到後端
               const baseApi = process.env.VUE_APP_BASE_API || ''
               if (baseApi) {
                 avatar = baseApi + avatar

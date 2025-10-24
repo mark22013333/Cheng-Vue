@@ -1,6 +1,5 @@
 package com.cheng.crawler.handler;
 
-import com.cheng.crawler.CrawlerHandler;
 import com.cheng.crawler.dto.BookInfoDTO;
 import com.cheng.crawler.dto.BookRawDTO;
 import com.cheng.crawler.enums.CrawlerType;
