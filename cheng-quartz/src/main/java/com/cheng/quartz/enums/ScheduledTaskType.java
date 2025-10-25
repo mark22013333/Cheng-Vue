@@ -2,6 +2,7 @@ package com.cheng.quartz.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
  * @since 2025-03-28
  */
 @Getter
-@AllArgsConstructor
+@RequiredArgsConstructor
 public enum ScheduledTaskType {
 
     // ==================== 爬蟲任務 ====================

@@ -30,6 +30,11 @@ public class CrawlerParams implements Serializable {
     private Boolean enabled = true;
 
     /**
+     * 爬蟲類型代碼（如：CA101, CA102, CA103）
+     */
+    private String crawlerType;
+
+    /**
      * 模式參數（如：today-only, full-sync 等）
      */
     private String mode;

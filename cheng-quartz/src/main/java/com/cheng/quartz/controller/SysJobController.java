@@ -4,8 +4,12 @@ import com.cheng.common.annotation.Log;
 import com.cheng.common.constant.Constants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
+import com.cheng.common.core.domain.TaskParamMetadata;
+import com.cheng.common.core.domain.TaskTypeOption;
 import com.cheng.common.core.page.TableDataInfo;
+import com.cheng.common.core.provider.TaskTypeProvider;
 import com.cheng.common.enums.BusinessType;
+import com.cheng.common.enums.TaskCategory;
 import com.cheng.common.exception.job.TaskException;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.poi.ExcelUtil;
@@ -14,12 +18,14 @@ import com.cheng.quartz.service.ISysJobService;
 import com.cheng.quartz.util.CronUtils;
 import com.cheng.quartz.util.ScheduleUtils;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 呼叫任務訊息操作處理
@@ -27,10 +33,87 @@ import java.util.List;
  * @author cheng
  */
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/monitor/job")
 public class SysJobController extends BaseController {
-    @Autowired
-    private ISysJobService jobService;
+
+    private final ISysJobService jobService;
+
+    /**
+     * 注入所有 TaskTypeProvider（可選，若無提供者則為空列表）
+     */
+    private final List<TaskTypeProvider> taskTypeProviders;
+
+    /**
+     * 取得所有任務類型選項
+     * 供前端新增/編輯排程任務時，動態產生表單使用
+     *
+     * @return 任務類型選項，按分類分組
+     */
+    @PreAuthorize("@ss.hasPermi('monitor:job:list')")
+    public AjaxResult getTaskTypes() {
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        // 如果沒有任何 TaskTypeProvider，返回空結果
+        if (taskTypeProviders == null || taskTypeProviders.isEmpty()) {
+            result.put("categories", Collections.emptyList());
+            result.put("tasks", Collections.emptyMap());
+            return success(result);
+        }
+
+        // 按優先級排序提供者
+        List<TaskTypeProvider> sortedProviders = taskTypeProviders.stream()
+                .filter(TaskTypeProvider::isEnabled)
+                .sorted(Comparator.comparingInt(TaskTypeProvider::getPriority))
+                .toList();
+
+        // 收集所有分類
+        List<Map<String, String>> categories = new ArrayList<>();
+        Map<String, List<TaskTypeOption>> tasksByCategory = new LinkedHashMap<>();
+
+        for (TaskTypeProvider provider : sortedProviders) {
+            TaskCategory category = provider.getCategory();
+            List<TaskTypeOption> tasks = provider.getTaskTypes();
+
+            if (tasks != null && !tasks.isEmpty()) {
+                // 新增分類資訊
+                Map<String, String> categoryInfo = new LinkedHashMap<>();
+                categoryInfo.put("code", category.getCode());
+                categoryInfo.put("label", category.getLabel());
+                categories.add(categoryInfo);
+
+                // 新增任務列表
+                tasksByCategory.put(category.getCode(), tasks);
+            }
+        }
+
+        result.put("categories", categories);
+        result.put("tasks", tasksByCategory);
+
+        return success(result);
+    }
+
+    /**
+     * 取得特定分類的任務類型
+     *
+     * @param category 任務分類代碼（例如：crawler, notification）
+     * @return 任務類型選項列表
+     */
+    @PreAuthorize("@ss.hasPermi('monitor:job:list')")
+    @GetMapping("/taskTypes/{category}")
+    public AjaxResult getTaskTypesByCategory(@PathVariable String category) {
+        if (taskTypeProviders == null || taskTypeProviders.isEmpty()) {
+            return success(Collections.emptyList());
+        }
+
+        List<TaskTypeOption> tasks = taskTypeProviders.stream()
+                .filter(TaskTypeProvider::isEnabled)
+                .filter(provider -> provider.getCategory().getCode().equalsIgnoreCase(category))
+                .flatMap(provider -> provider.getTaskTypes().stream())
+                .collect(Collectors.toList());
+
+        return success(tasks);
+    }
 
     /**
      * 查詢定時任務列表

@@ -14,7 +14,6 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -50,10 +49,6 @@ public class CA103WHandler extends CrawlerHandler<String[], String[]> {
     // 查詢設定
     private static final String SECURITY_TYPE = "ALLBUT0999"; // 全部(不含權證、牛熊證、可展延牛熊證)
 
-    // 是否只爬取今天的資料
-    @Value("${crawler.ca103.today-only:false}")
-    private boolean todayOnly;
-
     private final GenericCrawlerRepository genericCrawlerRepository;
 
     @Override
@@ -65,7 +60,7 @@ public class CA103WHandler extends CrawlerHandler<String[], String[]> {
     protected void init() {
         // 初始化時建立動態 SQL 語句
         String timestampFunc = jdbcSqlTemplate.getCurrentTimestampFunction();
-        String SQL = String.format(
+        registeredSql = String.format(
                 "INSERT INTO CAT103 (COMPANY_NAME, COMPANY_NO, PRICE, PUBLISH_DATE, EXTRACT_DATE) " +
                         "VALUES (?, ?, ?, ?, %s)",
                 timestampFunc
@@ -74,11 +69,12 @@ public class CA103WHandler extends CrawlerHandler<String[], String[]> {
         // 註冊 SQL 到 Repository（資料已經是 String[] 格式，直接返回即可）
         genericCrawlerRepository.registerSql(
                 CrawlerType.CA103,
-                SQL,
+                registeredSql,
                 data -> (String[]) data
         );
 
         log.info("初始化 CA103WHandler，已註冊 SQL 到 Repository");
+        log.info("SQL 語句: {}", registeredSql);
     }
 
     @Override
@@ -87,11 +83,25 @@ public class CA103WHandler extends CrawlerHandler<String[], String[]> {
         return (CrawlerDataRepository<String[]>) (CrawlerDataRepository<?>) genericCrawlerRepository;
     }
 
+    // 批次寫入設定
+    private static final int BATCH_WRITE_SIZE = 100; // 每 100 筆寫入一次資料庫
+    private final List<String[]> pendingBatch = new ArrayList<>(); // 待寫入的批次資料
+    private int totalWritten = 0; // 已寫入的總筆數
+    private String registeredSql; // 註冊的 SQL 語句
+
     @Override
     protected List<String[]> crawlWebsiteFetchData(WebDriver driver, CrawlerParams crawlerParams) throws Exception {
         List<String[]> resultList = new ArrayList<>();
+        pendingBatch.clear();
+        totalWritten = 0;
 
-        log.info("開始執行證券交易所收盤價爬蟲，模式: {}", todayOnly ? "僅爬取今日資料" : "從歷史資料開始爬取");
+        // 從參數讀取執行模式
+        String mode = crawlerParams != null ? crawlerParams.getMode() : null;
+        boolean todayOnly = "today-only".equalsIgnoreCase(mode);
+        
+        log.info("開始執行證券交易所收盤價爬蟲");
+        log.info("參數資訊 - mode: {}, 模式: {}", mode, todayOnly ? "僅爬取今日資料" : "從歷史資料開始爬取");
+        log.info("批次寫入設定：每 {} 筆資料立即寫入資料庫", BATCH_WRITE_SIZE);
 
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         JavascriptExecutor jsExecutor = (JavascriptExecutor) driver;
@@ -106,8 +116,18 @@ public class CA103WHandler extends CrawlerHandler<String[], String[]> {
                 // 如果是只爬取今天，則起始日期就是今天
                 startDate = currentDate;
                 log.info("僅爬取今日 ({}) 的收盤行情資料", currentDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            } else if ("date-range".equalsIgnoreCase(mode) && crawlerParams != null) {
+                // 自訂日期範圍模式
+                String startDateStr = crawlerParams.getStartDate();
+                if (startDateStr != null && !startDateStr.isEmpty()) {
+                    startDate = LocalDate.parse(startDateStr);
+                    log.info("使用自訂起始日期: {}", startDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
+                } else {
+                    startDate = LocalDate.of(2016, 8, 1);
+                    log.warn("未指定起始日期，使用預設值: {}", startDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
+                }
             } else {
-                // 否則從歷史時間爬取
+                // 完整同步模式
                 startDate = LocalDate.of(2016, 8, 1); // 105年8月1日
                 log.info("從 {} 開始爬取到今日 ({}) 的收盤行情資料",
                         startDate.format(DateTimeFormatter.ISO_LOCAL_DATE),
@@ -185,13 +205,91 @@ public class CA103WHandler extends CrawlerHandler<String[], String[]> {
                     startDate.getYear(), startDate.getMonthValue(), startDate.getDayOfMonth(), totalProcessed);
 
             log.info(message);
+            
+            // 爬取完成後，寫入剩餘的資料
+            if (!pendingBatch.isEmpty()) {
+                log.info("爬取完成，寫入剩餘的 {} 筆資料到資料庫", pendingBatch.size());
+                writeBatchToDatabase();
+            }
+            
+            log.info("資料庫寫入統計：總共成功寫入 {} 筆資料", totalWritten);
 
         } catch (Exception e) {
             log.error("=>爬取臺灣證券交易所每日收盤行情資訊時發生錯誤", e);
+            
+            // 發生異常時，嘗試寫入剩餘資料
+            if (!pendingBatch.isEmpty()) {
+                log.warn("發生異常，嘗試寫入剩餘的 {} 筆資料", pendingBatch.size());
+                try {
+                    writeBatchToDatabase();
+                } catch (Exception writeException) {
+                    log.error("寫入剩餘資料時發生錯誤", writeException);
+                }
+            }
+            
             throw e;
         }
 
         return resultList;
+    }
+    
+    /**
+     * 將待處理批次寫入資料庫
+     */
+    private void writeBatchToDatabase() {
+        if (pendingBatch.isEmpty()) {
+            return;
+        }
+        
+        int batchSize = pendingBatch.size();
+        log.info("========================================");
+        log.info("準備寫入第 {} 批資料到資料庫，本批筆數: {}", (totalWritten / BATCH_WRITE_SIZE) + 1, batchSize);
+        log.info("SQL: {}", registeredSql);
+        log.info("========================================");
+        
+        try {
+            // 記錄第一筆資料的內容（用於除錯）
+            if (!pendingBatch.isEmpty()) {
+                String[] firstRow = pendingBatch.get(0);
+                log.info("第一筆資料內容: 公司名稱={}, 公司代碼={}, 價格={}, 發布日期={}",
+                        firstRow[0], firstRow[1], firstRow[2], firstRow[3]);
+            }
+            
+            // 使用父類的批次寫入方法（不分批，一次全寫）
+            boolean success = batchSaveToDatabase(registeredSql, new ArrayList<>(pendingBatch), batchSize, 0);
+            
+            if (success) {
+                totalWritten += batchSize;
+                log.info("✅ 批次寫入成功！本批: {} 筆，累計已寫入: {} 筆", batchSize, totalWritten);
+                pendingBatch.clear();
+            } else {
+                log.error("❌ 批次寫入失敗！本批: {} 筆", batchSize);
+                log.error("失敗的資料將保留在 pendingBatch 中，筆數: {}", pendingBatch.size());
+                
+                // 記錄所有失敗的資料（前 5 筆）
+                int displayCount = Math.min(5, pendingBatch.size());
+                for (int i = 0; i < displayCount; i++) {
+                    String[] row = pendingBatch.get(i);
+                    log.error("失敗資料 #{}: {}", i + 1, String.join(", ", row));
+                }
+            }
+        } catch (Exception e) {
+            log.error("❌ 寫入資料庫時發生異常！本批筆數: {}", batchSize, e);
+            log.error("異常類型: {}", e.getClass().getName());
+            log.error("異常訊息: {}", e.getMessage());
+            if (e.getCause() != null) {
+                log.error("根本原因: {}", e.getCause().getMessage());
+            }
+            
+            // 記錄堆疊追蹤的前 10 行
+            StackTraceElement[] stackTrace = e.getStackTrace();
+            log.error("堆疊追蹤:");
+            for (int i = 0; i < Math.min(10, stackTrace.length); i++) {
+                log.error("  at {}", stackTrace[i]);
+            }
+        }
+        
+        log.info("========================================\n");
     }
 
     /**
@@ -349,12 +447,18 @@ public class CA103WHandler extends CrawlerHandler<String[], String[]> {
                 }
             }
 
-            // 將此頁資料加入結果列表
+            // 將此頁資料加入結果列表和待寫入批次
             if (!pageData.isEmpty()) {
                 log.info("正在將 {} 的第 {} 頁的 {} 筆資料加入結果列表",
                         publishDate, currentPage, pageData.size());
                 dayResultList.addAll(pageData);
                 resultList.addAll(pageData);
+                pendingBatch.addAll(pageData);
+                
+                // 檢查是否達到批次寫入條件
+                if (pendingBatch.size() >= BATCH_WRITE_SIZE) {
+                    writeBatchToDatabase();
+                }
             }
 
             // 檢查是否有下一頁
