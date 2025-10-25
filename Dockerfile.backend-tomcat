@@ -15,7 +15,6 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     ca-certificates \
     fonts-liberation \
-    libasound2 \
     libatk-bridge2.0-0 \
     libatk1.0-0 \
     libatspi2.0-0 \
@@ -34,17 +33,19 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     xdg-utils \
     unzip \
+    jq \
     --no-install-recommends \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
-    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+    && wget -qO- https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-linux-signing-key.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-signing-key.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update \
     && apt-get install -y google-chrome-stable \
-    && CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d. -f1) \
-    && wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${CHROME_VERSION}.0.6778.85/linux64/chromedriver-linux64.zip" -O /tmp/chromedriver.zip || \
-       wget -q "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}" -O /tmp/version && \
-       wget -q "https://chromedriver.storage.googleapis.com/$(cat /tmp/version)/chromedriver_linux64.zip" -O /tmp/chromedriver.zip \
-    && unzip /tmp/chromedriver.zip -d /tmp/ \
-    && mv /tmp/chromedriver-linux64/chromedriver /usr/bin/chromedriver 2>/dev/null || mv /tmp/chromedriver /usr/bin/chromedriver \
+    && echo "正在使用 Chrome for Testing JSON API 取得 ChromeDriver..." \
+    && JSON_URL="https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" \
+    && DOWNLOAD_URL=$(wget -qO- "$JSON_URL" | jq -r '.channels.Stable.downloads.chromedriver[] | select(.platform=="linux64").url') \
+    && echo "ChromeDriver 下載網址: $DOWNLOAD_URL" \
+    && wget -q "$DOWNLOAD_URL" -O /tmp/chromedriver_linux64.zip \
+    && unzip /tmp/chromedriver_linux64.zip -d /tmp/ \
+    && mv /tmp/chromedriver-linux64/chromedriver /usr/bin/chromedriver \
     && chmod +x /usr/bin/chromedriver \
     && rm -rf /tmp/chromedriver* \
     && apt-get clean \

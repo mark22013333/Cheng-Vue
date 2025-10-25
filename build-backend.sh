@@ -13,7 +13,7 @@ set -e  # 遇到錯誤立即退出
 # ============================================
 REGISTRY="android106"
 IMAGE_NAME="coolapps-backend"
-BASE_VERSION="v1.2.2"
+BASE_VERSION="v1.5.2"
 DOCKERFILE="Dockerfile.backend-tomcat"
 BUILD_CONTEXT="."
 
