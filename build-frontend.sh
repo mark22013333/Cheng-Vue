@@ -13,7 +13,7 @@ set -e  # 遇到錯誤立即退出
 # ============================================
 REGISTRY="android106"
 IMAGE_NAME="coolapps-frontend"
-BASE_VERSION="v1.2.3"
+BASE_VERSION="v1.3.1"
 DOCKERFILE="cheng-ui/Dockerfile"
 BUILD_CONTEXT="cheng-ui"
 
