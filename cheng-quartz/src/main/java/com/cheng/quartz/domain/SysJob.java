@@ -54,6 +54,12 @@ public class SysJob extends BaseEntity {
     private String invokeTarget;
 
     /**
+     * 任務類型代碼（用於範本模式）
+     */
+    @Getter
+    private String taskTypeCode;
+
+    /**
      * Cron執行表達式
      */
     @Excel(name = "執行表達式 ")

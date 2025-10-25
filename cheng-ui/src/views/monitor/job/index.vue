@@ -228,22 +228,60 @@
               :key="param.name"
               :label="param.description"
               :required="param.required">
+              <!-- SELECT 類型：下拉選單 -->
+              <el-select
+                v-if="param.type === 'SELECT'"
+                v-model="taskParams[param.name]"
+                :placeholder="`請選擇${param.description}`"
+                style="width: 100%"
+                clearable>
+                <el-option
+                  v-for="option in param.options"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value">
+                  <span style="float: left">{{ option.label }}</span>
+                  <span v-if="option.description" style="float: right; color: #8492a6; font-size: 12px">
+                    {{ option.description }}
+                  </span>
+                </el-option>
+              </el-select>
+              <!-- DATE 類型：日期選擇器 -->
+              <el-date-picker
+                v-else-if="param.type === 'DATE'"
+                v-model="taskParams[param.name]"
+                type="date"
+                :placeholder="`請選擇${param.description}`"
+                style="width: 100%"
+                value-format="yyyy-MM-dd"/>
+              <!-- STRING 類型：文字輸入 -->
               <el-input
-                v-if="param.type === 'STRING'"
+                v-else-if="param.type === 'STRING'"
                 v-model="taskParams[param.name]"
                 :placeholder="`範例: ${param.example}`"
                 clearable>
                 <template slot="prepend">{{ param.type }}</template>
               </el-input>
+              <!-- TEXTAREA 類型：多行文字 -->
+              <el-input
+                v-else-if="param.type === 'TEXTAREA'"
+                v-model="taskParams[param.name]"
+                type="textarea"
+                :rows="3"
+                :placeholder="`範例: ${param.example}`"
+                clearable/>
+              <!-- NUMBER 類型：數字輸入 -->
               <el-input-number
-                v-else-if="param.type === 'INTEGER' || param.type === 'LONG'"
+                v-else-if="param.type === 'NUMBER' || param.type === 'INTEGER' || param.type === 'LONG'"
                 v-model="taskParams[param.name]"
                 :placeholder="`範例: ${param.example}`"
                 style="width: 100%"
                 controls-position="right"/>
+              <!-- BOOLEAN 類型：開關 -->
               <el-switch
                 v-else-if="param.type === 'BOOLEAN'"
                 v-model="taskParams[param.name]"/>
+              <!-- 其他類型：預設文字輸入 -->
               <el-input
                 v-else
                 v-model="taskParams[param.name]"
@@ -468,8 +506,17 @@ export default {
     }
   },
   computed: {
-    // 當前任務的參數列表
+    // 當前任務的參數列表（只顯示 visible 為 true 的參數）
     currentParameters() {
+      if (!this.currentTaskType || !this.currentTaskType.parameters) {
+        return []
+      }
+      // 過濾掉不可見的參數（例如：crawlerType 自動參數）
+      return this.currentTaskType.parameters.filter(param => param.visible !== false)
+    },
+    
+    // 所有參數列表（包含隱藏參數，用於產生 invokeTarget）
+    allParameters() {
       return this.currentTaskType ? this.currentTaskType.parameters : []
     },
     // 建議的 Cron 表達式
@@ -498,21 +545,23 @@ export default {
 
       const {beanName, methodName} = this.currentTaskType
 
-      // 將參數物件轉換為陣列
-      const paramValues = Object.values(this.taskParams || {}).map(v => {
-        // 字串類型加引號
-        if (typeof v === 'string') {
-          return `'${v}'`
-        }
-        return String(v)
-      })
-
-      // 組合格式：beanName.methodName(param1, param2, ...)
-      if (paramValues.length > 0) {
-        return `${beanName}.${methodName}(${paramValues.join(', ')})`
-      } else {
-        return `${beanName}.${methodName}()`
+      // 收集所有有值的參數（包含隱藏參數）
+      const paramsObject = {}
+      if (this.allParameters && this.allParameters.length > 0) {
+        this.allParameters.forEach(param => {
+          const value = this.taskParams[param.name]
+          // 只包含有值的參數（不包含 null、undefined、空字串）
+          if (value !== null && value !== undefined && value !== '') {
+            paramsObject[param.name] = value
+          }
+        })
       }
+
+      // 將參數物件轉為 JSON 字串
+      const paramsJson = JSON.stringify(paramsObject)
+      
+      // 組合格式：beanName.methodName('{"crawlerType":"CA103","mode":"today-only"}')
+      return `${beanName}.${methodName}('${paramsJson}')`
     }
   },
   created() {
@@ -557,13 +606,16 @@ export default {
         // 清空參數
         this.taskParams = {}
 
-        // 初始化參數預設值
+        // 初始化參數預設值（包含隱藏參數）
         console.log('開始初始化參數預設值...')
         this.currentTaskType.parameters.forEach(param => {
-          console.log(`參數 ${param.name} - 範例值:`, param.example)
-          if (param.example) {
-            this.$set(this.taskParams, param.name, param.example)
-            console.log(`已設定 ${param.name} = ${param.example}`)
+          // 優先使用 defaultValue，然後是 example
+          const defaultVal = param.defaultValue || param.example
+          console.log(`參數 ${param.name} - 預設值:`, defaultVal, '是否隱藏:', param.visible === false)
+          
+          if (defaultVal) {
+            this.$set(this.taskParams, param.name, defaultVal)
+            console.log(`已設定 ${param.name} = ${defaultVal}`)
           }
         })
         console.log('參數初始化完成，taskParams:', this.taskParams)
@@ -707,14 +759,292 @@ export default {
       this.title = "新增任務"
     },
     /** 修改按鈕操作 */
-    handleUpdate(row) {
+    async handleUpdate(row) {
       this.reset()
       const jobId = row.jobId || this.ids
-      getJob(jobId).then(response => {
+      
+      try {
+        // 確保任務類型列表已載入
+        if (!this.jobTypes || this.jobTypes.length === 0) {
+          await this.loadJobTypes()
+        }
+        
+        // 載入任務資料
+        const response = await getJob(jobId)
         this.form = response.data
         this.open = true
         this.title = "修改任務"
-      })
+        
+        // 優先使用 taskTypeCode（新方案）
+        if (this.form.taskTypeCode) {
+          console.log('使用 taskTypeCode 還原表單:', this.form.taskTypeCode)
+          await this.restoreFormByTaskTypeCode(this.form.taskTypeCode, this.form.invokeTarget)
+        } else {
+          // 降級方案：從 invokeTarget 反向解析（舊資料）
+          console.log('taskTypeCode 不存在，嘗試從 invokeTarget 解析')
+          await this.parseInvokeTarget(this.form.invokeTarget)
+        }
+      } catch (error) {
+        console.error('載入任務失敗:', error)
+        this.$message.error('載入任務失敗')
+      }
+    },
+    
+    /** 根據 taskTypeCode 還原表單（新方案）*/
+    async restoreFormByTaskTypeCode(taskTypeCode, invokeTarget) {
+      try {
+        // 載入任務類型詳情
+        const response = await getJobTypeByCode(taskTypeCode)
+        this.currentTaskType = response.data
+        
+        // 切換到範本模式
+        this.configMode = 'template'
+        this.selectedTaskType = taskTypeCode
+        
+        // 初始化所有參數的預設值（特別是隱藏參數）
+        this.taskParams = {}
+        if (this.currentTaskType.parameters) {
+          this.currentTaskType.parameters.forEach(param => {
+            const defaultVal = param.defaultValue || param.example
+            if (defaultVal) {
+              this.$set(this.taskParams, param.name, defaultVal)
+            }
+          })
+        }
+        
+        // 從 invokeTarget 解析參數值
+        // 新格式：crawlerTask.run('{"crawlerType":"CA103","mode":"today-only"}')
+        const regex = /^(\w+)\.(\w+)\('(.*)'\)$/
+        const match = invokeTarget.match(regex)
+        
+        if (match && match[3].trim()) {
+          const [, , , jsonStr] = match
+          try {
+            // 解析 JSON 字串
+            const params = JSON.parse(jsonStr)
+            
+            // 將 JSON 物件的值覆蓋到 taskParams
+            Object.keys(params).forEach(key => {
+              this.$set(this.taskParams, key, params[key])
+            })
+            
+            console.log('表單還原完成 - 參數:', this.taskParams)
+          } catch (e) {
+            console.error('解析 JSON 參數失敗:', e)
+            // 如果 JSON 解析失敗，嘗試舊格式
+            this.parseOldFormatParams(invokeTarget)
+          }
+        }
+      } catch (error) {
+        console.error('還原表單失敗:', error)
+        this.$message.error('載入任務詳情失敗')
+        // 降級到手動模式
+        this.configMode = 'manual'
+      }
+    },
+    
+    /** 解析舊格式參數（向後相容）*/
+    parseOldFormatParams(invokeTarget) {
+      const regex = /^(\w+)\.(\w+)\((.*)\)$/
+      const match = invokeTarget.match(regex)
+      
+      if (match && match[3].trim()) {
+        const [, , , paramsStr] = match
+        const paramValues = this.parseParamValues(paramsStr)
+        
+        // 只覆蓋可見參數的值（不覆蓋隱藏參數如 crawlerType）
+        if (this.currentTaskType.parameters) {
+          // 取得可見參數列表並排序
+          const visibleParams = this.currentTaskType.parameters
+            .filter(param => param.visible !== false)
+            .sort((a, b) => (a.order || 0) - (b.order || 0))
+          
+          // 將解析出的值對應到可見參數
+          visibleParams.forEach((param, index) => {
+            if (index < paramValues.length && paramValues[index] !== 'null') {
+              this.$set(this.taskParams, param.name, paramValues[index])
+            }
+          })
+        }
+        
+        console.log('表單還原完成（舊格式）- 參數:', this.taskParams)
+      }
+    },
+    
+    /** 從 invokeTarget 解析任務類型和參數 */
+    async parseInvokeTarget(invokeTarget) {
+      if (!invokeTarget) return
+      
+      // 格式範例：crawlerTask.runWithMode('today-only')
+      // 或：crawlerTask.runWithMode('date-range', '2024-01-01', '2024-12-31')
+      const regex = /^(\w+)\.(\w+)\((.*)\)$/
+      const match = invokeTarget.match(regex)
+      
+      if (!match) {
+        // 不符合範本格式，使用手動模式
+        this.configMode = 'manual'
+        return
+      }
+      
+      const [, beanName, methodName, paramsStr] = match
+      
+      // 解析參數值
+      const paramValues = paramsStr.trim() ? this.parseParamValues(paramsStr) : []
+      const paramCount = paramValues.length
+      
+      // 查找對應的任務類型（需要匹配 beanName、methodName 和參數數量）
+      const candidateTypes = this.jobTypes.filter(type => 
+        type.beanName === beanName && type.methodName === methodName
+      )
+      
+      console.log('候選任務類型:', candidateTypes.map(t => ({ 
+        code: t.code, 
+        name: t.name,
+        paramCount: t.parameters ? t.parameters.length : 0 
+      })))
+      console.log('實際參數數量:', paramCount)
+      
+      if (candidateTypes.length === 0) {
+        // 找不到對應的任務類型，使用手動模式
+        console.warn('找不到匹配的任務類型，切換到手動模式')
+        this.configMode = 'manual'
+        return
+      }
+      
+      // 如果有多個候選，根據參數數量選擇最匹配的
+      let taskType = null
+      if (candidateTypes.length === 1) {
+        taskType = candidateTypes[0]
+        console.log('只有一個候選，直接使用:', taskType.code)
+      } else {
+        // 先嘗試精確匹配參數數量
+        taskType = candidateTypes.find(type => 
+          type.parameters && type.parameters.length === paramCount
+        )
+        
+        if (!taskType) {
+          // 找必填參數數量小於等於實際參數數量的任務類型
+          const compatibleTypes = candidateTypes.filter(type => {
+            if (!type.parameters) return false
+            const requiredCount = type.parameters.filter(p => p.required).length
+            return requiredCount <= paramCount && type.parameters.length >= paramCount
+          })
+          
+          if (compatibleTypes.length > 0) {
+            // 選擇參數數量最接近的
+            taskType = compatibleTypes.reduce((prev, curr) => {
+              const prevDiff = Math.abs(prev.parameters.length - paramCount)
+              const currDiff = Math.abs(curr.parameters.length - paramCount)
+              return currDiff < prevDiff ? curr : prev
+            })
+          }
+        }
+        
+        // 如果還是找不到，使用第一個
+        if (!taskType) {
+          console.warn('無法精確匹配，使用第一個候選')
+          taskType = candidateTypes[0]
+        } else {
+          console.log('匹配到任務類型:', taskType.code)
+        }
+      }
+      
+      // 切換到範本模式
+      this.configMode = 'template'
+      this.selectedTaskType = taskType.code
+      
+      // 暫存參數值（先用簡化的列表資料對應）
+      let parsedParams = {}
+      if (paramValues.length > 0 && taskType.parameters) {
+        // 先按 order 排序參數
+        const sortedParams = [...taskType.parameters].sort((a, b) => {
+          const orderA = a.order || 0
+          const orderB = b.order || 0
+          return orderA - orderB
+        })
+        
+        sortedParams.forEach((param, index) => {
+          if (index < paramValues.length) {
+            parsedParams[param.name] = paramValues[index]
+          }
+        })
+      }
+      
+      console.log('解析完成 - 任務類型:', taskType.code, '暫存參數:', parsedParams)
+      
+      // 重新載入任務類型詳情（含完整的 options 等資訊）
+      try {
+        const response = await getJobTypeByCode(taskType.code)
+        this.currentTaskType = response.data
+        
+        // 套用解析出來的參數值
+        this.taskParams = {}
+        Object.keys(parsedParams).forEach(key => {
+          this.$set(this.taskParams, key, parsedParams[key])
+        })
+        
+        console.log('載入任務詳情完成，參數已還原:', this.taskParams)
+      } catch (error) {
+        console.error('載入任務類型詳情失敗:', error)
+        this.$message.error('載入任務詳情失敗')
+        this.configMode = 'manual'
+      }
+    },
+    
+    /** 解析參數字串 */
+    parseParamValues(paramsStr) {
+      const values = []
+      let current = ''
+      let inString = false
+      let escapeNext = false
+      
+      for (let i = 0; i < paramsStr.length; i++) {
+        const char = paramsStr[i]
+        
+        if (escapeNext) {
+          current += char
+          escapeNext = false
+          continue
+        }
+        
+        if (char === '\\') {
+          escapeNext = true
+          continue
+        }
+        
+        if (char === "'" || char === '"') {
+          if (inString) {
+            // 結束字串
+            values.push(current)
+            current = ''
+            inString = false
+          } else {
+            // 開始字串
+            inString = true
+          }
+          continue
+        }
+        
+        if (char === ',' && !inString) {
+          // 分隔符（非字串內）
+          if (current.trim()) {
+            values.push(current.trim())
+          }
+          current = ''
+          continue
+        }
+        
+        if (inString || char !== ' ') {
+          current += char
+        }
+      }
+      
+      // 最後一個參數
+      if (current.trim()) {
+        values.push(current.trim())
+      }
+      
+      return values
     },
     /** 提交按鈕 */
     submitForm: function () {
@@ -746,6 +1076,9 @@ export default {
 
             // 使用產生的 invokeTarget
             this.form.invokeTarget = this.generatedInvokeTarget
+            
+            // 儲存任務類型代碼（用於編輯時還原）
+            this.form.taskTypeCode = this.selectedTaskType
           }
 
           // 驗證 invokeTarget

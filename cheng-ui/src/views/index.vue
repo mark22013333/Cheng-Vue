@@ -49,6 +49,11 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.5.3 - 2025-10-26">
+              <ol>
+                <li>導入排程任務範本 (TaskTypeProvider) 動態註冊機制。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.5.2 - 2025-10-25">
               <ol>
                 <li>整合 Selenium 爬蟲框架。</li>
@@ -145,7 +150,7 @@ export default {
   data() {
     return {
       // 版本號
-      version: "1.5.2"
+      version: "1.5.3"
     }
   },
   methods: {

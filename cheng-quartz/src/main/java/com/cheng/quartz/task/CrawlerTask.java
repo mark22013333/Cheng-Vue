@@ -1,5 +1,6 @@
 package com.cheng.quartz.task;
 
+import com.alibaba.fastjson2.JSON;
 import com.cheng.crawler.handler.CrawlerHandler;
 import com.cheng.crawler.dto.CrawlerParams;
 import com.cheng.crawler.dto.CrawlerResult;
@@ -27,20 +28,69 @@ import org.springframework.stereotype.Component;
 public class CrawlerTask {
 
     /**
-     * 執行爬蟲任務（無參數）
+     * 執行爬蟲任務（統一介面）
+     * <p>
+     * 使用 JSON 字串傳遞參數，支援所有爬蟲類型和參數組合
+     * <p>
+     * <b>Quartz 設定範例：</b>
+     * <pre>
+     * Bean名稱: crawlerTask
+     * 方法名稱: run
+     * 參數: {"crawlerType":"CA103","mode":"today-only"}
+     * 參數: {"crawlerType":"CA103","mode":"date-range","startDate":"2025-10-01","endDate":"2025-10-24"}
+     * </pre>
+     *
+     * @param paramsJson 參數的 JSON 字串
+     */
+    public void run(String paramsJson) {
+        log.info("開始執行爬蟲任務，參數: {}", paramsJson);
+        
+        try {
+            // 解析 JSON 為 CrawlerParams
+            CrawlerParams params = JSON.parseObject(paramsJson, CrawlerParams.class);
+            
+            // 取得爬蟲類型
+            String crawlerTypeStr = params.getCrawlerType();
+            if (crawlerTypeStr == null || crawlerTypeStr.trim().isEmpty()) {
+                log.error("參數中缺少 crawlerType");
+                return;
+            }
+            
+            CrawlerType type = parseCrawlerType(crawlerTypeStr);
+            if (type == null) {
+                log.error("無效的爬蟲類型: {}", crawlerTypeStr);
+                return;
+            }
+            
+            // 執行爬蟲
+            CrawlerHandler<?, ?> handler = CrawlerHandler.getHandler(type);
+            if (handler != null) {
+                CrawlerResult result = handler.execute(params);
+                logResult(type, result);
+            } else {
+                log.error("找不到 {} 爬蟲處理器", type.name());
+            }
+        } catch (Exception e) {
+            log.error("解析參數或執行爬蟲任務失敗", e);
+        }
+    }
+
+    /**
+     * 執行爬蟲任務（舊介面，保留向後相容）
      * <p>
      * 使用預設參數執行指定類型的爬蟲
      * <p>
      * <b>Quartz 設定範例：</b>
      * <pre>
      * Bean名稱: crawlerTask
-     * 方法名稱: run
+     * 方法名稱: runLegacy
      * 參數: CA102
      * </pre>
      *
      * @param crawlerType 爬蟲類型代碼（如：CA102, CA103）
+     * @deprecated 建議使用 run(String paramsJson) 統一介面
      */
-    public void run(String crawlerType) {
+    public void runLegacy(String crawlerType) {
         log.info("開始執行爬蟲任務，類型: {}", crawlerType);
 
         CrawlerType type = parseCrawlerType(crawlerType);
@@ -130,6 +180,49 @@ public class CrawlerTask {
                     .mode(mode)
                     .batchSize(batchSize)
                     .timeout(timeout)
+                    .build();
+
+            CrawlerResult result = handler.execute(params);
+            logResult(type, result);
+        } else {
+            log.error("找不到 {} 爬蟲處理器", type.name());
+        }
+    }
+
+    /**
+     * 執行爬蟲任務（帶模式和日期範圍參數）
+     * <p>
+     * 支援設定模式和日期範圍（用於範本模式）
+     * <p>
+     * <b>Quartz 設定範例：</b>
+     * <pre>
+     * Bean名稱: crawlerTask
+     * 方法名稱: runWithMode
+     * 參數: CA103, date-range, 2025-03-01, 2025-03-28
+     * </pre>
+     *
+     * @param crawlerType 爬蟲類型代碼（如：CA102, CA103）
+     * @param mode        模式參數（如：date-range）
+     * @param startDate   開始日期（格式：yyyy-MM-dd）
+     * @param endDate     結束日期（格式：yyyy-MM-dd）
+     */
+    public void runWithMode(String crawlerType, String mode, String startDate, String endDate) {
+        log.info("開始執行爬蟲任務，類型: {}, 模式: {}, 日期範圍: {} 至 {}",
+                crawlerType, mode, startDate, endDate);
+
+        CrawlerType type = parseCrawlerType(crawlerType);
+        if (type == null) {
+            log.error("無效的爬蟲類型: {}", crawlerType);
+            return;
+        }
+
+        CrawlerHandler<?, ?> handler = CrawlerHandler.getHandler(type);
+        if (handler != null) {
+            // 建立參數
+            CrawlerParams params = CrawlerParams.builder()
+                    .mode(mode)
+                    .startDate(startDate)
+                    .endDate(endDate)
                     .build();
 
             CrawlerResult result = handler.execute(params);

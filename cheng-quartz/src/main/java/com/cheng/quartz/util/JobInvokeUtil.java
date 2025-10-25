@@ -101,8 +101,12 @@ public class JobInvokeUtil {
         List<Object[]> classs = new LinkedList<>();
         for (String methodParam : methodParams) {
             String str = StringUtils.trimToEmpty(methodParam);
+            // null 值處理
+            if ("null".equalsIgnoreCase(str) || StringUtils.isEmpty(str)) {
+                classs.add(new Object[]{null, String.class});
+            }
             // String字串類型，以'或"開頭
-            if (StringUtils.startsWithAny(str, "'", "\"")) {
+            else if (StringUtils.startsWithAny(str, "'", "\"")) {
                 classs.add(new Object[]{StringUtils.substring(str, 1, str.length() - 1), String.class});
             }
             // boolean布林類型，等於true或者false
