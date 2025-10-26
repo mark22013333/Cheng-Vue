@@ -118,7 +118,7 @@
 
     <!-- 底部版權 -->
     <div class="el-login-footer">
-      <span>Copyright © 2018-2025 Cool-Apps All Rights Reserved.</span>
+      <span>Copyright © 2025–present Cool-Apps All Rights Reserved.</span>
     </div>
   </div>
 </template>

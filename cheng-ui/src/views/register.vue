@@ -61,7 +61,7 @@
     </el-form>
     <!--  底部  -->
     <div class="el-register-footer">
-      <span>Copyright © 2018-2025 cheng.vip All Rights Reserved.</span>
+      <span>Copyright © 2025–present cheng.vip All Rights Reserved.</span>
     </div>
   </div>
 </template>

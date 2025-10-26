@@ -277,8 +277,8 @@ insert into sys_menu
 values ('116', '程式碼產生', '3', '2', 'gen', 'tool/gen/index', '', '', 1, 0, 'C', '0', '0', 'tool:gen:list', 'code',
         'admin', sysdate(), '', null, '程式碼產生功能表');
 insert into sys_menu
-values ('117', '系統介面', '3', '3', 'swagger', 'tool/swagger/index', '', '', 1, 0, 'C', '0', '0', 'tool:swagger:list',
-        'swagger', 'admin', sysdate(), '', null, '系統介面功能表');
+values ('117', '系統API', '3', '3', 'swagger', 'tool/swagger/index', '', '', 1, 0, 'C', '0', '0', 'tool:swagger:list',
+        'swagger', 'admin', sysdate(), '', null, '系統API資料');
 -- 三級選單
 insert into sys_menu
 values ('500', '操作日誌', '108', '1', 'operlog', 'monitor/operlog/index', '', '', 1, 0, 'C', '0', '0',
