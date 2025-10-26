@@ -52,5 +52,5 @@ module.exports = {
   /**
    * 底部版權文字内容
    */
-  footerContent: 'Copyright © 2018-2025 CoolApps. All Rights Reserved.'
+  footerContent: 'Copyright © 2025–present CoolApps. All Rights Reserved.'
 }
