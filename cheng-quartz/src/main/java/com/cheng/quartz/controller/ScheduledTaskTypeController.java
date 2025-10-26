@@ -189,6 +189,7 @@ public class ScheduledTaskTypeController {
                 paramVO.setDescription(param.getLabel());
                 paramVO.setExample(param.getDefaultValue() != null ? param.getDefaultValue() : "");
                 paramVO.setOrder(param.getOrder() != null ? param.getOrder() : 0);
+                paramVO.setVisible(param.getVisible());
                 
                 // 轉換選項列表（用於 SELECT 類型）
                 if (param.getOptions() != null && !param.getOptions().isEmpty()) {
@@ -239,6 +240,7 @@ public class ScheduledTaskTypeController {
         private String example;
         private Integer order; // 參數順序
         private List<OptionVO> options; // 下拉選單選項
+        private Boolean visible; // 是否顯示在前端
     }
 
     @Data

@@ -1,6 +1,7 @@
 package com.cheng.common.core.domain;
 
 import com.cheng.common.enums.TaskParamType;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 
@@ -14,7 +15,8 @@ import java.util.List;
  * @since 2025-10-25
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public class TaskParamMetadata {
 
     /**

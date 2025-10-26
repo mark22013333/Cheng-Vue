@@ -70,6 +70,12 @@ public class CrawlerTypeProvider implements TaskTypeProvider {
         List<TaskParamMetadata> allParams = new ArrayList<>();
         allParams.add(crawlerTypeParam);
         if (originalParams != null) {
+            // 為所有原始參數明確設定 visible=true（如果未設定）
+            originalParams.forEach(param -> {
+                if (param.getVisible() == null) {
+                    param.setVisible(true);
+                }
+            });
             allParams.addAll(originalParams);
         }
         
