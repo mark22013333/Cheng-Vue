@@ -5,7 +5,7 @@ import com.cheng.crawler.dto.CrawlerParams;
 import com.cheng.crawler.enums.CrawlerType;
 import com.cheng.crawler.repository.CrawlerDataRepository;
 import com.cheng.crawler.repository.GenericCrawlerRepository;
-import com.cheng.crawler.utils.JacksonUtil;
+import com.cheng.common.utils.JacksonUtil;
 import com.cheng.crawler.utils.TimeUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;

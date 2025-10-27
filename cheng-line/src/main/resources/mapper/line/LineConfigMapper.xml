@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.line.mapper.LineConfigMapper">
+    
+    <resultMap type="com.cheng.line.domain.LineConfig" id="LineConfigResult">
+        <id     property="configId"            column="config_id"              />
+        <result property="channelTypeCode"     column="channel_type"           />
+        <result property="channelName"         column="channel_name"           />
+        <result property="channelId"           column="channel_id"             />
+        <result property="channelSecret"       column="channel_secret"         />
+        <result property="channelAccessToken"  column="channel_access_token"   />
+        <result property="webhookUrl"          column="webhook_url"            />
+        <result property="webhookStatus"       column="webhook_status"         />
+        <result property="status"              column="status"                 />
+        <result property="isDefault"           column="is_default"             />
+        <result property="sortOrder"           column="sort_order"             />
+        <result property="createBy"            column="create_by"              />
+        <result property="createTime"          column="create_time"            />
+        <result property="updateBy"            column="update_by"              />
+        <result property="updateTime"          column="update_time"            />
+        <result property="remark"              column="remark"                 />
+    </resultMap>
+    
+    <sql id="selectLineConfigVo">
+        select config_id, channel_type, channel_name, channel_id, channel_secret, 
+               channel_access_token, webhook_url, webhook_status, status, is_default, 
+               sort_order, create_by, create_time, update_by, update_time, remark
+        from sys_line_config
+    </sql>
+    
+    <select id="selectLineConfigById" parameterType="Integer" resultMap="LineConfigResult">
+        <include refid="selectLineConfigVo"/>
+        where config_id = #{configId}
+    </select>
+    
+    <select id="selectLineConfigByType" resultMap="LineConfigResult">
+        <include refid="selectLineConfigVo"/>
+        where channel_type = #{channelType.code}
+    </select>
+    
+    <select id="selectLineConfigList" parameterType="com.cheng.line.domain.LineConfig" resultMap="LineConfigResult">
+        <include refid="selectLineConfigVo"/>
+        <where>
+            <if test="channelType != null">
+                AND channel_type = #{channelTypeCode}
+            </if>
+            <if test="channelName != null and channelName != ''">
+                AND channel_name like concat('%', #{channelName}, '%')
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="webhookStatus != null">
+                AND webhook_status = #{webhookStatus}
+            </if>
+            <if test="isDefault != null">
+                AND is_default = #{isDefault}
+            </if>
+        </where>
+        order by sort_order asc, config_id asc
+    </select>
+    
+    <select id="selectEnabledLineConfigs" resultMap="LineConfigResult">
+        <include refid="selectLineConfigVo"/>
+        where status = 1
+        order by sort_order asc, config_id asc
+    </select>
+    
+    <select id="selectDefaultLineConfig" resultMap="LineConfigResult">
+        <include refid="selectLineConfigVo"/>
+        where is_default = 1 and status = 1
+        limit 1
+    </select>
+    
+    <insert id="insertLineConfig" parameterType="com.cheng.line.domain.LineConfig" useGeneratedKeys="true" keyProperty="configId">
+        insert into sys_line_config
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="channelType != null">channel_type,</if>
+            <if test="channelName != null and channelName != ''">channel_name,</if>
+            <if test="channelId != null and channelId != ''">channel_id,</if>
+            <if test="channelSecret != null and channelSecret != ''">channel_secret,</if>
+            <if test="channelAccessToken != null and channelAccessToken != ''">channel_access_token,</if>
+            <if test="webhookUrl != null and webhookUrl != ''">webhook_url,</if>
+            <if test="webhookStatus != null">webhook_status,</if>
+            <if test="status != null">status,</if>
+            <if test="isDefault != null">is_default,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="channelType != null">#{channelTypeCode},</if>
+            <if test="channelName != null and channelName != ''">#{channelName},</if>
+            <if test="channelId != null and channelId != ''">#{channelId},</if>
+            <if test="channelSecret != null and channelSecret != ''">#{channelSecret},</if>
+            <if test="channelAccessToken != null and channelAccessToken != ''">#{channelAccessToken},</if>
+            <if test="webhookUrl != null and webhookUrl != ''">#{webhookUrl},</if>
+            <if test="webhookStatus != null">#{webhookStatus},</if>
+            <if test="status != null">#{status},</if>
+            <if test="isDefault != null">#{isDefault},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            sysdate()
+        </trim>
+    </insert>
+    
+    <update id="updateLineConfig" parameterType="com.cheng.line.domain.LineConfig">
+        update sys_line_config
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="channelType != null">channel_type = #{channelTypeCode},</if>
+            <if test="channelName != null and channelName != ''">channel_name = #{channelName},</if>
+            <if test="channelId != null and channelId != ''">channel_id = #{channelId},</if>
+            <if test="channelSecret != null and channelSecret != ''">channel_secret = #{channelSecret},</if>
+            <if test="channelAccessToken != null and channelAccessToken != ''">channel_access_token = #{channelAccessToken},</if>
+            <if test="webhookUrl != null">webhook_url = #{webhookUrl},</if>
+            <if test="webhookStatus != null">webhook_status = #{webhookStatus},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="isDefault != null">is_default = #{isDefault},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </trim>
+        where config_id = #{configId}
+    </update>
+    
+    <delete id="deleteLineConfigById" parameterType="Integer">
+        delete from sys_line_config where config_id = #{configId}
+    </delete>
+    
+    <delete id="deleteLineConfigByIds" parameterType="Integer">
+        delete from sys_line_config where config_id in
+        <foreach item="configId" collection="array" open="(" separator="," close=")">
+            #{configId}
+        </foreach>
+    </delete>
+    
+    <select id="checkChannelTypeUnique" parameterType="String" resultType="int">
+        select count(1) from sys_line_config where channel_type = #{channelType}
+    </select>
+    
+    <update id="clearDefaultStatus">
+        update sys_line_config set is_default = 0
+    </update>
+    
+    <update id="setDefaultChannel" parameterType="Integer">
+        update sys_line_config set is_default = 1 where config_id = #{configId}
+    </update>
+    
+</mapper>

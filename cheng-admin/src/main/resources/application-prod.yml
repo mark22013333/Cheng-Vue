@@ -98,3 +98,11 @@ crawler:
   selenium:
     mode: local
     chrome-driver-path: /usr/bin/chromedriver
+
+# LINE Bot 設定 - 正式環境（使用環境變數）
+line:
+  bot:
+    channel-token: ${LINE_BOT_CHANNEL_TOKEN}
+    channel-secret: ${LINE_BOT_CHANNEL_SECRET}
+    handler:
+      path: /line/callback

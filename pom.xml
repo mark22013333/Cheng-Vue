@@ -37,6 +37,8 @@
         <springdoc.version>2.8.9</springdoc.version>
         <lombok.version>1.18.42</lombok.version>
         <flyway.version>11.14.1</flyway.version>
+        <line-bot-sdk.version>9.12.0</line-bot-sdk.version>
+        <protobuf.version>4.29.2</protobuf.version>
     </properties>
 
     <!-- 依賴聲明 -->
@@ -212,7 +214,7 @@
             <dependency>
                 <groupId>com.cheng</groupId>
                 <artifactId>cheng-crawler</artifactId>
-                <version>3.9.0</version>
+                <version>${cheng.version}</version>
             </dependency>
 
             <!-- Lombok (managed version) -->
@@ -220,6 +222,62 @@
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
+            </dependency>
+
+            <!-- LINE Bot SDK 9.12.0 - Messaging API Client -->
+            <dependency>
+                <groupId>com.linecorp.bot</groupId>
+                <artifactId>line-bot-messaging-api-client</artifactId>
+                <version>${line-bot-sdk.version}</version>
+            </dependency>
+
+            <!-- LINE Bot SDK 9.12.0 - Webhook -->
+            <dependency>
+                <groupId>com.linecorp.bot</groupId>
+                <artifactId>line-bot-webhook</artifactId>
+                <version>${line-bot-sdk.version}</version>
+            </dependency>
+
+            <!-- LINE Bot SDK 9.12.0 - Parser (內部依賴，會自動引入) -->
+            <dependency>
+                <groupId>com.linecorp.bot</groupId>
+                <artifactId>line-bot-parser</artifactId>
+                <version>${line-bot-sdk.version}</version>
+            </dependency>
+
+            <!-- LINE Bot Spring Boot Handler (處理 Webhook 事件的註解支援) -->
+            <dependency>
+                <groupId>com.linecorp.bot</groupId>
+                <artifactId>line-bot-spring-boot-handler</artifactId>
+                <version>${line-bot-sdk.version}</version>
+            </dependency>
+
+            <!-- LINE Bot Spring Boot WebMVC (Spring MVC 整合) -->
+            <dependency>
+                <groupId>com.linecorp.bot</groupId>
+                <artifactId>line-bot-spring-boot-webmvc</artifactId>
+                <version>${line-bot-sdk.version}</version>
+            </dependency>
+
+            <!-- LINE Channel Access Token Client (管理 Access Token) -->
+            <dependency>
+                <groupId>com.linecorp.bot</groupId>
+                <artifactId>line-channel-access-token-client</artifactId>
+                <version>${line-bot-sdk.version}</version>
+            </dependency>
+
+            <!-- 明確指定安全的 protobuf 版本，覆蓋傳遞依賴，修復 CVE-2024-7254 -->
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
+
+            <!-- LINE 模組 -->
+            <dependency>
+                <groupId>com.cheng</groupId>
+                <artifactId>cheng-line</artifactId>
+                <version>${cheng.version}</version>
             </dependency>
 
         </dependencies>
@@ -241,6 +299,7 @@
         <module>cheng-generator</module>
         <module>cheng-common</module>
         <module>cheng-crawler</module>
+        <module>cheng-line</module>
     </modules>
     <packaging>pom</packaging>
 

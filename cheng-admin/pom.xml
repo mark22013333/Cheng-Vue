@@ -85,6 +85,23 @@
             <artifactId>flyway-mysql</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.cheng</groupId>
+            <artifactId>cheng-line</artifactId>
+        </dependency>
+
+        <!-- LINE Bot Spring Boot Handler (Webhook 事件處理註解) -->
+        <dependency>
+            <groupId>com.linecorp.bot</groupId>
+            <artifactId>line-bot-spring-boot-handler</artifactId>
+        </dependency>
+
+        <!-- LINE Bot Spring Boot WebMVC (Spring MVC 整合) -->
+        <dependency>
+            <groupId>com.linecorp.bot</groupId>
+            <artifactId>line-bot-spring-boot-webmvc</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

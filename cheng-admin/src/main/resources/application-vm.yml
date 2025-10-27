@@ -67,3 +67,11 @@ crawler:
   selenium:
     mode: remote
     remote-url: http://localhost:9515
+
+# LINE Bot 設定 - 測試環境（使用環境變數）
+line:
+  bot:
+    channel-token: ${LINE_BOT_CHANNEL_TOKEN}
+    channel-secret: ${LINE_BOT_CHANNEL_SECRET}
+    handler:
+      path: /line/callback

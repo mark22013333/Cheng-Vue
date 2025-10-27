@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.line.mapper.LineMessageLogMapper">
+    
+    <resultMap type="com.cheng.line.domain.LineMessageLog" id="LineMessageLogResult">
+        <id     property="messageId"           column="message_id"             />
+        <result property="configId"            column="config_id"              />
+        <result property="messageTypeCode"     column="message_type"           />
+        <result property="contentTypeCode"     column="content_type"           />
+        <result property="messageContent"      column="message_content"        />
+        <result property="targetTypeCode"      column="target_type"            />
+        <result property="targetLineUserId"    column="target_line_user_id"    />
+        <result property="targetUserIds"       column="target_user_ids"        />
+        <result property="targetTagId"         column="target_tag_id"          />
+        <result property="targetCount"         column="target_count"           />
+        <result property="successCount"        column="success_count"          />
+        <result property="failCount"           column="fail_count"             />
+        <result property="sendStatusCode"      column="send_status"            />
+        <result property="errorMessage"        column="error_message"          />
+        <result property="lineRequestId"       column="line_request_id"        />
+        <result property="sendTime"            column="send_time"              />
+        <result property="createBy"            column="create_by"              />
+        <result property="createTime"          column="create_time"            />
+    </resultMap>
+    
+    <sql id="selectLineMessageLogVo">
+        select message_id, config_id, message_type, content_type, message_content,
+               target_type, target_line_user_id, target_user_ids, target_tag_id,
+               target_count, success_count, fail_count, send_status, error_message,
+               line_request_id, send_time, create_by, create_time
+        from sys_line_message_log
+    </sql>
+    
+    <select id="selectLineMessageLogById" parameterType="Long" resultMap="LineMessageLogResult">
+        <include refid="selectLineMessageLogVo"/>
+        where message_id = #{messageId}
+    </select>
+    
+    <select id="selectLineMessageLogList" parameterType="com.cheng.line.domain.LineMessageLog" resultMap="LineMessageLogResult">
+        <include refid="selectLineMessageLogVo"/>
+        <where>
+            <if test="configId != null">
+                AND config_id = #{configId}
+            </if>
+            <if test="messageType != null">
+                AND message_type = #{messageTypeCode}
+            </if>
+            <if test="contentType != null">
+                AND content_type = #{contentTypeCode}
+            </if>
+            <if test="targetType != null">
+                AND target_type = #{targetTypeCode}
+            </if>
+            <if test="targetLineUserId != null and targetLineUserId != ''">
+                AND target_line_user_id = #{targetLineUserId}
+            </if>
+            <if test="targetTagId != null">
+                AND target_tag_id = #{targetTagId}
+            </if>
+            <if test="sendStatus != null">
+                AND send_status = #{sendStatusCode}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                AND date_format(send_time,'%Y%m%d') &gt;= date_format(#{params.beginTime},'%Y%m%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND date_format(send_time,'%Y%m%d') &lt;= date_format(#{params.endTime},'%Y%m%d')
+            </if>
+        </where>
+        order by message_id desc
+    </select>
+    
+    <select id="selectMessageLogByUserId" parameterType="String" resultMap="LineMessageLogResult">
+        <include refid="selectLineMessageLogVo"/>
+        where target_line_user_id = #{lineUserId}
+        order by send_time desc
+    </select>
+    
+    <select id="selectMessageLogByTagId" parameterType="Long" resultMap="LineMessageLogResult">
+        <include refid="selectLineMessageLogVo"/>
+        where target_tag_id = #{tagId}
+        order by send_time desc
+    </select>
+    
+    <insert id="insertLineMessageLog" parameterType="com.cheng.line.domain.LineMessageLog" useGeneratedKeys="true" keyProperty="messageId">
+        insert into sys_line_message_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="configId != null">config_id,</if>
+            <if test="messageType != null">message_type,</if>
+            <if test="contentType != null">content_type,</if>
+            <if test="messageContent != null and messageContent != ''">message_content,</if>
+            <if test="targetType != null">target_type,</if>
+            <if test="targetLineUserId != null and targetLineUserId != ''">target_line_user_id,</if>
+            <if test="targetUserIds != null and targetUserIds != ''">target_user_ids,</if>
+            <if test="targetTagId != null">target_tag_id,</if>
+            <if test="targetCount != null">target_count,</if>
+            <if test="successCount != null">success_count,</if>
+            <if test="failCount != null">fail_count,</if>
+            <if test="sendStatus != null">send_status,</if>
+            <if test="errorMessage != null and errorMessage != ''">error_message,</if>
+            <if test="lineRequestId != null and lineRequestId != ''">line_request_id,</if>
+            <if test="sendTime != null">send_time,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="configId != null">#{configId},</if>
+            <if test="messageType != null">#{messageTypeCode},</if>
+            <if test="contentType != null">#{contentTypeCode},</if>
+            <if test="messageContent != null and messageContent != ''">#{messageContent},</if>
+            <if test="targetType != null">#{targetTypeCode},</if>
+            <if test="targetLineUserId != null and targetLineUserId != ''">#{targetLineUserId},</if>
+            <if test="targetUserIds != null and targetUserIds != ''">#{targetUserIds},</if>
+            <if test="targetTagId != null">#{targetTagId},</if>
+            <if test="targetCount != null">#{targetCount},</if>
+            <if test="successCount != null">#{successCount},</if>
+            <if test="failCount != null">#{failCount},</if>
+            <if test="sendStatus != null">#{sendStatusCode},</if>
+            <if test="errorMessage != null and errorMessage != ''">#{errorMessage},</if>
+            <if test="lineRequestId != null and lineRequestId != ''">#{lineRequestId},</if>
+            <if test="sendTime != null">#{sendTime},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        </trim>
+    </insert>
+    
+    <update id="updateLineMessageLog" parameterType="com.cheng.line.domain.LineMessageLog">
+        update sys_line_message_log
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="successCount != null">success_count = #{successCount},</if>
+            <if test="failCount != null">fail_count = #{failCount},</if>
+            <if test="sendStatus != null">send_status = #{sendStatusCode},</if>
+            <if test="errorMessage != null">error_message = #{errorMessage},</if>
+            <if test="sendTime != null">send_time = #{sendTime},</if>
+        </trim>
+        where message_id = #{messageId}
+    </update>
+    
+    <delete id="deleteLineMessageLogById" parameterType="Long">
+        delete from sys_line_message_log where message_id = #{messageId}
+    </delete>
+    
+    <delete id="deleteLineMessageLogByIds" parameterType="Long">
+        delete from sys_line_message_log where message_id in
+        <foreach item="messageId" collection="array" open="(" separator="," close=")">
+            #{messageId}
+        </foreach>
+    </delete>
+    
+    <select id="countSuccessMessagesByConfigId" parameterType="Integer" resultType="int">
+        select count(1) from sys_line_message_log
+        where config_id = #{configId} and send_status = 'SUCCESS'
+    </select>
+    
+    <select id="countFailedMessagesByConfigId" parameterType="Integer" resultType="int">
+        select count(1) from sys_line_message_log
+        where config_id = #{configId} and send_status = 'FAILED'
+    </select>
+    
+</mapper>
