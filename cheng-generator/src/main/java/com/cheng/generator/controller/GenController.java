@@ -133,7 +133,7 @@ public class GenController extends BaseController {
             genTableService.importGenTable(tableList, operName);
             return AjaxResult.success();
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             return AjaxResult.error("建立表結構異常");
         }
     }

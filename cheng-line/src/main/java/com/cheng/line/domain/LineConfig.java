@@ -54,11 +54,34 @@ public class LineConfig extends BaseEntity {
     private String channelId;
 
     /**
+     * Bot Basic ID（例如：@322okyxf）
+     * 用於 Webhook URL 路徑參數
+     */
+    @NotBlank(message = "Bot Basic ID不能為空")
+    @Size(max = 100, message = "Bot Basic ID長度不能超過100個字元")
+    @Excel(name = "Bot Basic ID")
+    private String botBasicId;
+
+    /**
      * LINE Channel Secret（加密儲存）
      */
     @NotBlank(message = "Channel Secret不能為空")
     @Size(max = 500, message = "Channel Secret長度不能超過500個字元")
     private String channelSecret;
+
+    /**
+     * LINE Login Channel ID（加密儲存）
+     * 用於 LINE Login 功能，與 Messaging API 的 Channel ID 不同
+     */
+    @Size(max = 255, message = "Login Channel ID長度不能超過255個字元")
+    private String loginChannelId;
+
+    /**
+     * LINE Login Channel Secret（加密儲存）
+     * 用於 LINE Login 功能，與 Messaging API 的 Channel Secret 不同
+     */
+    @Size(max = 500, message = "Login Channel Secret長度不能超過500個字元")
+    private String loginChannelSecret;
 
     /**
      * Channel Access Token（加密儲存）
@@ -68,7 +91,15 @@ public class LineConfig extends BaseEntity {
     private String channelAccessToken;
 
     /**
-     * Webhook URL
+     * Webhook Base URL（可選，用於自訂 API 網域）
+     * 若為空則使用系統預設值（line.webhook.base-url）
+     */
+    @Size(max = 255, message = "Webhook Base URL長度不能超過255個字元")
+    @Excel(name = "Webhook Base URL")
+    private String webhookBaseUrl;
+
+    /**
+     * Webhook URL（完整的 Webhook URL，自動產生）
      */
     @Size(max = 500, message = "Webhook URL長度不能超過500個字元")
     @Excel(name = "Webhook URL")

@@ -23,10 +23,18 @@ public interface LineConfigMapper {
     /**
      * 根據頻道類型查詢設定
      *
-     * @param channelType 頻道類型
+     * @param channelTypeCode 頻道類型代碼
      * @return LINE 頻道設定
      */
-    LineConfig selectLineConfigByType(ChannelType channelType);
+    LineConfig selectLineConfigByType(String channelTypeCode);
+
+    /**
+     * 根據 Bot Basic ID 查詢設定
+     *
+     * @param botBasicId Bot Basic ID（例如：@322okyxf）
+     * @return LINE 頻道設定
+     */
+    LineConfig selectLineConfigByBotBasicId(String botBasicId);
 
     /**
      * 查詢 LINE 頻道設定列表
@@ -104,4 +112,13 @@ public interface LineConfigMapper {
      * @return 結果
      */
     int setDefaultChannel(Integer configId);
+
+    /**
+     * 更新 Webhook 驗證狀態
+     *
+     * @param configId 設定ID
+     * @param webhookStatusCode Webhook 狀態代碼（0=停用/未驗證, 1=啟用/已驗證）
+     * @return 結果
+     */
+    int updateWebhookStatus(Integer configId, Integer webhookStatusCode);
 }

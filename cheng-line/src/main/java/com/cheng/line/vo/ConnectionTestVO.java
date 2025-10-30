@@ -23,41 +23,59 @@ public class ConnectionTestVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 是否成功
+     * API 連線測試結果
      */
-    private Boolean success;
+    private TestItemVO api;
 
     /**
-     * 訊息
+     * Webhook 設定檢查結果
      */
-    private String message;
+    private TestItemVO webhook;
 
     /**
-     * Bot 基本資訊（成功時回傳）
+     * Bot 資訊取得結果
      */
-    private BotInfoVO botInfo;
+    private TestItemVO bot;
 
     /**
-     * 錯誤詳情（失敗時回傳）
-     */
-    private String errorDetails;
-
-    /**
-     * Bot 基本資訊
+     * 單項測試結果
      */
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class BotInfoVO implements Serializable {
+    public static class TestItemVO implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
 
         /**
-         * Bot 使用者ID
+         * 是否成功
          */
-        private String userId;
+        private Boolean success;
+
+        /**
+         * 訊息
+         */
+        private String message;
+
+        /**
+         * Bot 詳細資訊（僅 bot 項目有）
+         */
+        private BotDataVO data;
+    }
+
+    /**
+     * Bot 詳細資訊
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BotDataVO implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
 
         /**
          * Bot 顯示名稱
@@ -65,13 +83,13 @@ public class ConnectionTestVO implements Serializable {
         private String displayName;
 
         /**
-         * Bot 圖片 URL
-         */
-        private String pictureUrl;
-
-        /**
          * Bot 狀態訊息
          */
         private String statusMessage;
+
+        /**
+         * Bot 圖片 URL
+         */
+        private String pictureUrl;
     }
 }

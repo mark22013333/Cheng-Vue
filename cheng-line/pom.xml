@@ -41,6 +41,12 @@
             <artifactId>line-bot-webhook</artifactId>
         </dependency>
 
+        <!-- LINE Bot SDK 9.12.0 - Parser (用於簽名驗證和事件解析) -->
+        <dependency>
+            <groupId>com.linecorp.bot</groupId>
+            <artifactId>line-bot-parser</artifactId>
+        </dependency>
+
         <!-- LINE Channel Access Token Client -->
         <dependency>
             <groupId>com.linecorp.bot</groupId>

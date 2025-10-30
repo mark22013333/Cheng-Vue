@@ -97,3 +97,22 @@ crawler:
   selenium:
     mode: remote
     remote-url: http://localhost:9515
+
+# LINE Bot 設定 - 本地環境
+line:
+  # Webhook 設定
+  webhook:
+    # 本地開發環境的 Webhook 基礎 URL
+    # 如果使用 ngrok，請改為：https://your-ngrok-url.ngrok.io
+    base-url: https://fbf91fadb09f.ngrok-free.app
+  # LINE Bot SDK 標準配置（整合主頻道設定）
+  bot:
+    # === LINE SDK 必要參數 ===
+    channel-token: ENC(D0moRKiqJsK94WSk4hjO79h6FHnB0m3IY34Fo1D6Y3Ux1nBuSji3C67VU5plFVOkNJbSzoYgMa6gpenxkuIIaIcCtUFPPS4eaewWQS33EiJ8QwBwh6NI9KOmwfVu3VM5yo6n0VBr9KlmzqxBvcmezqGtMIYfx0c/7wMWJMztIVuJQ9k2+25v4wfkFydrv/8N1GyOjHhzJhTUC1SHjcG7oiChq4YqigTRWNeL6lwLLIy0k4SfeEtBQPWBuynGBDhAUABx4p7uTTtVjuqVLvRmjA==)
+    channel-secret: ENC(9hgDtIU38+mynPwHzCuMIjU3pcmbbQ6V5vu1M4ZI+rZLOH+Am5iVjml+XSTWZgzOapMilkL01phEkFSweruENpS6ga6vgrzdc5Oic2rV1zA=)
+    # 注意：專案使用自定義多頻道架構 /webhook/line/{botBasicId}，不使用 SDK 自動配置的 handler
+    # === 擴充參數（主頻道設定）===
+    enabled: true  # 是否啟用主頻道自動載入（預設關閉，需要時設為 true）
+    channel-name: Ava-OA  # 頻道名稱
+    channel-id: ENC(Hn+fBVvZqpHr7K2F10twJSNRjOrOSjnj7xkLl6m/+6PichlEMQYpVZ8cnBVxqokK)  # Channel ID（加密）
+    bot-basic-id: "@322okyxf"  # Bot Basic ID（例如：@322okyxf）

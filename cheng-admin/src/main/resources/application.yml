@@ -133,7 +133,7 @@ springdoc:
     - group: 'system'
       display-name: '系統管理'
       paths-to-match: '/**'
-      packages-to-scan: 
+      packages-to-scan:
         - com.cheng.web.controller
         - com.cheng.quartz.controller
         - com.cheng.generator.controller

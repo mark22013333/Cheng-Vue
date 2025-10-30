@@ -80,9 +80,6 @@ public class LineConfigController extends BaseController {
     @Log(title = "LINE頻道設定", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody LineConfig lineConfig) {
-        if (!lineConfigService.checkChannelTypeUnique(lineConfig)) {
-            return error("新增 LINE 頻道設定失敗，頻道類型已存在");
-        }
         lineConfig.setCreateBy(getUsername());
         return toAjax(lineConfigService.insertLineConfig(lineConfig));
     }
@@ -94,8 +91,17 @@ public class LineConfigController extends BaseController {
     @Log(title = "LINE頻道設定", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody LineConfig lineConfig) {
+        log.info("=== 接收到更新請求 ===");
+        log.info("configId: {}", lineConfig.getConfigId());
+        log.info("status 物件: {}", lineConfig.getStatus());
+        log.info("statusCode (應該有值): {}", lineConfig.getStatusCode());
+        log.info("===================");
+        
         lineConfig.setUpdateBy(getUsername());
-        return toAjax(lineConfigService.updateLineConfig(lineConfig));
+        int result = lineConfigService.updateLineConfig(lineConfig);
+        
+        log.info("更新結果: {}", result);
+        return toAjax(result);
     }
 
     /**
@@ -116,24 +122,11 @@ public class LineConfigController extends BaseController {
     @PostMapping("/testConnection/{configId}")
     public AjaxResult testConnection(@PathVariable Integer configId) {
         try {
-            long startTime = System.currentTimeMillis();
-            String message = lineConfigService.testLineConnection(configId);
-            long responseTime = System.currentTimeMillis() - startTime;
-
-            ConnectionTestVO result = ConnectionTestVO.builder()
-                    .success(true)
-                    .message(message)
-                    .build();
-
+            ConnectionTestVO result = lineConfigService.testLineConnection(configId);
             return success(result);
         } catch (Exception e) {
-            logger.error("LINE 連線測試失敗", e);
-            ConnectionTestVO result = ConnectionTestVO.builder()
-                    .success(false)
-                    .message("連線測試失敗")
-                    .errorDetails(e.getMessage())
-                    .build();
-            return success(result);
+            log.error("LINE 連線測試失敗", e);
+            return error("連線測試失敗：" + e.getMessage());
         }
     }
 
@@ -159,7 +152,7 @@ public class LineConfigController extends BaseController {
 
             return success(result);
         } catch (Exception e) {
-            logger.error("Webhook 測試失敗", e);
+            log.error("Webhook 測試失敗", e);
             WebhookTestVO result = WebhookTestVO.builder()
                     .success(false)
                     .message("Webhook 測試失敗")
@@ -188,5 +181,84 @@ public class LineConfigController extends BaseController {
     @PutMapping("/setDefault/{configId}")
     public AjaxResult setAsDefault(@PathVariable Integer configId) {
         return toAjax(lineConfigService.setAsDefaultChannel(configId));
+    }
+
+    /**
+     * 取得所有啟用的頻道設定
+     */
+    @PreAuthorize("@ss.hasPermi('line:config:query')")
+    @GetMapping("/enabled")
+    public AjaxResult getEnabledList() {
+        List<LineConfig> list = lineConfigService.selectEnabledLineConfigs();
+        return success(list);
+    }
+
+    /**
+     * 檢查指定類型的頻道是否已存在
+     */
+    @PreAuthorize("@ss.hasPermi('line:config:query')")
+    @GetMapping("/checkChannelType/{channelType}")
+    public AjaxResult checkChannelType(@PathVariable String channelType) {
+        LineConfig existingConfig = lineConfigService.selectLineConfigByType(channelType);
+        if (existingConfig != null) {
+            return success(existingConfig);
+        }
+        return success();
+    }
+
+    /**
+     * 設定 LINE Webhook URL
+     * 呼叫 LINE Messaging API 設定 Webhook 端點
+     *
+     * @param configId 頻道設定ID
+     * @return 結果
+     */
+    @PreAuthorize("@ss.hasPermi('line:config:edit')")
+    @Log(title = "設定LINE Webhook", businessType = BusinessType.UPDATE)
+    @PostMapping("/setLineWebhook/{configId}")
+    public AjaxResult setLineWebhook(@PathVariable Integer configId) {
+        try {
+            lineConfigService.setLineWebhookEndpoint(configId);
+            return success("Webhook URL 設定成功");
+        } catch (Exception e) {
+            log.error("設定 LINE Webhook URL 失敗", e);
+            return error("設定失敗：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 設定 LINE Webhook URL（使用表單當前值）
+     * 呼叫 LINE Messaging API 設定 Webhook 端點
+     * 使用表單中的值而不是從資料庫讀取
+     *
+     * @param params 包含 webhookUrl, channelAccessToken, configId
+     * @return 結果
+     */
+    @PreAuthorize("@ss.hasPermi('line:config:edit')")
+    @Log(title = "設定LINE Webhook(表單值)", businessType = BusinessType.UPDATE)
+    @PostMapping("/setLineWebhookWithParams")
+    public AjaxResult setLineWebhookWithParams(@RequestBody java.util.Map<String, Object> params) {
+        try {
+            String webhookUrl = (String) params.get("webhookUrl");
+            String channelAccessToken = (String) params.get("channelAccessToken");
+            Integer configId = params.get("configId") != null ? (Integer) params.get("configId") : null;
+            
+            lineConfigService.setLineWebhookEndpointWithParams(webhookUrl, channelAccessToken, configId);
+            return success("Webhook URL 設定成功");
+        } catch (Exception e) {
+            log.error("設定 LINE Webhook URL 失敗", e);
+            return error("設定失敗：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 取得系統預設的 Webhook 基礎 URL
+     *
+     * @return 預設 Webhook 基礎 URL
+     */
+    @GetMapping("/defaultWebhookBaseUrl")
+    public AjaxResult getDefaultWebhookBaseUrl() {
+        String defaultBaseUrl = lineConfigService.getDefaultWebhookBaseUrl();
+        return success(defaultBaseUrl);
     }
 }

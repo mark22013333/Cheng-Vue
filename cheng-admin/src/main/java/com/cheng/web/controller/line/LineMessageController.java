@@ -8,6 +8,7 @@ import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.line.domain.LineMessageLog;
 import com.cheng.line.dto.BroadcastMessageDTO;
+import com.cheng.line.dto.FlexMessageDTO;
 import com.cheng.line.dto.MulticastMessageDTO;
 import com.cheng.line.dto.PushMessageDTO;
 import com.cheng.line.service.ILineMessageService;
@@ -74,7 +75,7 @@ public class LineMessageController extends BaseController {
             Long messageId = lineMessageService.sendPushMessage(pushMessageDTO);
             return AjaxResult.success("推播訊息發送成功", messageId);
         } catch (Exception e) {
-            logger.error("發送推播訊息失敗", e);
+            log.error("發送推播訊息失敗", e);
             return error("發送推播訊息失敗：" + e.getMessage());
         }
     }
@@ -90,7 +91,7 @@ public class LineMessageController extends BaseController {
             Long messageId = lineMessageService.sendMulticastMessage(multicastMessageDTO);
             return AjaxResult.success("多人推播訊息發送成功", messageId);
         } catch (Exception e) {
-            logger.error("發送多人推播訊息失敗", e);
+            log.error("發送多人推播訊息失敗", e);
             return error("發送多人推播訊息失敗：" + e.getMessage());
         }
     }
@@ -106,8 +107,25 @@ public class LineMessageController extends BaseController {
             Long messageId = lineMessageService.sendBroadcastMessage(broadcastMessageDTO);
             return AjaxResult.success("廣播訊息發送成功", messageId);
         } catch (Exception e) {
-            logger.error("發送廣播訊息失敗", e);
+            log.error("發送廣播訊息失敗", e);
             return error("發送廣播訊息失敗：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 發送 Flex Message（彈性訊息）
+     * 支援單人、多人、廣播
+     */
+    @PreAuthorize("@ss.hasPermi('line:message:send')")
+    @Log(title = "發送Flex Message", businessType = BusinessType.INSERT)
+    @PostMapping("/flex")
+    public AjaxResult sendFlexMessage(@Validated @RequestBody FlexMessageDTO flexMessageDTO) {
+        try {
+            Long messageId = lineMessageService.sendFlexMessage(flexMessageDTO);
+            return AjaxResult.success("Flex Message 發送成功", messageId);
+        } catch (Exception e) {
+            log.error("發送 Flex Message 失敗", e);
+            return error("發送 Flex Message 失敗：" + e.getMessage());
         }
     }
 

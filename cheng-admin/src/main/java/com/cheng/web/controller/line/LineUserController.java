@@ -88,7 +88,7 @@ public class LineUserController extends BaseController {
         try {
             return toAjax(lineUserService.bindSysUser(lineUserId, sysUserId));
         } catch (Exception e) {
-            logger.error("綁定系統使用者失敗", e);
+            log.error("綁定系統使用者失敗", e);
             return error("綁定系統使用者失敗：" + e.getMessage());
         }
     }
@@ -103,7 +103,7 @@ public class LineUserController extends BaseController {
         try {
             return toAjax(lineUserService.unbindSysUser(lineUserId));
         } catch (Exception e) {
-            logger.error("解除綁定系統使用者失敗", e);
+            log.error("解除綁定系統使用者失敗", e);
             return error("解除綁定系統使用者失敗：" + e.getMessage());
         }
     }
@@ -118,7 +118,7 @@ public class LineUserController extends BaseController {
         try {
             return toAjax(lineUserService.updateUserProfile(lineUserId, configId));
         } catch (Exception e) {
-            logger.error("更新使用者個人資料失敗", e);
+            log.error("更新使用者個人資料失敗", e);
             return error("更新使用者個人資料失敗：" + e.getMessage());
         }
     }

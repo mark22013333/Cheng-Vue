@@ -2,6 +2,7 @@ package com.cheng.line.service.impl;
 
 import com.cheng.common.exception.ServiceException;
 import com.cheng.common.utils.StringUtils;
+import com.cheng.line.client.LineClientFactory;
 import com.cheng.line.domain.LineConfig;
 import com.cheng.line.domain.LineUser;
 import com.cheng.line.enums.BindStatus;
@@ -31,6 +32,7 @@ public class LineUserServiceImpl implements ILineUserService {
 
     private @Resource LineUserMapper lineUserMapper;
     private @Resource ILineConfigService lineConfigService;
+    private @Resource LineClientFactory lineClientFactory;
 
     /**
      * 查詢 LINE 使用者
@@ -290,8 +292,8 @@ public class LineUserServiceImpl implements ILineUserService {
         }
 
         try {
-            // 建立 LINE Messaging API Client (SDK 9.x)
-            MessagingApiClient client = MessagingApiClient.builder(config.getChannelAccessToken()).build();
+            // 取得 LINE Messaging API Client（復用快取）
+            MessagingApiClient client = lineClientFactory.getClient(config.getChannelAccessToken());
 
             // 取得使用者個人資料
             UserProfileResponse profile = client.getProfile(lineUserId).get().body();

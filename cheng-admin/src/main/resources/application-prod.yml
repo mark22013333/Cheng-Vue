@@ -101,8 +101,19 @@ crawler:
 
 # LINE Bot 設定 - 正式環境（使用環境變數）
 line:
+  # Webhook 設定
+  webhook:
+    # 正式環境的 Webhook Base URL（必須是公開可存取的網域）
+    # 範例：https://api.ap-domain.com
+    base-url: ${LINE_WEBHOOK_BASE_URL:https://ap-domain.com}
+  # LINE Bot SDK 標準配置（整合主頻道設定）
   bot:
+    # === LINE SDK 必要參數 ===
     channel-token: ${LINE_BOT_CHANNEL_TOKEN}
     channel-secret: ${LINE_BOT_CHANNEL_SECRET}
-    handler:
-      path: /line/callback
+    # 注意：專案使用自定義多頻道架構 /webhook/line/{botBasicId}，不使用 SDK 自動配置的 handler
+    # === 擴充參數（主頻道設定）===
+    enabled: ${LINE_MAIN_ENABLED:false}  # 是否啟用主頻道自動載入
+    channel-name: ${LINE_MAIN_CHANNEL_NAME:主頻道}  # 頻道名稱
+    channel-id: ${LINE_MAIN_CHANNEL_ID:}  # Channel ID（加密）
+    bot-basic-id: ${LINE_MAIN_BOT_BASIC_ID:}  # Bot Basic ID（例如：@322okyxf）

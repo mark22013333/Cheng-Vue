@@ -2,6 +2,7 @@ package com.cheng.line.service;
 
 import com.cheng.line.domain.LineMessageLog;
 import com.cheng.line.dto.BroadcastMessageDTO;
+import com.cheng.line.dto.FlexMessageDTO;
 import com.cheng.line.dto.MulticastMessageDTO;
 import com.cheng.line.dto.PushMessageDTO;
 import com.cheng.line.dto.ReplyMessageDTO;
@@ -62,6 +63,15 @@ public interface ILineMessageService {
      * @return 訊息記錄ID
      */
     Long replyMessage(ReplyMessageDTO replyMessageDTO);
+
+    /**
+     * 發送 Flex Message（彈性訊息）
+     * 根據 targetType 決定發送方式：SINGLE/MULTIPLE/ALL
+     *
+     * @param flexMessageDTO Flex Message DTO
+     * @return 訊息記錄ID
+     */
+    Long sendFlexMessage(FlexMessageDTO flexMessageDTO);
 
     /**
      * 刪除推播訊息記錄
