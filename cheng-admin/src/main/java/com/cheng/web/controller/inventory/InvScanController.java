@@ -99,7 +99,7 @@ public class InvScanController extends BaseController {
             return AjaxResult.success(result);
 
         } catch (Exception e) {
-            logger.error("ISBN 掃描處理失敗 - ISBN: {}, 錯誤: {}", isbn, e.getMessage(), e);
+            log.error("ISBN 掃描處理失敗 - ISBN: {}, 錯誤: {}", isbn, e.getMessage(), e);
             return AjaxResult.error("處理失敗: " + e.getMessage());
         }
     }
@@ -121,7 +121,7 @@ public class InvScanController extends BaseController {
 
             invScanLogService.insertInvScanLog(log);
         } catch (Exception e) {
-            logger.warn("寫入掃描記錄失敗: {}", e.getMessage());
+            log.warn("寫入掃描記錄失敗: {}", e.getMessage());
             // 不中斷主流程
         }
     }

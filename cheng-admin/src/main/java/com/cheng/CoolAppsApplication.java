@@ -62,15 +62,15 @@ public class CoolAppsApplication {
                             \t\
                             🚀 應用程式執行中！存取網址：
                             \t\
-                            本機存取: \t{}
+                            本機存取: {}
                             \t\
-                            網路存取: \t{}
+                            網路存取: {}
                             \t\
-                            Swagger 文檔 (本機): \t{}
+                            Swagger API (本機): {}
                             \t\
-                            Swagger 文檔 (網路): \t{}
+                            Swagger API (網路): {}
                             \t\
-                            環境設定檔: \t{}
+                            環境設定檔: {}
                             ----------------------------------------------------------""",
                     localUrl, networkUrl, swaggerUrl, swaggerNetworkUrl,
                     env.getProperty("spring.profiles.active", "default"));

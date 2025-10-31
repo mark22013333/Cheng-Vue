@@ -28,7 +28,7 @@ import java.util.List;
  * @author cheng
  */
 public class BaseController {
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
     /**
      * 將前台傳遞過來的日期格式的字串，自動轉化為Date類型
@@ -115,6 +115,14 @@ public class BaseController {
      */
     public AjaxResult error(String message) {
         return AjaxResult.error(message);
+    }
+
+    public AjaxResult unauthorized(String message) {
+        return AjaxResult.unauthorized(message);
+    }
+
+    public AjaxResult notFound(String message) {
+        return AjaxResult.notFound(message);
     }
 
     /**

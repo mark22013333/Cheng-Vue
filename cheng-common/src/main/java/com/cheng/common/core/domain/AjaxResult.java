@@ -164,6 +164,14 @@ public class AjaxResult extends HashMap<String, Object> {
         return new AjaxResult(code, msg, null);
     }
 
+    public static AjaxResult notFound(String msg) {
+        return new AjaxResult(HttpStatus.NOT_FOUND, msg, null);
+    }
+
+    public static AjaxResult unauthorized(String msg) {
+        return new AjaxResult(HttpStatus.UNAUTHORIZED, msg, null);
+    }
+
     /**
      * 是否為成功訊息
      *

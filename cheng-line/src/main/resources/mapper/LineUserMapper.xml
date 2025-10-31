@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.line.mapper.LineUserMapper">
+
+    <resultMap type="com.cheng.line.domain.LineUser" id="LineUserResult">
+        <id property="id" column="id"/>
+        <result property="lineUserId" column="line_user_id"/>
+        <result property="lineDisplayName" column="line_display_name"/>
+        <result property="linePictureUrl" column="line_picture_url"/>
+        <result property="lineStatusMessage" column="line_status_message"/>
+        <result property="lineLanguage" column="line_language"/>
+        <result property="sysUserId" column="sys_user_id"/>
+        <result property="bindStatusCode" column="bind_status"/>
+        <result property="followStatusCode" column="follow_status"/>
+        <result property="firstFollowTime" column="first_follow_time"/>
+        <result property="latestFollowTime" column="latest_follow_time"/>
+        <result property="unfollowTime" column="unfollow_time"/>
+        <result property="blockTime" column="block_time"/>
+        <result property="firstBindTime" column="first_bind_time"/>
+        <result property="latestBindTime" column="latest_bind_time"/>
+        <result property="unbindTime" column="unbind_time"/>
+        <result property="bindCount" column="bind_count"/>
+        <result property="totalMessagesSent" column="total_messages_sent"/>
+        <result property="totalMessagesReceived" column="total_messages_received"/>
+        <result property="lastInteractionTime" column="last_interaction_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectLineUserVo">
+        select id,
+               line_user_id,
+               line_display_name,
+               line_picture_url,
+               line_status_message,
+               line_language,
+               sys_user_id,
+               bind_status,
+               follow_status,
+               first_follow_time,
+               latest_follow_time,
+               unfollow_time,
+               block_time,
+               first_bind_time,
+               latest_bind_time,
+               unbind_time,
+               bind_count,
+               total_messages_sent,
+               total_messages_received,
+               last_interaction_time,
+               create_time,
+               update_time,
+               remark
+        from sys_line_user
+    </sql>
+
+    <select id="selectLineUserById" parameterType="Long" resultMap="LineUserResult">
+        <include refid="selectLineUserVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectLineUserByLineUserId" parameterType="String" resultMap="LineUserResult">
+        <include refid="selectLineUserVo"/>
+        where line_user_id = #{lineUserId}
+    </select>
+
+    <select id="selectLineUserBySysUserId" parameterType="Long" resultMap="LineUserResult">
+        <include refid="selectLineUserVo"/>
+        where sys_user_id = #{sysUserId} and bind_status = 'BOUND'
+        limit 1
+    </select>
+
+    <select id="selectLineUserList" parameterType="com.cheng.line.domain.LineUser" resultMap="LineUserResult">
+        <include refid="selectLineUserVo"/>
+        <where>
+            <if test="lineUserId != null and lineUserId != ''">
+                AND line_user_id = #{lineUserId}
+            </if>
+            <if test="lineDisplayName != null and lineDisplayName != ''">
+                AND line_display_name like concat('%', #{lineDisplayName}, '%')
+            </if>
+            <if test="sysUserId != null">
+                AND sys_user_id = #{sysUserId}
+            </if>
+            <if test="bindStatus != null">
+                AND bind_status = #{bindStatus}
+            </if>
+            <if test="followStatus != null">
+                AND follow_status = #{followStatus}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectFollowedLineUsers" resultMap="LineUserResult">
+        <include refid="selectLineUserVo"/>
+        where follow_status = 'FOLLOWING'
+        order by latest_follow_time desc
+    </select>
+
+    <select id="selectBoundLineUsers" resultMap="LineUserResult">
+        <include refid="selectLineUserVo"/>
+        where bind_status = 'BOUND'
+        order by latest_bind_time desc
+    </select>
+
+    <insert id="insertLineUser" parameterType="com.cheng.line.domain.LineUser" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_line_user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="lineUserId != null and lineUserId != ''">line_user_id,</if>
+            <if test="lineDisplayName != null and lineDisplayName != ''">line_display_name,</if>
+            <if test="linePictureUrl != null and linePictureUrl != ''">line_picture_url,</if>
+            <if test="lineStatusMessage != null">line_status_message,</if>
+            <if test="lineLanguage != null">line_language,</if>
+            <if test="sysUserId != null">sys_user_id,</if>
+            <if test="bindStatus != null">bind_status,</if>
+            <if test="followStatus != null">follow_status,</if>
+            <if test="firstFollowTime != null">first_follow_time,</if>
+            <if test="latestFollowTime != null">latest_follow_time,</if>
+            <if test="firstBindTime != null">first_bind_time,</if>
+            <if test="latestBindTime != null">latest_bind_time,</if>
+            <if test="bindCount != null">bind_count,</if>
+            <if test="remark != null">remark,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="lineUserId != null and lineUserId != ''">#{lineUserId},</if>
+            <if test="lineDisplayName != null and lineDisplayName != ''">#{lineDisplayName},</if>
+            <if test="linePictureUrl != null and linePictureUrl != ''">#{linePictureUrl},</if>
+            <if test="lineStatusMessage != null">#{lineStatusMessage},</if>
+            <if test="lineLanguage != null">#{lineLanguage},</if>
+            <if test="sysUserId != null">#{sysUserId},</if>
+            <if test="bindStatus != null">#{bindStatus},</if>
+            <if test="followStatus != null">#{followStatus},</if>
+            <if test="firstFollowTime != null">#{firstFollowTime},</if>
+            <if test="latestFollowTime != null">#{latestFollowTime},</if>
+            <if test="firstBindTime != null">#{firstBindTime},</if>
+            <if test="latestBindTime != null">#{latestBindTime},</if>
+            <if test="bindCount != null">#{bindCount},</if>
+            <if test="remark != null">#{remark},</if>
+            sysdate()
+        </trim>
+    </insert>
+
+    <update id="updateLineUser" parameterType="com.cheng.line.domain.LineUser">
+        update sys_line_user
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="lineDisplayName != null and lineDisplayName != ''">line_display_name = #{lineDisplayName},</if>
+            <if test="linePictureUrl != null">line_picture_url = #{linePictureUrl},</if>
+            <if test="lineStatusMessage != null">line_status_message = #{lineStatusMessage},</if>
+            <if test="lineLanguage != null">line_language = #{lineLanguage},</if>
+            <if test="sysUserId != null">sys_user_id = #{sysUserId},</if>
+            <if test="bindStatus != null">bind_status = #{bindStatus},</if>
+            <if test="followStatus != null">follow_status = #{followStatus},</if>
+            <if test="latestFollowTime != null">latest_follow_time = #{latestFollowTime},</if>
+            <if test="unfollowTime != null">unfollow_time = #{unfollowTime},</if>
+            <if test="blockTime != null">block_time = #{blockTime},</if>
+            <if test="latestBindTime != null">latest_bind_time = #{latestBindTime},</if>
+            <if test="unbindTime != null">unbind_time = #{unbindTime},</if>
+            <if test="bindCount != null">bind_count = #{bindCount},</if>
+            <if test="totalMessagesSent != null">total_messages_sent = #{totalMessagesSent},</if>
+            <if test="totalMessagesReceived != null">total_messages_received = #{totalMessagesReceived},</if>
+            <if test="lastInteractionTime != null">last_interaction_time = #{lastInteractionTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteLineUserById" parameterType="Long">
+        delete
+        from sys_line_user
+        where id = #{id}
+    </delete>
+
+    <delete id="deleteLineUserByIds" parameterType="Long">
+        delete from sys_line_user where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

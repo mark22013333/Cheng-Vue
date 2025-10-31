@@ -1,5 +1,7 @@
 package com.cheng.common.exception;
 
+import lombok.Getter;
+
 import java.io.Serial;
 
 /**
@@ -7,6 +9,7 @@ import java.io.Serial;
  *
  * @author cheng
  */
+@Getter
 public final class ServiceException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -24,7 +27,7 @@ public final class ServiceException extends RuntimeException {
     /**
      * 錯誤明細，内部調試錯誤
      * <p>
-     * 和 {@link CommonResult#getDetailMessage()} 一致的設計
+     * 和 {@see CommonResult#getDetailMessage()} 一致的設計
      */
     private String detailMessage;
 
@@ -43,17 +46,9 @@ public final class ServiceException extends RuntimeException {
         this.code = code;
     }
 
-    public String getDetailMessage() {
-        return detailMessage;
-    }
-
     @Override
     public String getMessage() {
         return message;
-    }
-
-    public Integer getCode() {
-        return code;
     }
 
     public ServiceException setMessage(String message) {

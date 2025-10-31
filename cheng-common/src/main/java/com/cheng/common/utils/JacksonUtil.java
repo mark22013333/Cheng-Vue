@@ -1,4 +1,4 @@
-package com.cheng.crawler.utils;
+package com.cheng.common.utils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;

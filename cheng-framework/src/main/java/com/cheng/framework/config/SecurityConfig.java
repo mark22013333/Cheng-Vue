@@ -98,6 +98,8 @@ public class SecurityConfig {
                     requests.requestMatchers("/login", "/register", "/captchaImage").permitAll()
                             // 測試用登入 API，允許匿名訪問
                             .requestMatchers("/test/user/test-login").permitAll()
+                            // LINE Bot Webhook，允許匿名訪問（支援多頻道動態路徑）
+                            .requestMatchers("/webhook/line/**").permitAll()
                             // 靜態資源，可匿名訪問
                             .requestMatchers(HttpMethod.GET, "/", "/*.html", "/**.html", "/**.css", "/**.js", "/profile/**").permitAll()
                             .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**", "/druid/**").permitAll()

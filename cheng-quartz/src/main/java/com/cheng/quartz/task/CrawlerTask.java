@@ -44,24 +44,24 @@ public class CrawlerTask {
      */
     public void run(String paramsJson) {
         log.info("開始執行爬蟲任務，參數: {}", paramsJson);
-        
+
         try {
             // 解析 JSON 為 CrawlerParams
             CrawlerParams params = JSON.parseObject(paramsJson, CrawlerParams.class);
-            
+
             // 取得爬蟲類型
             String crawlerTypeStr = params.getCrawlerType();
             if (crawlerTypeStr == null || crawlerTypeStr.trim().isEmpty()) {
                 log.error("參數中缺少 crawlerType");
                 return;
             }
-            
+
             CrawlerType type = parseCrawlerType(crawlerTypeStr);
             if (type == null) {
                 log.error("無效的爬蟲類型: {}", crawlerTypeStr);
                 return;
             }
-            
+
             // 執行爬蟲
             CrawlerHandler<?, ?> handler = CrawlerHandler.getHandler(type);
             if (handler != null) {

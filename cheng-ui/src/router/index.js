@@ -216,10 +216,27 @@ export const dynamicRoutes = [
         meta: {title: '庫存報表', icon: 'chart'}
       }
     ]
+  },
+  {
+    path: '/line/config',
+    component: Layout,
+    hidden: false,
+    permissions: ['line:config:list'],
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/line/config/index'),
+        name: 'LineConfig',
+        meta: {
+          title: 'LINE 設定',
+          icon: 'setting'
+        }
+      }
+    ]
   }
 ]
 
-// 防止连續點擊多次路由報錯
+// 防止連續點擊多次路由報錯
 let routerPush = Router.prototype.push
 let routerReplace = Router.prototype.replace
 // push
@@ -232,7 +249,7 @@ Router.prototype.replace = function push(location) {
 }
 
 export default new Router({
-  mode: 'history', // 去掉url中的#
+  mode: 'history', // 移除url中的#
   scrollBehavior: () => ({y: 0}),
   routes: constantRoutes
 })
