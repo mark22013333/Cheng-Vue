@@ -230,13 +230,16 @@ INSERT INTO sys_dict_type (dict_id, dict_name, dict_type, status, create_by, cre
 VALUES ((SELECT IFNULL(MAX(dict_id), 100) + 1 FROM (SELECT dict_id FROM sys_dict_type) AS temp), 'LINE頻道類型',
         'line_channel_type', '0', 'admin', NOW(), '', NULL, 'LINE 頻道類型列表');
 
+-- 取得 dict_code 最大值
+SET @max_dict_code = (SELECT IFNULL(MAX(dict_code), 100) FROM sys_dict_data);
+
 INSERT INTO sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default,
                            status, create_by, create_time, update_by, update_time, remark)
-VALUES ((SELECT IFNULL(MAX(dict_code), 100) + 1 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 1, '主頻道',
+VALUES (@max_dict_code + 1, 1, '主頻道',
         'MAIN', 'line_channel_type', '', 'primary', 'Y', '0', 'admin', NOW(), '', NULL, '正式環境使用的主頻道'),
-       ((SELECT IFNULL(MAX(dict_code), 100) + 2 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 2, '副頻道', 'SUB',
+       (@max_dict_code + 2, 2, '副頻道', 'SUB',
         'line_channel_type', '', 'success', 'N', '0', 'admin', NOW(), '', NULL, '備用頻道'),
-       ((SELECT IFNULL(MAX(dict_code), 100) + 3 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 3, '測試頻道',
+       (@max_dict_code + 3, 3, '測試頻道',
         'TEST', 'line_channel_type', '', 'info', 'N', '0', 'admin', NOW(), '', NULL, '測試環境使用');
 
 -- 新增 LINE 訊息類型字典
@@ -245,15 +248,18 @@ INSERT INTO sys_dict_type (dict_id, dict_name, dict_type, status, create_by, cre
 VALUES ((SELECT IFNULL(MAX(dict_id), 100) + 2 FROM (SELECT dict_id FROM sys_dict_type) AS temp), 'LINE訊息類型',
         'line_message_type', '0', 'admin', NOW(), '', NULL, 'LINE 訊息類型列表');
 
+-- 更新 dict_code 最大值
+SET @max_dict_code = (SELECT IFNULL(MAX(dict_code), 100) FROM sys_dict_data);
+
 INSERT INTO sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default,
                            status, create_by, create_time, update_by, update_time, remark)
-VALUES ((SELECT IFNULL(MAX(dict_code), 100) + 4 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 1, '回覆訊息',
+VALUES (@max_dict_code + 1, 1, '回覆訊息',
         'REPLY', 'line_message_type', '', 'default', 'N', '0', 'admin', NOW(), '', NULL, ''),
-       ((SELECT IFNULL(MAX(dict_code), 100) + 5 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 2,
+       (@max_dict_code + 2, 2,
         '推播訊息(單人)', 'PUSH', 'line_message_type', '', 'primary', 'Y', '0', 'admin', NOW(), '', NULL, ''),
-       ((SELECT IFNULL(MAX(dict_code), 100) + 6 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 3,
+       (@max_dict_code + 3, 3,
         '推播訊息(多人)', 'MULTICAST', 'line_message_type', '', 'success', 'N', '0', 'admin', NOW(), '', NULL, ''),
-       ((SELECT IFNULL(MAX(dict_code), 100) + 7 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 4, '廣播訊息',
+       (@max_dict_code + 4, 4, '廣播訊息',
         'BROADCAST', 'line_message_type', '', 'warning', 'N', '0', 'admin', NOW(), '', NULL, '');
 
 -- 新增 LINE 內容類型字典
@@ -262,15 +268,18 @@ INSERT INTO sys_dict_type (dict_id, dict_name, dict_type, status, create_by, cre
 VALUES ((SELECT IFNULL(MAX(dict_id), 100) + 3 FROM (SELECT dict_id FROM sys_dict_type) AS temp), 'LINE內容類型',
         'line_content_type', '0', 'admin', NOW(), '', NULL, 'LINE 訊息內容類型');
 
+-- 更新 dict_code 最大值
+SET @max_dict_code = (SELECT IFNULL(MAX(dict_code), 100) FROM sys_dict_data);
+
 INSERT INTO sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default,
                            status, create_by, create_time, update_by, update_time, remark)
-VALUES ((SELECT IFNULL(MAX(dict_code), 100) + 8 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 1, '純文字',
+VALUES (@max_dict_code + 1, 1, '純文字',
         'TEXT', 'line_content_type', '', 'primary', 'Y', '0', 'admin', NOW(), '', NULL, ''),
-       ((SELECT IFNULL(MAX(dict_code), 100) + 9 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 2, '圖片訊息',
+       (@max_dict_code + 2, 2, '圖片訊息',
         'IMAGE', 'line_content_type', '', 'success', 'N', '0', 'admin', NOW(), '', NULL, ''),
-       ((SELECT IFNULL(MAX(dict_code), 100) + 10 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 3, '模板訊息',
+       (@max_dict_code + 3, 3, '模板訊息',
         'TEMPLATE', 'line_content_type', '', 'warning', 'N', '0', 'admin', NOW(), '', NULL, ''),
-       ((SELECT IFNULL(MAX(dict_code), 100) + 11 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 4, 'Flex訊息',
+       (@max_dict_code + 4, 4, 'Flex訊息',
         'FLEX', 'line_content_type', '', 'info', 'N', '0', 'admin', NOW(), '', NULL, '');
 
 -- 新增 LINE 發送狀態字典
@@ -279,15 +288,18 @@ INSERT INTO sys_dict_type (dict_id, dict_name, dict_type, status, create_by, cre
 VALUES ((SELECT IFNULL(MAX(dict_id), 100) + 4 FROM (SELECT dict_id FROM sys_dict_type) AS temp), 'LINE發送狀態',
         'line_send_status', '0', 'admin', NOW(), '', NULL, 'LINE 訊息發送狀態');
 
+-- 更新 dict_code 最大值
+SET @max_dict_code = (SELECT IFNULL(MAX(dict_code), 100) FROM sys_dict_data);
+
 INSERT INTO sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default,
                            status, create_by, create_time, update_by, update_time, remark)
-VALUES ((SELECT IFNULL(MAX(dict_code), 100) + 12 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 1, '待發送',
+VALUES (@max_dict_code + 1, 1, '待發送',
         'PENDING', 'line_send_status', '', 'info', 'N', '0', 'admin', NOW(), '', NULL, ''),
-       ((SELECT IFNULL(MAX(dict_code), 100) + 13 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 2, '發送中',
+       (@max_dict_code + 2, 2, '發送中',
         'SENDING', 'line_send_status', '', 'primary', 'N', '0', 'admin', NOW(), '', NULL, ''),
-       ((SELECT IFNULL(MAX(dict_code), 100) + 14 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 3, '發送成功',
+       (@max_dict_code + 3, 3, '發送成功',
         'SUCCESS', 'line_send_status', '', 'success', 'Y', '0', 'admin', NOW(), '', NULL, ''),
-       ((SELECT IFNULL(MAX(dict_code), 100) + 15 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 4, '部分成功',
+       (@max_dict_code + 4, 4, '部分成功',
         'PARTIAL_SUCCESS', 'line_send_status', '', 'warning', 'N', '0', 'admin', NOW(), '', NULL, ''),
-       ((SELECT IFNULL(MAX(dict_code), 100) + 16 FROM (SELECT dict_code FROM sys_dict_data) AS temp), 5, '發送失敗',
+       (@max_dict_code + 5, 5, '發送失敗',
         'FAILED', 'line_send_status', '', 'danger', 'N', '0', 'admin', NOW(), '', NULL, '');
