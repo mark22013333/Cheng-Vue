@@ -114,7 +114,7 @@
         </div>
         <div class="form-tip">
           <i class="el-icon-info"></i>
-          LINE 平台回呼使用的網域，必須是公開可存取的 URL。留空則使用系統預設值。
+          LINE 平台回呼使用的網域，必須是公開可存取的 URL（如有應用程式存取路徑，請一併填入，例如：domain.com/cool-apps）。留空則使用系統預設值。
         </div>
       </el-form-item>
 
