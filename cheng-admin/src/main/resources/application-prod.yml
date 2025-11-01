@@ -104,8 +104,9 @@ line:
   # Webhook 設定
   webhook:
     # 正式環境的 Webhook Base URL（必須是公開可存取的網域）
+    # 注意：只需填寫網域名稱，因為所有環境的 context-path 都是 /（根路徑）
     # 範例：https://api.ap-domain.com
-    base-url: ${LINE_WEBHOOK_BASE_URL:https://ap-domain.com}
+    base-url: ${LINE_WEBHOOK_BASE_URL:https://cool-apps.zeabur.app}
   # LINE Bot SDK 標準配置（整合主頻道設定）
   bot:
     # === LINE SDK 必要參數 ===
