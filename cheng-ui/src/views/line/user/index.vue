@@ -1,0 +1,423 @@
+<template>
+  <div class="app-container line-user-container">
+    <!-- 統計卡片區域 -->
+    <stats-card :stats="stats" :loading="statsLoading" @refresh="getStats" />
+
+    <!-- 查詢區域 -->
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="85px">
+      <el-form-item label="使用者ID" prop="lineUserId">
+        <el-input
+          v-model="queryParams.lineUserId"
+          placeholder="請輸入LINE使用者ID"
+          clearable
+          style="width: 200px"
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="顯示名稱" prop="lineDisplayName">
+        <el-input
+          v-model="queryParams.lineDisplayName"
+          placeholder="請輸入顯示名稱"
+          clearable
+          style="width: 200px"
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="綁定狀態" prop="bindStatus">
+        <el-select v-model="queryParams.bindStatus" placeholder="綁定狀態" clearable style="width: 140px">
+          <el-option label="未綁定" value="UNBOUND" />
+          <el-option label="已綁定" value="BOUND" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="關注狀態" prop="followStatus">
+        <el-select v-model="queryParams.followStatus" placeholder="關注狀態" clearable style="width: 140px">
+          <el-option label="關注中" value="FOLLOWING" />
+          <el-option label="已取消" value="UNFOLLOWED" />
+          <el-option label="已封鎖" value="BLOCKED" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="加入時間">
+        <el-date-picker
+          v-model="dateRange"
+          style="width: 240px"
+          value-format="yyyy-MM-dd"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="開始日期"
+          end-placeholder="結束日期"
+        ></el-date-picker>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+      </el-form-item>
+    </el-form>
+
+    <!-- 操作按鈕區域 -->
+    <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button
+          type="primary"
+          plain
+          icon="el-icon-upload"
+          size="mini"
+          @click="handleImport"
+          v-hasPermi="['line:user:import']"
+        >
+          匯入
+        </el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="warning"
+          plain
+          icon="el-icon-download"
+          size="mini"
+          @click="handleExport"
+          v-hasPermi="['line:user:export']"
+        >
+          匯出
+        </el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="danger"
+          plain
+          icon="el-icon-delete"
+          size="mini"
+          :disabled="multiple"
+          @click="handleDelete"
+          v-hasPermi="['line:user:remove']"
+        >
+          刪除
+        </el-button>
+      </el-col>
+      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+    </el-row>
+
+    <!-- 資料表格 -->
+    <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="50" align="center" />
+      <el-table-column label="頭像" align="center" width="80">
+        <template slot-scope="scope">
+          <el-avatar :src="scope.row.linePictureUrl" size="medium">
+            <i class="el-icon-user-solid"></i>
+          </el-avatar>
+        </template>
+      </el-table-column>
+      <el-table-column label="顯示名稱" align="center" prop="lineDisplayName" :show-overflow-tooltip="true" min-width="120" />
+      <el-table-column label="LINE ID" align="center" prop="lineUserId" :show-overflow-tooltip="true" min-width="150">
+        <template slot-scope="scope">
+          <span>{{ scope.row.lineUserId }}</span>
+          <el-button
+            type="text"
+            icon="el-icon-document-copy"
+            size="mini"
+            @click="handleCopy(scope.row.lineUserId)"
+            style="margin-left: 5px"
+          ></el-button>
+        </template>
+      </el-table-column>
+      <el-table-column label="關注狀態" align="center" width="100">
+        <template slot-scope="scope">
+          <el-tag v-if="scope.row.followStatus === 'FOLLOWING'" type="success" size="small">關注中</el-tag>
+          <el-tag v-else-if="scope.row.followStatus === 'BLOCKED'" type="danger" size="small">已封鎖</el-tag>
+          <el-tag v-else type="info" size="small">已取消</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="綁定狀態" align="center" width="100">
+        <template slot-scope="scope">
+          <el-tag v-if="scope.row.bindStatus === 'BOUND'" type="primary" size="small">已綁定</el-tag>
+          <el-tag v-else type="warning" size="small">未綁定</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="互動統計" align="center" width="120">
+        <template slot-scope="scope">
+          <el-tooltip placement="top">
+            <div slot="content">
+              發送：{{ scope.row.totalMessagesSent || 0 }}<br/>
+              接收：{{ scope.row.totalMessagesReceived || 0 }}
+            </div>
+            <el-tag size="small">
+              <i class="el-icon-s-comment"></i>
+              {{ (scope.row.totalMessagesSent || 0) + (scope.row.totalMessagesReceived || 0) }}
+            </el-tag>
+          </el-tooltip>
+        </template>
+      </el-table-column>
+      <el-table-column label="最後互動" align="center" prop="lastInteractionTime" width="160">
+        <template slot-scope="scope">
+          <span v-if="scope.row.lastInteractionTime">{{ parseTime(scope.row.lastInteractionTime, '{y}-{m}-{d} {h}:{i}') }}</span>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" width="220" class-name="small-padding fixed-width">
+        <template slot-scope="scope">
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-view"
+            @click="handleDetail(scope.row)"
+            v-hasPermi="['line:user:query']"
+          >詳情</el-button>
+          <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)">
+            <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command="bind" icon="el-icon-link" v-hasPermi="['line:user:bind']">
+                綁定
+              </el-dropdown-item>
+              <el-dropdown-item command="unbind" icon="el-icon-unlock" v-hasPermi="['line:user:bind']" v-if="scope.row.bindStatus === 'BOUND'">
+                解綁
+              </el-dropdown-item>
+              <el-dropdown-item command="sync" icon="el-icon-refresh" v-hasPermi="['line:user:edit']">
+                同步資料
+              </el-dropdown-item>
+              <el-dropdown-item command="delete" icon="el-icon-delete" divided v-hasPermi="['line:user:remove']">
+                刪除
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- 分頁 -->
+    <pagination
+      v-show="total > 0"
+      :total="total"
+      :page.sync="queryParams.pageNum"
+      :limit.sync="queryParams.pageSize"
+      @pagination="getList"
+    />
+
+    <!-- 使用者詳情抽屜 -->
+    <user-detail
+      :visible.sync="detailVisible"
+      :user-id="currentUserId"
+      @close="detailVisible = false"
+    />
+
+    <!-- 綁定對話框 -->
+    <bind-dialog
+      :visible.sync="bindVisible"
+      :line-user-id="currentLineUserId"
+      @success="handleBindSuccess"
+    />
+
+    <!-- 匯入對話框 -->
+    <import-dialog
+      :visible.sync="importVisible"
+      @success="handleImportSuccess"
+    />
+  </div>
+</template>
+
+<script>
+import { listUser, delUser, getUserStats, unbindUser, syncUserProfile, exportUser } from '@/api/line/user'
+import StatsCard from './components/StatsCard'
+import UserDetail from './components/UserDetail'
+import BindDialog from './components/BindDialog'
+import ImportDialog from './components/ImportDialog'
+
+export default {
+  name: 'LineUser',
+  components: {
+    StatsCard,
+    UserDetail,
+    BindDialog,
+    ImportDialog
+  },
+  data() {
+    return {
+      // 載入狀態
+      loading: true,
+      statsLoading: true,
+      // 選中陣列
+      ids: [],
+      // 非單個停用
+      single: true,
+      // 非多個停用
+      multiple: true,
+      // 顯示搜尋條件
+      showSearch: true,
+      // 總條數
+      total: 0,
+      // 使用者列表
+      userList: [],
+      // 統計資料
+      stats: {},
+      // 日期範圍
+      dateRange: [],
+      // 查詢參數
+      queryParams: {
+        pageNum: 1,
+        pageSize: 10,
+        lineUserId: undefined,
+        lineDisplayName: undefined,
+        bindStatus: undefined,
+        followStatus: undefined
+      },
+      // 使用者詳情
+      detailVisible: false,
+      currentUserId: null,
+      // 綁定對話框
+      bindVisible: false,
+      currentLineUserId: null,
+      // 匯入對話框
+      importVisible: false
+    }
+  },
+  created() {
+    this.getList()
+    this.getStats()
+  },
+  methods: {
+    /** 查詢使用者列表 */
+    getList() {
+      this.loading = true
+      listUser(this.addDateRange(this.queryParams, this.dateRange)).then(response => {
+        this.userList = response.rows
+        this.total = response.total
+        this.loading = false
+      })
+    },
+    /** 查詢統計資料 */
+    getStats() {
+      this.statsLoading = true
+      getUserStats().then(response => {
+        this.stats = response.data
+        this.statsLoading = false
+      })
+    },
+    /** 搜尋按鈕操作 */
+    handleQuery() {
+      this.queryParams.pageNum = 1
+      this.getList()
+    },
+    /** 重置按鈕操作 */
+    resetQuery() {
+      this.dateRange = []
+      this.resetForm('queryForm')
+      this.handleQuery()
+    },
+    /** 多選框選中資料 */
+    handleSelectionChange(selection) {
+      this.ids = selection.map(item => item.id)
+      this.single = selection.length !== 1
+      this.multiple = !selection.length
+    },
+    /** 匯出按鈕操作 */
+    handleExport() {
+      this.download('line/user/export', {
+        ...this.queryParams
+      }, `line_user_${new Date().getTime()}.xlsx`)
+    },
+    /** 匯入按鈕操作 */
+    handleImport() {
+      this.importVisible = true
+    },
+    /** 匯入成功回調 */
+    handleImportSuccess(result) {
+      this.importVisible = false
+      this.getList()
+      this.getStats()
+      
+      // 顯示匯入結果
+      const h = this.$createElement
+      const message = h('div', null, [
+        h('p', null, `總計：${result.totalCount} 筆`),
+        h('p', { style: 'color: #67C23A' }, `成功：${result.successCount} 筆（新增：${result.newCount}，更新：${result.updateCount}）`),
+        result.failCount > 0 ? h('p', { style: 'color: #F56C6C' }, `失敗：${result.failCount} 筆`) : null,
+        result.failDetails && result.failDetails.length > 0 ? h('div', { style: 'margin-top: 10px; max-height: 200px; overflow-y: auto' }, [
+          h('p', { style: 'font-weight: bold' }, '失敗詳情：'),
+          ...result.failDetails.slice(0, 10).map(detail =>
+            h('p', { style: 'font-size: 12px' }, `行 ${detail.rowNumber}: ${detail.lineUserId} - ${detail.reason}`)
+          ),
+          result.failDetails.length > 10 ? h('p', { style: 'font-size: 12px; color: #909399' }, `... 還有 ${result.failDetails.length - 10} 筆失敗記錄`) : null
+        ]) : null
+      ])
+      
+      this.$notify({
+        title: '匯入完成',
+        message: message,
+        type: result.failCount > 0 ? 'warning' : 'success',
+        duration: 10000,
+        dangerouslyUseHTMLString: false
+      })
+    },
+    /** 刪除按鈕操作 */
+    handleDelete(row) {
+      const ids = row.id || this.ids
+      this.$modal.confirm('是否確認刪除選中的 LINE 使用者？').then(() => {
+        return delUser(ids)
+      }).then(() => {
+        this.getList()
+        this.getStats()
+        this.$modal.msgSuccess('刪除成功')
+      }).catch(() => {})
+    },
+    /** 查看詳情 */
+    handleDetail(row) {
+      this.currentUserId = row.id
+      this.detailVisible = true
+    },
+    /** 綁定成功回調 */
+    handleBindSuccess() {
+      this.bindVisible = false
+      this.getList()
+      this.getStats()
+    },
+    /** 複製 LINE ID */
+    handleCopy(text) {
+      this.$copyText(text).then(() => {
+        this.$message.success('已複製到剪貼簿')
+      }).catch(() => {
+        this.$message.error('複製失敗')
+      })
+    },
+    /** 下拉選單操作 */
+    handleCommand(command, row) {
+      switch (command) {
+        case 'bind':
+          this.currentLineUserId = row.lineUserId
+          this.bindVisible = true
+          break
+        case 'unbind':
+          this.handleUnbind(row)
+          break
+        case 'sync':
+          this.handleSync(row)
+          break
+        case 'delete':
+          this.handleDelete(row)
+          break
+      }
+    },
+    /** 解除綁定 */
+    handleUnbind(row) {
+      this.$modal.confirm('是否確認解除綁定？').then(() => {
+        return unbindUser(row.lineUserId)
+      }).then(() => {
+        this.getList()
+        this.getStats()
+        this.$modal.msgSuccess('解除綁定成功')
+      }).catch(() => {})
+    },
+    /** 同步資料 */
+    handleSync(row) {
+      this.$modal.confirm('是否從 LINE API 同步使用者最新資料？').then(() => {
+        return syncUserProfile(row.lineUserId, null)
+      }).then(() => {
+        this.getList()
+        this.$modal.msgSuccess('同步成功')
+      }).catch(() => {})
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.line-user-container {
+  padding: 20px;
+}
+</style>

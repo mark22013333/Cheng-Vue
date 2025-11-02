@@ -5,6 +5,8 @@ import com.cheng.common.utils.StringUtils;
 import com.cheng.line.client.LineClientFactory;
 import com.cheng.line.domain.LineConfig;
 import com.cheng.line.domain.LineUser;
+import com.cheng.line.dto.LineUserImportResultDTO;
+import com.cheng.line.dto.LineUserStatsDTO;
 import com.cheng.line.enums.BindStatus;
 import com.cheng.line.enums.FollowStatus;
 import com.cheng.line.mapper.LineUserMapper;
@@ -16,7 +18,12 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -346,5 +353,248 @@ public class LineUserServiceImpl implements ILineUserService {
         } else {
             return lineUserMapper.incrementMessagesReceived(lineUserId);
         }
+    }
+
+    /**
+     * 取得使用者統計資料
+     *
+     * @return 統計資料
+     */
+    @Override
+    public LineUserStatsDTO getUserStats() {
+        // 取得當前日期時間
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime todayStart = now.toLocalDate().atStartOfDay();
+        LocalDateTime weekStart = now.minusWeeks(1);
+        LocalDateTime monthStart = now.minusMonths(1);
+
+        // 格式化日期
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String todayStartStr = todayStart.format(formatter);
+        String weekStartStr = weekStart.format(formatter);
+        String monthStartStr = monthStart.format(formatter);
+        String nowStr = now.format(formatter);
+
+        return LineUserStatsDTO.builder()
+                .totalUsers(lineUserMapper.countTotalUsers())
+                .followingCount((long) lineUserMapper.countFollowingUsers())
+                .boundCount((long) lineUserMapper.countBoundUsers())
+                .blockedCount(lineUserMapper.countBlockedUsers())
+                .todayNewCount(lineUserMapper.countNewUsersByDateRange(todayStartStr, nowStr))
+                .weekNewCount(lineUserMapper.countNewUsersByDateRange(weekStartStr, nowStr))
+                .monthNewCount(lineUserMapper.countNewUsersByDateRange(monthStartStr, nowStr))
+                .build();
+    }
+
+    /**
+     * 匯入 LINE 使用者（從檔案）
+     *
+     * @param file     上傳的檔案
+     * @param configId 頻道設定ID
+     * @return 匯入結果
+     */
+    @Override
+    @Transactional
+    public LineUserImportResultDTO importLineUsers(MultipartFile file, Integer configId) {
+        LineUserImportResultDTO result = LineUserImportResultDTO.builder()
+                .totalCount(0)
+                .successCount(0)
+                .failCount(0)
+                .newCount(0)
+                .updateCount(0)
+                .failDetails(new ArrayList<>())
+                .build();
+
+        try {
+            // 讀取檔案內容
+            List<String> lineUserIds = readLineUserIdsFromFile(file);
+            result.setTotalCount(lineUserIds.size());
+
+            // 取得頻道設定
+            if (configId == null) {
+                throw new ServiceException("請指定頻道設定");
+            }
+            
+            LineConfig config = lineConfigService.selectLineConfigById(configId);
+            if (config == null) {
+                throw new ServiceException("頻道設定不存在");
+            }
+            
+            // 取得 LINE Messaging API Client（復用快取）
+            MessagingApiClient client = lineClientFactory.getClient(config.getChannelAccessToken());
+
+            // 逐個處理 LINE User ID
+            for (int i = 0; i < lineUserIds.size(); i++) {
+                String lineUserId = lineUserIds.get(i).trim();
+                int rowNumber = i + 1;
+
+                if (StringUtils.isEmpty(lineUserId)) {
+                    continue;
+                }
+
+                try {
+                    // 檢查是否已存在
+                    LineUser existUser = lineUserMapper.selectLineUserByLineUserId(lineUserId);
+                    boolean isNew = (existUser == null);
+
+                    // 從 LINE API 取得使用者資料
+                    UserProfileResponse profile = client.getProfile(lineUserId).get().body();
+
+                    if (isNew) {
+                        // 建立新使用者
+                        LineUser newUser = new LineUser();
+                        newUser.setLineUserId(lineUserId);
+                        newUser.setLineDisplayName(profile.displayName());
+                        newUser.setLinePictureUrl(profile.pictureUrl() != null ? profile.pictureUrl().toString() : null);
+                        newUser.setLineStatusMessage(profile.statusMessage());
+                        newUser.setFollowStatus(FollowStatus.FOLLOWING);
+                        newUser.setBindStatus(BindStatus.UNBOUND);
+                        newUser.setFirstFollowTime(new Date());
+                        newUser.setLatestFollowTime(new Date());
+                        newUser.setBindCount(0);
+                        newUser.setTotalMessagesSent(0);
+                        newUser.setTotalMessagesReceived(0);
+                        lineUserMapper.insertLineUser(newUser);
+                        result.setNewCount(result.getNewCount() + 1);
+                    } else {
+                        // 更新既有使用者
+                        existUser.setLineDisplayName(profile.displayName());
+                        existUser.setLinePictureUrl(profile.pictureUrl() != null ? profile.pictureUrl().toString() : null);
+                        existUser.setLineStatusMessage(profile.statusMessage());
+                        existUser.setFollowStatus(FollowStatus.FOLLOWING);
+                        existUser.setLatestFollowTime(new Date());
+                        lineUserMapper.updateLineUser(existUser);
+                        result.setUpdateCount(result.getUpdateCount() + 1);
+                    }
+
+                    result.setSuccessCount(result.getSuccessCount() + 1);
+
+                } catch (Exception e) {
+                    log.error("匯入 LINE 使用者失敗：{}", lineUserId, e);
+                    result.setFailCount(result.getFailCount() + 1);
+                    result.getFailDetails().add(
+                            LineUserImportResultDTO.ImportFailDetail.builder()
+                                    .lineUserId(lineUserId)
+                                    .reason(e.getMessage())
+                                    .rowNumber(rowNumber)
+                                    .build()
+                    );
+                }
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("匯入 LINE 使用者失敗", e);
+            throw new ServiceException("匯入 LINE 使用者失敗：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 從檔案讀取 LINE User ID 列表
+     *
+     * @param file 上傳的檔案
+     * @return LINE User ID 列表
+     */
+    private List<String> readLineUserIdsFromFile(MultipartFile file) {
+        List<String> lineUserIds = new ArrayList<>();
+        String fileName = file.getOriginalFilename();
+
+        try {
+            if (fileName == null) {
+                throw new ServiceException("檔案名稱不能為空");
+            }
+
+            // 根據檔案類型讀取
+            if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+                // Excel 檔案
+                lineUserIds = readFromExcel(file);
+            } else if (fileName.endsWith(".csv")) {
+                // CSV 檔案
+                lineUserIds = readFromCsv(file);
+            } else if (fileName.endsWith(".txt")) {
+                // TXT 檔案
+                lineUserIds = readFromTxt(file);
+            } else {
+                throw new ServiceException("不支援的檔案格式，請上傳 .xlsx、.xls、.csv 或 .txt 檔案");
+            }
+
+            // 移除空白和重複項
+            return lineUserIds.stream()
+                    .map(String::trim)
+                    .filter(id -> !id.isEmpty())
+                    .distinct()
+                    .collect(java.util.stream.Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("讀取檔案失敗", e);
+            throw new ServiceException("讀取檔案失敗：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 從 Excel 讀取
+     */
+    private List<String> readFromExcel(MultipartFile file) throws Exception {
+        List<String> result = new ArrayList<>();
+        try (java.io.InputStream is = file.getInputStream();
+             org.apache.poi.ss.usermodel.Workbook workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create(is)) {
+
+            org.apache.poi.ss.usermodel.Sheet sheet = workbook.getSheetAt(0);
+            for (org.apache.poi.ss.usermodel.Row row : sheet) {
+                if (row.getRowNum() == 0) continue; // 跳過標題行
+                org.apache.poi.ss.usermodel.Cell cell = row.getCell(0);
+                if (cell != null) {
+                    String value = cell.getStringCellValue();
+                    if (StringUtils.isNotEmpty(value)) {
+                        result.add(value.trim());
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 從 CSV 讀取
+     */
+    private List<String> readFromCsv(MultipartFile file) throws Exception {
+        List<String> result = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(
+                new java.io.InputStreamReader(file.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {
+
+            String line;
+            boolean isFirstLine = true;
+            while ((line = reader.readLine()) != null) {
+                if (isFirstLine) {
+                    isFirstLine = false;
+                    continue; // 跳過標題行
+                }
+                String[] values = line.split(",");
+                if (values.length > 0 && StringUtils.isNotEmpty(values[0])) {
+                    result.add(values[0].trim());
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 從 TXT 讀取（換行分隔）
+     */
+    private List<String> readFromTxt(MultipartFile file) throws Exception {
+        List<String> result = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(
+                new java.io.InputStreamReader(file.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String trimmed = line.trim();
+                if (StringUtils.isNotEmpty(trimmed)) {
+                    result.add(trimmed);
+                }
+            }
+        }
+        return result;
     }
 }

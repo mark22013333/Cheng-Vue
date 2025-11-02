@@ -132,4 +132,45 @@ public class LineUserController extends BaseController {
     public AjaxResult remove(@PathVariable Long[] ids) {
         return toAjax(lineUserService.deleteLineUserByIds(ids));
     }
+
+    /**
+     * 取得使用者統計資料
+     */
+    @PreAuthorize("@ss.hasPermi('line:user:list')")
+    @GetMapping("/stats")
+    public AjaxResult getStats() {
+        return success(lineUserService.getUserStats());
+    }
+
+    /**
+     * 匯入 LINE 使用者
+     */
+    @PreAuthorize("@ss.hasPermi('line:user:import')")
+    @Log(title = "匯入LINE使用者", businessType = BusinessType.IMPORT)
+    @PostMapping("/import")
+    public AjaxResult importUsers(@RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+                                   @RequestParam("configId") Integer configId) {
+        try {
+            if (file.isEmpty()) {
+                return error("請選擇要上傳的檔案");
+            }
+            
+            com.cheng.line.dto.LineUserImportResultDTO result = lineUserService.importLineUsers(file, configId);
+            return success(result);
+        } catch (Exception e) {
+            log.error("匯入 LINE 使用者失敗", e);
+            return error("匯入 LINE 使用者失敗：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 下載匯入範本
+     */
+    @PreAuthorize("@ss.hasPermi('line:user:import')")
+    @PostMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response) {
+        com.cheng.common.utils.poi.ExcelUtil<com.cheng.line.domain.LineUser> util = 
+                new com.cheng.common.utils.poi.ExcelUtil<>(com.cheng.line.domain.LineUser.class);
+        util.importTemplateExcel(response, "LINE使用者");
+    }
 }

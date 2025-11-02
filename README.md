@@ -45,6 +45,8 @@ CoolApps 是一個基於若依(RY)專案修改的 Spring Boot 3.5.4 和 Vue.js 2
 - 🚀 **高效能**：Redis 暫存 + Druid 連線池優化
 - 🛠️ **開發友善**：完整的程式碼產生器和自動化建置腳本
 - 📦 **庫存管理**：完整的庫存管理系統（包含 QR Code 掃描功能）
+- 🔍 **智慧日誌**：TraceId 追蹤 + 自動壓縮 + 彩色輸出
+- 🎣 **Git Hooks**：自動安裝、Mapper 驗證、Commit 格式檢查
 
 ## 🏛️ 技術架構
 
@@ -143,12 +145,14 @@ Cheng-Vue/
 ├── cheng-generator/          # 程式碼產生模組
 ├── cheng-quartz/             # 定時任務模組
 ├── cheng-system/             # 系統管理模組
-├── cheng-crawler/            # 爬蟲模組（預留）
+├── cheng-crawler/            # 爬蟲模組
+├── cheng-line/               # LINE Bot 模組
 ├── cheng-ui/                 # 前端 Vue.js 專案
 │   ├── src/                  # 原始碼
 │   ├── public/               # 靜態資源
 │   ├── Dockerfile            # 前端 Docker 映像
 │   └── nginx.conf            # Nginx 配置
+├── .githooks/                # Git Hooks（自動驗證）
 ├── cheng.deploy/             # 傳統部署腳本
 ├── sql/                      # 資料庫初始化腳本
 ├── docs/                     # 專案文檔
@@ -162,12 +166,88 @@ Cheng-Vue/
 ### 模組說明
 
 - **cheng-admin**：系統主模組，整合所有功能模組，產出 `apps.war` 部署檔案
-- **cheng-common**：通用工具類、常數定義、共用元件、JSON 序列化等
-- **cheng-framework**：核心框架設定，包含 Spring Security、Redis、異常處理等
+- **cheng-common**：通用工具類、常數定義、共用元件、TraceId 工具等
+- **cheng-framework**：核心框架設定，包含 Spring Security、Redis、日誌系統、Git Hooks 自動安裝等
 - **cheng-generator**：程式碼產生器，支援自動產生 Controller、Service、Mapper 等
-- **cheng-quartz**：定時任務管理，基於 Quartz 實現
+- **cheng-quartz**：定時任務管理，基於 Quartz 實現，支援 TraceId 追蹤
 - **cheng-system**：系統管理功能，包含用戶、角色、選單、部門、庫存管理等
+- **cheng-crawler**：爬蟲模組，支援資料爬取和 TraceId 追蹤
+- **cheng-line**：LINE Bot 模組，整合 LINE Messaging API
 - **cheng-ui**：前端專案，基於 Vue.js 2.6 + Element UI（繁體中文）
+
+## 🔧 開發工具與規範
+
+### Git Hooks 自動安裝
+
+**零配置啟用**：啟動後端服務時自動安裝 Git Hooks
+
+```bash
+# 啟動服務即自動安裝
+mvn spring-boot:run -Dspring-boot.run.profiles=local -Djasypt.encryptor.password=diDsd]3FsGO@4dido
+```
+
+**已安裝的 Hooks**：
+- ✅ **pre-commit** - 提交前自動驗證所有 Mapper 的 XML 實作
+- ✅ **commit-msg** - 驗證 commit message 格式（feat/fix/docs 等 prefix）
+
+**Commit Message 格式**：
+```bash
+# 正確格式（簡單版）
+git commit -m "feat: 新增使用者管理功能"
+git commit -m "fix: 修正登入驗證邏輯"
+git commit -m "docs: 更新 README 說明"
+
+# 正確格式（帶 scope，推薦）
+git commit -m "feat(auth): 新增 JWT Token 驗證"
+git commit -m "fix(system): 修正選單權限檢查問題"
+
+# 跳過驗證（不建議）
+git commit --no-verify -m "message"
+```
+
+詳細說明：[Git Hooks 自動安裝機制](./docs/Line/GIT_HOOKS_AUTO_INSTALL.md)
+
+### LOG 系統
+
+**智慧日誌系統**，支援完整的請求追蹤和自動化管理：
+
+#### 核心功能
+- 🔍 **TraceId 追蹤** - 自動產生唯一 ID，追蹤完整請求鏈路
+- 📦 **自動壓縮** - 歷史日誌自動壓縮為 .gz，節省空間
+- 📁 **目錄分離** - current（當日）/ archive（歷史）分開管理
+- 🎨 **彩色輸出** - 開發環境彩色日誌，方便除錯
+- ⚡ **非同步支援** - 非同步任務自動繼承 TraceId
+- ⏰ **定時任務** - Quartz 任務自動產生專屬 TraceId
+
+#### 日誌目錄結構
+```
+本地環境：/Users/cheng/cool-logs/
+生產環境：/opt/cool-apps/logs/
+├── current/              # 當日日誌
+│   ├── sys-info.log     # INFO 級別
+│   ├── sys-error.log    # ERROR 級別
+│   └── sys-user.log     # 使用者操作
+└── archive/              # 歷史日誌（.gz 壓縮，保留 60 天）
+    ├── sys-info.2025-11-01.log.gz
+    └── sys-error.2025-11-01.log.gz
+```
+
+#### 日誌格式
+```
+2025-11-02 12:30:45.123 | INFO | [a1B2c3D4] | [http-exec-1] | UserController.list:89 | 查詢使用者列表
+                                        ↑ TraceId（可追蹤完整請求鏈路）
+```
+
+#### 查詢日誌
+```bash
+# 根據 TraceId 查詢完整請求
+grep "a1B2c3D4" /Users/cheng/cool-logs/current/*.log
+
+# 即時查看日誌
+tail -f /Users/cheng/cool-logs/current/sys-info.log
+```
+
+詳細說明：[LOG 系統配置說明](./docs/Architecture/LOG系統配置說明.md)
 
 ## 🚀 快速開始
 
@@ -218,15 +298,30 @@ spring:
 
 2. 啟動後端服務：
 ```bash
-# 方式一：IDE 中直接執行 CoolAppsApplication.main()
+# 方式一：Maven 命令啟動（推薦）
+mvn spring-boot:run -Dspring-boot.run.profiles=local -Djasypt.encryptor.password=diDsd]3FsGO@4dido
 
-# 方式二：Maven 命令啟動
-mvn clean compile
-mvn spring-boot:run -pl cheng-admin
+# 方式二：IDE 中直接執行 CoolAppsApplication.main()
+# 需在 VM Options 加入：-Djasypt.encryptor.password=diDsd]3FsGO@4dido -Dspring.profiles.active=local
 
 # 方式三：打包後啟動
 mvn clean package -DskipTests
-java -jar cheng-admin/target/apps.war
+java -Djasypt.encryptor.password=diDsd]3FsGO@4dido -jar cheng-admin/target/apps.war
+```
+
+啟動時會看到彩色日誌：
+```
+════════════════════════════════════════════════════
+  Git Hooks 自動安裝
+════════════════════════════════════════════════════
+✅ 成功安裝 2 個 Git Hook(s)
+
+════════════════════════════════════════════════════
+  LOG 系統配置資訊
+════════════════════════════════════════════════════
+應用程式名稱: CoolApps
+啟用環境: local
+日誌根目錄: /Users/cheng/cool-logs
 ```
 
 3. 驗證後端啟動：
@@ -263,9 +358,11 @@ API 文檔：http://localhost:8080/swagger-ui/index.html
 | 變數名稱 | 說明 | 預設值 | 必填 |
 |---------|------|--------|------|
 | `JASYPT_ENCRYPTOR_PASSWORD` | Jasypt 解密密碼 | - | ✅ |
-| `SPRING_PROFILES_ACTIVE` | 環境設定 | prod | ✅ |
+| `SPRING_PROFILES_ACTIVE` | 環境設定（local/prod） | prod | ✅ |
 | `PORT` | 後端服務埠號 | 8080 | ❌ |
 | `TZ` | 時區設定 | Asia/Taipei | ❌ |
+
+**本地開發密碼**：`diDsd]3FsGO@4dido`
 
 ## 👨‍💻 開發指南
 
@@ -300,6 +397,7 @@ src/main/java/com/cheng/
    - 類名使用 PascalCase
    - 方法名使用 camelCase
    - 常數使用 UPPER_SNAKE_CASE
+   - 工具類使用 `@UtilityClass`（Lombok）
 
 2. **註解使用**：
    - `@PreAuthorize`：權限控制
@@ -311,6 +409,12 @@ src/main/java/com/cheng/
    - 使用統一的異常處理機制
    - 自定義業務異常繼承 `ServiceException`
    - 返回統一的響應格式 `AjaxResult`
+   - 異常日誌會自動包含 TraceId 和完整堆疊
+
+4. **Git 提交規範**：
+   - 使用規範的 commit prefix（feat/fix/docs 等）
+   - 提交前會自動驗證 Mapper 實作
+   - 提交訊息會自動驗證格式
 
 ### 新增功能模組
 
@@ -587,12 +691,26 @@ POST /system/user
 
 ### 日誌管理
 
-- **應用日誌**：Logback 設定
+- **TraceId 追蹤**：完整請求鏈路追蹤
+- **應用日誌**：Logback 設定，自動壓縮歸檔
 - **存取日誌**：Nginx 存取記錄
-- **錯誤日誌**：異常堆疊追蹤
+- **錯誤日誌**：異常堆疊追蹤，包含行號定位
 - **審計日誌**：用戶操作記錄
+- **目錄分離**：current（當日）/ archive（歷史）
+- **保留策略**：歷史日誌保留 60 天
 
 ## 🔄 更新日誌
+
+### v1.5.4 (2025-11-02)
+- 🎣 **Git Hooks 自動安裝** - 啟動服務時自動安裝 pre-commit 和 commit-msg hooks
+- 🔍 **TraceId 日誌系統** - 完整的請求追蹤、自動壓縮、目錄分離
+- 🎨 **彩色日誌輸出** - 使用 ANSI 顏色碼，開發環境更友善
+- 📱 **LINE Bot 模組** - 新增 cheng-line 模組，整合 LINE Messaging API
+- ⚡ **非同步任務追蹤** - 非同步任務自動繼承 TraceId
+- ⏰ **定時任務追蹤** - Quartz 和 @Scheduled 任務自動產生專屬 TraceId
+- 🔧 **環境變數化** - LOG 路徑和上傳路徑根據環境自動切換
+- 📝 **Mapper 驗證** - Git Hook 自動驗證 Mapper XML 實作
+- 📚 **文檔完善** - 新增 Git Hooks 和 LOG 系統詳細說明文檔
 
 ### v1.2.2 (2025-10-13)
 - 🐳 新增 Docker 容器化部署支援

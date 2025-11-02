@@ -77,7 +77,7 @@
         <include refid="selectLineUserVo"/>
         <where>
             <if test="lineUserId != null and lineUserId != ''">
-                AND line_user_id = #{lineUserId}
+                AND line_user_id like concat('%', #{lineUserId}, '%')
             </if>
             <if test="lineDisplayName != null and lineDisplayName != ''">
                 AND line_display_name like concat('%', #{lineDisplayName}, '%')
@@ -85,11 +85,17 @@
             <if test="sysUserId != null">
                 AND sys_user_id = #{sysUserId}
             </if>
-            <if test="bindStatus != null">
-                AND bind_status = #{bindStatus}
+            <if test="bindStatus != null and bindStatus.code != null">
+                AND bind_status = #{bindStatus.code}
             </if>
-            <if test="followStatus != null">
-                AND follow_status = #{followStatus}
+            <if test="followStatus != null and followStatus.code != null">
+                AND follow_status = #{followStatus.code}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                and date_format(first_follow_time,'%Y-%m-%d') &gt;= date_format(#{params.beginTime},'%Y-%m-%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and date_format(first_follow_time,'%Y-%m-%d') &lt;= date_format(#{params.endTime},'%Y-%m-%d')
             </if>
         </where>
         order by create_time desc
@@ -182,5 +188,94 @@
             #{id}
         </foreach>
     </delete>
+
+    <select id="countTotalUsers" resultType="long">
+        select count(*) from sys_line_user
+    </select>
+
+    <select id="countFollowingUsers" resultType="int">
+        select count(*) from sys_line_user where follow_status = 'FOLLOWING'
+    </select>
+
+    <select id="countBoundUsers" resultType="int">
+        select count(*) from sys_line_user where bind_status = 'BOUND'
+    </select>
+
+    <select id="countBlockedUsers" resultType="long">
+        select count(*) from sys_line_user where follow_status = 'BLOCKED'
+    </select>
+
+    <select id="countNewUsersByDateRange" resultType="long">
+        select count(*) from sys_line_user
+        where first_follow_time between #{startTime} and #{endTime}
+    </select>
+
+    <select id="selectAllFollowingLineUserIds" resultType="String">
+        select line_user_id from sys_line_user where follow_status = 'FOLLOWING'
+    </select>
+
+    <select id="selectFollowingLineUsers" resultMap="LineUserResult">
+        <include refid="selectLineUserVo"/>
+        where follow_status = 'FOLLOWING'
+        order by latest_follow_time desc
+    </select>
+
+    <update id="updateBindStatus">
+        update sys_line_user
+        set bind_status = #{bindStatus.code},
+            sys_user_id = #{sysUserId},
+            <if test="bindStatus.code == 'BOUND'">
+                latest_bind_time = sysdate(),
+                bind_count = bind_count + 1,
+                <if test="sysUserId != null">
+                    first_bind_time = COALESCE(first_bind_time, sysdate()),
+                </if>
+            </if>
+            <if test="bindStatus.code == 'UNBOUND'">
+                unbind_time = sysdate(),
+            </if>
+            update_time = sysdate()
+        where line_user_id = #{lineUserId}
+    </update>
+
+    <update id="updateFollowStatus">
+        update sys_line_user
+        set follow_status = #{followStatus.code},
+            <if test="followStatus.code == 'FOLLOWING'">
+                latest_follow_time = sysdate(),
+                first_follow_time = COALESCE(first_follow_time, sysdate()),
+            </if>
+            <if test="followStatus.code == 'UNFOLLOWED'">
+                unfollow_time = sysdate(),
+            </if>
+            <if test="followStatus.code == 'BLOCKED'">
+                block_time = sysdate(),
+            </if>
+            update_time = sysdate()
+        where line_user_id = #{lineUserId}
+    </update>
+
+    <update id="incrementMessagesSent">
+        update sys_line_user
+        set total_messages_sent = total_messages_sent + 1,
+            last_interaction_time = sysdate(),
+            update_time = sysdate()
+        where line_user_id = #{lineUserId}
+    </update>
+
+    <update id="incrementMessagesReceived">
+        update sys_line_user
+        set total_messages_received = total_messages_received + 1,
+            last_interaction_time = sysdate(),
+            update_time = sysdate()
+        where line_user_id = #{lineUserId}
+    </update>
+
+    <update id="updateLastInteractionTime">
+        update sys_line_user
+        set last_interaction_time = sysdate(),
+            update_time = sysdate()
+        where line_user_id = #{lineUserId}
+    </update>
 
 </mapper>

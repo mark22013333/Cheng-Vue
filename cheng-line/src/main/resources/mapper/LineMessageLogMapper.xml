@@ -103,6 +103,19 @@
         order by send_time desc
     </select>
 
+    <select id="selectMessageLogByUserId" parameterType="String" resultMap="LineMessageLogResult">
+        <include refid="selectLineMessageLogVo"/>
+        where target_line_user_id = #{lineUserId}
+        or target_user_ids like concat('%', #{lineUserId}, '%')
+        order by send_time desc
+    </select>
+
+    <select id="selectMessageLogByTagId" parameterType="Long" resultMap="LineMessageLogResult">
+        <include refid="selectLineMessageLogVo"/>
+        where target_tag_id = #{tagId}
+        order by send_time desc
+    </select>
+
     <insert id="insertLineMessageLog" parameterType="com.cheng.line.domain.LineMessageLog" useGeneratedKeys="true"
             keyProperty="messageId">
         insert into sys_line_message_log
@@ -182,6 +195,13 @@
         from sys_line_message_log
         where config_id = #{configId}
           and send_status = 'SUCCESS'
+    </select>
+
+    <select id="countFailedMessagesByConfigId" parameterType="Integer" resultType="int">
+        select count(1)
+        from sys_line_message_log
+        where config_id = #{configId}
+          and send_status = 'FAILED'
     </select>
 
 </mapper>

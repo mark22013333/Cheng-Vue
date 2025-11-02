@@ -52,6 +52,7 @@
             <el-collapse-item title="v1.5.4 - 2025-11-02">
               <ol>
                 <li>導入全系統日誌追蹤功能 (TraceId)。</li>
+                <li>導入開發工具 (Git Hooks, Mapper 驗證) 並擴充 LINE 模組功能。</li>
               </ol>
             </el-collapse-item>
             <el-collapse-item title="v1.5.3 - 2025-10-26">

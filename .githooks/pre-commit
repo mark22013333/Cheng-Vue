@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Git Pre-commit Hook - Mapper 驗證
+# 此腳本會在 git commit 前自動驗證 Mapper XML 實作
+
+set -e
+
+echo ""
+echo "🔍 執行 Mapper 驗證..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# 取得專案根目錄
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# 執行驗證腳本
+if python3 "$REPO_ROOT/cheng.deploy/verify-all-mappers.py"; then
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "✅ Mapper 驗證通過！可以提交程式碼"
+    echo ""
+    exit 0
+else
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "❌ Mapper 驗證失敗！"
+    echo ""
+    echo "請修正上述問題後再提交程式碼。"
+    echo ""
+    echo "如果確定要跳過驗證，可以使用："
+    echo "  git commit --no-verify"
+    echo ""
+    exit 1
+fi

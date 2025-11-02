@@ -134,4 +134,20 @@ public interface ILineUserService {
      * @return 結果
      */
     int incrementMessageCount(String lineUserId, boolean sent);
+
+    /**
+     * 取得使用者統計資料
+     *
+     * @return 統計資料
+     */
+    com.cheng.line.dto.LineUserStatsDTO getUserStats();
+
+    /**
+     * 匯入 LINE 使用者（從檔案）
+     *
+     * @param file     上傳的檔案
+     * @param configId 頻道設定ID
+     * @return 匯入結果
+     */
+    com.cheng.line.dto.LineUserImportResultDTO importLineUsers(org.springframework.web.multipart.MultipartFile file, Integer configId);
 }

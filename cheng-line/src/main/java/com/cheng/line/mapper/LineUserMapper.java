@@ -3,6 +3,7 @@ package com.cheng.line.mapper;
 import com.cheng.line.domain.LineUser;
 import com.cheng.line.enums.BindStatus;
 import com.cheng.line.enums.FollowStatus;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -154,4 +155,27 @@ public interface LineUserMapper {
      * @return 結果
      */
     int updateLastInteractionTime(String lineUserId);
+
+    /**
+     * 統計總使用者數
+     *
+     * @return 數量
+     */
+    long countTotalUsers();
+
+    /**
+     * 統計已封鎖使用者數量
+     *
+     * @return 數量
+     */
+    long countBlockedUsers();
+
+    /**
+     * 統計指定時間範圍內新增的使用者數量
+     *
+     * @param startTime 開始時間
+     * @param endTime   結束時間
+     * @return 數量
+     */
+    long countNewUsersByDateRange(@Param("startTime") String startTime, @Param("endTime") String endTime);
 }
