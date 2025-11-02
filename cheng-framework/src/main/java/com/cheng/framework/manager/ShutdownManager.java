@@ -1,8 +1,7 @@
 package com.cheng.framework.manager;
 
 import jakarta.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
@@ -10,9 +9,9 @@ import org.springframework.stereotype.Component;
  *
  * @author cheng
  */
+@Slf4j
 @Component
 public class ShutdownManager {
-    private static final Logger logger = LoggerFactory.getLogger("sys-user");
 
     @PreDestroy
     public void destroy() {
@@ -24,10 +23,10 @@ public class ShutdownManager {
      */
     private void shutdownAsyncManager() {
         try {
-            logger.info("====關閉後台任務執行緒池====");
+            log.info("====關閉後台任務執行緒池====");
             AsyncManager.me().shutdown();
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 }

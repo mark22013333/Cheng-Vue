@@ -4,30 +4,36 @@
     <springProperty scope="context" name="log.path" source="logging.file.path" defaultValue="/tmp/logs"/>
     <!-- 備用日誌路徑設定，使用多層級回退機制 -->
     <property name="LOG_PATH" value="${logging.file.path:-${log.path:-/tmp/logs}}"/>
-    <!-- 日誌輸出格式 -->
-	<property name="log.pattern" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{20} - [%method,%line] - %msg%n" />
+    <!-- 當日日誌目錄 -->
+    <property name="CURRENT_LOG_PATH" value="${LOG_PATH}/current"/>
+    <!-- 歷史日誌目錄 -->
+    <property name="ARCHIVE_LOG_PATH" value="${LOG_PATH}/archive"/>
+
+    <!-- 日誌輸出格式 - 包含完整時間、traceId、類別行號、異常堆疊 -->
+    <property name="log.pattern"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} | %-5level | [%X{traceId:-NO_TRACE}] | [%thread] | %logger{50}:%line | %msg%n%ex{full}"/>
 
     <!-- 控制台輸出 -->
-	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
-		<encoder>
-			<pattern>${log.pattern}</pattern>
-		</encoder>
-	</appender>
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+    </appender>
 
     <!-- 系統日誌輸出 -->
-	<appender name="file_info" class="ch.qos.logback.core.rolling.RollingFileAppender">
-	    <file>${LOG_PATH}/sys-info.log</file>
+    <appender name="file_info" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${CURRENT_LOG_PATH}/sys-info.log</file>
         <!-- 循環政策：基於時間建立日誌檔案 -->
-		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 日誌檔案名格式 -->
-			<fileNamePattern>${LOG_PATH}/sys-info.%d{yyyy-MM-dd}.log</fileNamePattern>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 日誌檔案名格式 - 自動壓縮為 .gz -->
+            <fileNamePattern>${ARCHIVE_LOG_PATH}/sys-info.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
             <!-- 日誌最大的歷史 60天 -->
-			<maxHistory>60</maxHistory>
-		</rollingPolicy>
-		<encoder>
-			<pattern>${log.pattern}</pattern>
-		</encoder>
-		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <!-- 過濾的級別 -->
             <level>INFO</level>
             <!-- 匹配時的操作：接收（記錄） -->
@@ -35,16 +41,16 @@
             <!-- 不匹配時的操作：拒絕（不記錄） -->
             <onMismatch>DENY</onMismatch>
         </filter>
-	</appender>
-	
-	<appender name="file_error" class="ch.qos.logback.core.rolling.RollingFileAppender">
-	    <file>${LOG_PATH}/sys-error.log</file>
+    </appender>
+
+    <appender name="file_error" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${CURRENT_LOG_PATH}/sys-error.log</file>
         <!-- 循環政策：基於時間建立日誌檔案 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 日誌檔案名格式 -->
-            <fileNamePattern>${LOG_PATH}/sys-error.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 日誌檔案名格式 - 自動壓縮為 .gz -->
+            <fileNamePattern>${ARCHIVE_LOG_PATH}/sys-error.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
             <!-- 日誌最大的歷史 60天 -->
-			<maxHistory>60</maxHistory>
+            <maxHistory>60</maxHistory>
         </rollingPolicy>
         <encoder>
             <pattern>${log.pattern}</pattern>
@@ -61,10 +67,10 @@
 
     <!-- 使用者訪問日誌輸出  -->
     <appender name="sys-user" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>${LOG_PATH}/sys-user.log</file>
+        <file>${CURRENT_LOG_PATH}/sys-user.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 按天滾動 daily -->
-            <fileNamePattern>${LOG_PATH}/sys-user.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 按天滾動 daily - 自動壓縮為 .gz -->
+            <fileNamePattern>${ARCHIVE_LOG_PATH}/sys-user.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
             <!-- 日誌最大的歷史 60天 -->
             <maxHistory>60</maxHistory>
         </rollingPolicy>
@@ -76,20 +82,20 @@
     <!-- 系統模組日誌級別控制  -->
     <logger name="com.cheng" level="info"/>
     <!-- Spring日誌級別控制  -->
-	<logger name="org.springframework" level="warn" />
+    <logger name="org.springframework" level="warn"/>
 
-	<root level="info">
-		<appender-ref ref="console" />
-	</root>
+    <root level="info">
+        <appender-ref ref="console"/>
+    </root>
 
     <!--系統操作日誌-->
     <root level="info">
-        <appender-ref ref="file_info" />
-        <appender-ref ref="file_error" />
+        <appender-ref ref="file_info"/>
+        <appender-ref ref="file_error"/>
     </root>
 
     <!--系統使用者操作日誌-->
     <logger name="sys-user" level="info">
         <appender-ref ref="sys-user"/>
     </logger>
-</configuration> 
+</configuration>
