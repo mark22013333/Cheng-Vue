@@ -1,7 +1,6 @@
 package com.cheng.common.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.*;
 
@@ -10,19 +9,8 @@ import java.util.concurrent.*;
  *
  * @author cheng
  */
+@Slf4j
 public class Threads {
-    private static final Logger logger = LoggerFactory.getLogger(Threads.class);
-
-    /**
-     * sleep等待,單位為毫秒
-     */
-    public static void sleep(long milliseconds) {
-        try {
-            Thread.sleep(milliseconds);
-        } catch (InterruptedException e) {
-            return;
-        }
-    }
 
     /**
      * 停止執行緒池
@@ -38,7 +26,7 @@ public class Threads {
                 if (!pool.awaitTermination(120, TimeUnit.SECONDS)) {
                     pool.shutdownNow();
                     if (!pool.awaitTermination(120, TimeUnit.SECONDS)) {
-                        logger.info("Pool did not terminate");
+                        log.info("Pool did not terminate");
                     }
                 }
             } catch (InterruptedException ie) {
@@ -66,7 +54,7 @@ public class Threads {
             }
         }
         if (t != null) {
-            logger.error(t.getMessage(), t);
+            log.error(t.getMessage(), t);
         }
     }
 }

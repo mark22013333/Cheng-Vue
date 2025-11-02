@@ -166,7 +166,7 @@ public class SysMenuServiceImpl implements ISysMenuService {
                 children.setQuery(menu.getQuery());
                 childrenList.add(children);
                 router.setChildren(childrenList);
-            } else if (menu.getParentId().intValue() == 0 && isInnerLink(menu)) {
+            } else if (menu.getParentId() != null && menu.getParentId().intValue() == 0 && isInnerLink(menu)) {
                 router.setMeta(new MetaVo(menu.getMenuName(), menu.getIcon()));
                 router.setPath("/");
                 List<RouterVo> childrenList = new ArrayList<>();
@@ -338,11 +338,11 @@ public class SysMenuServiceImpl implements ISysMenuService {
     public String getRouterPath(SysMenu menu) {
         String routerPath = menu.getPath();
         // 内鏈打開外網方式
-        if (menu.getParentId().intValue() != 0 && isInnerLink(menu)) {
+        if (menu.getParentId() != null && menu.getParentId().intValue() != 0 && isInnerLink(menu)) {
             routerPath = innerLinkReplaceEach(routerPath);
         }
         // 非外部連結並且是一級目錄（類型為目錄）
-        if (0 == menu.getParentId().intValue() && UserConstants.TYPE_DIR.equals(menu.getMenuType())
+        if (menu.getParentId() != null && 0 == menu.getParentId().intValue() && UserConstants.TYPE_DIR.equals(menu.getMenuType())
                 && UserConstants.NO_FRAME.equals(menu.getIsFrame())) {
             routerPath = "/" + menu.getPath();
         }
@@ -363,7 +363,7 @@ public class SysMenuServiceImpl implements ISysMenuService {
         String component = UserConstants.LAYOUT;
         if (StringUtils.isNotEmpty(menu.getComponent()) && !isMenuFrame(menu)) {
             component = menu.getComponent();
-        } else if (StringUtils.isEmpty(menu.getComponent()) && menu.getParentId().intValue() != 0 && isInnerLink(menu)) {
+        } else if (StringUtils.isEmpty(menu.getComponent()) && menu.getParentId() != null && menu.getParentId().intValue() != 0 && isInnerLink(menu)) {
             component = UserConstants.INNER_LINK;
         } else if (StringUtils.isEmpty(menu.getComponent()) && isParentView(menu)) {
             component = UserConstants.PARENT_VIEW;
@@ -378,7 +378,7 @@ public class SysMenuServiceImpl implements ISysMenuService {
      * @return 結果
      */
     public boolean isMenuFrame(SysMenu menu) {
-        return menu.getParentId().intValue() == 0 && UserConstants.TYPE_MENU.equals(menu.getMenuType())
+        return menu.getParentId() != null && menu.getParentId().intValue() == 0 && UserConstants.TYPE_MENU.equals(menu.getMenuType())
                 && menu.getIsFrame().equals(UserConstants.NO_FRAME);
     }
 
@@ -399,7 +399,7 @@ public class SysMenuServiceImpl implements ISysMenuService {
      * @return 結果
      */
     public boolean isParentView(SysMenu menu) {
-        return menu.getParentId().intValue() != 0 && UserConstants.TYPE_DIR.equals(menu.getMenuType());
+        return menu.getParentId() != null && menu.getParentId().intValue() != 0 && UserConstants.TYPE_DIR.equals(menu.getMenuType());
     }
 
     /**
@@ -413,7 +413,7 @@ public class SysMenuServiceImpl implements ISysMenuService {
         List<SysMenu> returnList = new ArrayList<>();
         for (SysMenu t : list) {
             // 一、根據傳入的某個父節點ID,遍歷該父節點的所有子節點
-            if (t.getParentId() == parentId) {
+            if (t.getParentId() != null && t.getParentId() == parentId) {
                 recursionFn(list, t);
                 returnList.add(t);
             }
@@ -444,7 +444,8 @@ public class SysMenuServiceImpl implements ISysMenuService {
     private List<SysMenu> getChildList(List<SysMenu> list, SysMenu t) {
         List<SysMenu> tlist = new ArrayList<>();
         for (SysMenu n : list) {
-            if (n.getParentId().longValue() == t.getMenuId().longValue()) {
+            if (n.getParentId() != null && t.getMenuId() != null 
+                    && n.getParentId().longValue() == t.getMenuId().longValue()) {
                 tlist.add(n);
             }
         }

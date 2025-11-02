@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.line.mapper.LineConversationLogMapper">
+
+    <resultMap id="LineConversationLogResult" type="com.cheng.line.domain.LineConversationLog">
+        <id property="id" column="id"/>
+        <result property="lineUserId" column="line_user_id"/>
+        <result property="directionCode" column="direction"/>
+        <result property="messageContent" column="message_content"/>
+        <result property="messageFormat" column="message_format"/>
+        <result property="messageId" column="message_id"/>
+        <result property="configId" column="config_id"/>
+        <result property="messageTime" column="message_time"/>
+        <result property="isSuccess" column="is_success"/>
+        <result property="errorMessage" column="error_message"/>
+        <result property="createTime" column="create_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectLineConversationLogVo">
+        select id, line_user_id, direction, message_content, message_format, message_id,
+               config_id, message_time, is_success, error_message, create_time, remark
+        from sys_line_conversation_log
+    </sql>
+
+    <select id="selectLineConversationLogById" parameterType="Long" resultMap="LineConversationLogResult">
+        <include refid="selectLineConversationLogVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectLineConversationLogList" parameterType="com.cheng.line.domain.LineConversationLog"
+            resultMap="LineConversationLogResult">
+        <include refid="selectLineConversationLogVo"/>
+        <where>
+            <if test="lineUserId != null and lineUserId != ''">
+                and line_user_id = #{lineUserId}
+            </if>
+            <if test="direction != null and direction.code != null">
+                and direction = #{direction.code}
+            </if>
+            <if test="messageFormat != null and messageFormat != ''">
+                and message_format = #{messageFormat}
+            </if>
+            <if test="configId != null">
+                and config_id = #{configId}
+            </if>
+            <if test="isSuccess != null">
+                and is_success = #{isSuccess}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                and date_format(message_time,'%Y-%m-%d') &gt;= date_format(#{params.beginTime},'%Y-%m-%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and date_format(message_time,'%Y-%m-%d') &lt;= date_format(#{params.endTime},'%Y-%m-%d')
+            </if>
+        </where>
+        order by message_time desc
+    </select>
+
+    <select id="selectRecentConversations" resultMap="LineConversationLogResult">
+        <include refid="selectLineConversationLogVo"/>
+        where line_user_id = #{lineUserId}
+        order by message_time desc
+        limit #{limit}
+    </select>
+
+    <insert id="insertLineConversationLog" parameterType="com.cheng.line.domain.LineConversationLog"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into sys_line_conversation_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="lineUserId != null and lineUserId != ''">line_user_id,</if>
+            <if test="direction != null and direction.code != null">direction,</if>
+            <if test="messageContent != null">message_content,</if>
+            <if test="messageFormat != null and messageFormat != ''">message_format,</if>
+            <if test="messageId != null and messageId != ''">message_id,</if>
+            <if test="configId != null">config_id,</if>
+            <if test="messageTime != null">message_time,</if>
+            <if test="isSuccess != null">is_success,</if>
+            <if test="errorMessage != null">error_message,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="lineUserId != null and lineUserId != ''">#{lineUserId},</if>
+            <if test="direction != null and direction.code != null">#{direction.code},</if>
+            <if test="messageContent != null">#{messageContent},</if>
+            <if test="messageFormat != null and messageFormat != ''">#{messageFormat},</if>
+            <if test="messageId != null and messageId != ''">#{messageId},</if>
+            <if test="configId != null">#{configId},</if>
+            <if test="messageTime != null">#{messageTime},</if>
+            <if test="isSuccess != null">#{isSuccess},</if>
+            <if test="errorMessage != null">#{errorMessage},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <insert id="batchInsertLineConversationLog" parameterType="java.util.List">
+        insert into sys_line_conversation_log
+        (line_user_id, direction, message_content, message_format, message_id,
+        config_id, message_time, is_success, error_message, remark)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.lineUserId}, #{item.direction.code}, #{item.messageContent}, #{item.messageFormat},
+            #{item.messageId}, #{item.configId}, #{item.messageTime}, #{item.isSuccess},
+            #{item.errorMessage}, #{item.remark})
+        </foreach>
+    </insert>
+
+    <delete id="deleteLineConversationLogById" parameterType="Long">
+        delete from sys_line_conversation_log where id = #{id}
+    </delete>
+
+    <delete id="deleteLineConversationLogByIds" parameterType="Long">
+        delete from sys_line_conversation_log where id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteLineConversationLogByLineUserId" parameterType="String">
+        delete from sys_line_conversation_log where line_user_id = #{lineUserId}
+    </delete>
+
+    <delete id="deleteLineConversationLogBeforeDate" parameterType="String">
+        delete from sys_line_conversation_log
+        where message_time &lt; #{beforeDate}
+    </delete>
+
+</mapper>

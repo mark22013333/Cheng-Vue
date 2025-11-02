@@ -20,8 +20,32 @@ concurrency:
 env:
   NODE_VERSION: '18'
   JAVA_VERSION: '17'
+  PYTHON_VERSION: '3.9'
 
 jobs:
+  validate-mappers:
+    name: Validate MyBatis Mappers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Verify All Mappers (全專案)
+        run: |
+          echo "🔍 驗證全專案所有模組的 Mapper 實作..."
+          python3 cheng.deploy/verify-all-mappers.py
+          if [ $? -eq 0 ]; then
+            echo "✅ 全專案 Mapper 驗證通過"
+          else
+            echo "❌ Mapper 驗證失敗，請檢查上述錯誤"
+            exit 1
+          fi
+
   build-frontend:
     name: Build Frontend
     runs-on: ubuntu-latest
@@ -65,6 +89,7 @@ jobs:
 
   build-backend:
     name: Build Backend (Maven)
+    needs: validate-mappers
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

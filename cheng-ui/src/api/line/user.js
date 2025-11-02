@@ -18,34 +18,34 @@ export function getUser(id) {
 }
 
 // 綁定系統使用者
-export function bindUser(data) {
+export function bindUser(lineUserId, sysUserId) {
   return request({
-    url: '/line/user/bind',
-    method: 'post',
-    data: data
+    url: `/line/user/bind/${lineUserId}/${sysUserId}`,
+    method: 'put'
   })
 }
 
 // 解除綁定
-export function unbindUser(id) {
+export function unbindUser(lineUserId) {
   return request({
-    url: '/line/user/unbind/' + id,
-    method: 'post'
+    url: '/line/user/unbind/' + lineUserId,
+    method: 'put'
   })
 }
 
 // 更新使用者個人資料（從 LINE API 同步）
-export function syncUserProfile(lineUserId) {
+export function syncUserProfile(lineUserId, configId) {
   return request({
-    url: '/line/user/sync/' + lineUserId,
-    method: 'post'
+    url: '/line/user/updateProfile/' + lineUserId,
+    method: 'put',
+    params: { configId }
   })
 }
 
 // 刪除 LINE 使用者
-export function delUser(id) {
+export function delUser(ids) {
   return request({
-    url: '/line/user/' + id,
+    url: '/line/user/' + ids,
     method: 'delete'
   })
 }
@@ -75,28 +75,20 @@ export function listFollowingUsers() {
   })
 }
 
-// 查詢所有已綁定的使用者
-export function listBoundUsers() {
+// 匯入 LINE 使用者
+export function importUser(data) {
   return request({
-    url: '/line/user/bound',
-    method: 'get'
-  })
-}
-
-// 批次綁定使用者
-export function batchBindUsers(data) {
-  return request({
-    url: '/line/user/batchBind',
+    url: '/line/user/import',
     method: 'post',
     data: data
   })
 }
 
-// 批次解除綁定
-export function batchUnbindUsers(ids) {
+// 下載匯入範本
+export function downloadTemplate() {
   return request({
-    url: '/line/user/batchUnbind',
+    url: '/line/user/importTemplate',
     method: 'post',
-    data: ids
+    responseType: 'blob'
   })
 }

@@ -6,6 +6,7 @@ import java.lang.management.ManagementFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**
@@ -160,5 +161,17 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     public static Date toDate(LocalDate temporalAccessor) {
         LocalDateTime localDateTime = LocalDateTime.of(temporalAccessor, LocalTime.of(0, 0, 0));
         return toDate(localDateTime);
+    }
+
+    /**
+     * 取得指定天數之前的日期
+     *
+     * @param days 天數
+     * @return 日期字串（格式：yyyy-MM-dd HH:mm:ss）
+     */
+    public static String getBeforeDaysDate(int days) {
+        LocalDateTime dateTime = LocalDateTime.now().minusDays(days);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(YYYY_MM_DD_HH_MM_SS);
+        return dateTime.format(formatter);
     }
 }

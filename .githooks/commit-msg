@@ -1,0 +1,122 @@
+#!/bin/bash
+
+# Git Commit Message 格式驗證
+# 根據團隊規範檢查 commit message 格式
+
+set -e
+
+# 取得 commit message 檔案路徑
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# 顏色定義
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo ""
+echo -e "${BLUE}🔍 檢查 Commit Message 格式...${NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# 跳過 merge commit
+if echo "$COMMIT_MSG" | grep -q "^Merge"; then
+    echo -e "${GREEN}✅ Merge commit，跳過格式檢查${NC}"
+    echo ""
+    exit 0
+fi
+
+# 跳過 revert commit
+if echo "$COMMIT_MSG" | grep -q "^Revert"; then
+    echo -e "${GREEN}✅ Revert commit，跳過格式檢查${NC}"
+    echo ""
+    exit 0
+fi
+
+# 定義允許的 prefix（支援可選的 scope）
+# 格式：prefix: message 或 prefix(scope): message
+VALID_PREFIXES="^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\([a-zA-Z0-9_-]+\))?:"
+
+# 檢查是否有有效的 prefix
+if ! echo "$COMMIT_MSG" | grep -qE "$VALID_PREFIXES"; then
+    echo -e "${RED}❌ Commit message 格式錯誤！${NC}"
+    echo ""
+    echo -e "${YELLOW}必須使用以下其中一個 prefix：${NC}"
+    echo "  - feat:     新增功能"
+    echo "  - fix:      修正 Bug"
+    echo "  - docs:     文件變更"
+    echo "  - style:    程式碼格式調整（不影響功能）"
+    echo "  - refactor: 重構程式碼"
+    echo "  - perf:     效能優化"
+    echo "  - test:     測試相關"
+    echo "  - chore:    雜項（建置、工具等）"
+    echo "  - build:    建置系統變更"
+    echo "  - ci:       CI/CD 配置變更"
+    echo ""
+    echo -e "${YELLOW}範例格式：${NC}"
+    echo "  feat: 新增使用者登入功能"
+    echo "  feat(auth): 新增 JWT Token 驗證"
+    echo "  fix(system): 修正選單權限檢查問題"
+    echo ""
+    echo "  fix: 修正阿甘頭像可能被覆蓋的問題"
+    echo ""
+    echo "  LINEBotApi.java - 修正若為阿甘傳送的頭像，不能套用後台設定的頭像"
+    echo "  AuthController.java - 補上推播功能所需的 sender 參數"
+    echo ""
+    echo -e "${YELLOW}目前的 commit message：${NC}"
+    echo "$COMMIT_MSG"
+    echo ""
+    echo -e "${BLUE}如需跳過檢查，請使用：${NC}"
+    echo "  git commit --no-verify"
+    echo ""
+    exit 1
+fi
+
+# 提取 prefix 和標題（支援 scope）
+PREFIX=$(echo "$COMMIT_MSG" | head -n 1 | sed -E 's/^([a-z]+)(\([a-zA-Z0-9_-]+\))?:.*/\1/')
+SCOPE=$(echo "$COMMIT_MSG" | head -n 1 | sed -E 's/^[a-z]+\(([a-zA-Z0-9_-]+)\):.*/\1/')
+TITLE=$(echo "$COMMIT_MSG" | head -n 1 | sed -E 's/^[a-z]+(\([a-zA-Z0-9_-]+\))?:\s*//')
+
+# 檢查標題是否為空
+if [ -z "$TITLE" ]; then
+    echo -e "${RED}❌ Commit message 標題不能為空！${NC}"
+    echo ""
+    echo -e "${YELLOW}正確格式：${NC}"
+    echo "  prefix: 標題"
+    echo ""
+    echo "  詳細說明（可選）"
+    echo ""
+    exit 1
+fi
+
+# 檢查標題長度（建議不超過 72 字元）
+TITLE_LENGTH=${#TITLE}
+if [ $TITLE_LENGTH -gt 72 ]; then
+    echo -e "${YELLOW}⚠️  標題過長（${TITLE_LENGTH} 字元，建議 < 72）${NC}"
+    echo "  建議將詳細說明移到第二段"
+    echo ""
+fi
+
+# 所有檢查通過
+echo -e "${GREEN}✅ Commit message 格式正確${NC}"
+echo ""
+echo -e "${BLUE}Prefix:${NC} ${PREFIX}"
+# 只在有 scope 時顯示
+if [ "$SCOPE" != "$COMMIT_MSG" ] && [ -n "$SCOPE" ]; then
+    echo -e "${BLUE}Scope:${NC} ${SCOPE}"
+fi
+echo -e "${BLUE}標題:${NC} ${TITLE}"
+
+# 顯示完整訊息（如果有多行）
+LINE_COUNT=$(echo "$COMMIT_MSG" | wc -l | tr -d ' ')
+if [ "$LINE_COUNT" -gt 1 ]; then
+    echo ""
+    echo -e "${BLUE}完整訊息：${NC}"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "$COMMIT_MSG"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+fi
+
+echo ""
+exit 0
