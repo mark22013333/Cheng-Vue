@@ -49,6 +49,11 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.5.4 - 2025-11-02">
+              <ol>
+                <li>導入全系統日誌追蹤功能 (TraceId)。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.5.3 - 2025-10-26">
               <ol>
                 <li>導入排程任務範本 (TaskTypeProvider) 動態註冊機制。</li>
@@ -150,7 +155,7 @@ export default {
   data() {
     return {
       // 版本號
-      version: "1.5.3"
+      version: "1.5.4"
     }
   },
   methods: {

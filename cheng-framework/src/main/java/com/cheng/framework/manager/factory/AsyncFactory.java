@@ -12,8 +12,7 @@ import com.cheng.system.domain.SysOperLog;
 import com.cheng.system.service.ISysUninformatively;
 import com.cheng.system.service.ISysOperLogService;
 import eu.bitwalker.useragentutils.UserAgent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.TimerTask;
 
@@ -22,8 +21,8 @@ import java.util.TimerTask;
  *
  * @author cheng
  */
+@Slf4j
 public class AsyncFactory {
-    private static final Logger sys_user_logger = LoggerFactory.getLogger("sys-user");
 
     /**
      * 記錄登入訊息
@@ -48,7 +47,7 @@ public class AsyncFactory {
                         LogUtils.getBlock(status) +
                         LogUtils.getBlock(message);
                 // 印出訊息到日誌
-                sys_user_logger.info(s, args);
+                log.info(s, args);
                 // 取得客戶端作業系統
                 String os = userAgent.getOperatingSystem().getName();
                 // 取得客戶端瀏覽器

@@ -4,6 +4,7 @@ import com.cheng.common.constant.Constants;
 import com.cheng.common.constant.ScheduleConstants;
 import com.cheng.common.utils.ExceptionUtil;
 import com.cheng.common.utils.StringUtils;
+import com.cheng.common.utils.TraceUtils;
 import com.cheng.common.utils.bean.BeanUtils;
 import com.cheng.common.utils.spring.SpringUtils;
 import com.cheng.quartz.domain.SysJob;
@@ -33,6 +34,11 @@ public abstract class AbstractQuartzJob implements Job {
     public void execute(JobExecutionContext context) {
         SysJob sysJob = new SysJob();
         BeanUtils.copyBeanProp(sysJob, context.getMergedJobDataMap().get(ScheduleConstants.TASK_PROPERTIES));
+        
+        // 初始化 traceId，使用任務名稱作為前綴
+        String taskIdentifier = buildTaskIdentifier(sysJob);
+        TraceUtils.initTrace(taskIdentifier);
+        
         try {
             before(context, sysJob);
             doExecute(context, sysJob);
@@ -40,7 +46,52 @@ public abstract class AbstractQuartzJob implements Job {
         } catch (Exception e) {
             log.error("任務執行異常  - ：", e);
             after(context, sysJob, e);
+        } finally {
+            // 清理 traceId（在記錄 job log 之後）
+            TraceUtils.clearTrace();
         }
+    }
+    
+    /**
+     * 建立任務識別字串
+     * 
+     * @param sysJob 系統任務
+     * @return 任務識別字串
+     */
+    private String buildTaskIdentifier(SysJob sysJob) {
+        StringBuilder identifier = new StringBuilder("QUARTZ");
+        
+        if (sysJob != null && StringUtils.isNotEmpty(sysJob.getJobName())) {
+            String jobName = sysJob.getJobName();
+            
+            // 嘗試提取方括號內的代號（如：[CA103] → CA103）
+            if (jobName.contains("[") && jobName.contains("]")) {
+                int start = jobName.indexOf('[');
+                int end = jobName.indexOf(']');
+                if (start < end) {
+                    String code = jobName.substring(start + 1, end).trim();
+                    if (!code.isEmpty()) {
+                        identifier.append("_").append(code);
+                        return identifier.toString();
+                    }
+                }
+            }
+            
+            // 如果沒有方括號，使用完整任務名稱（簡化處理）
+            jobName = jobName
+                    .replaceAll("[\\[\\]\\s\\-]", "_")  // 替換特殊字元為底線
+                    .replaceAll("_+", "_")              // 合併多個底線
+                    .replaceAll("^_|_$", "");           // 移除開頭和結尾的底線
+            
+            // 限制長度
+            if (jobName.length() > 20) {
+                jobName = jobName.substring(0, 20);
+            }
+            
+            identifier.append("_").append(jobName);
+        }
+        
+        return identifier.toString();
     }
 
     /**

@@ -32,6 +32,8 @@ public class ThreadPoolConfig {
         executor.setKeepAliveSeconds(300);
         // 執行緒池對拒絕任務(無執行緒可用)的處理策略
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        // 設定 TraceId 裝飾器，用於傳遞 traceId 到非同步執行緒
+        executor.setTaskDecorator(new TraceTaskDecorator());
         return executor;
     }
 
