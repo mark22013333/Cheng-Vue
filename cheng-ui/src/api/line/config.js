@@ -126,3 +126,11 @@ export function getDefaultWebhookBaseUrl() {
     method: 'get'
   })
 }
+
+// 取得所有啟用的頻道列表（用於下拉選單）
+export function getEnabledConfigs() {
+  return request({
+    url: '/line/config/enabled',
+    method: 'get'
+  })
+}

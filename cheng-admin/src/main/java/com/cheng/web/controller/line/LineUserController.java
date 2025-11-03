@@ -173,4 +173,66 @@ public class LineUserController extends BaseController {
                 new com.cheng.common.utils.poi.ExcelUtil<>(com.cheng.line.domain.LineUser.class);
         util.importTemplateExcel(response, "LINE使用者");
     }
+
+    /**
+     * 將使用者加入黑名單
+     */
+    @PreAuthorize("@ss.hasPermi('line:user:edit')")
+    @Log(title = "加入黑名單", businessType = BusinessType.UPDATE)
+    @PutMapping("/blacklist/add/{lineUserId}")
+    public AjaxResult addToBlacklist(@PathVariable("lineUserId") String lineUserId) {
+        try {
+            return toAjax(lineUserService.addToBlacklist(lineUserId));
+        } catch (Exception e) {
+            log.error("加入黑名單失敗", e);
+            return error(e.getMessage());
+        }
+    }
+
+    /**
+     * 將使用者從黑名單移除
+     */
+    @PreAuthorize("@ss.hasPermi('line:user:edit')")
+    @Log(title = "移除黑名單", businessType = BusinessType.UPDATE)
+    @PutMapping("/blacklist/remove/{lineUserId}")
+    public AjaxResult removeFromBlacklist(@PathVariable("lineUserId") String lineUserId) {
+        try {
+            return toAjax(lineUserService.removeFromBlacklist(lineUserId));
+        } catch (Exception e) {
+            log.error("移除黑名單失敗", e);
+            return error(e.getMessage());
+        }
+    }
+
+    /**
+     * 批次將使用者加入黑名單
+     */
+    @PreAuthorize("@ss.hasPermi('line:user:edit')")
+    @Log(title = "批次加入黑名單", businessType = BusinessType.UPDATE)
+    @PutMapping("/blacklist/batchAdd")
+    public AjaxResult batchAddToBlacklist(@RequestBody String[] lineUserIds) {
+        try {
+            int count = lineUserService.batchAddToBlacklist(lineUserIds);
+            return success("成功加入 " + count + " 位使用者到黑名單");
+        } catch (Exception e) {
+            log.error("批次加入黑名單失敗", e);
+            return error(e.getMessage());
+        }
+    }
+
+    /**
+     * 批次將使用者從黑名單移除
+     */
+    @PreAuthorize("@ss.hasPermi('line:user:edit')")
+    @Log(title = "批次移除黑名單", businessType = BusinessType.UPDATE)
+    @PutMapping("/blacklist/batchRemove")
+    public AjaxResult batchRemoveFromBlacklist(@RequestBody String[] lineUserIds) {
+        try {
+            int count = lineUserService.batchRemoveFromBlacklist(lineUserIds);
+            return success("成功移除 " + count + " 位使用者的黑名單");
+        } catch (Exception e) {
+            log.error("批次移除黑名單失敗", e);
+            return error(e.getMessage());
+        }
+    }
 }

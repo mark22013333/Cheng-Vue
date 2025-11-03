@@ -1,8 +1,9 @@
 package com.cheng.line.service;
 
 import com.cheng.line.domain.LineUser;
-import com.cheng.line.enums.BindStatus;
-import com.cheng.line.enums.FollowStatus;
+import com.cheng.line.dto.LineUserImportResultDTO;
+import com.cheng.line.dto.LineUserStatsDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -140,7 +141,7 @@ public interface ILineUserService {
      *
      * @return 統計資料
      */
-    com.cheng.line.dto.LineUserStatsDTO getUserStats();
+    LineUserStatsDTO getUserStats();
 
     /**
      * 匯入 LINE 使用者（從檔案）
@@ -149,5 +150,37 @@ public interface ILineUserService {
      * @param configId 頻道設定ID
      * @return 匯入結果
      */
-    com.cheng.line.dto.LineUserImportResultDTO importLineUsers(org.springframework.web.multipart.MultipartFile file, Integer configId);
+    LineUserImportResultDTO importLineUsers(MultipartFile file, Integer configId);
+
+    /**
+     * 將使用者加入黑名單
+     *
+     * @param lineUserId LINE 使用者 ID
+     * @return 結果
+     */
+    int addToBlacklist(String lineUserId);
+
+    /**
+     * 將使用者從黑名單移除
+     *
+     * @param lineUserId LINE 使用者 ID
+     * @return 結果
+     */
+    int removeFromBlacklist(String lineUserId);
+
+    /**
+     * 批次將使用者加入黑名單
+     *
+     * @param lineUserIds LINE 使用者 ID 陣列
+     * @return 成功加入的數量
+     */
+    int batchAddToBlacklist(String[] lineUserIds);
+
+    /**
+     * 批次將使用者從黑名單移除
+     *
+     * @param lineUserIds LINE 使用者 ID 陣列
+     * @return 成功移除的數量
+     */
+    int batchRemoveFromBlacklist(String[] lineUserIds);
 }

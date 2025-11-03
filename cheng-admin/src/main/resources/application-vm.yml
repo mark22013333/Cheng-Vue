@@ -57,6 +57,9 @@ spring:
 logging:
   file:
     path: /opt/cool-apps/logs
+  level:
+    root: info
+    com.cheng: debug
 
 # 專案相關設定 - VM環境
 cheng:

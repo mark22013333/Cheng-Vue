@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<configuration scan="true" scanPeriod="10 seconds" debug="false">
     <!-- 日誌存放路徑 -->
     <springProperty scope="context" name="log.path" source="logging.file.path" defaultValue="/tmp/logs"/>
     <!-- 備用日誌路徑設定，使用多層級回退機制 -->
@@ -8,6 +8,10 @@
     <property name="CURRENT_LOG_PATH" value="${LOG_PATH}/current"/>
     <!-- 歷史日誌目錄 -->
     <property name="ARCHIVE_LOG_PATH" value="${LOG_PATH}/archive"/>
+    
+    <!-- 日誌層級設定（可透過 application.yml 的 logging.level.com.cheng 調整） -->
+    <springProperty scope="context" name="log.level.cheng" source="logging.level.com.cheng" defaultValue="info"/>
+    <springProperty scope="context" name="log.level.root" source="logging.level.root" defaultValue="info"/>
 
     <!-- 日誌輸出格式 - 包含完整時間、traceId、類別行號、異常堆疊 -->
     <property name="log.pattern"
@@ -79,17 +83,17 @@
         </encoder>
     </appender>
 
-    <!-- 系統模組日誌級別控制  -->
-    <logger name="com.cheng" level="info"/>
+    <!-- 系統模組日誌級別控制（可透過 application.yml 的 logging.level.com.cheng 設定為 debug/info） -->
+    <logger name="com.cheng" level="${log.level.cheng}"/>
     <!-- Spring日誌級別控制  -->
     <logger name="org.springframework" level="warn"/>
 
-    <root level="info">
+    <root level="${log.level.root}">
         <appender-ref ref="console"/>
     </root>
 
     <!--系統操作日誌-->
-    <root level="info">
+    <root level="${log.level.root}">
         <appender-ref ref="file_info"/>
         <appender-ref ref="file_error"/>
     </root>

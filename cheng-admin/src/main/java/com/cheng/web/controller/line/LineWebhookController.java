@@ -3,7 +3,8 @@ package com.cheng.web.controller.line;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.line.domain.LineConfig;
-import com.cheng.line.enums.CallBack;
+import com.cheng.line.domain.LineUser;
+import com.cheng.line.enums.FollowStatus;
 import com.cheng.line.service.ILineConfigService;
 import com.cheng.line.service.ILineUserService;
 import com.linecorp.bot.parser.LineSignatureValidator;
@@ -77,16 +78,16 @@ public class LineWebhookController extends BaseController {
 
         try {
             // 1. 驗證頻道是否存在且啟用
-            log.info("[Stop1] 開始驗證頻道配置...");
+            log.debug("[Stop1] 開始驗證頻道配置...");
             LineConfig config = lineConfigService.selectLineConfigByBotBasicId(normalizedBotBasicId);
             if (config == null) {
                 log.error("[錯誤] Bot Basic ID 不存在: {}", botBasicId);
                 return notFound("頻道設定不存在");
             }
-            log.info("[Stop1] 頻道驗證成功: {} ({})", config.getChannelName(), config.getBotBasicId());
+            log.debug("[Stop1] 頻道驗證成功: {} ({})", config.getChannelName(), config.getBotBasicId());
 
             // 2. 解析並驗證 Webhook 事件
-            log.info("[Stop2] 開始解析並驗證 Webhook 事件...");
+            log.debug("[Stop2] 開始解析並驗證 Webhook 事件...");
 
             // 檢查是否有簽名
             if (signature == null || signature.isEmpty()) {
@@ -99,28 +100,28 @@ public class LineWebhookController extends BaseController {
             try {
                 // WebhookParser 會自動驗證簽名並解析事件
                 callbackRequest = parseAndValidateWebhook(config.getChannelSecret(), signature, payload);
-                log.info("[Stop2] 簽名驗證成功");
+                log.debug("[Stop2] 簽名驗證成功");
             } catch (Exception e) {
                 log.error("[錯誤] 簽名驗證失敗或解析錯誤: {}", e.getMessage());
                 return unauthorized("簽名驗證失敗或解析錯誤");
             }
 
             List<Event> events = callbackRequest.events();
-            log.info("[Stop2] 解析成功，共 {} 個事件", events.size());
+            log.debug("[Stop2] 解析成功，共 {} 個事件", events.size());
 
             // 3. 處理每個事件
             if (!events.isEmpty()) {
-                log.info("[Stop3] 開始處理事件...");
+                log.debug("[Stop3] 開始處理事件...");
             }
 
             for (int i = 0; i < events.size(); i++) {
                 Event event = events.get(i);
                 String eventType = event.getClass().getSimpleName();
                 log.info("[事件 {}/{}] 類型: {}", i + 1, events.size(), eventType);
-                log.info("[事件 {}/{}] 時間戳: {}", i + 1, events.size(), event.timestamp());
+                log.debug("[事件 {}/{}] 時間戳: {}", i + 1, events.size(), event.timestamp());
 
                 processEvent(event);
-                log.info("[事件 {}/{}] 處理完成", i + 1, events.size());
+                log.debug("[事件 {}/{}] 處理完成", i + 1, events.size());
             }
 
             log.info("==================== Webhook 請求處理完成 ====================");
@@ -246,6 +247,12 @@ public class LineWebhookController extends BaseController {
     public void handleMessageEvent(MessageEvent event) {
         String userId = event.source().userId();
 
+        // 檢查使用者是否在黑名單中
+        if (isUserBlacklisted(userId)) {
+            log.warn("使用者在黑名單中，忽略訊息事件, userId={}", userId);
+            return;
+        }
+
         if (event.message() instanceof TextMessageContent) {
             // 處理文字訊息
             String messageText = ((TextMessageContent) event.message()).text();
@@ -275,13 +282,20 @@ public class LineWebhookController extends BaseController {
     }
 
     /**
-     * 處理 Postback 事件（按鈕點擊回調）
+     * 處理 Postback 事件（按鈕點擊Callback）
      * <p>
      * 使用 @EventMapping 標記，符合 LINE SDK 標準
      */
     @EventMapping
     public void handlePostbackEvent(PostbackEvent event) {
         String userId = event.source().userId();
+
+        // 檢查使用者是否在黑名單中
+        if (isUserBlacklisted(userId)) {
+            log.warn("使用者在黑名單中，忽略 Postback 事件, userId={}", userId);
+            return;
+        }
+
         String data = event.postback().data();
         log.info("收到 Postback 事件，使用者ID: {}，資料: {}", userId, data);
 
@@ -290,7 +304,7 @@ public class LineWebhookController extends BaseController {
     }
 
     /**
-     * 處理 Beacon 事件（藍牙信標）
+     * 處理 Beacon 事件（藍牙訊號）
      * <p>
      * 使用 @EventMapping 標記，符合 LINE SDK 標準
      */
@@ -377,5 +391,23 @@ public class LineWebhookController extends BaseController {
 
         // 記錄事件但不做特別處理
         log.debug("事件詳情: {}", event);
+    }
+
+    /**
+     * 檢查使用者是否在黑名單中
+     *
+     * @param lineUserId LINE 使用者 ID
+     * @return true: 在黑名單中, false: 不在黑名單中
+     */
+    private boolean isUserBlacklisted(String lineUserId) {
+        try {
+            LineUser user = lineUserService.selectLineUserByLineUserId(lineUserId);
+            if (user != null && user.getFollowStatus() == FollowStatus.BLACKLISTED) {
+                return true;
+            }
+        } catch (Exception e) {
+            log.error("檢查黑名單狀態失敗, userId={}", lineUserId, e);
+        }
+        return false;
     }
 }

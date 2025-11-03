@@ -97,7 +97,7 @@ public class LineUserServiceImpl implements ILineUserService {
             lineUser.setBindStatus(BindStatus.UNBOUND);
         }
         if (lineUser.getFollowStatus() == null) {
-            lineUser.setFollowStatus(FollowStatus.BLOCKED);
+            lineUser.setFollowStatus(FollowStatus.UNFOLLOWED);
         }
         if (lineUser.getBindCount() == null) {
             lineUser.setBindCount(0);
@@ -185,24 +185,38 @@ public class LineUserServiceImpl implements ILineUserService {
 
     /**
      * 處理使用者取消關注事件
-     *
+     * 當使用者封鎖或刪除好友時觸發
+     * 
      * @param lineUserId LINE 使用者 ID
      * @return 結果
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public int handleUnfollowEvent(String lineUserId) {
         LineUser user = lineUserMapper.selectLineUserByLineUserId(lineUserId);
         if (user != null) {
-            user.setFollowStatus(FollowStatus.BLOCKED);
-            user.setUnfollowTime(new Date());
+            Date now = new Date();
+            
+            // 更新關注狀態為未關注（使用者主動取消關注）
+            user.setFollowStatus(FollowStatus.UNFOLLOWED);
+            user.setUnfollowTime(now);
+            user.setBlockTime(now);
+            
+            // 統一將綁定狀態改為未綁定
+            user.setBindStatus(BindStatus.UNBOUND);
+            user.setUnbindTime(now);
+            user.setSysUserId(null);
+            
+            log.info("使用者取消關注，已自動解除綁定, lineUserId={}", lineUserId);
+            
             return lineUserMapper.updateLineUser(user);
         }
+        log.warn("處理取消關注事件失敗，使用者不存在, lineUserId={}", lineUserId);
         return 0;
     }
 
     /**
-     * 處理使用者封鎖事件
+     * 處理使用者封鎖事件（LINE 的封鎖與取消關注是同一個 unfollow 事件）
      *
      * @param lineUserId LINE 使用者 ID
      * @return 結果
@@ -212,7 +226,8 @@ public class LineUserServiceImpl implements ILineUserService {
     public int handleBlockEvent(String lineUserId) {
         LineUser user = lineUserMapper.selectLineUserByLineUserId(lineUserId);
         if (user != null) {
-            user.setFollowStatus(FollowStatus.BLOCKED);
+            // LINE 的封鎖與取消關注在系統中視為同一狀態
+            user.setFollowStatus(FollowStatus.UNFOLLOWED);
             user.setBlockTime(new Date());
             return lineUserMapper.updateLineUser(user);
         }
@@ -596,5 +611,141 @@ public class LineUserServiceImpl implements ILineUserService {
             }
         }
         return result;
+    }
+
+    /**
+     * 將使用者加入黑名單
+     *
+     * @param lineUserId LINE 使用者 ID
+     * @return 結果
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int addToBlacklist(String lineUserId) {
+        LineUser user = lineUserMapper.selectLineUserByLineUserId(lineUserId);
+        if (user == null) {
+            throw new ServiceException("使用者不存在");
+        }
+        
+        if (user.getFollowStatus() == FollowStatus.BLACKLISTED) {
+            throw new ServiceException("該使用者已在黑名單中");
+        }
+        
+        // 設為黑名單
+        user.setFollowStatus(FollowStatus.BLACKLISTED);
+        user.setBlockTime(new Date());
+        
+        // 自動解除綁定
+        if (user.getBindStatus() == BindStatus.BOUND) {
+            user.setBindStatus(BindStatus.UNBOUND);
+            user.setUnbindTime(new Date());
+            user.setSysUserId(null);
+            log.info("使用者加入黑名單，已自動解除綁定, lineUserId={}", lineUserId);
+        }
+        
+        return lineUserMapper.updateLineUser(user);
+    }
+
+    /**
+     * 將使用者從黑名單移除
+     *
+     * @param lineUserId LINE 使用者 ID
+     * @return 結果
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int removeFromBlacklist(String lineUserId) {
+        LineUser user = lineUserMapper.selectLineUserByLineUserId(lineUserId);
+        if (user == null) {
+            throw new ServiceException("使用者不存在");
+        }
+        
+        if (user.getFollowStatus() != FollowStatus.BLACKLISTED) {
+            throw new ServiceException("該使用者不在黑名單中");
+        }
+        
+        // 移除黑名單，改為未關注狀態（需要使用者重新關注）
+        user.setFollowStatus(FollowStatus.UNFOLLOWED);
+        user.setBlockTime(null);
+        
+        log.info("使用者已從黑名單移除, lineUserId={}", lineUserId);
+        
+        return lineUserMapper.updateLineUser(user);
+    }
+
+    /**
+     * 批次將使用者加入黑名單
+     *
+     * @param lineUserIds LINE 使用者 ID 陣列
+     * @return 成功加入的數量
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int batchAddToBlacklist(String[] lineUserIds) {
+        if (lineUserIds == null || lineUserIds.length == 0) {
+            throw new ServiceException("請選擇要加入黑名單的使用者");
+        }
+
+        int successCount = 0;
+        int failCount = 0;
+        StringBuilder failedUsers = new StringBuilder();
+
+        for (String lineUserId : lineUserIds) {
+            try {
+                addToBlacklist(lineUserId);
+                successCount++;
+            } catch (Exception e) {
+                failCount++;
+                failedUsers.append(lineUserId).append(", ");
+                log.warn("加入黑名單失敗, lineUserId={}, 原因: {}", lineUserId, e.getMessage());
+            }
+        }
+
+        if (failCount > 0) {
+            log.warn("批次加入黑名單完成，成功: {}, 失敗: {}, 失敗的使用者: {}", 
+                successCount, failCount, failedUsers.toString());
+        } else {
+            log.info("批次加入黑名單完成，成功: {}", successCount);
+        }
+
+        return successCount;
+    }
+
+    /**
+     * 批次將使用者從黑名單移除
+     *
+     * @param lineUserIds LINE 使用者 ID 陣列
+     * @return 成功移除的數量
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int batchRemoveFromBlacklist(String[] lineUserIds) {
+        if (lineUserIds == null || lineUserIds.length == 0) {
+            throw new ServiceException("請選擇要移除黑名單的使用者");
+        }
+
+        int successCount = 0;
+        int failCount = 0;
+        StringBuilder failedUsers = new StringBuilder();
+
+        for (String lineUserId : lineUserIds) {
+            try {
+                removeFromBlacklist(lineUserId);
+                successCount++;
+            } catch (Exception e) {
+                failCount++;
+                failedUsers.append(lineUserId).append(", ");
+                log.warn("移除黑名單失敗, lineUserId={}, 原因: {}", lineUserId, e.getMessage());
+            }
+        }
+
+        if (failCount > 0) {
+            log.warn("批次移除黑名單完成，成功: {}, 失敗: {}, 失敗的使用者: {}", 
+                successCount, failCount, failedUsers.toString());
+        } else {
+            log.info("批次移除黑名單完成，成功: {}", successCount);
+        }
+
+        return successCount;
     }
 }

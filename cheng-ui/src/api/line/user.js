@@ -92,3 +92,37 @@ export function downloadTemplate() {
     responseType: 'blob'
   })
 }
+
+// 將使用者加入黑名單
+export function addToBlacklist(lineUserId) {
+  return request({
+    url: `/line/user/blacklist/add/${lineUserId}`,
+    method: 'put'
+  })
+}
+
+// 將使用者從黑名單移除
+export function removeFromBlacklist(lineUserId) {
+  return request({
+    url: `/line/user/blacklist/remove/${lineUserId}`,
+    method: 'put'
+  })
+}
+
+// 批次將使用者加入黑名單
+export function batchAddToBlacklist(lineUserIds) {
+  return request({
+    url: '/line/user/blacklist/batchAdd',
+    method: 'put',
+    data: lineUserIds
+  })
+}
+
+// 批次將使用者從黑名單移除
+export function batchRemoveFromBlacklist(lineUserIds) {
+  return request({
+    url: '/line/user/blacklist/batchRemove',
+    method: 'put',
+    data: lineUserIds
+  })
+}
