@@ -362,11 +362,11 @@ export default {
       try {
         this.html5QrCode.render(
           (decodedText, decodedResult) => {
-            // 掃描成功回調
+            // 掃描成功Callback
             this.handleScanSuccess(decodedText);
           },
           (error) => {
-            // 掃描失敗回調（可以忽略，因為會持續掃描）
+            // 掃描失敗Callback（可以忽略，因為會持續掃描）
             console.warn('掃描中...', error);
           }
         );

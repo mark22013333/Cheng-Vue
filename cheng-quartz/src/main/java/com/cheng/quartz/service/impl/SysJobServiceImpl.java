@@ -7,12 +7,12 @@ import com.cheng.quartz.mapper.SysJobMapper;
 import com.cheng.quartz.service.ISysJobService;
 import com.cheng.quartz.util.CronUtils;
 import com.cheng.quartz.util.ScheduleUtils;
-import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobDataMap;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -25,12 +25,13 @@ import java.util.List;
  *
  * @author cheng
  */
+@Slf4j
 @Service
 public class SysJobServiceImpl implements ISysJobService {
-    @Autowired
+    @Resource
     private Scheduler scheduler;
 
-    @Autowired
+    @Resource
     private SysJobMapper jobMapper;
 
     /**
@@ -50,7 +51,6 @@ public class SysJobServiceImpl implements ISysJobService {
      * 取得quartz呼叫器的計畫任務列表
      *
      * @param job 呼叫訊息
-     * @return
      */
     @Override
     public List<SysJob> selectJobList(SysJob job) {
@@ -114,10 +114,24 @@ public class SysJobServiceImpl implements ISysJobService {
     public int deleteJob(SysJob job) throws SchedulerException {
         Long jobId = job.getJobId();
         String jobGroup = job.getJobGroup();
-        int rows = jobMapper.deleteJobById(jobId);
-        if (rows > 0) {
-            scheduler.deleteJob(ScheduleUtils.getJobKey(jobId, jobGroup));
+
+        // 先刪除 Quartz 的排程
+        JobKey jobKey = ScheduleUtils.getJobKey(jobId, jobGroup);
+        if (scheduler.checkExists(jobKey)) {
+            boolean deleted = scheduler.deleteJob(jobKey);
+            if (!deleted) {
+                log.warn("刪除 Quartz Job 失敗: jobId={}, jobGroup={}", jobId, jobGroup);
+                throw new SchedulerException("刪除 Quartz Job 失敗");
+            }
+            log.info("已刪除 Quartz Job: jobId={}, jobGroup={}", jobId, jobGroup);
         }
+
+        // 再刪除資料庫記錄
+        int rows = jobMapper.deleteJobById(jobId);
+        if (rows == 0) {
+            log.warn("刪除 sys_job 記錄失敗: jobId={}", jobId);
+        }
+
         return rows;
     }
 

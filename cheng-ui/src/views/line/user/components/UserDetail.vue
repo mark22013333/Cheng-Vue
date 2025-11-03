@@ -41,7 +41,7 @@
             <div class="info-item">
               <span class="label">關注狀態</span>
               <el-tag v-if="userInfo.followStatus === 'FOLLOWING'" type="success" size="small">關注中</el-tag>
-              <el-tag v-else-if="userInfo.followStatus === 'BLOCKED'" type="danger" size="small">已封鎖</el-tag>
+              <el-tag v-else-if="userInfo.followStatus === 'BLACKLISTED'" type="danger" size="small">黑名單</el-tag>
               <el-tag v-else type="info" size="small">已取消</el-tag>
             </div>
             <div class="info-item">
@@ -103,7 +103,7 @@
               color="#F56C6C"
             >
               <div class="timeline-content">
-                <div class="timeline-title">封鎖時間</div>
+                <div class="timeline-title">加入黑名單</div>
                 <div class="timeline-time">{{ parseTime(userInfo.blockTime) }}</div>
               </div>
             </el-timeline-item>

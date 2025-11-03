@@ -87,6 +87,9 @@ spring:
 logging:
   file:
     path: /Users/cheng/cool-logs
+  level:
+    root: info
+    com.cheng: debug
 
 # 專案相關設定 - 本地環境
 cheng:

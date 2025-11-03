@@ -33,7 +33,7 @@
         <el-select v-model="queryParams.followStatus" placeholder="關注狀態" clearable style="width: 140px">
           <el-option label="關注中" value="FOLLOWING" />
           <el-option label="已取消" value="UNFOLLOWED" />
-          <el-option label="已封鎖" value="BLOCKED" />
+          <el-option label="黑名單" value="BLACKLISTED" />
         </el-select>
       </el-form-item>
       <el-form-item label="加入時間">
@@ -92,6 +92,32 @@
           刪除
         </el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="warning"
+          plain
+          icon="el-icon-remove-outline"
+          size="mini"
+          :disabled="multiple"
+          @click="handleBatchAddBlacklist"
+          v-hasPermi="['line:user:edit']"
+        >
+          批次加入黑名單
+        </el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="success"
+          plain
+          icon="el-icon-circle-check"
+          size="mini"
+          :disabled="multiple"
+          @click="handleBatchRemoveBlacklist"
+          v-hasPermi="['line:user:edit']"
+        >
+          批次移除黑名單
+        </el-button>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -121,7 +147,7 @@
       <el-table-column label="關注狀態" align="center" width="100">
         <template slot-scope="scope">
           <el-tag v-if="scope.row.followStatus === 'FOLLOWING'" type="success" size="small">關注中</el-tag>
-          <el-tag v-else-if="scope.row.followStatus === 'BLOCKED'" type="danger" size="small">已封鎖</el-tag>
+          <el-tag v-else-if="scope.row.followStatus === 'BLACKLISTED'" type="danger" size="small">黑名單</el-tag>
           <el-tag v-else type="info" size="small">已取消</el-tag>
         </template>
       </el-table-column>
@@ -172,6 +198,23 @@
               <el-dropdown-item command="sync" icon="el-icon-refresh" v-hasPermi="['line:user:edit']">
                 同步資料
               </el-dropdown-item>
+              <el-dropdown-item
+                command="addBlacklist"
+                icon="el-icon-remove-outline"
+                divided
+                v-hasPermi="['line:user:edit']"
+                v-if="scope.row.followStatus !== 'BLACKLISTED'"
+              >
+                加入黑名單
+              </el-dropdown-item>
+              <el-dropdown-item
+                command="removeBlacklist"
+                icon="el-icon-circle-check"
+                v-hasPermi="['line:user:edit']"
+                v-if="scope.row.followStatus === 'BLACKLISTED'"
+              >
+                移除黑名單
+              </el-dropdown-item>
               <el-dropdown-item command="delete" icon="el-icon-delete" divided v-hasPermi="['line:user:remove']">
                 刪除
               </el-dropdown-item>
@@ -213,7 +256,7 @@
 </template>
 
 <script>
-import { listUser, delUser, getUserStats, unbindUser, syncUserProfile, exportUser } from '@/api/line/user'
+import { listUser, delUser, getUserStats, unbindUser, syncUserProfile, exportUser, addToBlacklist, removeFromBlacklist, batchAddToBlacklist, batchRemoveFromBlacklist } from '@/api/line/user'
 import StatsCard from './components/StatsCard'
 import UserDetail from './components/UserDetail'
 import BindDialog from './components/BindDialog'
@@ -234,6 +277,8 @@ export default {
       statsLoading: true,
       // 選中陣列
       ids: [],
+      // 選中的 LINE 使用者 ID
+      lineUserIds: [],
       // 非單個停用
       single: true,
       // 非多個停用
@@ -303,6 +348,7 @@ export default {
     /** 多選框選中資料 */
     handleSelectionChange(selection) {
       this.ids = selection.map(item => item.id)
+      this.lineUserIds = selection.map(item => item.lineUserId)
       this.single = selection.length !== 1
       this.multiple = !selection.length
     },
@@ -316,12 +362,12 @@ export default {
     handleImport() {
       this.importVisible = true
     },
-    /** 匯入成功回調 */
+    /** 匯入成功Callback */
     handleImportSuccess(result) {
       this.importVisible = false
       this.getList()
       this.getStats()
-      
+
       // 顯示匯入結果
       const h = this.$createElement
       const message = h('div', null, [
@@ -336,7 +382,7 @@ export default {
           result.failDetails.length > 10 ? h('p', { style: 'font-size: 12px; color: #909399' }, `... 還有 ${result.failDetails.length - 10} 筆失敗記錄`) : null
         ]) : null
       ])
-      
+
       this.$notify({
         title: '匯入完成',
         message: message,
@@ -361,7 +407,7 @@ export default {
       this.currentUserId = row.id
       this.detailVisible = true
     },
-    /** 綁定成功回調 */
+    /** 綁定成功Callback */
     handleBindSuccess() {
       this.bindVisible = false
       this.getList()
@@ -388,6 +434,12 @@ export default {
         case 'sync':
           this.handleSync(row)
           break
+        case 'addBlacklist':
+          this.handleAddToBlacklist(row)
+          break
+        case 'removeBlacklist':
+          this.handleRemoveFromBlacklist(row)
+          break
         case 'delete':
           this.handleDelete(row)
           break
@@ -410,6 +462,82 @@ export default {
       }).then(() => {
         this.getList()
         this.$modal.msgSuccess('同步成功')
+      }).catch(() => {})
+    },
+    /** 加入黑名單 */
+    handleAddToBlacklist(row) {
+      const displayName = row.lineDisplayName || row.lineUserId
+      const h = this.$createElement
+      this.$confirm('', '警告', {
+        message: h('div', null, [
+          h('p', null, `是否將使用者「${displayName}」加入黑名單？`),
+          h('p', { style: 'color: #F56C6C; margin-top: 10px; font-weight: bold;' },
+            '⚠️ 加入後該使用者將無法參與活動，也不會收到任何訊息。')
+        ]),
+        confirmButtonText: '確認加入',
+        cancelButtonText: '取消',
+        type: 'warning',
+        dangerouslyUseHTMLString: false
+      }).then(() => {
+        return addToBlacklist(row.lineUserId)
+      }).then(() => {
+        this.getList()
+        this.getStats()
+        this.$modal.msgSuccess('已加入黑名單')
+      }).catch(() => {})
+    },
+    /** 移除黑名單 */
+    handleRemoveFromBlacklist(row) {
+      const displayName = row.lineDisplayName || row.lineUserId
+      this.$modal.confirm(`是否將使用者「${displayName}」從黑名單移除？`, '提示').then(() => {
+        return removeFromBlacklist(row.lineUserId)
+      }).then(() => {
+        this.getList()
+        this.getStats()
+        this.$modal.msgSuccess('已移除黑名單')
+      }).catch(() => {})
+    },
+    /** 批次加入黑名單 */
+    handleBatchAddBlacklist() {
+      if (this.lineUserIds.length === 0) {
+        this.$modal.msgWarning('請選擇要加入黑名單的使用者')
+        return
+      }
+
+      const h = this.$createElement
+      this.$confirm('', '警告', {
+        message: h('div', null, [
+          h('p', null, `是否將選中的 ${this.lineUserIds.length} 位使用者加入黑名單？`),
+          h('p', { style: 'color: #F56C6C; margin-top: 10px; font-weight: bold;' },
+            '⚠️ 加入後這些使用者將無法參與活動，也不會收到任何訊息。')
+        ]),
+        confirmButtonText: '確認加入',
+        cancelButtonText: '取消',
+        type: 'warning',
+        dangerouslyUseHTMLString: false
+      }).then(() => {
+        return batchAddToBlacklist(this.lineUserIds)
+      }).then(response => {
+        this.getList()
+        this.getStats()
+        this.$modal.msgSuccess(response.msg || '批次加入黑名單成功')
+      }).catch(() => {})
+    },
+    /** 批次移除黑名單 */
+    handleBatchRemoveBlacklist() {
+      if (this.lineUserIds.length === 0) {
+        this.$modal.msgWarning('請選擇要移除黑名單的使用者')
+        return
+      }
+
+      this.$modal.confirm(
+        `是否將選中的 ${this.lineUserIds.length} 位使用者從黑名單移除？`
+      ).then(() => {
+        return batchRemoveFromBlacklist(this.lineUserIds)
+      }).then(response => {
+        this.getList()
+        this.getStats()
+        this.$modal.msgSuccess(response.msg || '批次移除黑名單成功')
       }).catch(() => {})
     }
   }
