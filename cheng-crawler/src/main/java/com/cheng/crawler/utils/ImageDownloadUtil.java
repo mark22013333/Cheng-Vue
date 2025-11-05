@@ -1,5 +1,9 @@
 package com.cheng.crawler.utils;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 圖片下載工具類別
@@ -25,6 +30,15 @@ public class ImageDownloadUtil {
     private static final int READ_TIMEOUT = 30000; // 30秒
 
     /**
+     * OkHttpClient 實例（用於支援 Cloudflare 保護的圖片下載）
+     */
+    private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .followRedirects(true)
+            .build();
+
+    /**
      * 從網址下載圖片到指定目錄
      *
      * @param imageUrl 圖片網址
@@ -34,6 +48,96 @@ public class ImageDownloadUtil {
      */
     public static String downloadImage(String imageUrl, String savePath, String fileName) {
         return downloadImage(imageUrl, savePath, fileName, null);
+    }
+
+    /**
+     * 從網址下載圖片（使用 Cloudflare cookies，適用於 isbn.tw）
+     *
+     * @param imageUrl  圖片網址
+     * @param savePath  儲存路徑（資料夾）
+     * @param fileName  檔案名稱（不含副檔名）
+     * @param cookies   Cloudflare cookies（從 FlareSolver 取得）
+     * @param userAgent User-Agent（從 FlareSolver 取得）
+     * @return 儲存後的完整路徑，失敗回傳 null
+     */
+    public static String downloadImageWithCookies(String imageUrl, String savePath, String fileName,
+                                                   String cookies, String userAgent) {
+        try {
+            // 建立目錄
+            Path dirPath = Paths.get(savePath);
+            if (!Files.exists(dirPath)) {
+                Files.createDirectories(dirPath);
+                log.info("建立目錄: {}", savePath);
+            }
+
+            // 取得圖片副檔名
+            String extension = getFileExtension(imageUrl);
+            if (extension == null || extension.isEmpty()) {
+                extension = "jpg"; // 預設
+            }
+
+            // 產生檔案名稱（不加時間戳記，重複掃描時直接覆蓋）
+            String fullFileName = fileName + "." + extension;
+            String fullPath = savePath + File.separator + fullFileName;
+
+            log.info("準備下載圖片（使用 Cloudflare cookies）: {} -> {}", imageUrl, fullPath);
+
+            // 建立請求（使用 cookies 和 user-agent）
+            Request.Builder requestBuilder = new Request.Builder()
+                    .url(imageUrl)
+                    .get();
+
+            // 設定 User-Agent
+            if (userAgent != null && !userAgent.isEmpty()) {
+                requestBuilder.header("User-Agent", userAgent);
+            } else {
+                requestBuilder.header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36");
+            }
+
+            // 設定 Cookies
+            if (cookies != null && !cookies.isEmpty()) {
+                requestBuilder.header("Cookie", cookies);
+            }
+
+            // 設定 Referer
+            if (imageUrl.contains("isbn.tw")) {
+                requestBuilder.header("Referer", "https://isbn.tw/");
+            }
+
+            Request request = requestBuilder.build();
+
+            // 執行請求
+            try (Response response = OK_HTTP_CLIENT.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    log.error("下載圖片失敗，HTTP 回應碼: {}, URL: {}", response.code(), imageUrl);
+                    return null;
+                }
+
+                ResponseBody body = response.body();
+                if (body == null) {
+                    log.error("圖片回應內容為空，URL: {}", imageUrl);
+                    return null;
+                }
+
+                // 寫入檔案
+                try (InputStream inputStream = body.byteStream();
+                     FileOutputStream outputStream = new FileOutputStream(fullPath)) {
+                    
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                }
+
+                log.info("圖片下載成功: {}", fullPath);
+                return fullPath;
+            }
+
+        } catch (Exception e) {
+            log.error("下載圖片時發生錯誤: {}", e.getMessage(), e);
+            return null;
+        }
     }
 
     /**
@@ -64,9 +168,8 @@ public class ImageDownloadUtil {
                 extension = "jpg"; // 預設
             }
 
-            // 產生帶時間戳記的檔案名稱
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-            String fullFileName = timestamp + "_" + fileName + "." + extension;
+            // 產生檔案名稱（不加時間戳記，重複掃描時直接覆蓋）
+            String fullFileName = fileName + "." + extension;
             String fullPath = savePath + File.separator + fullFileName;
 
             log.info("準備下載圖片: {} -> {}", imageUrl, fullPath);

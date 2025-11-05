@@ -65,11 +65,17 @@ logging:
 cheng:
   profile: /opt/cool-apps/uploadFile
 
-# 爬蟲設定 - 本地環境（使用 Docker Selenium）
+# 爬蟲設定 - 本地環境（使用 WebDriverManager 自動管理 ChromeDriver）
 crawler:
   selenium:
     mode: remote
     remote-url: http://localhost:9515
+    chrome-driver-path: auto  # 設定為 auto 使用 WebDriverManager 自動下載最新版本
+  # FlareSolverr 設定（處理 Cloudflare 驗證）
+  flaresolver:
+    enabled: true  # 是否啟用 FlareSolverr（預設啟用）
+    url: http://localhost:8191/v1  # FlareSolver 服務 URL
+    max-timeout: 60000  # 最大逾時時間（毫秒），預設 60 秒
 
 # LINE Bot 設定 - 測試環境（使用環境變數）
 line:

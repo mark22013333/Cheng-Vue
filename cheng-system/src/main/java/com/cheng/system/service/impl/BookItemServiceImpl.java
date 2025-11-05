@@ -130,9 +130,10 @@ public class BookItemServiceImpl implements IBookItemService {
     }
 
     /**
-     * 更新現有書籍資訊
+     * 更新現有書籍資訊（完整更新，包含物品表和書籍資訊表）
      */
     private void updateExistingBookInfo(InvBookInfo existingBook, BookInfoDTO bookInfoDTO) {
+        // 1. 更新書籍資訊表 (inv_book_info)
         existingBook.setTitle(bookInfoDTO.getTitle());
         existingBook.setAuthor(bookInfoDTO.getAuthor());
         existingBook.setPublisher(bookInfoDTO.getPublisher());
@@ -146,8 +147,52 @@ public class BookItemServiceImpl implements IBookItemService {
         existingBook.setIntroduction(bookInfoDTO.getIntroduction());
         existingBook.setSourceUrl(bookInfoDTO.getSourceUrl());
         existingBook.setCrawlTime(new Date());
-        invBookInfoService.updateInvBookInfo(existingBook);
+        existingBook.setUpdateBy(SecurityUtils.getUsername());
+        existingBook.setUpdateTime(new Date());
+        
+        int bookInfoResult = invBookInfoService.updateInvBookInfo(existingBook);
+        if (bookInfoResult <= 0) {
+            throw new ServiceException("更新書籍資訊失敗");
+        }
         log.info("更新書籍資訊成功，ISBN: {}", existingBook.getIsbn());
+        
+        // 2. 同步更新關聯的物品表 (inv_item)
+        if (existingBook.getItemId() != null) {
+            InvItem item = invItemMapper.selectInvItemByItemId(existingBook.getItemId());
+            if (item != null) {
+                // 更新物品名稱
+                item.setItemName(bookInfoDTO.getTitle());
+                
+                // 更新規格（語言/裝訂/出版日期）
+                item.setSpecification(buildSpecification(bookInfoDTO));
+                
+                // 更新品牌（出版社）
+                item.setBrand(bookInfoDTO.getPublisher());
+                
+                // 更新型號（版本）
+                item.setModel(bookInfoDTO.getEdition());
+                
+                // 更新描述（簡介）
+                item.setDescription(truncateDescription(bookInfoDTO.getIntroduction()));
+                
+                // 更新圖片路徑
+                if (StringUtils.isNotEmpty(bookInfoDTO.getCoverImagePath())) {
+                    item.setImageUrl(bookInfoDTO.getCoverImagePath());
+                }
+                
+                item.setUpdateBy(SecurityUtils.getUsername());
+                item.setUpdateTime(new Date());
+                
+                int itemResult = invItemMapper.updateInvItem(item);
+                if (itemResult <= 0) {
+                    log.warn("更新物品資訊失敗，ItemId: {}", item.getItemId());
+                } else {
+                    log.info("同步更新物品資訊成功，ItemId: {}, 書名: {}", item.getItemId(), item.getItemName());
+                }
+            } else {
+                log.warn("找不到關聯的物品記錄，ItemId: {}", existingBook.getItemId());
+            }
+        }
     }
 
     /**

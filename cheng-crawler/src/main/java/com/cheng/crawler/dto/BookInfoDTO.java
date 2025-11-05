@@ -16,6 +16,11 @@ public class BookInfoDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
+     * 物品 ID（入庫後產生）
+     */
+    private Long itemId;
+
+    /**
      * ISBN
      */
     private String isbn;

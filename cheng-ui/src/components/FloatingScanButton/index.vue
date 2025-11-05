@@ -1,5 +1,15 @@
 <template>
-  <div class="floating-scan-button" v-if="showButton" @click="handleScanClick">
+  <div>
+    <!-- 浮動掃描按鈕 -->
+    <div 
+      class="floating-scan-button" 
+      v-if="showButton" 
+      :style="buttonPosition"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+      @click="handleScanClick"
+    >
     <el-tooltip content="掃描功能" placement="left">
       <el-button
         type="primary"
@@ -11,6 +21,11 @@
       >
       </el-button>
     </el-tooltip>
+
+      <!-- 任務數量標記 -->
+      <span v-if="activeTasks.length > 0" class="task-badge">{{ activeTasks.length }}</span>
+    </div>
+
 
     <!-- 快速掃描對話框 -->
     <el-dialog
@@ -170,6 +185,7 @@
 import {Html5QrcodeScanner, Html5QrcodeScanType} from "html5-qrcode";
 import {scanIsbn, scanCode} from "@/api/inventory/scan";
 import {quickStockIn, getManagement} from "@/api/inventory/management";
+import {createCrawlTask, getTaskStatus} from "@/api/inventory/crawlTask";
 
 export default {
   name: "FloatingScanButton",
@@ -185,12 +201,29 @@ export default {
       currentCamera: 'environment', // 'environment' 或 'user'
       stockInLoading: false, // 入庫加載狀態
       detailDialogVisible: false, // 詳情對話框顯示
-      itemDetail: null // 物品詳細資訊
+      itemDetail: null, // 物品詳細資訊
+      // 拖動相關
+      isDragging: false,
+      dragStartX: 0,
+      dragStartY: 0,
+      buttonX: 0,
+      buttonY: 0,
+      hasMoved: false, // 是否已經移動
+      // 任務管理
+      activeTasks: [], // 進行中的任務列表
+      pollingTimer: null, // 輪詢計時器
+      // 掃描防重複
+      lastScannedCode: null, // 最後掃描的條碼
+      lastScanTime: 0, // 最後掃描時間
+      scanCooldown: 3000, // 冷卻時間 3 秒
+      recentScannedCodes: new Set() // 最近掃描過的條碼
     };
   },
   mounted() {
     this.checkMobileDevice();
     this.checkCurrentRoute();
+    this.loadButtonPosition();
+    this.loadActiveTasks(); // 載入持久化的任務列表
   },
   watch: {
     '$route'() {
@@ -214,6 +247,11 @@ export default {
 
     /** 處理掃描按鈕點擊 */
     handleScanClick() {
+      // 如果正在拖動或已經移動，不觸發點擊
+      if (this.isDragging || this.hasMoved) {
+        return;
+      }
+      
       this.quickScanVisible = true;
       this.$nextTick(() => {
         this.initQuickScanner();
@@ -351,9 +389,18 @@ export default {
 
     /** 快速掃描成功處理 */
     handleQuickScanSuccess(decodedText) {
+      // 停止掃描器
       this.stopQuickScan();
+      
+      // 執行掃描
       this.performQuickScan(decodedText);
-      this.$message.success(`掃描成功: ${decodedText}`);
+      
+      // 簡短提示
+      this.$message({
+        message: `掃描成功: ${decodedText}`,
+        type: 'success',
+        duration: 1500
+      });
     },
 
     /** 手動輸入處理 */
@@ -379,34 +426,36 @@ export default {
       }
     },
 
-    /** 執行 ISBN 快速掃描 */
+    /** 執行 ISBN 快速掃描（非同步版本） */
     performIsbnQuickScan(code) {
-      const loading = this.$loading({
-        lock: true,
-        text: '正在爬取書籍資訊...',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      });
-
-      scanIsbn({ isbn: code }).then(response => {
-        loading.close();
-
-        if (response.code === 200 && response.data && response.data.item) {
-          this.scanResult = response.data.item;
-
-          const message = response.data.message || '書籍掃描成功';
+      // 建立爬取任務
+      createCrawlTask(code).then(response => {
+        if (response.code === 200) {
+          const taskId = response.data;
+          
+          // 立即提示加入佇列
           this.$notify({
-            title: '成功',
-            message: message,
-            type: 'success',
-            duration: 3000
+            title: '已加入佇列',
+            message: `ISBN ${code} 正在爬取中...`,
+            type: 'info',
+            duration: 2000
           });
+          
+          // 加入任務列表
+          this.activeTasks.push({
+            taskId: taskId,
+            isbn: code,
+            status: 'PENDING'
+          });
+          
+          // 使用 SSE 訂閱任務狀態
+          this.subscribeTaskStatus(taskId);
+          
         } else {
-          this.$message.error('ISBN 掃描失敗');
+          this.$message.error('建立任務失敗');
         }
       }).catch(error => {
-        loading.close();
-        this.$message.error('ISBN 掃描失敗：' + (error.msg || '無法取得書籍資訊'));
+        this.$message.error('建立任務失敗：' + (error.msg || '未知錯誤'));
       });
     },
 
@@ -539,11 +588,276 @@ export default {
       this.quickScanVisible = false;
       this.scanResult = null;
       this.manualCode = '';
-    }
+    },
+    
+    // ==================== 拖動功能 ====================
+    
+    /** 觸控開始 */
+    handleTouchStart(e) {
+      this.hasMoved = false;
+      this.dragStartX = e.touches[0].clientX;
+      this.dragStartY = e.touches[0].clientY;
+      
+      // 顯示長按進度指示器
+      // 直接進入拖動模式（移除長按等待）
+      this.isDragging = true;
+      this.hasMoved = false;
+      
+      // 阻止事件冒泡
+      e.stopPropagation();
+    },
+    
+    /** 觸控移動 */
+    handleTouchMove(e) {
+      if (!this.isDragging) {
+        return;
+      }
+      
+      this.hasMoved = true;
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // 計算移動距離（修正 Y 軸反向問題）
+      const deltaX = this.dragStartX - e.touches[0].clientX;
+      const deltaY = this.dragStartY - e.touches[0].clientY;  // 修正！
+      
+      // 更新按鈕位置
+      let newX = this.buttonX + deltaX;
+      let newY = this.buttonY + deltaY;
+      
+      // 邊界限制（不超出螢幕）
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      const buttonSize = 60;
+      
+      newX = Math.max(10, Math.min(newX, screenWidth - buttonSize - 10));
+      newY = Math.max(10, Math.min(newY, screenHeight - buttonSize - 10));
+      
+      this.buttonX = newX;
+      this.buttonY = newY;
+      
+      // 更新拖動起始點
+      this.dragStartX = e.touches[0].clientX;
+      this.dragStartY = e.touches[0].clientY;
+    },
+    
+    /** 觸控結束 */
+    handleTouchEnd(e) {
+      if (this.isDragging && this.hasMoved) {
+        // 儲存位置到 localStorage
+        this.saveButtonPosition();
+        
+        e.stopPropagation();
+        e.preventDefault();
+      } else if (this.isDragging && !this.hasMoved) {
+        // 沒有移動，視為點擊事件
+        // 觸發掃描功能
+        this.quickScanVisible = true;
+      }
+      
+      // 重置拖動狀態
+      this.isDragging = false;
+      this.hasMoved = false;
+    },
+    
+    /** 載入按鈕位置 */
+    loadButtonPosition() {
+      const savedPosition = localStorage.getItem('scan-button-position');
+      if (savedPosition) {
+        const position = JSON.parse(savedPosition);
+        this.buttonX = position.x || 20;
+        this.buttonY = position.y || 80;
+      } else {
+        // 預設位置（右下角）
+        this.buttonX = 20;
+        this.buttonY = 80;
+      }
+    },
+    
+    /** 儲存按鈕位置 */
+    saveButtonPosition() {
+      localStorage.setItem('scan-button-position', JSON.stringify({
+        x: this.buttonX,
+        y: this.buttonY
+      }));
+    },
+    
+    /** 儲存進行中的任務列表 */
+    saveActiveTasks() {
+      try {
+        // 只儲存基本資訊，不儲存整個 bookInfo 物件
+        const tasksToSave = this.activeTasks.map(task => ({
+          taskId: task.taskId,
+          isbn: task.isbn,
+          status: task.status,
+          createTime: task.createTime
+        }));
+        localStorage.setItem('active-crawl-tasks', JSON.stringify(tasksToSave));
+      } catch (error) {
+        console.error('儲存任務列表失敗', error);
+      }
+    },
+    
+    /** 載入進行中的任務列表 */
+    loadActiveTasks() {
+      try {
+        const saved = localStorage.getItem('active-crawl-tasks');
+        if (saved) {
+          const tasks = JSON.parse(saved);
+          // 過濾掉超過 10 分鐘的舊任務
+          const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+          const validTasks = tasks.filter(task => {
+            const createTime = new Date(task.createTime);
+            return createTime > tenMinutesAgo;
+          });
+          
+          if (validTasks.length > 0) {
+            this.activeTasks = validTasks;
+            // 重新訂閱這些任務
+            validTasks.forEach(task => {
+              if (task.status === 'PENDING' || task.status === 'PROCESSING') {
+                this.subscribeTaskStatus(task.taskId);
+              }
+            });
+          } else {
+            // 清除過期的資料
+            localStorage.removeItem('active-crawl-tasks');
+          }
+        }
+      } catch (error) {
+        console.error('載入任務列表失敗', error);
+        localStorage.removeItem('active-crawl-tasks');
+      }
+    },
+    
+    // ==================== SSE 訂閱 ====================
+    
+    /** 訂閱任務狀態（SSE） */
+    subscribeTaskStatus(taskId) {
+      const baseURL = process.env.VUE_APP_BASE_API || '';
+      const eventSource = new EventSource(`${baseURL}/inventory/crawlTask/subscribe/${taskId}`);
+      
+      // 監聽任務更新事件
+      eventSource.addEventListener('task-update', (event) => {
+        try {
+          const task = JSON.parse(event.data);
+          this.handleTaskUpdate(task);
+        } catch (error) {
+          console.error('解析 SSE 資料失敗', error);
+        }
+      });
+      
+      // 監聽錯誤事件
+      eventSource.addEventListener('error', (event) => {
+        console.error('SSE 連線錯誤', event);
+        eventSource.close();
+      });
+      
+      // 儲存連線，用於後續關閉
+      if (!this.sseConnections) {
+        this.sseConnections = new Map();
+      }
+      this.sseConnections.set(taskId, eventSource);
+    },
+    
+    /** 取消訂閱 */
+    unsubscribeTaskStatus(taskId) {
+      if (this.sseConnections && this.sseConnections.has(taskId)) {
+        const eventSource = this.sseConnections.get(taskId);
+        eventSource.close();
+        this.sseConnections.delete(taskId);
+      }
+    },
+    
+    /** 處理任務更新 */
+    handleTaskUpdate(task) {
+      const index = this.activeTasks.findIndex(t => t.taskId === task.taskId);
+      if (index === -1) return;
+      
+      // 更新任務狀態
+      this.$set(this.activeTasks, index, task);
+      this.saveActiveTasks(); // 儲存任務列表
+      
+      // 檢查是否完成
+      if (task.status === 'COMPLETED') {
+        console.log('任務完成，準備觸發 scan-success 事件:', task.bookInfo);
+        
+        // 觸發全域事件，讓掃描結果按鈕接收
+        this.$root.$emit('scan-success', task.bookInfo);
+        
+        // 任務完成通知
+        this.$notify({
+          title: '書籍爬取完成',
+          message: `《${task.bookInfo?.title || task.isbn}》已加入掃描結果`,
+          type: 'success',
+          duration: 3000
+        });
+        
+        // 取消訂閱
+        this.unsubscribeTaskStatus(task.taskId);
+        
+        // 從列表移除（紅色徽章數量會減少）
+        console.log(`任務完成，從 activeTasks 移除，剩餘任務數: ${this.activeTasks.length - 1}`);
+        this.activeTasks.splice(index, 1);
+        this.saveActiveTasks(); // 儲存任務列表
+      } else if (task.status === 'FAILED') {
+        // 任務失敗通知
+        this.$notify({
+          title: '爬取失敗',
+          message: `ISBN ${task.isbn} 爬取失敗：${task.errorMessage || '未知錯誤'}`,
+          type: 'error',
+          duration: 5000
+        });
+        
+        // 取消訂閱
+        this.unsubscribeTaskStatus(task.taskId);
+        
+        // 從列表移除（紅色徽章數量會減少）
+        console.log(`任務失敗，從 activeTasks 移除，剩餘任務數: ${this.activeTasks.length - 1}`);
+        this.activeTasks.splice(index, 1);
+        this.saveActiveTasks(); // 儲存任務列表
+      }
+    },
+    
+    /** 顯示書籍資訊 */
+    showBookInfo(bookInfo) {
+      if (!bookInfo) return;
+      
+      this.$alert(`
+        <div style="text-align: left;">
+          <h3 style="margin-top: 0;">${bookInfo.title}</h3>
+          <p><strong>作者：</strong>${bookInfo.author || '-'}</p>
+          <p><strong>出版社：</strong>${bookInfo.publisher || '-'}</p>
+          <p><strong>ISBN：</strong>${bookInfo.isbn || '-'}</p>
+        </div>
+      `, '書籍資訊', {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '確定'
+      });
+    },
   },
 
   beforeDestroy() {
     this.stopQuickScan();
+    
+    // 關閉所有 SSE 連線
+    if (this.sseConnections) {
+      this.sseConnections.forEach((eventSource, taskId) => {
+        eventSource.close();
+      });
+      this.sseConnections.clear();
+    }
+  },
+  
+  computed: {
+    /** 按鈕位置樣式 */
+    buttonPosition() {
+      return {
+        right: `${this.buttonX}px`,
+        bottom: `${this.buttonY}px`,
+        transition: this.isDragging ? 'none' : 'all 0.3s ease'
+      };
+    }
   }
 };
 </script>
@@ -551,9 +865,11 @@ export default {
 <style scoped>
 .floating-scan-button {
   position: fixed;
-  bottom: 80px;
-  right: 20px;
   z-index: 1000;
+  cursor: move;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
 }
 
 .scan-btn {
@@ -567,6 +883,34 @@ export default {
 .scan-btn:hover {
   transform: scale(1.1);
   box-shadow: 0 6px 16px rgba(64, 158, 255, 0.6);
+}
+
+/* 任務數量標記 */
+.task-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #f56c6c;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(245, 108, 108, 0.4);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 /* 手機端對話框樣式 */

@@ -27,7 +27,15 @@ public interface IIsbnCrawlerService {
     BookInfoDTO crawlByIsbnFromTw(String isbn);
 
     /**
-     * 根據 ISBN 從 NiceBooks 美國站爬取書籍資訊（備援站）
+     * 根據 ISBN 從國家圖書館 ISBN 查詢系統爬取書籍資訊（第二層備援）
+     *
+     * @param isbn ISBN 編號
+     * @return 書籍資訊 DTO
+     */
+    BookInfoDTO crawlByIsbnFromNcl(String isbn);
+
+    /**
+     * 根據 ISBN 從 NiceBooks 美國站爬取書籍資訊（第三層備援）
      *
      * @param isbn ISBN 編號
      * @return 書籍資訊 DTO

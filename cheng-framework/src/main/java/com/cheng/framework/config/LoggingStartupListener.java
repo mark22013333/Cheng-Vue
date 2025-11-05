@@ -86,7 +86,7 @@ public class LoggingStartupListener implements ApplicationRunner {
         log.info("  - 保留天數: 60 天");
         log.info("");
         log.info("{}════════════════════════════════════════════════════{}", ANSI_GREEN, ANSI_RESET);
-        log.info("{}  ✓ LOG 系統初始化完成{}", ANSI_GREEN, ANSI_RESET);
+        log.info("{}  LOG 系統初始化完成{}", ANSI_GREEN, ANSI_RESET);
         log.info("{}════════════════════════════════════════════════════{}", ANSI_GREEN, ANSI_RESET);
     }
 }

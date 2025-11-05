@@ -12,6 +12,8 @@
     </div>
     <!-- 浮動掃描按鈕 -->
     <floating-scan-button/>
+    <!-- 掃描結果按鈕 -->
+    <scan-result-button/>
   </div>
 </template>
 
@@ -21,6 +23,7 @@ import ResizeMixin from './mixin/ResizeHandler'
 import {mapState} from 'vuex'
 import variables from '@/assets/styles/variables.scss'
 import FloatingScanButton from '@/components/FloatingScanButton'
+import ScanResultButton from '@/components/ScanResultButton'
 
 export default {
   name: 'Layout',
@@ -30,7 +33,8 @@ export default {
     Settings,
     Sidebar,
     TagsView,
-    FloatingScanButton
+    FloatingScanButton,
+    ScanResultButton
   },
   mixins: [ResizeMixin],
   computed: {

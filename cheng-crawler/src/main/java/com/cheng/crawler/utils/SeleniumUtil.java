@@ -2,6 +2,7 @@ package com.cheng.crawler.utils;
 
 import com.cheng.crawler.config.CrawlerProperties;
 import com.cheng.crawler.enums.Constant;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
@@ -71,9 +72,17 @@ public class SeleniumUtil {
      * @return 配置好的 ChromeOptions
      */
     public static ChromeOptions createChromeOptions(boolean headless, boolean randomUserAgent, boolean antiDetection, boolean isRemote) {
-        // 只有本地模式才需要設定 ChromeDriver 路徑
+        // 只有本地模式且使用預設路徑時才需要設定 ChromeDriver 路徑
+        // 如果透過 createLocalWebDriver() 建立，路徑設定會在該方法中處理
         if (!isRemote) {
-            System.setProperty("webdriver.chrome.driver", Constant.getChromeDriverPath());
+            String chromeDriverPath = Constant.getChromeDriverPath();
+            if ("auto".equalsIgnoreCase(chromeDriverPath) || chromeDriverPath == null || chromeDriverPath.trim().isEmpty()) {
+                // 使用 WebDriverManager 自動管理
+                WebDriverManager.chromedriver().setup();
+            } else {
+                // 使用指定路徑
+                System.setProperty("webdriver.chrome.driver", chromeDriverPath);
+            }
         }
         ChromeOptions options = new ChromeOptions();
 
@@ -148,7 +157,7 @@ public class SeleniumUtil {
      * @return WebDriver 實例
      */
     public static WebDriver createWebDriver(CrawlerProperties properties) {
-        return createWebDriver(properties, true, true, true);
+        return createWebDriver(properties, properties.isHeadless(), true, true);
     }
 
     /**
@@ -191,16 +200,23 @@ public class SeleniumUtil {
     /**
      * 建立本地 WebDriver
      *
-     * @param chromeDriverPath ChromeDriver 路徑
+     * @param chromeDriverPath ChromeDriver 路徑（如果為 "auto" 則使用 WebDriverManager 自動下載）
      * @param headless         是否使用無頭模式
      * @param randomUserAgent  是否使用隨機 User-Agent
      * @param antiDetection    是否啟用反偵測功能
      * @return ChromeDriver 實例
      */
     public static WebDriver createLocalWebDriver(String chromeDriverPath, boolean headless, boolean randomUserAgent, boolean antiDetection) {
-        System.setProperty("webdriver.chrome.driver", chromeDriverPath);
+        // 如果路徑設定為 "auto" 或空值，使用 WebDriverManager 自動下載最新的 ChromeDriver
+        if ("auto".equalsIgnoreCase(chromeDriverPath) || chromeDriverPath == null || chromeDriverPath.trim().isEmpty()) {
+            log.info("使用 WebDriverManager 自動下載最新的 ChromeDriver");
+            WebDriverManager.chromedriver().setup();
+        } else {
+            log.info("使用指定路徑的 ChromeDriver: {}", chromeDriverPath);
+            System.setProperty("webdriver.chrome.driver", chromeDriverPath);
+        }
+        
         ChromeOptions options = createChromeOptions(headless, randomUserAgent, antiDetection, false);
-        log.info("建立本地 WebDriver，路徑: {}", chromeDriverPath);
         return new ChromeDriver(options);
     }
 

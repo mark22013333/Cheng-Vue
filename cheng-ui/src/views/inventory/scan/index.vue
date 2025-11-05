@@ -212,8 +212,8 @@
         <el-form-item label="入庫數量" prop="quantity">
           <el-input-number v-model="stockForm.quantity" :min="1"/>
         </el-form-item>
-        <el-form-item label="入庫原因" prop="reason">
-          <el-input v-model="stockForm.reason" placeholder="請輸入入庫原因"/>
+        <el-form-item label="入庫原因">
+          <el-input v-model="stockForm.reason" placeholder="請輸入入庫原因（選填）"/>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -249,7 +249,8 @@ import {scanIsbn, scanCode} from "@/api/inventory/scan";
 import {getItem} from "@/api/inventory/item";
 import {borrowItem} from "@/api/inventory/borrow";
 import {stockIn, stockOut} from "@/api/inventory/stock";
-import {parseTime} from "@/utils";
+import {createCrawlTask, getTaskStatus} from "@/api/inventory/crawlTask";
+import {parseTime} from "@/utils/cheng";
 import {getImageUrl} from "@/utils/image";
 
 export default {
@@ -296,13 +297,14 @@ export default {
       stockRules: {
         quantity: [
           {required: true, message: "數量不能為空", trigger: "blur"}
-        ],
-        reason: [
-          {required: true, message: "原因不能為空", trigger: "blur"}
         ]
       },
       // QR掃描器
-      html5QrCode: null
+      html5QrCode: null,
+      // SSE 連線管理
+      sseConnections: new Map(),
+      // 進行中的任務列表
+      activeTasks: []
     };
   },
   mounted() {
@@ -311,6 +313,11 @@ export default {
   },
   beforeDestroy() {
     this.stopScan();
+    // 關閉所有 SSE 連線
+    if (this.sseConnections) {
+      this.sseConnections.forEach(eventSource => eventSource.close());
+      this.sseConnections.clear();
+    }
   },
   methods: {
     parseTime,
@@ -422,37 +429,39 @@ export default {
       }
     },
 
-    /** 執行 ISBN 掃描 */
+    /** 執行 ISBN 掃描（使用非同步爬取）*/
     performIsbnScan(code, scanType) {
-      const loading = this.$loading({
-        lock: true,
-        text: '正在爬取書籍資訊...',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      });
-
-      scanIsbn({ isbn: code }).then(response => {
-        loading.close();
-
-        if (response.code === 200 && response.data && response.data.item) {
-          this.scanResult = response.data.item;
-          this.addToHistory(code, scanType, '0', response.data.item.itemName, 'ISBN');
-
-          const message = response.data.message || '書籍掃描成功';
+      console.log('開始建立 ISBN 爬取任務:', code);
+      
+      // 建立爬取任務（注意：createCrawlTask 接收 isbn 字串，不是物件）
+      createCrawlTask(code).then(response => {
+        if (response.code === 200 && response.data) {
+          const taskId = response.data;  // response.data 就是 taskId 字串
+          console.log('任務建立成功, taskId:', taskId);
+          
+          // 加入任務列表
+          this.activeTasks.push({
+            taskId: taskId,
+            isbn: code,
+            status: 'PENDING'
+          });
+          
+          // 顯示通知
           this.$notify({
-            title: '成功',
-            message: message,
-            type: 'success',
+            title: 'ISBN 爬取任務已建立',
+            message: `ISBN ${code} 正在佇列中處理，請稍候...`,
+            type: 'info',
             duration: 3000
           });
+          
+          // 使用 SSE 訂閱任務狀態
+          this.subscribeTaskStatus(taskId, code, scanType);
         } else {
-          this.addToHistory(code, scanType, '1', '', 'ISBN');
-          this.$message.error('ISBN 掃描失敗');
+          this.$message.error('建立任務失敗');
         }
       }).catch(error => {
-        loading.close();
-        this.addToHistory(code, scanType, '1', '', 'ISBN');
-        this.$message.error('ISBN 掃描失敗：' + (error.msg || '無法取得書籍資訊'));
+        console.error('建立任務失敗', error);
+        this.$message.error('建立任務失敗：' + (error.msg || '未知錯誤'));
       });
     },
 
@@ -618,6 +627,103 @@ export default {
     /** 返回 */
     handleBack() {
       this.$router.go(-1);
+    },
+    
+    // ==================== SSE 訂閱 ====================
+    
+    /** 訂閱任務狀態（SSE） */
+    subscribeTaskStatus(taskId, isbn, scanType) {
+      const baseURL = process.env.VUE_APP_BASE_API || '';
+      const eventSource = new EventSource(`${baseURL}/inventory/crawlTask/subscribe/${taskId}`);
+      
+      console.log('開始訂閱任務狀態, taskId:', taskId);
+      
+      // 監聽任務更新事件
+      eventSource.addEventListener('task-update', (event) => {
+        try {
+          const task = JSON.parse(event.data);
+          console.log('收到任務更新:', task);
+          this.handleTaskUpdate(task, isbn, scanType);
+        } catch (error) {
+          console.error('解析 SSE 資料失敗', error);
+        }
+      });
+      
+      // 監聽錯誤事件
+      eventSource.addEventListener('error', (event) => {
+        console.error('SSE 連線錯誤', event);
+        eventSource.close();
+      });
+      
+      // 儲存連線，用於後續關閉
+      this.sseConnections.set(taskId, eventSource);
+    },
+    
+    /** 取消訂閱 */
+    unsubscribeTaskStatus(taskId) {
+      if (this.sseConnections && this.sseConnections.has(taskId)) {
+        const eventSource = this.sseConnections.get(taskId);
+        eventSource.close();
+        this.sseConnections.delete(taskId);
+        console.log('取消訂閱任務:', taskId);
+      }
+    },
+    
+    /** 處理任務更新 */
+    handleTaskUpdate(task, isbn, scanType) {
+      const index = this.activeTasks.findIndex(t => t.taskId === task.taskId);
+      if (index === -1) return;
+      
+      // 更新任務狀態
+      this.$set(this.activeTasks, index, task);
+      
+      // 檢查是否完成
+      if (task.status === 'COMPLETED') {
+        console.log('任務完成:', task.bookInfo);
+        
+        // 顯示掃描結果
+        if (task.bookInfo && task.bookInfo.itemId) {
+          // 使用 itemId 取得完整物品資訊
+          getItem(task.bookInfo.itemId).then(response => {
+            if (response.code === 200 && response.data) {
+              this.scanResult = response.data;
+              this.addToHistory(isbn, scanType, '0', response.data.itemName, 'ISBN');
+              
+              this.$notify({
+                title: '書籍爬取完成',
+                message: `《${task.bookInfo.title}》已成功加入系統`,
+                type: 'success',
+                duration: 3000
+              });
+            }
+          }).catch(error => {
+            console.error('取得物品資訊失敗', error);
+          });
+        }
+        
+        // 取消訂閱
+        this.unsubscribeTaskStatus(task.taskId);
+        
+        // 從列表移除
+        this.activeTasks.splice(index, 1);
+        
+      } else if (task.status === 'FAILED') {
+        // 任務失敗通知
+        this.$notify({
+          title: '爬取失敗',
+          message: `ISBN ${isbn} 爬取失敗：${task.errorMessage || '未知錯誤'}`,
+          type: 'error',
+          duration: 5000
+        });
+        
+        this.addToHistory(isbn, scanType, '1', '', 'ISBN');
+        
+        // 取消訂閱
+        this.unsubscribeTaskStatus(task.taskId);
+        
+        // 從列表移除
+        this.activeTasks.splice(index, 1);
+      }
     }
   }
 };
