@@ -1,6 +1,8 @@
 package com.cheng.crawler.config;
 
 import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
  */
 @Getter
 @Component
+@Accessors(chain = true)
 public class CrawlerProperties {
 
     /**
@@ -38,6 +41,27 @@ public class CrawlerProperties {
     @Value("${crawler.selenium.chrome-driver-path:/usr/bin/chromedriver}")
     private String chromeDriverPath;
 
+    @Setter
+    private boolean isHeadless;
+
+    /**
+     * 是否啟用 FlareSolverr（用於處理 Cloudflare 驗證）
+     */
+    @Value("${crawler.flaresolver.enabled:true}")
+    private boolean flareSolverEnabled;
+
+    /**
+     * FlareSolverr 服務 URL
+     */
+    @Value("${crawler.flaresolver.url:http://localhost:8191/v1}")
+    private String flareSolverUrl;
+
+    /**
+     * FlareSolverr 最大逾時時間（毫秒）
+     */
+    @Value("${crawler.flaresolver.max-timeout:60000}")
+    private int flareSolverMaxTimeout;
+
     /**
      * 判斷是否使用遠端模式
      *
@@ -55,4 +79,5 @@ public class CrawlerProperties {
     public boolean isLocalMode() {
         return "local".equalsIgnoreCase(mode);
     }
+
 }

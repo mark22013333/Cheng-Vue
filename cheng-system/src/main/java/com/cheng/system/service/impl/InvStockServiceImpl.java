@@ -9,10 +9,12 @@ import com.cheng.system.dto.InvStockStatisticsDTO;
 import com.cheng.system.mapper.InvStockMapper;
 import com.cheng.system.mapper.InvStockRecordMapper;
 import com.cheng.system.service.IInvStockService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -20,6 +22,7 @@ import java.util.List;
  *
  * @author cheng
  */
+@Slf4j
 @Service
 public class InvStockServiceImpl implements IInvStockService {
 
@@ -125,7 +128,23 @@ public class InvStockServiceImpl implements IInvStockService {
         // 查詢當前庫存
         InvStock stock = invStockMapper.selectInvStockByItemId(itemId);
         if (stock == null) {
-            throw new ServiceException("物品庫存記錄不存在");
+            // 庫存記錄不存在，自動建立（容錯處理）
+            log.warn("物品 {} 的庫存記錄不存在，將自動建立初始庫存記錄", itemId);
+            stock = new InvStock();
+            stock.setItemId(itemId);
+            stock.setTotalQuantity(0);
+            stock.setAvailableQty(0);
+            stock.setBorrowedQty(0);
+            stock.setReservedQty(0);
+            stock.setDamagedQty(0);
+            stock.setLostQty(0);
+            stock.setUpdateTime(new Date());
+            
+            int insertResult = invStockMapper.insertInvStock(stock);
+            if (insertResult <= 0) {
+                throw new ServiceException("初始化庫存記錄失敗");
+            }
+            log.info("自動建立庫存記錄成功，StockId: {}", stock.getStockId());
         }
 
         int beforeQty = stock.getTotalQuantity();

@@ -39,6 +39,12 @@
         <flyway.version>11.14.1</flyway.version>
         <line-bot-sdk.version>9.12.0</line-bot-sdk.version>
         <protobuf.version>4.29.2</protobuf.version>
+        <commons.collections4.version>4.4</commons.collections4.version>
+        <commons.pool2.version>2.12.0</commons.pool2.version>
+        <commons.csv.version>1.10.0</commons.csv.version>
+        <commons.codec.version>1.16.0</commons.codec.version>
+        <okhttp.version>4.12.0</okhttp.version>
+        <logging-interceptor.version>4.12.0</logging-interceptor.version>
     </properties>
 
     <!-- 依賴聲明 -->
@@ -271,6 +277,48 @@
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
                 <version>${protobuf.version}</version>
+            </dependency>
+
+            <!-- Apache Commons Collections4 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons.collections4.version}</version>
+            </dependency>
+
+            <!-- Apache Commons Pool -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-pool2</artifactId>
+                <version>${commons.pool2.version}</version>
+            </dependency>
+
+            <!-- Apache Commons CSV -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-csv</artifactId>
+                <version>${commons.csv.version}</version>
+            </dependency>
+
+            <!-- Apache Commons Codec -->
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commons.codec.version}</version>
+            </dependency>
+
+            <!-- okhttp3 -->
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+
+            <!-- okhttp3 logging -->
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>logging-interceptor</artifactId>
+                <version>${logging-interceptor.version}</version>
             </dependency>
 
             <!-- LINE 模組 -->

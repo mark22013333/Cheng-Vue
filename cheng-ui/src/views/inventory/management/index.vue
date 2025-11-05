@@ -116,6 +116,7 @@
       </el-table-column>
       <el-table-column label="物品名稱" align="center" prop="itemName" min-width="150" sortable="custom"
                        :show-overflow-tooltip="true"/>
+      <el-table-column label="作者" align="center" prop="author" width="120" :show-overflow-tooltip="true" v-if="hasAuthorColumn"/>
       <el-table-column label="規格" align="center" prop="specification" width="120"/>
       <el-table-column label="品牌/型號" align="center" width="150">
         <template slot-scope="scope">
@@ -233,6 +234,7 @@
       <el-descriptions :column="2" border v-if="detailData">
         <el-descriptions-item label="物品編碼">{{ detailData.itemCode }}</el-descriptions-item>
         <el-descriptions-item label="物品名稱">{{ detailData.itemName }}</el-descriptions-item>
+        <el-descriptions-item label="作者" v-if="detailData.author">{{ detailData.author }}</el-descriptions-item>
         <el-descriptions-item label="分類">{{ detailData.categoryName }}</el-descriptions-item>
         <el-descriptions-item label="規格">{{ detailData.specification }}</el-descriptions-item>
         <el-descriptions-item label="品牌">{{ detailData.brand }}</el-descriptions-item>
@@ -556,6 +558,12 @@ export default {
       // 分類列表
       categoryList: []
     };
+  },
+  computed: {
+    // 判斷是否有任何物品包含作者資訊（用於顯示作者欄位）
+    hasAuthorColumn() {
+      return this.managementList.some(item => item.author && item.author.trim() !== '');
+    }
   },
   created() {
     // 檢查路由，如果是從分類管理選單進來，自動切換到分類管理頁籤

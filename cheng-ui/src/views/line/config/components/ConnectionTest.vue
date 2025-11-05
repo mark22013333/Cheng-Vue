@@ -130,7 +130,7 @@
       <el-alert
         v-if="testComplete"
         :type="allTestsPassed ? 'success' : 'error'"
-        :title="allTestsPassed ? '✓ 所有測試通過' : '✗ 部分測試失敗'"
+        :title="allTestsPassed ? '所有測試通過' : '✗ 部分測試失敗'"
         :closable="false"
         show-icon
         class="mt-3"
@@ -213,7 +213,7 @@ export default {
           console.log('=== 測試連線完成 ===')
           console.log('測試結果:', response.data)
           this.testResults = response.data
-          
+
           // 測試完成後，通知父組件重新整理列表（更新 webhook 狀態）
           console.log('觸發 test-complete 事件，通知父組件重新載入列表')
           this.$emit('test-complete')
