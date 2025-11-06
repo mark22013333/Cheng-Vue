@@ -307,7 +307,7 @@ DELETE FROM flyway_schema_history WHERE version = '版本號' AND success = 0;
 - [ ] 包含清楚的註解說明
 - [ ] 考慮了回滾方案
 - [ ] 在測試環境驗證過
-- [ ] 備份了生產資料庫
+- [ ] 備份了正式資料庫
 
 ---
 

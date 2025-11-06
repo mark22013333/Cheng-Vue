@@ -144,16 +144,16 @@ public class CrawlTaskExecutor {
                         log.info("現有資料已足夠完整，跳過更新: isbn={}, itemId={}", isbn, itemId);
                     }
                 } else {
-                    // inv_item 存在但 inv_book_info 不存在，補插入
-                    log.info("inv_item 存在但 inv_book_info 不存在，補插入書籍詳細資訊: isbn={}, itemId={}", isbn, itemId);
+                    // inv_item 存在但 inv_book_info 不存在，補新增
+                    log.info("inv_item 存在但 inv_book_info 不存在，補新增書籍詳細資訊: isbn={}, itemId={}", isbn, itemId);
                     insertBookInfo(itemId, bookInfo);
                     bookInfo.setItemId(itemId);
                 }
                 return;
             }
             
-            // 插入物品資料
-            String itemCode = "BOOK_" + System.currentTimeMillis();
+            // 新增物品資料
+            String itemCode = "BOOK-" + isbn;
             String insertItemSql = "INSERT INTO inv_item " +
                 "(item_code, item_name, category_id, barcode, specification, unit, brand, supplier, " +
                 "description, image_url, status, remark, create_time, create_by) " +
@@ -183,9 +183,9 @@ public class CrawlTaskExecutor {
                 "ISBN 掃描自動建立"                  // remark
             );
             
-            log.info("物品資料插入成功: isbn={}, itemCode={}", isbn, itemCode);
+            log.info("物品資料新增成功: isbn={}, itemCode={}", isbn, itemCode);
             
-            // 取得剛插入的 item_id
+            // 取得剛新增的 item_id
             Long itemId = jdbcTemplate.queryForObject(
                 "SELECT item_id FROM inv_item WHERE item_code = ?",
                 Long.class,
@@ -193,15 +193,15 @@ public class CrawlTaskExecutor {
             );
             
             if (itemId != null) {
-                // 插入庫存資料（初始數量為 0）
+                // 新增庫存資料（初始數量為 0）
                 String insertStockSql = "INSERT INTO inv_stock " +
                     "(item_id, total_quantity, available_qty, borrowed_qty, reserved_qty, damaged_qty) " +
                     "VALUES (?, 0, 0, 0, 0, 0)";
                 
                 jdbcTemplate.update(insertStockSql, itemId);
-                log.info("庫存資料插入成功: itemId={}, 初始數量=0", itemId);
+                log.info("庫存資料新增成功: itemId={}, 初始數量=0", itemId);
                 
-                // 插入書籍詳細資訊
+                // 新增書籍詳細資訊
                 String insertBookInfoSql = "INSERT INTO inv_book_info " +
                     "(item_id, isbn, title, author, publisher, publish_date, language, " +
                     "cover_image_path, introduction, source_url, crawl_time, status, create_by, create_time, remark) " +
@@ -221,7 +221,7 @@ public class CrawlTaskExecutor {
                     bookInfo.getSourceUrl()             // source_url
                 );
                 
-                log.info("書籍資訊插入成功: itemId={}", itemId);
+                log.info("書籍資訊新增成功: itemId={}", itemId);
                 log.info("✓✓自動入庫完成: isbn={}, itemId={}", isbn, itemId);
                 
                 // 回寫 itemId 到 BookInfoDTO
@@ -229,7 +229,7 @@ public class CrawlTaskExecutor {
             }
             
         } catch (DuplicateKeyException e) {
-            log.warn("ISBN 已存在（並發插入）: isbn={}", isbn);
+            log.warn("ISBN 已存在（並發新增）: isbn={}", isbn);
         } catch (Exception e) {
             log.error("自動入庫失敗: isbn={}", isbn, e);
             throw e;
@@ -374,7 +374,7 @@ public class CrawlTaskExecutor {
     }
     
     /**
-     * 插入書籍詳細資訊到 inv_book_info
+     * 新增書籍詳細資訊到 inv_book_info
      *
      * @param itemId 物品 ID
      * @param bookInfo 書籍資訊
@@ -400,10 +400,10 @@ public class CrawlTaskExecutor {
                 bookInfo.getSourceUrl()
             );
             
-            log.info("書籍詳細資訊插入成功: itemId={}", itemId);
+            log.info("書籍詳細資訊新增成功: itemId={}", itemId);
             
         } catch (Exception e) {
-            log.error("插入書籍詳細資訊失敗: itemId={}", itemId, e);
+            log.error("新增書籍詳細資訊失敗: itemId={}", itemId, e);
             throw e;
         }
     }

@@ -222,7 +222,7 @@ git commit --no-verify -m "message"
 #### 日誌目錄結構
 ```
 本地環境：/Users/cheng/cool-logs/
-生產環境：/opt/cool-apps/logs/
+正式環境：/opt/cool-apps/logs/
 ├── current/              # 當日日誌
 │   ├── sys-info.log     # INFO 級別
 │   ├── sys-error.log    # ERROR 級別

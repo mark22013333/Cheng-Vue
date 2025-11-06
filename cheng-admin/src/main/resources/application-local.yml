@@ -101,11 +101,11 @@ crawler:
     mode: local
     remote-url: http://localhost:9515
     chrome-driver-path: auto  # 設定為 auto 使用 WebDriverManager 自動下載最新版本
-  # FlareSolverr 設定（處理 Cloudflare 驗證）
+  # FlareSolver 設定（處理 Cloudflare 驗證）
   flaresolver:
-    enabled: true  # 是否啟用 FlareSolverr（預設啟用）
-    url: http://localhost:8191/v1  # FlareSolver 服務 URL
-    max-timeout: 60000  # 最大逾時時間（毫秒），預設 60 秒
+    enabled: true  # 本地開發需要啟動 FlareSolver Docker
+    url: http://localhost:8191/v1
+    max-timeout: 60000
 
 # LINE Bot 設定 - 本地環境
 line:
