@@ -71,9 +71,9 @@ crawler:
     mode: remote
     remote-url: http://localhost:9515
     chrome-driver-path: auto  # 設定為 auto 使用 WebDriverManager 自動下載最新版本
-  # FlareSolverr 設定（處理 Cloudflare 驗證）
+  # FlareSolver 設定（處理 Cloudflare 驗證）
   flaresolver:
-    enabled: true  # 是否啟用 FlareSolverr（預設啟用）
+    enabled: true  # 是否啟用 FlareSolver（預設啟用）
     url: http://localhost:8191/v1  # FlareSolver 服務 URL
     max-timeout: 60000  # 最大逾時時間（毫秒），預設 60 秒
 

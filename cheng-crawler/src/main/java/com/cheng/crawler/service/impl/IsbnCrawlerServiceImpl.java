@@ -25,9 +25,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +66,7 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 log.info("[第{}次嘗試] 開始爬取 ISBN: {}", attempt, isbn);
-                
+
                 // 第一層：嘗試從台灣主站搜尋
                 log.info("[第1層] 嘗試從台灣主站搜尋 ISBN: {}", isbn);
                 BookInfoDTO bookInfo = crawlByIsbnFromTw(isbn);
@@ -92,29 +94,29 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
                     log.info("第{}次嘗試成功爬取 ISBN: {}", attempt, isbn);
                     return bookInfo;
                 }
-                
+
                 // 如果是最後一次嘗試，返回結果（即使失敗）
                 if (attempt == maxRetries) {
                     log.warn("✗ 已達最大重試次數({}次)，返回最後結果 ISBN: {}", maxRetries, isbn);
                     return bookInfo != null ? bookInfo : createErrorBookInfo(isbn, "達到最大重試次數，爬取失敗");
                 }
-                
+
                 // 如果失敗，等待後重試（遞增等待時間：第 N 次失敗後等待 N 秒）
                 log.warn("✗ 第{}次嘗試失敗，等待 {} 秒後重試... ISBN: {}", attempt, attempt, isbn);
                 TimeUnit.SECONDS.sleep(attempt);
-                
+
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.error("重試過程被中斷 ISBN: {}", isbn, e);
                 return createErrorBookInfo(isbn, "爬取過程被中斷");
             } catch (Exception e) {
                 log.error("第{}次嘗試發生異常 ISBN: {}", attempt, isbn, e);
-                
+
                 // 如果是最後一次嘗試，返回錯誤
                 if (attempt == maxRetries) {
                     return createErrorBookInfo(isbn, "爬取失敗: " + e.getMessage());
                 }
-                
+
                 // 等待後重試（遞增等待時間：第 N 次失敗後等待 N 秒）
                 try {
                     log.warn("等待 {} 秒後重試... ISBN: {}", attempt, isbn);
@@ -125,7 +127,7 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
                 }
             }
         }
-        
+
         // 理論上不會到這裡，但為了安全返回錯誤
         return createErrorBookInfo(isbn, "未知錯誤");
     }
@@ -1060,12 +1062,33 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
             String bookCoverPath = uploadPath + "/book-covers";
             String fileName = "isbn_" + isbn;
 
+            // 如果發生重定向，使用原始 URL 作為 Referer（重要！防盜鏈保護）
+            String referer = imageUrl.equals(downloadUrl) ? null : imageUrl;
+            if (referer != null) {
+                log.info("圖片發生重定向，使用原始 URL 作為 Referer: {}", referer);
+            }
+
             String savedPath = ImageDownloadUtil.downloadImageWithCookies(
-                    downloadUrl, bookCoverPath, fileName, finalCookies, finalUserAgent
+                    downloadUrl, bookCoverPath, fileName, finalCookies, finalUserAgent, referer
             );
 
             if (savedPath != null) {
-                log.info("封面圖片下載成功（使用 FlareSolver cookies）: {}", savedPath);
+                // 驗證下載的檔案大小（雙重檢查）
+                File imageFile = new File(savedPath);
+                if (imageFile.exists() && imageFile.length() < 2048) {
+                    log.warn("下載的圖片檔案過小（{} bytes），可能是錯誤頁面，改用 books.com.tw 搜尋",
+                            imageFile.length());
+                    try {
+                        Files.deleteIfExists(imageFile.toPath());
+                        log.info("已刪除無效圖片檔案: {}", savedPath);
+                    } catch (IOException e) {
+                        log.warn("刪除無效圖片檔案失敗: {}, 錯誤: {}", savedPath, e.getMessage());
+                    }
+                    return searchAndDownloadFromBooksComTw(bookTitle, isbn);
+                }
+
+                log.info("封面圖片下載成功（使用 FlareSolver cookies）: {}，檔案大小: {} bytes",
+                        savedPath, imageFile.length());
 
                 // 轉換為相對路徑（相對於 /profile）
                 if (savedPath.contains("/book-covers/")) {
@@ -1075,13 +1098,16 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
                     return relativePath;
                 }
                 return savedPath;
+            } else {
+                // 下載失敗或檔案無效，嘗試降級方案
+                log.warn("使用 FlareSolver 下載圖片失敗或檔案無效，改用 books.com.tw 搜尋");
+                return searchAndDownloadFromBooksComTw(bookTitle, isbn);
             }
         } catch (Exception e) {
             log.error("下載封面圖片失敗（使用 FlareSolver）: {}", e.getMessage(), e);
             // 降級到 books.com.tw 搜尋
             return searchAndDownloadFromBooksComTw(bookTitle, isbn);
         }
-        return null;
     }
 
     /**
@@ -1112,8 +1138,8 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
                     .timeout(10000)
                     .get();
 
-            // 找到所有 class="b-lazy b-loaded" 的圖片元素
-            Elements images = doc.select("img.b-lazy.b-loaded");
+            // 找到所有圖片元素（包含 b-lazy 或已載入的 b-loaded）
+            Elements images = doc.select("img.b-lazy, img[src*='book.com.tw']");
             if (images.isEmpty()) {
                 log.warn("在 books.com.tw 搜尋結果中未找到圖片元素");
                 return null;
@@ -1138,12 +1164,43 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
                 log.info("使用第一個圖片元素: alt='{}'", targetImage.attr("alt"));
             }
 
-            // 從 src 屬性中提取真實圖片 URL
+            // 從圖片元素中提取真實圖片 URL
+            // 優先檢查 src，如果是懶加載占位符，則檢查 data-src 或 srcset
             String src = targetImage.attr("src");
-            String realImageUrl = extractRealImageUrl(src);
+            String dataSrc = targetImage.attr("data-src");
+            String srcset = targetImage.attr("srcset");
+            
+            log.debug("圖片屬性 - src: {}, data-src: {}, srcset: {}", src, dataSrc, srcset);
+            
+            String realImageUrl = null;
+            
+            // 如果 src 是 base64 占位符（懶加載），使用 srcset 或 data-src
+            if (src != null && src.startsWith("data:image")) {
+                log.info("偵測到懶加載圖片（base64 占位符），嘗試從 srcset 或 data-src 取得真實 URL");
+                
+                // 優先使用 srcset（通常包含高解析度圖片）
+                if (srcset != null && !srcset.isEmpty()) {
+                    realImageUrl = extractRealImageUrl(srcset);
+                    if (realImageUrl != null) {
+                        log.info("從 srcset 提取到圖片 URL: {}", realImageUrl);
+                    }
+                }
+                
+                // 其次使用 data-src
+                if (realImageUrl == null && dataSrc != null && !dataSrc.isEmpty()) {
+                    realImageUrl = extractRealImageUrl(dataSrc);
+                    if (realImageUrl != null) {
+                        log.info("從 data-src 提取到圖片 URL: {}", realImageUrl);
+                    }
+                }
+            } else {
+                // 正常情況，從 src 提取
+                realImageUrl = extractRealImageUrl(src);
+            }
 
             if (realImageUrl == null) {
-                log.warn("無法從 src 中提取真實圖片 URL: {}", src);
+                log.warn("無法從圖片元素中提取真實 URL - src: {}, data-src: {}, srcset: {}", 
+                        src, dataSrc, srcset);
                 return null;
             }
 

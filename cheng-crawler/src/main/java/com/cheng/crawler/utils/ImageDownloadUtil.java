@@ -62,6 +62,22 @@ public class ImageDownloadUtil {
      */
     public static String downloadImageWithCookies(String imageUrl, String savePath, String fileName,
                                                    String cookies, String userAgent) {
+        return downloadImageWithCookies(imageUrl, savePath, fileName, cookies, userAgent, null);
+    }
+
+    /**
+     * 從網址下載圖片（使用 Cloudflare cookies，並可指定 Referer）
+     *
+     * @param imageUrl  圖片網址
+     * @param savePath  儲存路徑（資料夾）
+     * @param fileName  檔案名稱（不含副檔名）
+     * @param cookies   Cloudflare cookies（從 FlareSolver 取得）
+     * @param userAgent User-Agent（從 FlareSolver 取得）
+     * @param referer   自訂 Referer（可為 null，則自動判斷）
+     * @return 儲存後的完整路徑，失敗回傳 null
+     */
+    public static String downloadImageWithCookies(String imageUrl, String savePath, String fileName,
+                                                   String cookies, String userAgent, String referer) {
         try {
             // 建立目錄
             Path dirPath = Paths.get(savePath);
@@ -99,9 +115,20 @@ public class ImageDownloadUtil {
                 requestBuilder.header("Cookie", cookies);
             }
 
-            // 設定 Referer
-            if (imageUrl.contains("isbn.tw")) {
-                requestBuilder.header("Referer", "https://isbn.tw/");
+            // 設定 Referer（防盜鏈保護）
+            if (referer != null && !referer.isEmpty()) {
+                // 使用指定的 Referer
+                requestBuilder.header("Referer", referer);
+                log.debug("使用自訂 Referer: {}", referer);
+            } else {
+                // 自動判斷 Referer
+                if (imageUrl.contains("isbn.tw")) {
+                    requestBuilder.header("Referer", "https://isbn.tw/");
+                } else if (imageUrl.contains("sanmin.com.tw")) {
+                    requestBuilder.header("Referer", "https://www.sanmin.com.tw/");
+                } else if (imageUrl.contains("books.com.tw")) {
+                    requestBuilder.header("Referer", "https://www.books.com.tw/");
+                }
             }
 
             Request request = requestBuilder.build();
@@ -119,7 +146,21 @@ public class ImageDownloadUtil {
                     return null;
                 }
 
+                // 檢查 Content-Type 是否為圖片（但允許部分 CDN 配置錯誤的情況）
+                String contentType = response.header("Content-Type");
+                if (contentType != null && !contentType.startsWith("image/")) {
+                    // 如果是 HTML，很可能是防盜鏈或錯誤頁面
+                    if (contentType.contains("text/html")) {
+                        log.error("回應內容是 HTML 而不是圖片，Content-Type: {}, URL: {}", contentType, imageUrl);
+                        log.error("可能原因：1) 防盜鏈保護 2) 需要正確的 Referer 3) Cookie 已過期");
+                        return null;
+                    }
+                    // 其他非圖片 Content-Type 只記錄警告，仍嘗試下載（某些 CDN 可能配置錯誤）
+                    log.warn("Content-Type 不是 image/*，但仍嘗試下載: {}, URL: {}", contentType, imageUrl);
+                }
+
                 // 寫入檔案
+                long fileSize = 0;
                 try (InputStream inputStream = body.byteStream();
                      FileOutputStream outputStream = new FileOutputStream(fullPath)) {
                     
@@ -127,10 +168,24 @@ public class ImageDownloadUtil {
                     int bytesRead;
                     while ((bytesRead = inputStream.read(buffer)) != -1) {
                         outputStream.write(buffer, 0, bytesRead);
+                        fileSize += bytesRead;
                     }
                 }
 
-                log.info("圖片下載成功: {}", fullPath);
+                // 驗證檔案大小（至少 2KB，避免是錯誤頁面）
+                File downloadedFile = new File(fullPath);
+                if (!downloadedFile.exists() || downloadedFile.length() < 2048) {
+                    log.error("下載的圖片檔案過小（可能是錯誤頁面），大小: {} bytes, URL: {}", 
+                            downloadedFile.length(), imageUrl);
+                    // 刪除無效檔案
+                    if (downloadedFile.exists()) {
+                        downloadedFile.delete();
+                        log.info("已刪除無效圖片檔案: {}", fullPath);
+                    }
+                    return null;
+                }
+
+                log.info("圖片下載成功: {}，檔案大小: {} bytes", fullPath, fileSize);
                 return fullPath;
             }
 
