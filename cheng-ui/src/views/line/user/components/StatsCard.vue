@@ -1,7 +1,7 @@
 <template>
   <div class="stats-card-container" v-loading="loading">
     <el-row :gutter="20" class="stats-row">
-      <el-col :xs="12" :sm="8" :md="8" :lg="4.8" :xl="4.8">
+      <el-col :xs="12" :sm="8" :md="6" :lg="4" :xl="4">
         <div class="stat-card total">
           <div class="stat-icon">
             <i class="el-icon-user"></i>
@@ -12,7 +12,7 @@
           </div>
         </div>
       </el-col>
-      <el-col :xs="12" :sm="8" :md="8" :lg="4.8" :xl="4.8">
+      <el-col :xs="12" :sm="8" :md="6" :lg="4" :xl="4">
         <div class="stat-card following">
           <div class="stat-icon">
             <i class="el-icon-star-on"></i>
@@ -23,7 +23,7 @@
           </div>
         </div>
       </el-col>
-      <el-col :xs="12" :sm="8" :md="8" :lg="4.8" :xl="4.8">
+      <el-col :xs="12" :sm="8" :md="6" :lg="4" :xl="4">
         <div class="stat-card bound">
           <div class="stat-icon">
             <i class="el-icon-link"></i>
@@ -34,18 +34,29 @@
           </div>
         </div>
       </el-col>
-      <el-col :xs="12" :sm="8" :md="8" :lg="4.8" :xl="4.8">
-        <div class="stat-card blocked">
+      <el-col :xs="12" :sm="8" :md="6" :lg="4" :xl="4">
+        <div class="stat-card unfollowed">
           <div class="stat-icon">
-            <i class="el-icon-remove-outline"></i>
+            <i class="el-icon-circle-close"></i>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ stats.blockedCount || 0 }}</div>
+            <div class="stat-value">{{ stats.unfollowedCount || 0 }}</div>
             <div class="stat-label">已封鎖</div>
           </div>
         </div>
       </el-col>
-      <el-col :xs="12" :sm="8" :md="8" :lg="4.8" :xl="4.8">
+      <el-col :xs="12" :sm="8" :md="6" :lg="4" :xl="4">
+        <div class="stat-card blacklist">
+          <div class="stat-icon">
+            <i class="el-icon-remove-outline"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ stats.blacklistedCount || 0 }}</div>
+            <div class="stat-label">黑名單</div>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="8" :md="6" :lg="4" :xl="4">
         <div class="stat-card new-week">
           <div class="stat-icon">
             <i class="el-icon-plus"></i>
@@ -159,7 +170,16 @@ export default {
     }
   }
 
-  &.blocked {
+  &.unfollowed {
+    .stat-icon {
+      background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+    }
+    .stat-value {
+      color: #ff6b6b;
+    }
+  }
+
+  &.blacklist {
     .stat-icon {
       background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
     }

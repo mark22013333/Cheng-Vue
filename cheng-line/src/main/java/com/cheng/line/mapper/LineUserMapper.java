@@ -164,11 +164,18 @@ public interface LineUserMapper {
     long countTotalUsers();
 
     /**
-     * 統計已封鎖使用者數量
+     * 統計未關注使用者數量（取消關注或封鎖）
      *
      * @return 數量
      */
-    long countBlockedUsers();
+    long countUnfollowedUsers();
+
+    /**
+     * 統計黑名單使用者數量（管理者設定）
+     *
+     * @return 數量
+     */
+    long countBlacklistedUsers();
 
     /**
      * 統計指定時間範圍內新增的使用者數量
@@ -178,4 +185,13 @@ public interface LineUserMapper {
      * @return 數量
      */
     long countNewUsersByDateRange(@Param("startTime") String startTime, @Param("endTime") String endTime);
+
+    /**
+     * 取得每月加入統計資料
+     *
+     * @param startTime 開始時間
+     * @param endTime   結束時間
+     * @return 每月統計列表（Map格式：{month: "2024-01", count: 10}）
+     */
+    List<java.util.Map<String, Object>> getMonthlyJoinStats(@Param("startTime") String startTime, @Param("endTime") String endTime);
 }

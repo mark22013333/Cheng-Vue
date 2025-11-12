@@ -67,6 +67,15 @@ export function getUserStats() {
   })
 }
 
+// 取得每月加入統計資料
+export function getMonthlyStats(startTime, endTime) {
+  return request({
+    url: '/line/user/monthlyStats',
+    method: 'get',
+    params: { startTime, endTime }
+  })
+}
+
 // 查詢所有關注中的使用者
 export function listFollowingUsers() {
   return request({

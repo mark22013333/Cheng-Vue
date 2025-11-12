@@ -1,6 +1,7 @@
 import Vue from 'vue'
 
 import Cookies from 'js-cookie'
+import VueClipboard from 'vue-clipboard2'
 
 import Element from 'element-ui'
 import locale from 'element-ui/lib/locale/lang/zh-TW'
@@ -59,6 +60,7 @@ Vue.component('ImagePreview', ImagePreview)
 
 Vue.use(directive)
 Vue.use(plugins)
+Vue.use(VueClipboard)
 DictData.install()
 
 /**

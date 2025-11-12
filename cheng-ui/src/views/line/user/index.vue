@@ -3,6 +3,9 @@
     <!-- 統計卡片區域 -->
     <stats-card :stats="stats" :loading="statsLoading" @refresh="getStats" />
 
+    <!-- 每月加入圖表（當有時間範圍篩選時顯示） -->
+    <monthly-join-chart v-if="dateRange && dateRange.length === 2" :date-range="dateRange" />
+
     <!-- 查詢區域 -->
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="85px">
       <el-form-item label="使用者ID" prop="lineUserId">
@@ -45,6 +48,8 @@
           range-separator="-"
           start-placeholder="開始日期"
           end-placeholder="結束日期"
+          :picker-options="pickerOptions"
+          @change="handleDateChange"
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
@@ -148,7 +153,7 @@
         <template slot-scope="scope">
           <el-tag v-if="scope.row.followStatus === 'FOLLOWING'" type="success" size="small">關注中</el-tag>
           <el-tag v-else-if="scope.row.followStatus === 'BLACKLISTED'" type="danger" size="small">黑名單</el-tag>
-          <el-tag v-else type="info" size="small">已取消</el-tag>
+          <el-tag v-else type="info" size="small">未關注</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="綁定狀態" align="center" width="100">
@@ -261,6 +266,7 @@ import StatsCard from './components/StatsCard'
 import UserDetail from './components/UserDetail'
 import BindDialog from './components/BindDialog'
 import ImportDialog from './components/ImportDialog'
+import MonthlyJoinChart from './components/MonthlyJoinChart'
 
 export default {
   name: 'LineUser',
@@ -268,7 +274,8 @@ export default {
     StatsCard,
     UserDetail,
     BindDialog,
-    ImportDialog
+    ImportDialog,
+    MonthlyJoinChart
   },
   data() {
     return {
@@ -293,6 +300,51 @@ export default {
       stats: {},
       // 日期範圍
       dateRange: [],
+      // 日期選擇器選項
+      pickerOptions: {
+        disabledDate(time) {
+          // 限制只能選擇今天及之前的日期
+          return time.getTime() > Date.now()
+        },
+        shortcuts: [
+          {
+            text: '最近一週',
+            onClick(picker) {
+              const end = new Date()
+              const start = new Date()
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
+              picker.$emit('pick', [start, end])
+            }
+          },
+          {
+            text: '最近一個月',
+            onClick(picker) {
+              const end = new Date()
+              const start = new Date()
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 30)
+              picker.$emit('pick', [start, end])
+            }
+          },
+          {
+            text: '最近三個月',
+            onClick(picker) {
+              const end = new Date()
+              const start = new Date()
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
+              picker.$emit('pick', [start, end])
+            }
+          },
+          {
+            text: '最近一年',
+            onClick(picker) {
+              const end = new Date()
+              const start = new Date()
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 365)
+              picker.$emit('pick', [start, end])
+            }
+          }
+        ]
+      },
       // 查詢參數
       queryParams: {
         pageNum: 1,
@@ -336,8 +388,57 @@ export default {
     },
     /** 搜尋按鈕操作 */
     handleQuery() {
+      // 驗證日期範圍
+      if (!this.validateDateRange()) {
+        return
+      }
       this.queryParams.pageNum = 1
       this.getList()
+    },
+    /** 日期變更處理 */
+    handleDateChange(value) {
+      if (value && value.length === 2) {
+        this.validateDateRange()
+      }
+    },
+    /** 驗證日期範圍 */
+    validateDateRange() {
+      if (!this.dateRange || this.dateRange.length !== 2) {
+        return true
+      }
+
+      const startDate = new Date(this.dateRange[0])
+      const endDate = new Date(this.dateRange[1])
+      const today = new Date()
+      today.setHours(23, 59, 59, 999)
+
+      // 檢查起始日期是否晚於結束日期
+      if (startDate > endDate) {
+        this.$message.warning('開始日期不能晚於結束日期')
+        this.dateRange = []
+        return false
+      }
+
+      // 檢查日期是否超過今天
+      if (endDate > today) {
+        this.$message.warning('結束日期不能超過今天')
+        this.dateRange = []
+        return false
+      }
+
+      // 計算日期範圍（天數）
+      const diffTime = Math.abs(endDate - startDate)
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      const fiveYearsInDays = 365 * 5
+
+      // 檢查是否超過五年
+      if (diffDays > fiveYearsInDays) {
+        this.$message.warning('查詢範圍不能超過五年')
+        this.dateRange = []
+        return false
+      }
+
+      return true
     },
     /** 重置按鈕操作 */
     resetQuery() {
