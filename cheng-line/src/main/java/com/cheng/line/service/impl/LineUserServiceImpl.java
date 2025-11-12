@@ -394,11 +394,24 @@ public class LineUserServiceImpl implements ILineUserService {
                 .totalUsers(lineUserMapper.countTotalUsers())
                 .followingCount((long) lineUserMapper.countFollowingUsers())
                 .boundCount((long) lineUserMapper.countBoundUsers())
-                .blockedCount(lineUserMapper.countBlockedUsers())
+                .unfollowedCount(lineUserMapper.countUnfollowedUsers())
+                .blacklistedCount(lineUserMapper.countBlacklistedUsers())
                 .todayNewCount(lineUserMapper.countNewUsersByDateRange(todayStartStr, nowStr))
                 .weekNewCount(lineUserMapper.countNewUsersByDateRange(weekStartStr, nowStr))
                 .monthNewCount(lineUserMapper.countNewUsersByDateRange(monthStartStr, nowStr))
                 .build();
+    }
+
+    /**
+     * 取得每月加入統計資料
+     *
+     * @param startTime 開始時間
+     * @param endTime   結束時間
+     * @return 每月統計列表
+     */
+    @Override
+    public List<java.util.Map<String, Object>> getMonthlyJoinStats(String startTime, String endTime) {
+        return lineUserMapper.getMonthlyJoinStats(startTime, endTime);
     }
 
     /**

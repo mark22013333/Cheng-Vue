@@ -32,9 +32,14 @@ public class LineUserStatsDTO {
     private Long boundCount;
 
     /**
-     * 已封鎖數量
+     * 已封鎖數量（取消關注或封鎖頻道）
      */
-    private Long blockedCount;
+    private Long unfollowedCount;
+
+    /**
+     * 黑名單數量（管理者設定）
+     */
+    private Long blacklistedCount;
 
     /**
      * 本週新增數量

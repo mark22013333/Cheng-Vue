@@ -143,6 +143,15 @@ public class LineUserController extends BaseController {
     }
 
     /**
+     * 取得每月加入統計資料
+     */
+    @PreAuthorize("@ss.hasPermi('line:user:list')")
+    @GetMapping("/monthlyStats")
+    public AjaxResult getMonthlyStats(@RequestParam("startTime") String startTime, @RequestParam("endTime") String endTime) {
+        return success(lineUserService.getMonthlyJoinStats(startTime, endTime));
+    }
+
+    /**
      * 匯入 LINE 使用者
      */
     @PreAuthorize("@ss.hasPermi('line:user:import')")

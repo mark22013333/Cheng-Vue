@@ -201,13 +201,27 @@
         select count(*) from sys_line_user where bind_status = 'BOUND'
     </select>
 
-    <select id="countBlockedUsers" resultType="long">
-        select count(*) from sys_line_user where follow_status = 'BLOCKED'
+    <select id="countUnfollowedUsers" resultType="long">
+        select count(*) from sys_line_user where follow_status = 'UNFOLLOWED'
+    </select>
+
+    <select id="countBlacklistedUsers" resultType="long">
+        select count(*) from sys_line_user where follow_status = 'BLACKLISTED'
     </select>
 
     <select id="countNewUsersByDateRange" resultType="long">
         select count(*) from sys_line_user
         where first_follow_time between #{startTime} and #{endTime}
+    </select>
+
+    <select id="getMonthlyJoinStats" resultType="java.util.Map">
+        select
+            DATE_FORMAT(first_follow_time, '%Y-%m') as month,
+            count(*) as count
+        from sys_line_user
+        where first_follow_time between #{startTime} and #{endTime}
+        group by DATE_FORMAT(first_follow_time, '%Y-%m')
+        order by month
     </select>
 
     <select id="selectAllFollowingLineUserIds" resultType="String">
@@ -248,7 +262,7 @@
             <if test="followStatus.code == 'UNFOLLOWED'">
                 unfollow_time = sysdate(),
             </if>
-            <if test="followStatus.code == 'BLOCKED'">
+            <if test="followStatus.code == 'BLACKLISTED'">
                 block_time = sysdate(),
             </if>
             update_time = sysdate()

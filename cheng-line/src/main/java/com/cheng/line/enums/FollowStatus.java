@@ -11,9 +11,12 @@ import lombok.RequiredArgsConstructor;
  * 例如: "UNFOLLOWED", "FOLLOWING", "BLACKLISTED"
  * <p>
  * 狀態說明：
- * - UNFOLLOWED: 使用者主動取消關注 LINE 頻道（LINE 官方狀態）
+ * - UNFOLLOWED: 使用者主動取消關注或封鎖 LINE 頻道（LINE 官方狀態）
  * - FOLLOWING: 使用者正在關注頻道（好友狀態）
- * - BLACKLISTED: 管理者設定的黑名單（即使使用者關注頻道，也會被忽略）
+ * - BLACKLISTED: 管理者設定的黑名單（即使使用者關注頻道，也無法接收訊息，優先級最高）
+ * <p>
+ * 優先級：BLACKLISTED > FOLLOWING > UNFOLLOWED
+ * 當使用者被加入黑名單時，無論原本是什麼狀態（包括關注中），都無法收到訊息
  *
  * @author cheng
  */
@@ -22,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 public enum FollowStatus {
 
     /**
-     * 未關注（使用者主動取消關注 LINE 頻道）
+     * 未關注（使用者主動取消關注或封鎖 LINE 頻道）
      */
     UNFOLLOWED("未關注"),
 

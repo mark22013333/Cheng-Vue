@@ -153,6 +153,15 @@ public interface ILineUserService {
     LineUserImportResultDTO importLineUsers(MultipartFile file, Integer configId);
 
     /**
+     * 取得每月加入統計資料
+     *
+     * @param startTime 開始時間
+     * @param endTime   結束時間
+     * @return 每月統計列表
+     */
+    List<java.util.Map<String, Object>> getMonthlyJoinStats(String startTime, String endTime);
+
+    /**
      * 將使用者加入黑名單
      *
      * @param lineUserId LINE 使用者 ID
