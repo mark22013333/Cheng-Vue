@@ -148,6 +148,28 @@ public class JacksonUtil {
     }
 
     /**
+     * 反序列化成 List<Map<String, Object>>
+     * 專門用於處理動態結構的 JSON 陣列
+     *
+     * @param json JSON 陣列字串
+     * @return List<Map<String, Object>>，失敗返回空列表
+     */
+    public static List<Map<String, Object>> parseJsonArrayToMapList(String json) {
+        if (StringUtils.isBlank(json)) {
+            return Collections.emptyList();
+        }
+        try {
+            TypeReference<List<Map<String, Object>>> typeRef = new TypeReference<List<Map<String, Object>>>() {};
+            return MAPPER.readValue(json, typeRef);
+        } catch (Exception e) {
+            log.error("json parseJsonArrayToMapList fail, json={}, ERR={}",
+                    json,
+                    ExceptionUtils.getStackTrace(e));
+            return Collections.emptyList();
+        }
+    }
+
+    /**
      * 使用TypeReference反序列化JSON為複雜泛型類型
      * 這個方法主要用於處理複雜的泛型類型，例如List<String>, Map<String, Object>等
      * 使用方法：JacksonUtils.fromJson(jsonStr, new TypeReference<List<String>>() {});

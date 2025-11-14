@@ -30,11 +30,11 @@ public class AsyncConfig {
     @Bean(name = "taskExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
         // 核心執行緒數
-        executor.setCorePoolSize(3);
+        executor.setCorePoolSize(availableProcessors);
         // 最大執行緒數
-        executor.setMaxPoolSize(5);
+        executor.setMaxPoolSize(availableProcessors * 2);
         // 佇列容量
         executor.setQueueCapacity(20);
         // 執行緒名稱前綴
@@ -52,7 +52,9 @@ public class AsyncConfig {
 
         executor.initialize();
 
-        log.info("爬取任務執行器初始化完成: corePoolSize=3, maxPoolSize=5, queueCapacity=20");
+        log.info("爬取任務執行器初始化完成: corePoolSize={}, maxPoolSize={}, queueCapacity={}",
+                executor.getCorePoolSize(), executor.getMaxPoolSize(),
+                executor.getThreadPoolExecutor().getQueue().remainingCapacity());
 
         return executor;
     }
