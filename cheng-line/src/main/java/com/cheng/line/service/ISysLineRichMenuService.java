@@ -149,4 +149,16 @@ public interface ISysLineRichMenuService {
      * @return 是否唯一
      */
     boolean checkNameUnique(SysLineRichMenu richMenu);
+
+    /**
+     * 從 LINE 平台重新下載預覽圖並更新本地路徑
+     * <p>
+     * 1. 檢查 Rich Menu 是否已發布
+     * 2. 從 LINE 平台下載圖片
+     * 3. 儲存到本地並更新資料庫
+     *
+     * @param id Rich Menu ID
+     * @return 是否成功
+     */
+    boolean refreshPreviewImage(Long id);
 }

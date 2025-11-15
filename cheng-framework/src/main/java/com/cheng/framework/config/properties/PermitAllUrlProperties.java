@@ -1,6 +1,8 @@
 package com.cheng.framework.config.properties;
 
 import com.cheng.common.annotation.Anonymous;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.RegExUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
@@ -26,6 +28,8 @@ public class PermitAllUrlProperties implements InitializingBean, ApplicationCont
 
     private ApplicationContext applicationContext;
 
+    @Setter
+    @Getter
     private List<String> urls = new ArrayList<>();
 
     public String ASTERISK = "*";
@@ -56,11 +60,4 @@ public class PermitAllUrlProperties implements InitializingBean, ApplicationCont
         this.applicationContext = context;
     }
 
-    public List<String> getUrls() {
-        return urls;
-    }
-
-    public void setUrls(List<String> urls) {
-        this.urls = urls;
-    }
 }

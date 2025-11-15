@@ -105,6 +105,23 @@
     <!-- 資料表格 -->
     <el-table v-loading="loading" :data="richMenuList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
+      <el-table-column label="預覽圖" align="center" width="100">
+        <template slot-scope="scope">
+          <el-image
+            v-if="scope.row.localImagePath"
+            :src="getImageUrl(scope.row.localImagePath)"
+            :preview-src-list="[getImageUrl(scope.row.localImagePath)]"
+            fit="cover"
+            style="width: 60px; height: 40px; cursor: pointer; border-radius: 4px;"
+            :title="'點擊查看大圖'"
+          >
+            <div slot="error" class="image-slot">
+              <i class="el-icon-picture-outline" style="font-size: 24px; color: #ccc"></i>
+            </div>
+          </el-image>
+          <span v-else style="color: #ccc; font-size: 12px">無圖片</span>
+        </template>
+      </el-table-column>
       <el-table-column label="選單名稱" align="center" prop="name" :show-overflow-tooltip="true" min-width="150">
         <template slot-scope="scope">
           <el-tag v-if="scope.row.isDefault === 1" type="success" size="mini" style="margin-right: 5px">
@@ -178,6 +195,14 @@
                 v-hasPermi="['line:richMenu:setDefault']"
               >
                 設為預設
+              </el-dropdown-item>
+              <el-dropdown-item
+                v-if="scope.row.richMenuId"
+                command="refreshPreview"
+                icon="el-icon-refresh"
+                v-hasPermi="['line:richMenu:edit']"
+              >
+                更新預覽圖
               </el-dropdown-item>
               <el-dropdown-item
                 v-if="scope.row.richMenuId"
@@ -280,11 +305,63 @@
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="24">
+          <el-col :span="16">
             <el-form-item label="選單圖片" prop="imageUrl">
-              <el-input v-model="form.imageUrl" placeholder="圖片 URL（暫時使用文字輸入，後續將整合圖片上傳）" />
-              <span style="color: #999; font-size: 12px">註：後續版本將提供圖片上傳功能</span>
+              <el-tabs v-model="imageInputType" type="card">
+                <el-tab-pane label="上傳圖片（推薦）" name="upload">
+                  <image-upload 
+                    v-model="form.imageUrl" 
+                    :limit="1"
+                    :action="getUploadUrl()"
+                    :data="{ targetSize: form.imageSize }"
+                    :before-upload-hook="handleBeforeUpload"
+                    @response="handleImageUploadResponse"
+                  />
+                  <!-- 顯示圖片資訊 -->
+                  <div v-if="imageInfo.originalSize" style="margin-top: 10px; padding: 10px; background: #f5f7fa; border-radius: 4px;">
+                    <div style="margin-bottom: 5px;">
+                      <el-tag size="small" type="info">原始尺寸：{{ imageInfo.originalSize }}</el-tag>
+                      <el-tag v-if="imageInfo.resized" size="small" type="warning" style="margin-left: 10px;">
+                        已自動調整為 {{ imageInfo.finalSize }}
+                      </el-tag>
+                      <el-tag v-else size="small" type="success" style="margin-left: 10px;">
+                        尺寸符合，無需調整
+                      </el-tag>
+                    </div>
+                    <div style="color: #909399; font-size: 12px;">
+                      <i class="el-icon-document"></i> 檔案大小：{{ imageInfo.fileSizeKB }} KB
+                    </div>
+                  </div>
+                </el-tab-pane>
+                <el-tab-pane label="輸入網址" name="url">
+                  <el-input 
+                    v-model="form.imageUrl" 
+                    placeholder="請輸入圖片網址 (例如: https://example.com/image.jpg)" 
+                  />
+                  <span style="color: #999; font-size: 12px; display: block; margin-top: 8px;">
+                    註：請確保網址可公開訪問，且圖片尺寸符合規格
+                  </span>
+                </el-tab-pane>
+              </el-tabs>
             </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <div style="padding-left: 20px; color: #606266; font-size: 13px;">
+              <div style="margin-bottom: 10px; font-weight: bold;">
+                <i class="el-icon-info" style="color: #409EFF;"></i> 圖片尺寸規格
+              </div>
+              <div style="line-height: 1.8;">
+                • 2500x1686（全版高）<br/>
+                • 2500x843（全版矮）<br/>
+                • 1200x810（半版高）<br/>
+                • 1200x405（半版矮）<br/>
+                • 800x540（1/3 版高）<br/>
+                • 800x270（1/3 版矮）
+              </div>
+              <div style="margin-top: 10px; padding: 8px; background: #fef0f0; border-radius: 4px; color: #F56C6C; font-size: 12px;">
+                <i class="el-icon-warning"></i> 上傳任意尺寸圖片，系統會自動調整為所選尺寸
+              </div>
+            </div>
           </el-col>
         </el-row>
         <el-row>
@@ -295,6 +372,7 @@
                 v-model="form.areas"
                 :template-type="form.templateType"
                 :image-size="form.imageSize"
+                :image-url="form.imageUrl"
                 @change="handleAreasChange"
                 @manual-edit="handleManualEdit"
               />
@@ -314,18 +392,28 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 進度對話框 -->
+    <progress-dialog ref="progressDialog" />
   </div>
 </template>
 
 <script>
-import { listRichMenu, getRichMenu, addRichMenu, updateRichMenu, delRichMenu, publishRichMenu, setDefaultRichMenu, deleteRichMenuFromLine } from '@/api/line/richMenu'
+import { listRichMenu, getRichMenu, addRichMenu, updateRichMenu, delRichMenu, publishRichMenu, setDefaultRichMenu, deleteRichMenuFromLine, refreshPreviewImage } from '@/api/line/richMenu'
 import { listConfig } from '@/api/line/config'
 import RichMenuEditor from './components/RichMenuEditor'
+import ImageUpload from '@/components/ImageUpload'
+import ProgressDialog from '@/components/ProgressDialog'
+import { getImageUrl } from '@/utils/image'
+import request from '@/utils/request'
+import SseClient, { SSE_CHANNELS, SSE_EVENTS } from '@/utils/sse/SseClient'
 
 export default {
   name: 'LineRichMenu',
   components: {
-    RichMenuEditor
+    RichMenuEditor,
+    ImageUpload,
+    ProgressDialog
   },
   data() {
     return {
@@ -362,6 +450,21 @@ export default {
       form: {
         areas: []
       },
+      // 圖片輸入方式（upload: 上傳, url: 網址）
+      imageInputType: 'upload',
+      // 圖片資訊
+      imageInfo: {
+        originalSize: '',
+        finalSize: '',
+        resized: false,
+        fileSizeKB: 0
+      },
+      // 當前上傳的檔案名稱（用於重新上傳時刪除舊檔案）
+      currentUploadedFileName: null,
+      // SSE 客戶端
+      sseClient: null,
+      // SSE 連線超時計時器
+      sseConnectTimer: null,
       // 表單校驗
       rules: {
         configId: [
@@ -400,7 +503,105 @@ export default {
     this.getList()
     this.getChannelList()
   },
+  beforeDestroy() {
+    // 清理 SSE 連線
+    if (this.sseClient) {
+      this.sseClient.close()
+      this.sseClient = null
+    }
+    // 清理連線超時計時器
+    if (this.sseConnectTimer) {
+      clearTimeout(this.sseConnectTimer)
+      this.sseConnectTimer = null
+    }
+  },
+  watch: {
+    'form.imageUrl'(newVal, oldVal) {
+      console.log('🖼️ form.imageUrl 已更新：', oldVal, '→', newVal)
+    }
+  },
   methods: {
+    /** 取得上傳接口 URL（不含 base API，ImageUpload 組件會自動添加） */
+    getUploadUrl() {
+      return '/line/richMenu/uploadImage'
+    },
+    
+    /** 處理圖片上傳響應 */
+    handleImageUploadResponse(response) {
+      console.log('📸 圖片上傳響應：', response)
+      
+      if (!response) {
+        console.error('❌ 響應為空')
+        return
+      }
+      
+      if (response.code === 200 && response.data) {
+        const data = response.data
+        console.log('✅ 圖片資訊：', data)
+        
+        // 記錄當前上傳的檔案名稱（用於下次重新上傳時刪除）
+        if (data.fileName) {
+          this.currentUploadedFileName = data.fileName
+          console.log('📝 記錄檔案名稱：', this.currentUploadedFileName)
+        }
+        
+        // 更新圖片資訊
+        this.imageInfo = {
+          originalSize: data.originalSize || '',
+          finalSize: data.finalSize || data.originalSize || '',
+          resized: data.resized === true,  // 確保是布林值
+          fileSizeKB: data.fileSizeKB || 0
+        }
+        
+        console.log('📊 更新後的 imageInfo：', this.imageInfo)
+        
+        // 顯示提示
+        if (data.resized) {
+          this.$message({
+            message: `圖片已自動調整：${data.originalSize} → ${data.finalSize}`,
+            type: 'success',
+            duration: 3000
+          })
+        } else {
+          this.$message({
+            message: `圖片上傳成功（${data.originalSize}）`,
+            type: 'success',
+            duration: 2000
+          })
+        }
+        
+        // 強制更新視圖
+        this.$forceUpdate()
+      } else {
+        console.error('❌ 響應格式錯誤：', response)
+        if (response.msg) {
+          this.$message.error(response.msg)
+        }
+      }
+    },
+    
+    /** 上傳前處理：刪除舊圖片 */
+    async handleBeforeUpload(file) {
+      // 如果有舊圖片，先刪除
+      if (this.currentUploadedFileName) {
+        console.log('🗑️ 檢測到舊圖片，準備刪除：', this.currentUploadedFileName)
+        try {
+          const response = await request.delete(
+            '/line/richMenu/deleteImage?fileName=' + encodeURIComponent(this.currentUploadedFileName)
+          )
+          if (response.code === 200) {
+            console.log('✅ 舊圖片已刪除')
+          }
+        } catch (error) {
+          console.warn('⚠️ 刪除舊圖片失敗（可能已不存在）：', error)
+          // 即使刪除失敗也繼續上傳新圖片
+        }
+      }
+      
+      // 返回 true 繼續上傳（檔案類型和大小驗證由 ImageUpload 組件處理）
+      return true
+    },
+    
     /** 查詢 Rich Menu 列表 */
     getList() {
       this.loading = true
@@ -410,10 +611,22 @@ export default {
         this.loading = false
       })
     },
-    /** 查詢頻道列表 */
+    /** 查詢頻道列表 - 只載入啟用頻道，並按主頻道優先排序 */
     getChannelList() {
-      listConfig({ status: 1 }).then(response => {
-        this.channelList = response.rows || []
+      listConfig({ status: 1, pageNum: 1, pageSize: 9999 }).then(response => {
+        if (response && response.rows) {
+          // 按主頻道優先排序（is_primary DESC）
+          this.channelList = response.rows.sort((a, b) => {
+            if (a.isPrimary === b.isPrimary) return 0
+            return a.isPrimary === 1 ? -1 : 1
+          })
+        } else {
+          this.channelList = []
+        }
+      }).catch(error => {
+        console.error('載入頻道列表失敗:', error)
+        this.$message.error('載入頻道列表失敗，請檢查網路連線')
+        this.channelList = []
       })
     },
     // 取消按鈕
@@ -436,6 +649,15 @@ export default {
         areasJson: null,
         remark: null
       }
+      // 清除圖片資訊
+      this.imageInfo = {
+        originalSize: '',
+        finalSize: '',
+        resized: false,
+        fileSizeKB: 0
+      }
+      // 清除當前上傳檔案記錄
+      this.currentUploadedFileName = null
       this.resetForm('form')
     },
     /** 區塊設定變更處理 */
@@ -471,9 +693,25 @@ export default {
     handleAdd() {
       this.reset()
       this.dialogKey++ // 強制重新渲染對話框
+      
       // 為新增設定預設版型
       this.form.templateType = 'TWO_COLS'
       this.form.imageSize = '2500x1686'
+      
+      // 自動選擇頻道：優先主頻道，否則第一個啟用頻道
+      if (this.channelList && this.channelList.length > 0) {
+        const primaryChannel = this.channelList.find(c => c.isPrimary === 1)
+        if (primaryChannel) {
+          this.form.configId = primaryChannel.configId
+          this.$message.success(`已自動選擇主頻道：${primaryChannel.channelName}`)
+        } else {
+          this.form.configId = this.channelList[0].configId
+          this.$message.info(`已自動選擇頻道：${this.channelList[0].channelName}`)
+        }
+      } else {
+        this.$message.warning('目前沒有可用的頻道，請先設定 LINE 頻道')
+      }
+      
       this.open = true
       this.title = '新增 Rich Menu'
     },
@@ -538,6 +776,9 @@ export default {
                 } else if (!action.data) {
                   invalidAreas.push(`區塊 ${index + 1}（缺少 Postback 資料）`)
                 }
+              } else if (action.type === 'datetimepicker' && !action.data) {
+                // 新增：日期時間選擇器必須設定 data 欄位
+                invalidAreas.push(`區塊 ${index + 1}（日期時間選擇器缺少回傳資料）`)
               }
             })
             
@@ -578,14 +819,127 @@ export default {
     /** 發布按鈕操作 */
     handlePublish(row) {
       this.$modal.confirm('確認要發布此 Rich Menu 到 LINE 平台嗎？').then(() => {
-        return publishRichMenu(row.id)
-      }).then(() => {
-        this.$modal.msgSuccess('發布成功')
-        this.getList()
+        // 產生任務 ID
+        const taskId = 'richmenu-publish-' + Date.now()
+        
+        // 顯示進度對話框
+        this.$refs.progressDialog.show({
+          title: '發布 Rich Menu',
+          message: '正在準備發布...',
+          showLogs: true
+        })
+        
+        // 建立 SSE 連線
+        this.sseClient = new SseClient({
+          channel: SSE_CHANNELS.RICHMENU_PUBLISH,
+          taskId: taskId,
+          timeout: 300000 // 5 分鐘
+        })
+        
+        // 監聽進度事件
+        this.sseClient.on(SSE_EVENTS.PROGRESS, (data) => {
+          console.log('📊 發布進度:', data)
+          this.$refs.progressDialog.updateProgress(data.progress || 0, data.message)
+        })
+        
+        // 監聽成功事件
+        this.sseClient.on(SSE_EVENTS.SUCCESS, (data) => {
+          console.log('✅ 發布成功:', data)
+          this.$refs.progressDialog.setSuccess(data.message || '發布成功！')
+          this.sseClient.close()
+          this.sseClient = null
+          // 清理計時器
+          if (this.sseConnectTimer) {
+            clearTimeout(this.sseConnectTimer)
+            this.sseConnectTimer = null
+          }
+          // 重新整理列表
+          setTimeout(() => {
+            this.getList()
+          }, 1000)
+        })
+        
+        // 監聽錯誤事件
+        this.sseClient.on(SSE_EVENTS.ERROR, (data) => {
+          console.error('❌ 發布失敗:', data)
+          this.$refs.progressDialog.setError(
+            data.message || '發布失敗',
+            true,
+            () => this.handlePublish(row)
+          )
+          this.sseClient.close()
+          this.sseClient = null
+          // 清理計時器
+          if (this.sseConnectTimer) {
+            clearTimeout(this.sseConnectTimer)
+            this.sseConnectTimer = null
+          }
+        })
+        
+        // 監聽連線成功事件
+        this.sseClient.on(SSE_EVENTS.CONNECTED, () => {
+          console.log('✅ SSE 連線已建立，開始發布...')
+          // 清除連線超時計時器
+          if (this.sseConnectTimer) {
+            clearTimeout(this.sseConnectTimer)
+            this.sseConnectTimer = null
+          }
+          // 連線成功後才呼叫發布 API
+          publishRichMenu(row.id, taskId).catch(error => {
+            console.error('❌ 呼叫發布 API 失敗:', error)
+            this.$refs.progressDialog.setError(
+              error.msg || '呼叫發布 API 失敗',
+              true,
+              () => this.handlePublish(row)
+            )
+            if (this.sseClient) {
+              this.sseClient.close()
+              this.sseClient = null
+            }
+            // 清理計時器
+            if (this.sseConnectTimer) {
+              clearTimeout(this.sseConnectTimer)
+              this.sseConnectTimer = null
+            }
+          })
+        })
+        
+        // 建立連線
+        this.sseClient.connect()
+        
+        // 設定連線超時（10 秒）
+        this.sseConnectTimer = setTimeout(() => {
+          if (this.sseClient && !this.sseClient.isConnected()) {
+            console.error('❌ SSE 連線超時')
+            this.$refs.progressDialog.setError(
+              'SSE 連線超時，請檢查網路或重試',
+              true,
+              () => this.handlePublish(row)
+            )
+            if (this.sseClient) {
+              this.sseClient.close()
+              this.sseClient = null
+            }
+          }
+        }, 10000)
       }).catch(error => {
-        // 顯示詳細錯誤訊息
+        // 如果用戶取消確認
+        if (error === 'cancel') {
+          return
+        }
+        // 顯示錯誤訊息
         if (error && error.msg) {
           this.$modal.msgError(error.msg)
+        }
+        // 清理 SSE
+        if (this.sseClient) {
+          this.sseClient.close()
+          this.sseClient = null
+        }
+        // 清理計時器
+        if (this.sseConnectTimer) {
+          clearTimeout(this.sseConnectTimer)
+          this.sseConnectTimer = null
         }
       })
     },
@@ -594,6 +948,9 @@ export default {
       switch (command) {
         case 'setDefault':
           this.handleSetDefault(row)
+          break
+        case 'refreshPreview':
+          this.handleRefreshPreview(row)
           break
         case 'deleteFromLine':
           this.handleDeleteFromLine(row)
@@ -609,6 +966,28 @@ export default {
         return setDefaultRichMenu(row.id)
       }).then(() => {
         this.$modal.msgSuccess('設定成功')
+        this.getList()
+      }).catch(error => {
+        if (error && error.msg) {
+          this.$modal.msgError(error.msg)
+        }
+      })
+    },
+    /** 更新預覽圖 */
+    handleRefreshPreview(row) {
+      this.$modal.confirm('確認要從 LINE 平台重新下載並更新預覽圖嗎？').then(() => {
+        const loading = this.$loading({
+          lock: true,
+          text: '正在下載圖片...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        })
+        
+        return refreshPreviewImage(row.id).finally(() => {
+          loading.close()
+        })
+      }).then(() => {
+        this.$modal.msgSuccess('預覽圖更新成功')
         this.getList()
       }).catch(error => {
         if (error && error.msg) {
@@ -707,7 +1086,67 @@ export default {
         this.$message.error('複製失敗，請手動複製')
       }
       document.body.removeChild(textArea)
-    }
+    },
+    /** 驗證圖片尺寸是否符合 LINE Rich Menu 規格 */
+    validateImageSize(file) {
+      return new Promise((resolve, reject) => {
+        // 允許的尺寸列表
+        const allowedSizes = [
+          { width: 2500, height: 1686 },
+          { width: 2500, height: 843 },
+          { width: 1200, height: 810 },
+          { width: 1200, height: 405 },
+          { width: 800, height: 540 },
+          { width: 800, height: 270 }
+        ]
+
+        // 檢查檔案大小（最大 1MB）
+        const maxSize = 1 * 1024 * 1024 // 1MB
+        if (file.size > maxSize) {
+          this.$message.error('圖片大小不能超過 1MB')
+          return reject(new Error('圖片大小超過限制'))
+        }
+
+        // 使用 FileReader 讀取圖片
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const img = new Image()
+          img.onload = () => {
+            const width = img.width
+            const height = img.height
+
+            // 檢查尺寸是否符合規格
+            const isValid = allowedSizes.some(size => size.width === width && size.height === height)
+
+            if (isValid) {
+              // 自動設定對應的圖片尺寸
+              const sizeStr = `${width}x${height}`
+              if (this.form.imageSize !== sizeStr) {
+                this.form.imageSize = sizeStr
+                this.$message.success(`已自動設定圖片尺寸為 ${sizeStr}`)
+              }
+              resolve(file)
+            } else {
+              const sizeList = allowedSizes.map(s => `${s.width}x${s.height}`).join('、')
+              this.$message.error(`圖片尺寸 ${width}x${height} 不符合規格！允許的尺寸：${sizeList}`)
+              reject(new Error('圖片尺寸不符合規格'))
+            }
+          }
+          img.onerror = () => {
+            this.$message.error('圖片載入失敗')
+            reject(new Error('圖片載入失敗'))
+          }
+          img.src = e.target.result
+        }
+        reader.onerror = () => {
+          this.$message.error('圖片讀取失敗')
+          reject(new Error('圖片讀取失敗'))
+        }
+        reader.readAsDataURL(file)
+      })
+    },
+    /** 取得圖片 URL（使用統一工具函數） */
+    getImageUrl
   }
 }
 </script>

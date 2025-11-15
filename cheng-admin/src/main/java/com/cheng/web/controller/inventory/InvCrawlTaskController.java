@@ -1,5 +1,6 @@
 package com.cheng.web.controller.inventory;
 
+import com.cheng.common.annotation.Anonymous;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.crawler.dto.CrawlTaskDTO;
@@ -110,6 +111,7 @@ public class InvCrawlTaskController extends BaseController {
      * @param taskId 任務 ID
      * @return SseEmitter
      */
+    @Anonymous
     @GetMapping(value = "/subscribe/{taskId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(@PathVariable String taskId) {
         log.info("收到 SSE 訂閱請求: taskId={}", taskId);

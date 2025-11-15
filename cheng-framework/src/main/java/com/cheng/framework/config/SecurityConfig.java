@@ -93,16 +93,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 註解標記允許匿名訪問的url
                 .authorizeHttpRequests((requests) -> {
+                    // 掃描 @Anonymous 註解的端點，自動允許匿名訪問
                     permitAllUrl.getUrls().forEach(url -> requests.requestMatchers(url).permitAll());
                     // 對於登入login 註冊register 驗證碼captchaImage 允許匿名訪問
                     requests.requestMatchers("/login", "/register", "/captchaImage").permitAll()
-                            // 測試用登入 API，允許匿名訪問
-                            .requestMatchers("/test/user/test-login").permitAll()
-                            // LINE Bot Webhook，允許匿名訪問（支援多頻道動態路徑）
-                            .requestMatchers("/webhook/line/**").permitAll()
-                            .requestMatchers("/tool/trace/**").permitAll()
-                            // SSE 訂閱端點，允許匿名訪問（EventSource 無法攜帶 JWT token）
-                            .requestMatchers("/inventory/crawlTask/subscribe/**").permitAll()
                             // 靜態資源，可匿名訪問
                             .requestMatchers(HttpMethod.GET, "/", "/*.html", "/**.html", "/**.css", "/**.js", "/profile/**").permitAll()
                             .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**", "/druid/**").permitAll()

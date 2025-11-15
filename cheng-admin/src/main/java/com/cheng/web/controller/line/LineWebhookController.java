@@ -1,5 +1,6 @@
 package com.cheng.web.controller.line;
 
+import com.cheng.common.annotation.Anonymous;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.line.domain.LineConfig;
@@ -32,6 +33,7 @@ import java.util.List;
  *
  * @author cheng
  */
+@Anonymous
 @LineMessageHandler
 @RestController
 @RequestMapping(ILineConfigService.WEBHOOK)
@@ -299,8 +301,53 @@ public class LineWebhookController extends BaseController {
         String data = event.postback().data();
         log.info("收到 Postback 事件，使用者ID: {}，資料: {}", userId, data);
 
-        // TODO: 實作 Postback 處理邏輯
-        // 例如：處理 Template Message 的按鈕點擊
+        // 取得 params（日期時間選擇器會包含此欄位）
+        var params = event.postback().params();
+        
+        // 處理日期時間選擇器回傳
+        if (params != null && params.get("datetime") != null) {
+            String selectedDatetime = params.get("datetime");
+            log.info("========================================");
+            log.info("【日期時間選擇器回傳】");
+            log.info("使用者ID: {}", userId);
+            log.info("Postback Data: {}", data);
+            log.info("選擇的日期時間: {}", selectedDatetime);
+            log.info("========================================");
+            
+            // TODO: 根據業務需求處理日期時間
+            // 例如：儲存預約時間、觸發排程任務等
+        }
+        // 處理日期選擇器回傳（只有日期）
+        else if (params != null && params.get("date") != null) {
+            String selectedDate = params.get("date");
+            log.info("========================================");
+            log.info("【日期選擇器回傳】");
+            log.info("使用者ID: {}", userId);
+            log.info("Postback Data: {}", data);
+            log.info("選擇的日期: {}", selectedDate);
+            log.info("========================================");
+            
+            // TODO: 根據業務需求處理日期
+        }
+        // 處理時間選擇器回傳（只有時間）
+        else if (params != null && params.get("time") != null) {
+            String selectedTime = params.get("time");
+            log.info("========================================");
+            log.info("【時間選擇器回傳】");
+            log.info("使用者ID: {}", userId);
+            log.info("Postback Data: {}", data);
+            log.info("選擇的時間: {}", selectedTime);
+            log.info("========================================");
+            
+            // TODO: 根據業務需求處理時間
+        }
+        // 一般 Postback 事件
+        else {
+            log.debug("一般 Postback 事件（非日期時間選擇器）");
+            
+            // TODO: 實作其他 Postback 處理邏輯
+            // 例如：處理 Template Message 的按鈕點擊、Rich Menu Switch 等
+        }
     }
 
     /**

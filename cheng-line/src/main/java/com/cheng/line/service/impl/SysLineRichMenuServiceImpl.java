@@ -1,9 +1,11 @@
 package com.cheng.line.service.impl;
 
+import com.cheng.common.config.CoolAppsConfig;
 import com.cheng.common.exception.ServiceException;
 import com.cheng.common.utils.OkHttpUtils;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.JacksonUtil;
+import com.cheng.common.utils.ImageResizeUtil;
 import com.cheng.common.utils.dto.ApiResponse;
 import com.cheng.line.client.LineClientFactory;
 import com.cheng.line.domain.LineConfig;
@@ -20,10 +22,16 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.linecorp.bot.messaging.client.MessagingApiClient;
 import com.linecorp.bot.messaging.model.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.cheng.framework.sse.SseManager;
+import com.cheng.framework.sse.SseChannels;
+import com.cheng.framework.sse.SseEvent;
 
 import jakarta.annotation.Resource;
 
@@ -60,6 +68,9 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
     @Resource
     @Lazy
     private ISysLineRichMenuAliasService aliasService;
+
+    @Autowired
+    private SseManager sseManager;
 
     /**
      * 查詢 Rich Menu 列表
@@ -118,8 +129,49 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
             throw new ServiceException(String.format("選單名稱「%s」已存在", richMenu.getName()));
         }
 
-        // 驗證區塊設定
+        // 驗證區塊設定（基本驗證）
         validateAreas(richMenu);
+
+        // 如果有 areasJson，呼叫 LINE API 驗證 Rich Menu 結構
+        if (StringUtils.isNotEmpty(richMenu.getAreasJson()) && StringUtils.isNotEmpty(richMenu.getImageSize())) {
+            try {
+                log.info("新增 Rich Menu 前驗證結構：{}", richMenu.getName());
+                
+                // 解析 areas JSON
+                List<RichMenuArea> areas = parseAreas(richMenu.getAreasJson());
+                
+                // 解析圖片尺寸
+                String[] sizeParts = richMenu.getImageSize().split("x");
+                int width = Integer.parseInt(sizeParts[0]);
+                int height = Integer.parseInt(sizeParts[1]);
+                
+                // 建立 RichMenuRequest
+                RichMenuSize size = new RichMenuSize.Builder()
+                        .width((long) width)
+                        .height((long) height)
+                        .build();
+                
+                RichMenuRequest richMenuRequest = new RichMenuRequest.Builder()
+                        .size(size)
+                        .selected(false)
+                        .name(richMenu.getName())
+                        .chatBarText(richMenu.getChatBarText() != null ? richMenu.getChatBarText() : "選單")
+                        .areas(areas)
+                        .build();
+                
+                // 呼叫 LINE API 驗證
+                validateRichMenuStructure(richMenuRequest, config.getChannelAccessToken());
+                
+                log.info("✓ Rich Menu 結構驗證通過");
+                
+            } catch (ServiceException e) {
+                // 重新拋出 ServiceException ，保持原始錯誤訊息
+                throw e;
+            } catch (Exception e) {
+                log.error("驗證 Rich Menu 結構失敗", e);
+                throw new ServiceException("驗證 Rich Menu 結構失敗：" + e.getMessage());
+            }
+        }
 
         // 預設狀態為草稿
         if (richMenu.getStatus() == null) {
@@ -146,13 +198,60 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
             throw new ServiceException("Rich Menu 不存在");
         }
 
+        // 查詢頻道設定（用於驗證）
+        LineConfig config = lineConfigMapper.selectLineConfigById(richMenu.getConfigId());
+        if (config == null) {
+            throw new ServiceException("頻道設定不存在");
+        }
+
         // 檢查名稱是否重複
         if (!checkNameUnique(richMenu)) {
             throw new ServiceException(String.format("選單名稱「%s」已存在", richMenu.getName()));
         }
 
-        // 驗證區塊設定
+        // 驗證區塊設定（基本驗證）
         validateAreas(richMenu);
+
+        // 如果有 areasJson，呼叫 LINE API 驗證 Rich Menu 結構
+        if (StringUtils.isNotEmpty(richMenu.getAreasJson()) && StringUtils.isNotEmpty(richMenu.getImageSize())) {
+            try {
+                log.info("修改 Rich Menu 前驗證結構：{}", richMenu.getName());
+                
+                // 解析 areas JSON
+                List<RichMenuArea> areas = parseAreas(richMenu.getAreasJson());
+                
+                // 解析圖片尺寸
+                String[] sizeParts = richMenu.getImageSize().split("x");
+                int width = Integer.parseInt(sizeParts[0]);
+                int height = Integer.parseInt(sizeParts[1]);
+                
+                // 建立 RichMenuRequest
+                RichMenuSize size = new RichMenuSize.Builder()
+                        .width((long) width)
+                        .height((long) height)
+                        .build();
+                
+                RichMenuRequest richMenuRequest = new RichMenuRequest.Builder()
+                        .size(size)
+                        .selected(richMenu.getSelected() == 1)
+                        .name(richMenu.getName())
+                        .chatBarText(richMenu.getChatBarText() != null ? richMenu.getChatBarText() : "選單")
+                        .areas(areas)
+                        .build();
+                
+                // 呼叫 LINE API 驗證
+                validateRichMenuStructure(richMenuRequest, config.getChannelAccessToken());
+                
+                log.info("✓ Rich Menu 結構驗證通過");
+                
+            } catch (ServiceException e) {
+                // 重新拋出 ServiceException ，保持原始錯誤訊息
+                throw e;
+            } catch (Exception e) {
+                log.error("驗證 Rich Menu 結構失敗", e);
+                throw new ServiceException("驗證 Rich Menu 結構失敗：" + e.getMessage());
+            }
+        }
 
         // 如果已發布，不允許修改某些欄位
         if (existMenu.isPublished()) {
@@ -250,12 +349,43 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
     }
 
     /**
-     * 發布 Rich Menu 到 LINE 平台
+     * 發布 Rich Menu 到 LINE 平台（同步版本，向下相容）
      * 自動判斷是首次發布還是重新發布
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String publishRichMenu(Long id) {
+        return publishRichMenuInternal(id, null);
+    }
+
+    /**
+     * 發布 Rich Menu 到 LINE 平台（異步版本，支援 SSE 推送進度）
+     * 
+     * @param id Rich Menu ID
+     * @param taskId 任務 ID（用於 SSE 推送）
+     */
+    @Async
+    public void publishRichMenuAsync(Long id, String taskId) {
+        try {
+            publishRichMenuInternal(id, taskId);
+        } catch (Exception e) {
+            log.error("[Async] Rich Menu 發布失敗", e);
+            if (taskId != null) {
+                sseManager.send(SseChannels.RICHMENU_PUBLISH, taskId, 
+                    SseEvent.error("發布失敗：" + e.getMessage()));
+            }
+        }
+    }
+
+    /**
+     * 發布 Rich Menu 內部實作
+     * 
+     * @param id Rich Menu ID
+     * @param taskId 任務 ID（可選，用於 SSE 推送）
+     * @return richMenuId
+     */
+    @Transactional(rollbackFor = Exception.class)
+    protected String publishRichMenuInternal(Long id, String taskId) {
         log.info("========== 開始發布 Rich Menu ==========");
 
         // 查詢 Rich Menu
@@ -284,15 +414,21 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
             MessagingApiClient client = lineClientFactory.getClient(config.getChannelAccessToken());
 
             // 判斷是首次發布還是重新發布
-            boolean isRepublish = menu.isPublished();  // 已有 richMenuId 表示是重新發布
+            boolean isRepublish = menu.isPublished();
 
             String richMenuId;
             if (isRepublish) {
                 log.info("🔄 偵測到重新發布模式（舊 richMenuId: {}）", menu.getRichMenuId());
-                richMenuId = republish(menu, config, client);
+                richMenuId = republish(menu, config, client, taskId);
             } else {
                 log.info("🆕 偵測到首次發布模式");
-                richMenuId = firstPublish(menu, config, client);
+                richMenuId = firstPublish(menu, config, client, taskId);
+            }
+
+            // 發送成功事件
+            if (taskId != null) {
+                sseManager.send(SseChannels.RICHMENU_PUBLISH, taskId,
+                    SseEvent.success("發布成功！", richMenuId));
             }
 
             log.info("========== Rich Menu 發布成功！==========");
@@ -301,6 +437,13 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
         } catch (Exception e) {
             log.error("========== Rich Menu 發布失敗 ==========");
             log.error("錯誤訊息：{}", e.getMessage(), e);
+            
+            // 發送錯誤事件
+            if (taskId != null) {
+                sseManager.send(SseChannels.RICHMENU_PUBLISH, taskId,
+                    SseEvent.error("發布失敗：" + e.getMessage()));
+            }
+            
             throw new ServiceException("發布 Rich Menu 失敗：" + e.getMessage());
         }
     }
@@ -559,20 +702,106 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
      * 3. Base64: data:image/png;base64,... → Base64 解碼
      */
     private byte[] getImageBytes(String imageUrl) throws Exception {
+        return getImageBytes(imageUrl, null);
+    }
+
+    /**
+     * 根據 imageUrl 類型取得圖片 byte[]，並自動調整到指定尺寸
+     * 
+     * @param imageUrl 圖片 URL
+     * @param targetSize 目標尺寸（格式：寬x高，例如：2500x1686），null 表示不調整
+     * @return 圖片位元組陣列
+     * @throws Exception 處理異常
+     */
+    private byte[] getImageBytes(String imageUrl, String targetSize) throws Exception {
         if (imageUrl == null || imageUrl.trim().isEmpty()) {
             throw new ServiceException("圖片 URL 不能為空");
         }
 
+        byte[] imageBytes;
+        
         if (imageUrl.startsWith("data:image/")) {
             log.debug("圖片來源：Base64 編碼");
-            return decodeBase64Image(imageUrl);
+            imageBytes = decodeBase64Image(imageUrl);
         } else if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
             log.debug("圖片來源：HTTP URL");
-            return downloadImageFromUrl(imageUrl);
+            imageBytes = downloadImageFromUrl(imageUrl);
         } else {
             // 視為本地系統路徑（相對或絕對）
             log.debug("圖片來源：本地系統路徑");
-            return readLocalFile(imageUrl);
+            imageBytes = readLocalFile(imageUrl);
+        }
+        
+        // 如果指定了目標尺寸，自動調整圖片
+        if (StringUtils.isNotEmpty(targetSize)) {
+            imageBytes = autoResizeImage(imageBytes, targetSize);
+        }
+        
+        return imageBytes;
+    }
+
+    /**
+     * 自動調整圖片到指定尺寸
+     * 使用智慧裁切模式（CROP），保持比例並居中裁切
+     * 
+     * @param imageBytes 原始圖片
+     * @param targetSize 目標尺寸（格式：寬x高）
+     * @return 調整後的圖片
+     * @throws Exception 處理異常
+     */
+    private byte[] autoResizeImage(byte[] imageBytes, String targetSize) throws Exception {
+        try {
+            // 解析目標尺寸
+            String[] sizeParts = targetSize.split("x");
+            if (sizeParts.length != 2) {
+                throw new ServiceException("圖片尺寸格式錯誤：" + targetSize);
+            }
+            
+            int targetWidth = Integer.parseInt(sizeParts[0]);
+            int targetHeight = Integer.parseInt(sizeParts[1]);
+            
+            // 讀取原始圖片尺寸
+            BufferedImage originalImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
+            if (originalImage == null) {
+                throw new ServiceException("無法讀取圖片");
+            }
+            
+            int originalWidth = originalImage.getWidth();
+            int originalHeight = originalImage.getHeight();
+            
+            // 如果尺寸已經符合，直接返回
+            if (originalWidth == targetWidth && originalHeight == targetHeight) {
+                log.info("圖片尺寸已符合 ({}x{})，無需調整", originalWidth, originalHeight);
+                return imageBytes;
+            }
+            
+            log.info("圖片尺寸不符，自動調整：{}x{} -> {}x{}",
+                    originalWidth, originalHeight, targetWidth, targetHeight);
+            
+            // 使用 CROP 模式（智慧裁切）
+            byte[] resizedBytes = ImageResizeUtil.resize(
+                    imageBytes, 
+                    targetWidth, 
+                    targetHeight, 
+                    ImageResizeUtil.ResizeMode.CROP
+            );
+            
+            // 檢查是否超過 1MB 限制
+            long maxSize = 1024 * 1024; // 1MB
+            if (ImageResizeUtil.exceedsSize(resizedBytes, maxSize)) {
+                log.warn("調整後圖片超過 1MB，開始壓縮：{} bytes", resizedBytes.length);
+                resizedBytes = ImageResizeUtil.compressToSize(resizedBytes, maxSize);
+                log.info("壓縮完成，最終大小：{} bytes ({} KB)", 
+                        resizedBytes.length, resizedBytes.length / 1024);
+            }
+            
+            return resizedBytes;
+            
+        } catch (NumberFormatException e) {
+            throw new ServiceException("圖片尺寸格式錯誤：" + targetSize);
+        } catch (IOException e) {
+            log.error("調整圖片失敗：{}", e.getMessage(), e);
+            throw new ServiceException("調整圖片失敗：" + e.getMessage());
         }
     }
 
@@ -593,22 +822,31 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
     /**
      * 讀取本地系統檔案
      * 支援相對路徑（從專案根目錄）和絕對路徑
+     * 特別處理 /profile 開頭的路徑，轉換為實際的檔案系統路徑
      */
     private byte[] readLocalFile(String filePath) throws IOException {
         try {
             java.nio.file.Path path;
 
+            // 處理 /profile 開頭的相對路徑（轉換為實際路徑）
+            if (filePath.startsWith("/profile/")) {
+                // 移除 /profile 前綴，使用 CoolAppsConfig 取得實際路徑
+                String relativePath = filePath.substring("/profile/".length());
+                String fullPath = CoolAppsConfig.getProfile() + "/" + relativePath;
+                path = Paths.get(fullPath);
+                log.debug("轉換路徑：{} -> {}", filePath, fullPath);
+            }
             // 處理絕對路徑
-            if (filePath.startsWith("/") || filePath.matches("^[A-Za-z]:.*")) {
+            else if (filePath.startsWith("/") || filePath.matches("^[A-Za-z]:.*")) {
                 path = Paths.get(filePath);
-            } else {
-                // 相對路徑：從專案根目錄或指定的上傳目錄
-                // 假設上傳目錄在專案根目錄下的 upload 資料夾
+            }
+            // 相對路徑：從專案根目錄
+            else {
                 path = Paths.get(System.getProperty("user.dir"), filePath);
             }
 
             if (!Files.exists(path)) {
-                throw new ServiceException("檔案不存在：" + path);
+                throw new ServiceException("檔案不存在：" + filePath + " (實際路徑：" + path + ")");
             }
 
             log.debug("讀取本地檔案：{}", path);
@@ -857,6 +1095,10 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
 
     /**
      * 從 LINE 平台下載 Rich Menu 圖片並儲存到本地
+     * <p>
+     * 使用 CoolAppsConfig.getRichMenuPath() 取得實際儲存路徑
+     * 返回相對路徑供前端訪問（/profile/upload/richmenu/xxx.jpg）
+     * 如果檔案已存在會自動覆蓋
      */
     private String downloadRichMenuImage(String richMenuId, String accessToken, String imageSize) {
         try {
@@ -873,21 +1115,23 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
 
             byte[] imageBytes = response.getBinaryData();
 
-            // 建立儲存路徑
-            String uploadPath = "/upload/richmenu/";
+            // 使用配置的上傳路徑
             String fileName = richMenuId + ".jpg";
-            String localPath = uploadPath + fileName;
-            String fullPath = System.getProperty("user.dir") + localPath;
-
+            String fullPath = CoolAppsConfig.getRichMenuPath() + "/" + fileName;
+            
             // 確保目錄存在
-            Files.createDirectories(Paths.get(System.getProperty("user.dir") + uploadPath));
+            Files.createDirectories(Paths.get(CoolAppsConfig.getRichMenuPath()));
 
-            // 儲存圖片
+            // 儲存圖片（如果檔案已存在會自動覆蓋）
             Files.write(Paths.get(fullPath), imageBytes);
 
-            log.info("已下載並儲存 Rich Menu 圖片：{}", localPath);
+            // 返回相對路徑供前端訪問（對應 ResourcesConfig 的 /profile 映射）
+            String relativePath = "/profile/upload/richmenu/" + fileName;
+            
+            log.info("已下載並儲存 Rich Menu 圖片至：{}", fullPath);
+            log.info("前端訪問路徑：{}", relativePath);
 
-            return localPath;
+            return relativePath;
 
         } catch (IOException e) {
             log.error("下載或儲存圖片失敗：{}", e.getMessage(), e);
@@ -915,83 +1159,140 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
     }
 
     /**
-     * 首次發布 Rich Menu
+     * 首次發布 Rich Menu（含 Rollback 和 SSE 推送）
+     * 
+     * @param menu Rich Menu
+     * @param config LINE 配置
+     * @param client MessagingApiClient
+     * @param taskId 任務 ID（用於 SSE 推送）
+     * @return richMenuId
      */
-    private String firstPublish(SysLineRichMenu menu, LineConfig config, MessagingApiClient client) throws Exception {
-        // 解析 areas JSON
-        List<RichMenuArea> areas = parseAreas(menu.getAreasJson());
+    private String firstPublish(SysLineRichMenu menu, LineConfig config, MessagingApiClient client, String taskId) throws Exception {
+        String richMenuId = null;
+        
+        try {
+            // 解析 areas JSON
+            List<RichMenuArea> areas = parseAreas(menu.getAreasJson());
 
-        // 解析圖片尺寸
-        String[] sizeParts = menu.getImageSize().split("x");
-        int width = Integer.parseInt(sizeParts[0]);
-        int height = Integer.parseInt(sizeParts[1]);
+            // 解析圖片尺寸
+            String[] sizeParts = menu.getImageSize().split("x");
+            int width = Integer.parseInt(sizeParts[0]);
+            int height = Integer.parseInt(sizeParts[1]);
 
-        // 建立 RichMenuRequest
-        RichMenuSize size = new RichMenuSize.Builder()
-                .width((long) width)
-                .height((long) height)
-                .build();
+            // 建立 RichMenuRequest
+            RichMenuSize size = new RichMenuSize.Builder()
+                    .width((long) width)
+                    .height((long) height)
+                    .build();
 
-        RichMenuRequest richMenuRequest = new RichMenuRequest.Builder()
-                .size(size)
-                .selected(menu.getSelected() == 1)
-                .name(menu.getName())
-                .chatBarText(menu.getChatBarText() != null ? menu.getChatBarText() : "選單")
-                .areas(areas)
-                .build();
+            RichMenuRequest richMenuRequest = new RichMenuRequest.Builder()
+                    .size(size)
+                    .selected(menu.getSelected() == 1)
+                    .name(menu.getName())
+                    .chatBarText(menu.getChatBarText() != null ? menu.getChatBarText() : "選單")
+                    .areas(areas)
+                    .build();
 
-        log.info("▶ 首次發布：驗證 Rich Menu 結構");
-        validateRichMenuStructure(richMenuRequest, config.getChannelAccessToken());
+            log.info("▶ 首次發布：驗證 Rich Menu 結構");
+            validateRichMenuStructure(richMenuRequest, config.getChannelAccessToken());
 
-        log.info("▶ 首次發布：建立 Rich Menu");
-        RichMenuIdResponse response = client.createRichMenu(richMenuRequest).get().body();
-        String richMenuId = response.richMenuId();
-        log.info("✓ 建立成功，richMenuId: {}", richMenuId);
-
-        log.info("▶ 首次發布：上傳圖片");
-        byte[] imageBytes = getImageBytes(menu.getImageUrl());
-        validateImage(imageBytes, menu.getImageSize());
-        uploadImageToLine(richMenuId, imageBytes, config.getChannelAccessToken());
-        log.info("✓ 圖片上傳成功");
-
-        log.info("▶ 首次發布：下載圖片到本地");
-        String localImagePath = downloadRichMenuImage(richMenuId, config.getChannelAccessToken(), menu.getImageSize());
-        log.info("✓ 圖片已下載：{}", localImagePath);
-
-        log.info("▶ 首次發布：更新資料庫");
-        String previousConfig = saveConfigSnapshot(menu);
-        richMenuMapper.updatePublishInfo(
-                menu.getId(),
-                richMenuId,
-                null,  // 首次發布沒有前一個 ID
-                previousConfig,
-                localImagePath,
-                RichMenuStatus.ACTIVE.getCode()
-        );
-
-        // 自動建立 Alias（如果有指定）
-        if (StringUtils.isNotEmpty(menu.getSuggestedAliasId())) {
-            log.info("▶ 首次發布：自動建立 Alias: {}", menu.getSuggestedAliasId());
-            try {
-                SysLineRichMenuAlias alias = new SysLineRichMenuAlias();
-                alias.setRichMenuId(menu.getId());
-                alias.setAliasId(menu.getSuggestedAliasId());
-                alias.setDescription("自動建立於發布時");
-                aliasService.insertRichMenuAlias(alias);
-                log.info("✓ Alias 建立成功");
-            } catch (Exception e) {
-                log.warn("⚠ Alias 建立失敗（不影響發布）：{}", e.getMessage());
+            // 階段 1: 建立 Rich Menu (20%)
+            log.info("▶ 首次發布：建立 Rich Menu");
+            if (taskId != null) {
+                sseManager.send(SseChannels.RICHMENU_PUBLISH, taskId,
+                    SseEvent.progress("creating", 20, "建立 Rich Menu 中..."));
             }
-        }
+            
+            RichMenuIdResponse response = client.createRichMenu(richMenuRequest).get().body();
+            richMenuId = response.richMenuId();
+            log.info("✓ 建立成功，richMenuId: {}", richMenuId);
 
-        log.info("✓ 首次發布完成！");
-        return richMenuId;
+            // 階段 2: 上傳圖片 (50%)
+            log.info("▶ 首次發布：上傳圖片");
+            if (taskId != null) {
+                sseManager.send(SseChannels.RICHMENU_PUBLISH, taskId,
+                    SseEvent.progress("uploading", 50, "上傳圖片中..."));
+            }
+            
+            // 自動調整圖片到目標尺寸
+            byte[] imageBytes = getImageBytes(menu.getImageUrl(), menu.getImageSize());
+            validateImage(imageBytes, menu.getImageSize());
+            uploadImageToLine(richMenuId, imageBytes, config.getChannelAccessToken());
+            log.info("✓ 圖片上傳成功");
+
+            // 階段 3: 下載圖片到本地 (70%)
+            log.info("▶ 首次發布：下載圖片到本地");
+            if (taskId != null) {
+                sseManager.send(SseChannels.RICHMENU_PUBLISH, taskId,
+                    SseEvent.progress("downloading", 70, "下載預覽圖中..."));
+            }
+            
+            String localImagePath = downloadRichMenuImage(richMenuId, config.getChannelAccessToken(), menu.getImageSize());
+            log.info("✓ 圖片已下載：{}", localImagePath);
+
+            // 階段 4: 更新資料庫 (85%)
+            log.info("▶ 首次發布：更新資料庫");
+            if (taskId != null) {
+                sseManager.send(SseChannels.RICHMENU_PUBLISH, taskId,
+                    SseEvent.progress("saving", 85, "儲存資料中..."));
+            }
+            
+            String previousConfig = saveConfigSnapshot(menu);
+            richMenuMapper.updatePublishInfo(
+                    menu.getId(),
+                    richMenuId,
+                    null,  // 首次發布沒有前一個 ID
+                    previousConfig,
+                    localImagePath,
+                    RichMenuStatus.ACTIVE.getCode()
+            );
+
+            // 自動建立 Alias（如果有指定）
+            if (StringUtils.isNotEmpty(menu.getSuggestedAliasId())) {
+                log.info("▶ 首次發布：自動建立 Alias: {}", menu.getSuggestedAliasId());
+                try {
+                    SysLineRichMenuAlias alias = new SysLineRichMenuAlias();
+                    alias.setRichMenuId(menu.getId());
+                    alias.setAliasId(menu.getSuggestedAliasId());
+                    alias.setDescription("自動建立於發布時");
+                    aliasService.insertRichMenuAlias(alias);
+                    log.info("✓ Alias 建立成功");
+                } catch (Exception e) {
+                    log.warn("⚠ Alias 建立失敗（不影響發布）：{}", e.getMessage());
+                }
+            }
+
+            log.info("✓ 首次發布完成！");
+            return richMenuId;
+            
+        } catch (Exception e) {
+            log.error("首次發布失敗，開始 Rollback", e);
+            
+            // Rollback: 刪除已建立的 Rich Menu
+            if (richMenuId != null) {
+                try {
+                    log.warn("⚠ 執行 Rollback：刪除已建立的 Rich Menu: {}", richMenuId);
+                    deleteRichMenuFromLine(richMenuId, config.getChannelAccessToken());
+                    log.info("✓ Rollback 成功");
+                } catch (Exception rollbackEx) {
+                    log.error("✗ Rollback 失敗：{}", rollbackEx.getMessage(), rollbackEx);
+                }
+            }
+            
+            throw e;
+        }
     }
 
     /**
      * 重新發布 Rich Menu（含 Alias 自動更新和異常回滾）
+     * 
+     * @param menu Rich Menu
+     * @param config LINE 配置
+     * @param client MessagingApiClient
+     * @param taskId 任務 ID（用於 SSE 推送）
+     * @return richMenuId
      */
-    private String republish(SysLineRichMenu menu, LineConfig config, MessagingApiClient client) throws Exception {
+    private String republish(SysLineRichMenu menu, LineConfig config, MessagingApiClient client, String taskId) throws Exception {
         String oldRichMenuId = menu.getRichMenuId();
         String newRichMenuId = null;
         List<UpdatedAliasInfo> updatedAliases = new ArrayList<>();
@@ -1010,6 +1311,10 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
 
             // 階段 2：建立新的 Rich Menu
             log.info("▶ 重新發布：建立新 Rich Menu");
+            if (taskId != null) {
+                sseManager.send(SseChannels.RICHMENU_PUBLISH, taskId,
+                    SseEvent.progress("creating", 20, "建立 Rich Menu 中..."));
+            }
             List<RichMenuArea> areas = parseAreas(menu.getAreasJson());
             String[] sizeParts = menu.getImageSize().split("x");
             int width = Integer.parseInt(sizeParts[0]);
@@ -1036,13 +1341,22 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
 
             // 階段 3：上傳圖片
             log.info("▶ 重新發布：上傳圖片");
-            byte[] imageBytes = getImageBytes(menu.getImageUrl());
+            if (taskId != null) {
+                sseManager.send(SseChannels.RICHMENU_PUBLISH, taskId,
+                    SseEvent.progress("uploading", 50, "上傳圖片中..."));
+            }
+            // 自動調整圖片到目標尺寸
+            byte[] imageBytes = getImageBytes(menu.getImageUrl(), menu.getImageSize());
             validateImage(imageBytes, menu.getImageSize());
             uploadImageToLine(newRichMenuId, imageBytes, config.getChannelAccessToken());
             log.info("✓ 圖片上傳成功");
 
             // 階段 4：下載圖片到本地
             log.info("▶ 重新發布：下載圖片到本地");
+            if (taskId != null) {
+                sseManager.send(SseChannels.RICHMENU_PUBLISH, taskId,
+                    SseEvent.progress("downloading", 70, "下載預覽圖中..."));
+            }
             String localImagePath = downloadRichMenuImage(newRichMenuId, config.getChannelAccessToken(), menu.getImageSize());
             log.info("✓ 圖片已下載：{}", localImagePath);
 
@@ -1085,6 +1399,10 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
 
             // 階段 7：更新資料庫
             log.info("▶ 重新發布：更新資料庫");
+            if (taskId != null) {
+                sseManager.send(SseChannels.RICHMENU_PUBLISH, taskId,
+                    SseEvent.progress("saving", 85, "儲存資料中..."));
+            }
             String previousConfig = saveConfigSnapshot(menu);
             richMenuMapper.updatePublishInfo(
                     menu.getId(),
@@ -1199,6 +1517,69 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
             this.aliasId = aliasId;
             this.oldRichMenuId = oldRichMenuId;
             this.newRichMenuId = newRichMenuId;
+        }
+    }
+
+    /**
+     * 從 LINE 平台重新下載預覽圖並更新本地路徑
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean refreshPreviewImage(Long id) {
+        log.info("==================== 開始更新預覽圖 ====================");
+        log.info("Rich Menu ID: {}", id);
+
+        // 1. 查詢 Rich Menu
+        SysLineRichMenu menu = richMenuMapper.selectRichMenuById(id);
+        if (menu == null) {
+            throw new ServiceException("Rich Menu 不存在");
+        }
+
+        // 2. 檢查是否已發布
+        if (!menu.isPublished()) {
+            throw new ServiceException("Rich Menu 尚未發布，無法下載預覽圖");
+        }
+
+        if (StringUtils.isEmpty(menu.getRichMenuId())) {
+            throw new ServiceException("Rich Menu ID 為空，無法下載預覽圖");
+        }
+
+        // 3. 查詢頻道設定
+        LineConfig config = lineConfigMapper.selectLineConfigById(menu.getConfigId());
+        if (config == null) {
+            throw new ServiceException("頻道設定不存在");
+        }
+
+        try {
+            log.info("▶ 從 LINE 平台下載圖片");
+            
+            // 4. 下載圖片
+            String localImagePath = downloadRichMenuImage(
+                    menu.getRichMenuId(),
+                    config.getChannelAccessToken(),
+                    menu.getImageSize()
+            );
+            
+            log.info("✓ 圖片已下載：{}", localImagePath);
+
+            // 5. 更新資料庫
+            menu.setLocalImagePath(localImagePath);
+            int result = richMenuMapper.updateRichMenu(menu);
+
+            if (result > 0) {
+                log.info("✓ 預覽圖路徑已更新到資料庫");
+                log.info("==================== 更新預覽圖完成 ====================");
+                return true;
+            } else {
+                throw new ServiceException("更新資料庫失敗");
+            }
+
+        } catch (ServiceException e) {
+            log.error("更新預覽圖失敗：{}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("更新預覽圖失敗", e);
+            throw new ServiceException("更新預覽圖失敗：" + e.getMessage());
         }
     }
 }

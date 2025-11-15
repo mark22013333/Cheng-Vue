@@ -1,5 +1,7 @@
 package com.cheng.common.config;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -8,20 +10,25 @@ import org.springframework.stereotype.Component;
  *
  * @author cheng
  */
+@Setter
+@Getter
 @Component
 @ConfigurationProperties(prefix = "cheng")
 public class CoolAppsConfig {
     /**
      * 上傳路徑
      */
+    @Getter
     private static String profile;
     /**
      * 取得地址開關
      */
+    @Getter
     private static boolean addressEnabled;
     /**
      * 驗證碼類型
      */
+    @Getter
     private static String captchaType;
     /**
      * 專案名稱
@@ -36,16 +43,8 @@ public class CoolAppsConfig {
      */
     private String copyrightYear;
 
-    public static String getProfile() {
-        return profile;
-    }
-
     public void setProfile(String profile) {
         CoolAppsConfig.profile = profile;
-    }
-
-    public static boolean isAddressEnabled() {
-        return addressEnabled;
     }
 
     public void setAddressEnabled(boolean addressEnabled) {
@@ -80,32 +79,18 @@ public class CoolAppsConfig {
         return getProfile() + "/upload";
     }
 
-    public String getName() {
-        return name;
+    /**
+     * 取得 Rich Menu 上傳路徑
+     */
+    public static String getRichMenuPath() {
+        return getProfile() + "/upload/richmenu";
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public static String getCaptchaType() {
-        return captchaType;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public String getCopyrightYear() {
-        return copyrightYear;
-    }
-
-    public void setCopyrightYear(String copyrightYear) {
-        this.copyrightYear = copyrightYear;
+    /**
+     * 取得下載檔案路徑（未來使用）
+     */
+    public static String getDownloadFilePath() {
+        return getProfile() + "/download";
     }
 
     public void setCaptchaType(String captchaType) {

@@ -57,7 +57,7 @@ public class FilterConfig {
         registration.addUrlPatterns(Constants.RESOURCE_PREFIX + "/*");
         registration.setName("refererFilter");
         registration.setOrder(FilterRegistrationBean.HIGHEST_PRECEDENCE);
-        Map<String, String> initParameters = new HashMap<String, String>();
+        Map<String, String> initParameters = new HashMap<>();
         initParameters.put("allowedDomains", allowedDomains);
         registration.setInitParameters(initParameters);
         return registration;

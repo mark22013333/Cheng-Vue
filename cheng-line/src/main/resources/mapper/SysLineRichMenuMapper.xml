@@ -153,6 +153,7 @@
             <if test="templateType != null">template_type,</if>
             <if test="chatBarText != null">chat_bar_text,</if>
             <if test="imageUrl != null">image_url,</if>
+            <if test="localImagePath != null">local_image_path,</if>
             <if test="imageSize != null and imageSize != ''">image_size,</if>
             <if test="isDefault != null">is_default,</if>
             <if test="selected != null">selected,</if>
@@ -172,6 +173,7 @@
             <if test="templateType != null">#{templateTypeCode},</if>
             <if test="chatBarText != null">#{chatBarText},</if>
             <if test="imageUrl != null">#{imageUrl},</if>
+            <if test="localImagePath != null">#{localImagePath},</if>
             <if test="imageSize != null and imageSize != ''">#{imageSize},</if>
             <if test="isDefault != null">#{isDefault},</if>
             <if test="selected != null">#{selected},</if>
@@ -195,6 +197,7 @@
             <if test="templateType != null">template_type = #{templateTypeCode},</if>
             <if test="chatBarText != null">chat_bar_text = #{chatBarText},</if>
             <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="localImagePath != null">local_image_path = #{localImagePath},</if>
             <if test="imageSize != null and imageSize != ''">image_size = #{imageSize},</if>
             <if test="isDefault != null">is_default = #{isDefault},</if>
             <if test="selected != null">selected = #{selected},</if>

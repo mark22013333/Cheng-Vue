@@ -60,10 +60,11 @@ export function delRichMenu(ids) {
 }
 
 // 發布 Rich Menu 到 LINE 平台
-export function publishRichMenu(id) {
+export function publishRichMenu(id, taskId) {
   return request({
     url: '/line/richMenu/publish/' + id,
-    method: 'post'
+    method: 'post',
+    params: taskId ? { taskId } : undefined
   })
 }
 
@@ -115,5 +116,13 @@ export function exportRichMenu(query) {
     url: '/line/richMenu/export',
     method: 'post',
     params: query
+  })
+}
+
+// 重新下載並更新預覽圖
+export function refreshPreviewImage(id) {
+  return request({
+    url: '/line/richMenu/refreshPreviewImage/' + id,
+    method: 'post'
   })
 }
