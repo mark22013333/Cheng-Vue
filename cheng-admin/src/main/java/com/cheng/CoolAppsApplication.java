@@ -8,6 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.net.InetAddress;
 
@@ -17,6 +19,8 @@ import java.net.InetAddress;
  * @author cheng
  */
 @Slf4j
+@EnableAsync
+@EnableScheduling
 @EnableEncryptableProperties
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 public class CoolAppsApplication {

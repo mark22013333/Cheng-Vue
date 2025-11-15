@@ -1,5 +1,6 @@
 package com.cheng.web.controller.tool;
 
+import com.cheng.common.annotation.Anonymous;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.R;
 import com.cheng.common.core.domain.model.LoginUser;
@@ -32,6 +33,7 @@ import java.util.Map;
  * @author cheng
  */
 @Tag(name = "使用者訊息管理")
+@Anonymous
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/test/user")

@@ -1,6 +1,7 @@
 package com.cheng.framework.config;
 
 import com.cheng.common.utils.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.io.VFS;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
@@ -30,6 +31,7 @@ import java.util.List;
  *
  * @author cheng
  */
+@Slf4j
 @Configuration
 public class MyBatisConfig {
     @Autowired
@@ -43,11 +45,11 @@ public class MyBatisConfig {
         List<String> allResult = new ArrayList<>();
         try {
             for (String aliasesPackage : typeAliasesPackage.split(",")) {
-                List<String> result = new ArrayList<String>();
+                List<String> result = new ArrayList<>();
                 aliasesPackage = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX
                         + ClassUtils.convertClassNameToResourcePath(aliasesPackage.trim()) + "/" + DEFAULT_RESOURCE_PATTERN;
                 Resource[] resources = resolver.getResources(aliasesPackage);
-                if (resources != null && resources.length > 0) {
+                if (resources.length > 0) {
                     MetadataReader metadataReader = null;
                     for (Resource resource : resources) {
                         if (resource.isReadable()) {
@@ -55,7 +57,7 @@ public class MyBatisConfig {
                             try {
                                 result.add(Class.forName(metadataReader.getClassMetadata().getClassName()).getPackage().getName());
                             } catch (ClassNotFoundException e) {
-                                e.printStackTrace();
+                                log.error(e.getMessage(), e);
                             }
                         }
                     }
@@ -71,7 +73,7 @@ public class MyBatisConfig {
                 throw new RuntimeException("mybatis typeAliasesPackage 路徑掃描錯誤,參數typeAliasesPackage:" + typeAliasesPackage + "未找到任何包");
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         }
         return typeAliasesPackage;
     }

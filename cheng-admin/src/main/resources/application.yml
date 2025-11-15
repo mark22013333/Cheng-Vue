@@ -3,7 +3,7 @@ cheng:
   # 名稱
   name: CoolApps
   # 版本
-  version: 1.5.4
+  version: 1.6.1
   # 版權年份
   copyrightYear: 2025
   # 檔案路徑 - 由環境特定設定檔案設定 (application-local.yml 或 application-prod.yml)

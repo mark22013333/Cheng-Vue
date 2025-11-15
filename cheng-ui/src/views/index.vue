@@ -49,6 +49,11 @@
             <span>更新日誌</span>
           </div>
           <el-collapse accordion>
+            <el-collapse-item title="v1.6.1 - 2025-11-15">
+              <ol>
+                <li>新增 LINE Rich Menu 的發布功能，同時也新增了完整的圖片上傳、自動裁切/壓縮機制...等，並優化了前後端交互體驗。</li>
+              </ol>
+            </el-collapse-item>
             <el-collapse-item title="v1.5.4 - 2025-11-02">
               <ol>
                 <li>導入全系統日誌追蹤功能 (TraceId)。</li>
@@ -156,7 +161,7 @@ export default {
   data() {
     return {
       // 版本號
-      version: "1.5.4"
+      version: "1.6.1"
     }
   },
   methods: {

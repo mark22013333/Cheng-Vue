@@ -59,6 +59,12 @@
             <artifactId>cheng-common</artifactId>
         </dependency>
 
+        <!-- Cheng Framework (包含 SSE 功能) -->
+        <dependency>
+            <groupId>com.cheng</groupId>
+            <artifactId>cheng-framework</artifactId>
+        </dependency>
+
         <!-- MyBatis Spring Boot Starter -->
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>

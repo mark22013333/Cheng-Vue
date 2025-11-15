@@ -1,5 +1,6 @@
 package com.cheng.web.controller.tool;
 
+import com.cheng.common.annotation.Anonymous;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.utils.TraceUtils;
 import jakarta.annotation.Resource;
@@ -23,6 +24,7 @@ import java.util.Map;
  * @author cheng
  * @since 2025-11-02
  */
+@Anonymous
 @RestController
 @RequestMapping("/tool/trace")
 public class TraceTestController {

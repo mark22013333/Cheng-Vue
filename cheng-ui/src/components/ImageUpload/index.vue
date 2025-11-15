@@ -90,6 +90,11 @@ export default {
     drag: {
       type: Boolean,
       default: true
+    },
+    // 上傳前鉤子函數
+    beforeUploadHook: {
+      type: Function,
+      default: null
     }
   },
   data() {
@@ -155,7 +160,21 @@ export default {
   },
   methods: {
     // 上傳前loading載入
-    handleBeforeUpload(file) {
+    async handleBeforeUpload(file) {
+      // 先執行父組件的鉤子函數（如果有）
+      if (this.beforeUploadHook) {
+        try {
+          const result = await this.beforeUploadHook(file)
+          if (result === false) {
+            return false
+          }
+        } catch (error) {
+          console.error('beforeUploadHook 執行失敗：', error)
+          return false
+        }
+      }
+      
+      // 然後執行組件自己的驗證
       let isImg = false
       if (this.fileType.length) {
         let fileExtension = ""
@@ -195,9 +214,26 @@ export default {
     },
     // 上傳成功呼叫
     handleUploadSuccess(res, file) {
+      // 發送完整響應給父組件
+      this.$emit('response', res)
+      
       if (res.code === 200) {
-        this.uploadList.push({ name: res.fileName, url: res.fileName })
-        this.uploadedSuccessfully()
+        // 支援兩種格式：
+        // 1. 舊格式：{ code: 200, fileName: "xxx", url: "xxx" }
+        // 2. 新格式：{ code: 200, data: { fileName: "xxx", url: "xxx" } }
+        const fileName = res.fileName || (res.data && res.data.fileName)
+        const url = res.url || (res.data && res.data.url) || fileName
+        
+        if (fileName) {
+          this.uploadList.push({ name: fileName, url: url })
+          this.uploadedSuccessfully()
+        } else {
+          console.error('上傳響應中找不到 fileName:', res)
+          this.number--
+          this.$modal.closeLoading()
+          this.$modal.msgError('上傳失敗：響應格式錯誤')
+          this.$refs.imageUpload.handleRemove(file)
+        }
       } else {
         this.number--
         this.$modal.closeLoading()
@@ -225,7 +261,9 @@ export default {
         this.fileList = this.fileList.concat(this.uploadList)
         this.uploadList = []
         this.number = 0
-        this.$emit("input", this.listToString(this.fileList))
+        const imageUrl = this.listToString(this.fileList)
+        console.log('📤 發送圖片 URL 給父組件：', imageUrl)
+        this.$emit("input", imageUrl)
         this.$modal.closeLoading()
       }
     },

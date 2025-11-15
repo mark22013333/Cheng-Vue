@@ -248,6 +248,7 @@
 
 <script>
 import { listAllAliases } from '@/api/line/richMenuAlias'
+import { getImageUrl } from '@/utils/image'
 
 export default {
   name: 'RichMenuEditor',
@@ -263,14 +264,18 @@ export default {
     imageSize: {
       type: String,
       default: '2500x1686'
+    },
+    imageUrl: {
+      type: String,
+      default: ''
     }
   },
   data() {
     return {
       areas: [],
       selectedAreaIndex: null,
-      canvasWidth: 400,
-      canvasHeight: 270,
+      canvasWidth: 600,  // 調整為 600px 以完整顯示圖片
+      canvasHeight: 405,  // 對應 2500x1686 的比例
       // 拖曳狀態
       isDragging: false,
       dragMode: null, // 'move', 'n', 's', 'w', 'e', 'nw', 'ne', 'sw', 'se'
@@ -314,13 +319,29 @@ export default {
       }
       const [width, height] = this.imageSize.split('x').map(Number)
       const ratio = height / width
-      return {
+      
+      const style = {
         width: this.canvasWidth + 'px',
         height: (this.canvasWidth * ratio) + 'px',
         position: 'relative',
-        background: '#f5f5f5',
         border: '1px solid #ddd'
       }
+      
+      // 如果有上傳圖片，使用圖片作為背景（淡淡的效果）
+      if (this.imageUrl) {
+        const imageFullUrl = getImageUrl(this.imageUrl)
+        // 添加一個淺色遮罩效果，確保圖片完整顯示
+        style.background = `linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3)), url(${imageFullUrl})`
+        style.backgroundSize = 'contain'  // 完整顯示圖片，保持比例
+        style.backgroundPosition = 'center'
+        style.backgroundRepeat = 'no-repeat'
+        style.opacity = '0.95' // 稍微降低整體透明度
+        style.backgroundColor = '#f5f5f5'  // 如有留白則顯示灰色背景
+      } else {
+        style.background = '#f5f5f5'
+      }
+      
+      return style
     }
   },
   watch: {
@@ -351,6 +372,15 @@ export default {
         // 當版型切換時，如果是預設版型就初始化區塊
         if (newVal && newVal !== oldVal && newVal !== 'CUSTOM') {
           this.initTemplateAreas(newVal)
+        }
+      },
+      immediate: false
+    },
+    imageSize: {
+      handler(newVal, oldVal) {
+        // 當圖片尺寸變更時，自動調整超出範圍的區域框框
+        if (newVal && oldVal && newVal !== oldVal) {
+          this.adjustAreasToNewSize(newVal, oldVal)
         }
       },
       immediate: false
@@ -806,6 +836,68 @@ export default {
         return action.data.substring(0, 15) + (action.data.length > 15 ? '...' : '')
       }
       return '未設定'
+    },
+    /** 當圖片尺寸變更時，自動調整超出範圍的區域框框 */
+    adjustAreasToNewSize(newSize, oldSize) {
+      if (!newSize || !oldSize || !this.areas || this.areas.length === 0) {
+        return
+      }
+
+      const [newWidth, newHeight] = newSize.split('x').map(Number)
+      const [oldWidth, oldHeight] = oldSize.split('x').map(Number)
+
+      // 計算縮放比例
+      const scaleX = newWidth / oldWidth
+      const scaleY = newHeight / oldHeight
+
+      let hasAdjustment = false
+
+      // 調整每個區域的位置和大小
+      this.areas.forEach((area, index) => {
+        const bounds = area.bounds
+
+        // 按比例調整位置和大小
+        const newBounds = {
+          x: Math.round(bounds.x * scaleX),
+          y: Math.round(bounds.y * scaleY),
+          width: Math.round(bounds.width * scaleX),
+          height: Math.round(bounds.height * scaleY)
+        }
+
+        // 確保區域不超出畫布範圍
+        if (newBounds.x + newBounds.width > newWidth) {
+          newBounds.width = newWidth - newBounds.x
+          hasAdjustment = true
+        }
+        if (newBounds.y + newBounds.height > newHeight) {
+          newBounds.height = newHeight - newBounds.y
+          hasAdjustment = true
+        }
+        if (newBounds.x >= newWidth) {
+          newBounds.x = newWidth - newBounds.width
+          hasAdjustment = true
+        }
+        if (newBounds.y >= newHeight) {
+          newBounds.y = newHeight - newBounds.height
+          hasAdjustment = true
+        }
+
+        // 確保寬高不為負數或零
+        if (newBounds.width <= 0) newBounds.width = 100
+        if (newBounds.height <= 0) newBounds.height = 100
+
+        // 更新區域
+        area.bounds = newBounds
+      })
+
+      // 觸發更新
+      this.emitChange()
+
+      if (hasAdjustment) {
+        this.$message.warning('圖片尺寸已變更，已自動調整區域框框以適應新尺寸')
+      } else {
+        this.$message.success('圖片尺寸已變更，區域框框已按比例調整')
+      }
     }
   }
 }
