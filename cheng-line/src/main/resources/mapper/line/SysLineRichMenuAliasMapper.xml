@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.line.mapper.SysLineRichMenuAliasMapper">
+    
+    <resultMap type="com.cheng.line.domain.SysLineRichMenuAlias" id="SysLineRichMenuAliasResult">
+        <result property="id"              column="id"              />
+        <result property="richMenuId"      column="rich_menu_id"    />
+        <result property="aliasId"         column="alias_id"        />
+        <result property="description"     column="description"     />
+        <result property="createBy"        column="create_by"       />
+        <result property="createTime"      column="create_time"     />
+        <result property="updateBy"        column="update_by"       />
+        <result property="updateTime"      column="update_time"     />
+        <result property="remark"          column="remark"          />
+        <!-- 關聯欄位 -->
+        <result property="richMenuName"    column="rich_menu_name"  />
+        <result property="lineRichMenuId"  column="line_rich_menu_id" />
+        <result property="channelName"     column="channel_name"    />
+    </resultMap>
+
+    <sql id="selectRichMenuAliasVo">
+        select a.id, a.rich_menu_id, a.alias_id, a.description,
+               a.create_by, a.create_time, a.update_by, a.update_time, a.remark,
+               r.name as rich_menu_name, r.rich_menu_id as line_rich_menu_id,
+               c.channel_name
+        from sys_line_rich_menu_alias a
+        left join sys_line_rich_menu r on a.rich_menu_id = r.id
+        left join sys_line_config c on r.config_id = c.config_id
+    </sql>
+
+    <select id="selectRichMenuAliasList" parameterType="com.cheng.line.domain.SysLineRichMenuAlias" resultMap="SysLineRichMenuAliasResult">
+        <include refid="selectRichMenuAliasVo"/>
+        <where>  
+            <if test="richMenuId != null">
+                and a.rich_menu_id = #{richMenuId}
+            </if>
+            <if test="aliasId != null and aliasId != ''">
+                and a.alias_id like concat('%', #{aliasId}, '%')
+            </if>
+            <if test="description != null and description != ''">
+                and a.description like concat('%', #{description}, '%')
+            </if>
+        </where>
+        order by a.create_time desc
+    </select>
+    
+    <select id="selectRichMenuAliasById" parameterType="Long" resultMap="SysLineRichMenuAliasResult">
+        <include refid="selectRichMenuAliasVo"/>
+        where a.id = #{id}
+    </select>
+
+    <select id="selectRichMenuAliasByAliasId" parameterType="String" resultMap="SysLineRichMenuAliasResult">
+        <include refid="selectRichMenuAliasVo"/>
+        where a.alias_id = #{aliasId}
+    </select>
+
+    <select id="selectRichMenuAliasByRichMenuId" parameterType="Long" resultMap="SysLineRichMenuAliasResult">
+        <include refid="selectRichMenuAliasVo"/>
+        where a.rich_menu_id = #{richMenuId}
+        order by a.create_time desc
+    </select>
+
+    <select id="checkAliasIdUnique" parameterType="String" resultType="int">
+        select count(1) from sys_line_rich_menu_alias where alias_id = #{aliasId}
+    </select>
+        
+    <insert id="insertRichMenuAlias" parameterType="com.cheng.line.domain.SysLineRichMenuAlias" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_line_rich_menu_alias
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="richMenuId != null">rich_menu_id,</if>
+            <if test="aliasId != null and aliasId != ''">alias_id,</if>
+            <if test="description != null">description,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="remark != null">remark,</if>
+            create_time
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="richMenuId != null">#{richMenuId},</if>
+            <if test="aliasId != null and aliasId != ''">#{aliasId},</if>
+            <if test="description != null">#{description},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="remark != null">#{remark},</if>
+            sysdate()
+         </trim>
+    </insert>
+
+    <update id="updateRichMenuAlias" parameterType="com.cheng.line.domain.SysLineRichMenuAlias">
+        update sys_line_rich_menu_alias
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="richMenuId != null">rich_menu_id = #{richMenuId},</if>
+            <if test="aliasId != null and aliasId != ''">alias_id = #{aliasId},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteRichMenuAliasById" parameterType="Long">
+        delete from sys_line_rich_menu_alias where id = #{id}
+    </delete>
+
+    <delete id="deleteRichMenuAliasByAliasId" parameterType="String">
+        delete from sys_line_rich_menu_alias where alias_id = #{aliasId}
+    </delete>
+
+    <delete id="deleteRichMenuAliasByIds" parameterType="Long">
+        delete from sys_line_rich_menu_alias where id in 
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

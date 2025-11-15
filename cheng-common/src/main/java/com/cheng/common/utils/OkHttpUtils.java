@@ -379,6 +379,102 @@ public class OkHttpUtils {
         return this;
     }
 
+    /**
+     * DELETE 請求
+     * 使用順序：
+     * {@link #addHeader(String, String)} -> 
+     * {@link #delete(String)} -> 
+     * {@link #sync()}/{@link #async()}
+     */
+    public OkHttpUtils delete(String url) {
+        log.info("===>[DELETE] API Url:{}", url);
+        request = new Request.Builder().delete().url(url);
+        return this;
+    }
+
+    /**
+     * PUT 請求（預設使用 JSON）
+     * 使用順序：
+     * {@link #addHeader(String, String)}/{@link #addParam(ObjectNode)} -> 
+     * {@link #put(String)} -> 
+     * {@link #sync()}/{@link #async()}
+     */
+    public OkHttpUtils put(String url) {
+        return put(url, true);
+    }
+
+    /**
+     * PUT 請求
+     * 
+     * @param url 請求 URL
+     * @param isJsonPut true:JSON, false:Form
+     */
+    public OkHttpUtils put(String url, boolean isJsonPut) {
+        log.info("===>[PUT] API Url:{}", url);
+        RequestBody requestBody;
+        if (isJsonPut) {
+            String json = JacksonUtil.toJsonString(paramObj);
+            log.info("===>[ParamJson]:{}", json);
+            MediaType mediaType = MediaType.parse("application/json;charset=utf-8");
+            requestBody = RequestBody.create(json, mediaType);
+        } else {
+            FormBody.Builder formBody = new FormBody.Builder();
+            Map<String, String> params;
+            if (paramMap == null || paramMap.isEmpty()) {
+                params = JacksonUtil.toMap(JacksonUtil.toJsonString(paramObj));
+            } else {
+                params = paramMap;
+            }
+            if (MapUtils.isNotEmpty(params)) {
+                params.forEach((k, v) -> {
+                    log.info("key:{}, value:{}", k, v);
+                    Optional.ofNullable(v).ifPresent(val -> formBody.add(k, val));
+                });
+            }
+            requestBody = formBody.build();
+        }
+        request = new Request.Builder().put(requestBody).url(url);
+        return this;
+    }
+
+    /**
+     * POST 請求（上傳二進制資料）
+     * 使用順序：
+     * {@link #addHeader(String, String)} -> 
+     * {@link #postBinary(String, byte[], String)} -> 
+     * {@link #sync()}
+     * 
+     * @param url 請求 URL
+     * @param data 二進制資料
+     * @param contentType Content-Type（例如：image/png, image/jpeg）
+     */
+    public OkHttpUtils postBinary(String url, byte[] data, String contentType) {
+        log.info("===>[POST BINARY] API Url:{}, ContentType:{}, Size:{} bytes", url, contentType, data.length);
+        MediaType mediaType = MediaType.parse(contentType);
+        RequestBody requestBody = RequestBody.create(data, mediaType);
+        request = new Request.Builder().post(requestBody).url(url);
+        return this;
+    }
+
+    /**
+     * PUT 請求（上傳二進制資料）
+     * 使用順序：
+     * {@link #addHeader(String, String)} -> 
+     * {@link #putBinary(String, byte[], String)} -> 
+     * {@link #sync()}
+     * 
+     * @param url 請求 URL
+     * @param data 二進制資料
+     * @param contentType Content-Type（例如：image/png, image/jpeg）
+     */
+    public OkHttpUtils putBinary(String url, byte[] data, String contentType) {
+        log.info("===>[PUT BINARY] API Url:{}, ContentType:{}, Size:{} bytes", url, contentType, data.length);
+        MediaType mediaType = MediaType.parse(contentType);
+        RequestBody requestBody = RequestBody.create(data, mediaType);
+        request = new Request.Builder().put(requestBody).url(url);
+        return this;
+    }
+
     public ApiResponse syncReadCsv() {
         setHeader(request);
         try (Response response = okHttpClient.newCall(request.build()).execute()) {
