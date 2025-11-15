@@ -287,14 +287,24 @@ public class SysLineRichMenuController extends BaseController {
             
             // 儲存檔案（使用 Rich Menu 專用路徑）
             String uploadPath = CoolAppsConfig.getRichMenuPath();
-            File dir = new File(uploadPath);
-            if (!dir.exists()) {
-                dir.mkdirs();
+            Path uploadDir = Paths.get(uploadPath);
+            Files.createDirectories(uploadDir); // 建立目錄（含父目錄）
+            
+            // 產生檔案名稱（安全處理）
+            String originalFilename = file.getOriginalFilename();
+            if (StringUtils.isBlank(originalFilename)) {
+                return error("檔案名稱不能為空");
             }
             
-            // 產生檔案名稱
-            String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            // 安全提取副檔名
+            String extension;
+            int lastDotIndex = originalFilename.lastIndexOf(".");
+            if (lastDotIndex > 0 && lastDotIndex < originalFilename.length() - 1) {
+                extension = originalFilename.substring(lastDotIndex);
+            } else {
+                return error("無效的檔案格式");
+            }
+            
             String fileName = IdUtils.fastSimpleUUID() + extension;
             String filePath = uploadPath + File.separator + fileName;
             
@@ -302,12 +312,12 @@ public class SysLineRichMenuController extends BaseController {
             Path path = Paths.get(filePath);
             Files.write(path, finalBytes);
             
-            // 產生訪問 URL（注意：需要包含 /upload 路徑）
-            String url = serverConfig.getUrl() + "/profile/upload/richmenu/" + fileName;
+            // 產生相對路徑（讓前端 getImageUrl() 自動處理環境差異）
+            String relativePath = "/profile/upload/richmenu/" + fileName;
             
-            // 返回結果
-            result.put("url", url);
-            result.put("fileName", "/profile/upload/richmenu/" + fileName);
+            // 返回結果（url 和 fileName 都使用相對路徑）
+            result.put("url", relativePath);
+            result.put("fileName", relativePath);
             result.put("originalFilename", originalFilename);
             result.put("fileSize", finalBytes.length);
             result.put("fileSizeKB", finalBytes.length / 1024);
@@ -317,7 +327,7 @@ public class SysLineRichMenuController extends BaseController {
                     result.get("originalWidth"), 
                     result.get("originalHeight"),
                     resized ? " -> " + result.get("finalSize") : "",
-                    url);
+                    relativePath);
             
             return success(result);
             
