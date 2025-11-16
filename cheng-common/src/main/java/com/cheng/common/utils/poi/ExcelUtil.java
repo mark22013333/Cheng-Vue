@@ -36,6 +36,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -167,7 +170,7 @@ public class ExcelUtil<T> {
             if (StringUtils.containsAny(propertyValue, separator)) {
                 for (String value : propertyValue.split(separator)) {
                     if (itemArray[0].equals(value)) {
-                        propertyString.append(itemArray[1] + separator);
+                        propertyString.append(itemArray[1]).append(separator);
                         break;
                     }
                 }
@@ -245,8 +248,7 @@ public class ExcelUtil<T> {
         List<HSSFPictureData> pictures = workbook.getAllPictures();
         if (!pictures.isEmpty() && sheet.getDrawingPatriarch() != null) {
             for (HSSFShape shape : sheet.getDrawingPatriarch().getChildren()) {
-                if (shape instanceof HSSFPicture) {
-                    HSSFPicture pic = (HSSFPicture) shape;
+                if (shape instanceof HSSFPicture pic) {
                     HSSFClientAnchor anchor = (HSSFClientAnchor) pic.getAnchor();
                     String picIndex = anchor.getRow1() + "_" + anchor.getCol1();
                     sheetIndexPicMap.computeIfAbsent(picIndex, k -> new ArrayList<>()).add(pic.getPictureData());
@@ -553,7 +555,6 @@ public class ExcelUtil<T> {
      * @param response  返回數據
      * @param list      匯出數據集合
      * @param sheetName 工作表的名稱
-     * @return 結果
      */
     public void exportExcel(HttpServletResponse response, List<T> list, String sheetName) {
         exportExcel(response, list, sheetName, StringUtils.EMPTY);
@@ -566,7 +567,6 @@ public class ExcelUtil<T> {
      * @param list      匯出數據集合
      * @param sheetName 工作表的名稱
      * @param title     標題
-     * @return 結果
      */
     public void exportExcel(HttpServletResponse response, List<T> list, String sheetName, String title) {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -590,7 +590,6 @@ public class ExcelUtil<T> {
      *
      * @param sheetName 工作表的名稱
      * @param title     標題
-     * @return 結果
      */
     public AjaxResult importTemplateExcel(String sheetName, String title) {
         this.init(null, sheetName, title, Type.IMPORT);
@@ -601,7 +600,6 @@ public class ExcelUtil<T> {
      * 對list資料來源將其裡面的數據匯入到excel表單
      *
      * @param sheetName 工作表的名稱
-     * @return 結果
      */
     public void importTemplateExcel(HttpServletResponse response, String sheetName) {
         importTemplateExcel(response, sheetName, StringUtils.EMPTY);
@@ -612,7 +610,6 @@ public class ExcelUtil<T> {
      *
      * @param sheetName 工作表的名稱
      * @param title     標題
-     * @return 結果
      */
     public void importTemplateExcel(HttpServletResponse response, String sheetName, String title) {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -623,8 +620,6 @@ public class ExcelUtil<T> {
 
     /**
      * 對list資料來源將其裡面的數據匯入到excel表單
-     *
-     * @return 結果
      */
     public void exportExcel(HttpServletResponse response) {
         try {
@@ -991,7 +986,7 @@ public class ExcelUtil<T> {
      * 建立表格樣式
      */
     public void setDataValidation(Excel attr, Row row, int column) {
-        if (attr.name().indexOf("註：") >= 0) {
+        if (attr.name().contains("註：")) {
             sheet.setColumnWidth(column, 6000);
         } else {
             // 設定列寬
@@ -1065,7 +1060,7 @@ public class ExcelUtil<T> {
                 addStatisticsData(column, Convert.toStr(value), attr);
             }
         } catch (Exception e) {
-            log.error("匯出Excel失敗{}", e);
+            log.error("匯出Excel失敗:", e);
         }
         return cell;
     }
@@ -1103,9 +1098,9 @@ public class ExcelUtil<T> {
     }
 
     /**
-     * 設定某些列的值只能輸入預製的數據,顯示下拉框（兼容超出一定數量的下拉框）.
+     * 設定某些列的值只能輸入預製的數據，顯示下拉框（兼容超出一定數量的下拉框）
      *
-     * @param sheet         要設定的sheet.
+     * @param sheet         要設定的sheet
      * @param textlist      下拉框顯示的内容
      * @param promptContent 提示内容
      * @param firstRow      開始行
@@ -1115,17 +1110,31 @@ public class ExcelUtil<T> {
      */
     public void setXSSFValidationWithHidden(Sheet sheet, String[] textlist, String promptContent, int firstRow, int endRow, int firstCol, int endCol) {
         String hideSheetName = "combo_" + firstCol + "_" + endCol;
-        Sheet hideSheet = wb.createSheet(hideSheetName); // 用於儲存 下拉選單數據
-        for (int i = 0; i < textlist.length; i++) {
-            hideSheet.createRow(i).createCell(0).setCellValue(textlist[i]);
+        Sheet hideSheet = null;
+        String hideSheetDataName = hideSheetName + "_data";
+        Name name = wb.getName(hideSheetDataName);
+        if (name != null) {
+            // 名稱已存在，嘗試從名稱的引用中找到sheet名稱
+            String refersToFormula = name.getRefersToFormula();
+            if (StringUtils.isNotEmpty(refersToFormula) && refersToFormula.contains("!")) {
+                String sheetNameFromFormula = refersToFormula.substring(0, refersToFormula.indexOf("!"));
+                hideSheet = wb.getSheet(sheetNameFromFormula);
+            }
         }
-        // 建立名稱，可被其他單元格引用
-        Name name = wb.createName();
-        name.setNameName(hideSheetName + "_data");
-        name.setRefersToFormula(hideSheetName + "!$A$1:$A$" + textlist.length);
+
+        if (hideSheet == null) {
+            hideSheet = wb.createSheet(hideSheetName); // 儲存用(下拉選單)
+            for (int i = 0; i < textlist.length; i++) {
+                hideSheet.createRow(i).createCell(0).setCellValue(textlist[i]);
+            }
+            // 建立名稱，可以被其他單元格引用
+            name = wb.createName();
+            name.setNameName(hideSheetDataName);
+            name.setRefersToFormula(hideSheetName + "!$A$1:$A$" + textlist.length);
+        }
         DataValidationHelper helper = sheet.getDataValidationHelper();
         // 載入下拉列表内容
-        DataValidationConstraint constraint = helper.createFormulaListConstraint(hideSheetName + "_data");
+        DataValidationConstraint constraint = helper.createFormulaListConstraint(hideSheetName);
         // 設定數據有效性載入在哪個單元格上,四個參數分別是：起始行、終止行、起始列、終止列
         CellRangeAddressList regions = new CellRangeAddressList(firstRow, endRow, firstCol, endCol);
         // 數據有效性物件
@@ -1153,15 +1162,14 @@ public class ExcelUtil<T> {
      *
      * @param value 數據值
      * @param excel 數據註解
-     * @return
      */
     public String dataFormatHandlerAdapter(Object value, Excel excel, Cell cell) {
         try {
             Object instance = excel.handler().getDeclaredConstructor().newInstance();
-            Method formatMethod = excel.handler().getMethod("format", new Class[]{Object.class, String[].class, Cell.class, Workbook.class});
+            Method formatMethod = excel.handler().getMethod("format", Object.class, String[].class, Cell.class, Workbook.class);
             value = formatMethod.invoke(instance, value, excel.args(), cell, this.wb);
         } catch (Exception e) {
-            log.error("不能格式化數據 " + excel.handler(), e.getMessage());
+            log.error("不能格式化數據 {}, ERR:{}", excel.handler(), e.getMessage());
         }
         return Convert.toStr(value);
     }
@@ -1177,7 +1185,7 @@ public class ExcelUtil<T> {
             }
             try {
                 temp = Double.valueOf(text);
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ignored) {
             }
             statistics.put(index, statistics.get(index) + temp);
         }
@@ -1187,7 +1195,7 @@ public class ExcelUtil<T> {
      * 建立統計行
      */
     public void addStatisticsRow() {
-        if (statistics.size() > 0) {
+        if (!statistics.isEmpty()) {
             Row row = sheet.createRow(sheet.getLastRowNum() + 1);
             Set<Integer> keys = statistics.keySet();
             Cell cell = row.createCell(0);
@@ -1216,12 +1224,14 @@ public class ExcelUtil<T> {
      * @param filename 檔案名稱
      */
     public String getAbsoluteFile(String filename) {
-        String downloadPath = CoolAppsConfig.getDownloadPath() + filename;
-        File desc = new File(downloadPath);
-        if (!desc.getParentFile().exists()) {
-            desc.getParentFile().mkdirs();
+        Path path = Paths.get(CoolAppsConfig.getDownloadPath(), filename);
+        try {
+            Files.createDirectories(path.getParent());
+        } catch (IOException e) {
+            throw new RuntimeException("建立目錄失敗：" + path.getParent(), e);
         }
-        return downloadPath;
+
+        return path.toString();
     }
 
     /**
@@ -1231,7 +1241,6 @@ public class ExcelUtil<T> {
      * @param field 欄位
      * @param excel 註解
      * @return 最終的屬性值
-     * @throws Exception
      */
     private Object getTargetValue(T vo, Field field, Excel excel) throws Exception {
         field.setAccessible(true);
@@ -1251,12 +1260,11 @@ public class ExcelUtil<T> {
     }
 
     /**
-     * 以類的屬性的get方法方法形式取得值
+     * 以類別的屬性get方法形式取得值
      *
      * @param o
      * @param name
      * @return value
-     * @throws Exception
      */
     private Object getValue(Object o, String name) throws Exception {
         if (StringUtils.isNotNull(o) && StringUtils.isNotEmpty(name)) {
@@ -1281,7 +1289,7 @@ public class ExcelUtil<T> {
      * 取得欄位註解訊息
      */
     public List<Object[]> getFields() {
-        List<Object[]> fields = new ArrayList<Object[]>();
+        List<Object[]> fields = new ArrayList<>();
         List<Field> tempFields = new ArrayList<>();
         tempFields.addAll(Arrays.asList(clazz.getSuperclass().getDeclaredFields()));
         tempFields.addAll(Arrays.asList(clazz.getDeclaredFields()));
@@ -1329,13 +1337,11 @@ public class ExcelUtil<T> {
             Excel[] excels = attrs.value();
             for (Excel attr : excels) {
                 if (StringUtils.isNotEmpty(includeFields)) {
-                    if (ArrayUtils.contains(this.includeFields, field.getName() + "." + attr.targetAttr())
-                            && (attr != null && (attr.type() == Type.ALL || attr.type() == type))) {
+                    if (ArrayUtils.contains(this.includeFields, field.getName() + "." + attr.targetAttr()) && (attr.type() == Type.ALL || attr.type() == type)) {
                         fields.add(new Object[]{field, attr});
                     }
                 } else {
-                    if (!ArrayUtils.contains(this.excludeFields, field.getName() + "." + attr.targetAttr())
-                            && (attr != null && (attr.type() == Type.ALL || attr.type() == type))) {
+                    if (!ArrayUtils.contains(this.excludeFields, field.getName() + "." + attr.targetAttr()) && (attr.type() == Type.ALL || attr.type() == type)) {
                         fields.add(new Object[]{field, attr});
                     }
                 }
@@ -1389,7 +1395,7 @@ public class ExcelUtil<T> {
      */
     public Object getCellValue(Row row, int column) {
         if (row == null) {
-            return row;
+            return null;
         }
         Object val = "";
         try {
@@ -1425,7 +1431,6 @@ public class ExcelUtil<T> {
      * 判斷是否是空行
      *
      * @param row 判斷的行
-     * @return
      */
     private boolean isRowEmpty(Row row) {
         if (row == null) {
@@ -1468,14 +1473,14 @@ public class ExcelUtil<T> {
      * 是否有物件的子列表
      */
     public boolean isSubList() {
-        return StringUtils.isNotNull(subFields) && subFields.size() > 0;
+        return StringUtils.isNotNull(subFields) && !subFields.isEmpty();
     }
 
     /**
      * 是否有物件的子列表，集合不為空
      */
     public boolean isSubListValue(T vo) {
-        return StringUtils.isNotNull(subFields) && subFields.size() > 0 && StringUtils.isNotNull(getListCellValue(vo)) && getListCellValue(vo).size() > 0;
+        return StringUtils.isNotNull(subFields) && !subFields.isEmpty() && StringUtils.isNotNull(getListCellValue(vo)) && !getListCellValue(vo).isEmpty();
     }
 
     /**
@@ -1484,9 +1489,9 @@ public class ExcelUtil<T> {
     public Collection<?> getListCellValue(Object obj) {
         Object value;
         try {
-            value = subMethod.invoke(obj, new Object[]{});
+            value = subMethod.invoke(obj);
         } catch (Exception e) {
-            return new ArrayList<Object>();
+            return new ArrayList<>();
         }
         return (Collection<?>) value;
     }
@@ -1499,12 +1504,12 @@ public class ExcelUtil<T> {
      * @return 子列表方法
      */
     public Method getSubMethod(String name, Class<?> pojoClass) {
-        StringBuffer getMethodName = new StringBuffer("get");
+        StringBuilder getMethodName = new StringBuilder("get");
         getMethodName.append(name.substring(0, 1).toUpperCase());
         getMethodName.append(name.substring(1));
         Method method = null;
         try {
-            method = pojoClass.getMethod(getMethodName.toString(), new Class[]{});
+            method = pojoClass.getMethod(getMethodName.toString());
         } catch (Exception e) {
             log.error("取得物件異常{}", e.getMessage());
         }
