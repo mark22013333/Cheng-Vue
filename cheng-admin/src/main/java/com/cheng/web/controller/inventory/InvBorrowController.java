@@ -7,8 +7,10 @@ import com.cheng.common.core.page.TableDataInfo;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.system.domain.InvBorrow;
+import com.cheng.system.domain.InvItem;
 import com.cheng.system.domain.InvReturn;
 import com.cheng.system.domain.enums.BorrowStatus;
+import com.cheng.system.mapper.InvItemMapper;
 import com.cheng.system.mapper.InvReturnMapper;
 import com.cheng.system.service.IInvBorrowService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,6 +38,7 @@ public class InvBorrowController extends BaseController {
 
     private final IInvBorrowService invBorrowService;
     private final InvReturnMapper invReturnMapper;
+    private final InvItemMapper invItemMapper;
 
     /**
      * 查詢借出記錄列表
@@ -199,8 +202,18 @@ public class InvBorrowController extends BaseController {
                 invBorrow.setBorrowNo(invBorrowService.generateBorrowNo());
             }
 
+            // 取得物品名稱用於日誌記錄
+            InvItem item = invItemMapper.selectInvItemByItemId(invBorrow.getItemId());
+            String itemName = item != null ? item.getItemName() : "未知物品";
+
             int result = invBorrowService.borrowItem(invBorrow);
-            return toAjax(result);
+            
+            // 將借出的物品名稱加入返回結果，讓操作日誌能記錄
+            AjaxResult ajaxResult = toAjax(result);
+            ajaxResult.put("itemName", itemName);
+            log.info("借出物品：{}", itemName);
+            
+            return ajaxResult;
         } catch (Exception e) {
             return error(e.getMessage());
         }

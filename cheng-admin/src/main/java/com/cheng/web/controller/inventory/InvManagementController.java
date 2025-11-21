@@ -140,7 +140,13 @@ public class InvManagementController extends BaseController {
         if (!invItemService.checkBarcodeUnique(invItem)) {
             return error("修改物品'" + invItem.getItemName() + "'失敗，條碼已存在");
         }
-        return toAjax(invItemService.updateInvItem(invItem));
+        
+        // 記錄修改的物品名稱，讓操作日誌能記錄
+        AjaxResult result = toAjax(invItemService.updateInvItem(invItem));
+        result.put("itemName", invItem.getItemName());
+        log.info("修改物品：{}", invItem.getItemName());
+        
+        return result;
     }
 
     /**
@@ -151,8 +157,29 @@ public class InvManagementController extends BaseController {
     @DeleteMapping("/{itemIds}")
     public AjaxResult remove(@PathVariable Long[] itemIds) {
         try {
+            // 在刪除前取得物品名稱列表，用於操作日誌記錄
+            StringBuilder itemNames = new StringBuilder();
+            for (Long itemId : itemIds) {
+                InvItem item = invItemMapper.selectInvItemByItemId(itemId);
+                if (item != null) {
+                    if (!itemNames.isEmpty()) {
+                        itemNames.append("、");
+                    }
+                    itemNames.append(item.getItemName());
+                }
+            }
+            
+            // 執行刪除
             String resultMsg = invItemService.safeDeleteInvItemByItemIds(itemIds);
-            return success(resultMsg);
+            
+            // 將刪除的物品名稱加入返回結果，讓操作日誌能記錄
+            AjaxResult result = success(resultMsg);
+            if (!itemNames.isEmpty()) {
+                result.put("deletedItems", itemNames.toString());
+                log.info("刪除物品：{}", itemNames);
+            }
+            
+            return result;
         } catch (Exception e) {
             return error(e.getMessage());
         }

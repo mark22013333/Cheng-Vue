@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskDecorator;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -39,8 +41,8 @@ public class AsyncConfig {
         executor.setQueueCapacity(20);
         // 執行緒名稱前綴
         executor.setThreadNamePrefix("crawl-task-");
-        // 設定 TaskDecorator 以複製 MDC context（包含 trace id）
-        executor.setTaskDecorator(new MdcTaskDecorator());
+        // 設定 TaskDecorator 以複製 MDC context 和 SecurityContext
+        executor.setTaskDecorator(new ContextCopyingDecorator());
         // 拒絕策略：由呼叫執行緒處理
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         // 執行緒空閒時間（秒）
@@ -60,26 +62,37 @@ public class AsyncConfig {
     }
 
     /**
-     * MDC TaskDecorator - 複製 MDC context 到異步執行緒
+     * Context Copying Decorator - 複製 MDC 和 SecurityContext 到異步執行緒
+     * <p>
+     * 這個裝飾器解決了兩個問題：
+     * 1. MDC context（trace id）無法傳遞到子執行緒
+     * 2. SecurityContext（使用者認證資訊）無法傳遞到子執行緒
      */
-    private static class MdcTaskDecorator implements TaskDecorator {
+    private static class ContextCopyingDecorator implements TaskDecorator {
         @NotNull
         @Override
         public Runnable decorate(@NotNull Runnable runnable) {
             // 取得當前執行緒的 MDC context（包含 trace id）
-            Map<String, String> contextMap = MDC.getCopyOfContextMap();
+            Map<String, String> mdcContextMap = MDC.getCopyOfContextMap();
+
+            // 取得當前執行緒的 SecurityContext（使用者認證資訊）
+            SecurityContext securityContext = SecurityContextHolder.getContext();
 
             return () -> {
                 try {
                     // 設定 MDC context 到異步執行緒
-                    if (contextMap != null) {
-                        MDC.setContextMap(contextMap);
+                    if (mdcContextMap != null) {
+                        MDC.setContextMap(mdcContextMap);
                     }
+
+                    // 設定 SecurityContext 到異步執行緒
+                    SecurityContextHolder.setContext(securityContext);
+
                     // 執行原始任務
                     runnable.run();
                 } finally {
-                    // 清理 MDC context
                     MDC.clear();
+                    SecurityContextHolder.clearContext();
                 }
             };
         }

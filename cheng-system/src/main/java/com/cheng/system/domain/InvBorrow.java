@@ -47,13 +47,13 @@ public class InvBorrow extends BaseEntity {
     private Long itemId;
 
     /**
-     * 物品名稱（關聯查詢用）
+     * 物品名稱（冗餘欄位，保留歷史記錄）
      */
     @Excel(name = "物品名稱")
     private String itemName;
 
     /**
-     * 物品編碼（關聯查詢用）
+     * 物品編碼（冗餘欄位，保留歷史記錄）
      */
     @Excel(name = "物品編碼")
     private String itemCode;

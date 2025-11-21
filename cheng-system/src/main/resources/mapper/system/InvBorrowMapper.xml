@@ -37,8 +37,8 @@
         select b.borrow_id,
                b.borrow_no,
                b.item_id,
-               i.item_code,
-               i.item_name,
+               b.item_code,
+               b.item_name,
                c.category_name,
                b.borrower_id,
                b.borrower_name,
@@ -135,6 +135,8 @@
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="borrowNo != null and borrowNo != ''">borrow_no,</if>
             <if test="itemId != null">item_id,</if>
+            <if test="itemName != null and itemName != ''">item_name,</if>
+            <if test="itemCode != null and itemCode != ''">item_code,</if>
             <if test="quantity != null">quantity,</if>
             <if test="borrowerId != null">borrower_id,</if>
             <if test="borrowerName != null and borrowerName != ''">borrower_name,</if>
@@ -156,6 +158,8 @@
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="borrowNo != null and borrowNo != ''">#{borrowNo},</if>
             <if test="itemId != null">#{itemId},</if>
+            <if test="itemName != null and itemName != ''">#{itemName},</if>
+            <if test="itemCode != null and itemCode != ''">#{itemCode},</if>
             <if test="quantity != null">#{quantity},</if>
             <if test="borrowerId != null">#{borrowerId},</if>
             <if test="borrowerName != null and borrowerName != ''">#{borrowerName},</if>

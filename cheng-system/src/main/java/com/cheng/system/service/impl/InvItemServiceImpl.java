@@ -21,11 +21,13 @@ import com.cheng.system.service.IInvItemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.validation.Validator;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -54,6 +56,12 @@ public class InvItemServiceImpl implements IInvItemService {
 
     @Autowired
     protected Validator validator;
+
+    /**
+     * 檔案上傳根路徑
+     */
+    @Value("${cheng.profile:/tmp/uploadPath}")
+    private String uploadPath;
 
     /**
      * 查詢物品資訊
@@ -202,8 +210,14 @@ public class InvItemServiceImpl implements IInvItemService {
     @Override
     @Transactional
     public int deleteInvItemByItemIds(Long[] itemIds) {
-        // 先刪除相關的庫存記錄
+        // 先刪除相關的庫存記錄和圖片檔案
         for (Long itemId : itemIds) {
+            // 刪除圖片檔案
+            InvItem item = invItemMapper.selectInvItemByItemId(itemId);
+            if (item != null && StringUtils.isNotEmpty(item.getImageUrl())) {
+                deleteImageFile(item.getImageUrl(), item.getItemName());
+            }
+            // 刪除庫存記錄
             invStockMapper.deleteInvStockByItemId(itemId);
         }
         return invItemMapper.deleteInvItemByItemIds(itemIds);
@@ -218,7 +232,13 @@ public class InvItemServiceImpl implements IInvItemService {
     @Override
     @Transactional
     public int deleteInvItemByItemId(Long itemId) {
-        // 先刪除相關的庫存記錄
+        // 先刪除圖片檔案和相關的庫存記錄
+        // 刪除圖片檔案
+        InvItem item = invItemMapper.selectInvItemByItemId(itemId);
+        if (item != null && StringUtils.isNotEmpty(item.getImageUrl())) {
+            deleteImageFile(item.getImageUrl(), item.getItemName());
+        }
+        // 刪除庫存記錄
         invStockMapper.deleteInvStockByItemId(itemId);
         return invItemMapper.deleteInvItemByItemId(itemId);
     }
@@ -316,7 +336,7 @@ public class InvItemServiceImpl implements IInvItemService {
 
     /**
      * 安全刪除物品（檢查借出記錄、級聯刪除相關表）
-     * 
+     *
      * @param itemIds 需要刪除的物品ID陣列
      * @return 刪除結果訊息
      */
@@ -349,26 +369,60 @@ public class InvItemServiceImpl implements IInvItemService {
                 if (activeBorrows != null && !activeBorrows.isEmpty()) {
                     failCount++;
                     StringBuilder borrowInfo = new StringBuilder();
-                    borrowInfo.append("<div style='margin-top: 10px;'>")
-                            .append("<strong>").append(failCount).append("、物品「").append(item.getItemName()).append("」</strong>")
-                            .append("<div style='color: #E6A23C; margin: 8px 0 5px 20px;'>")
-                            .append("❌ 存在未完成的借出記錄，無法刪除")
+
+                    // --- 外層容器 ---
+                    borrowInfo.append("<div style='margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #EBEEF5;'>");
+
+                    // 1. 標題區：編號與物品名稱
+                    borrowInfo.append("<div style='display: flex; align-items: center; margin-bottom: 10px;'>")
+                            .append("<span style='background: #909399; color: #fff; border-radius: 50%; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; font-size: 12px; margin-right: 8px;'>")
+                            .append(failCount).append("</span>")
+                            .append("<span style='font-size: 15px; font-weight: bold; color: #303133;'>")
+                            .append(item.getItemName())
+                            .append("</span>")
                             .append("</div>");
-                    
-                    for (InvBorrow borrow : activeBorrows) {
+
+                    // 2. 錯誤提示區 (Alert Style)
+                    borrowInfo.append("<div style='background-color: #FEF0F0; color: #F56C6C; padding: 8px 12px; border-radius: 4px; font-size: 13px; margin-bottom: 10px; display: flex; align-items: center;'>")
+                            .append("<i class='el-icon-error' style='margin-right: 6px;'></i>")
+                            .append("<span>無法刪除：存在 <strong>").append(activeBorrows.size()).append("</strong> 筆未完成的借出記錄</span>")
+                            .append("</div>");
+
+                    // 3. 詳細清單容器 (灰色背景)
+                    borrowInfo.append("<div style='background-color: #F5F7FA; border-radius: 4px; padding: 8px 12px;'>");
+
+                    for (int i = 0; i < activeBorrows.size(); i++) {
+                        InvBorrow borrow = activeBorrows.get(i);
                         BorrowStatus status = BorrowStatus.getByCode(borrow.getStatus());
+
+                        // 最後一筆不顯示底線
+                        String borderStyle = (i == activeBorrows.size() - 1) ? "" : "border-bottom: 1px dashed #DCDFE6;";
+
                         if (status != null) {
-                            borrowInfo.append("<div style='margin-left: 20px; padding: 5px 0; color: #606266;'>")
-                                    .append("📋 借出單號：<code style='background: #f5f7fa; padding: 2px 8px; border-radius: 3px;'>")
-                                    .append(borrow.getBorrowNo()).append("</code>")
-                                    .append(" | 狀態：<span style='color: ").append(status.getColor()).append("; font-weight: bold;'>")
-                                    .append(status.getDescription()).append("</span>")
-                                    .append(" | 借出人：").append(borrow.getBorrowerName())
+                            borrowInfo.append("<div style='display: flex; align-items: center; justify-content: space-between; padding: 6px 0; font-size: 13px; color: #606266; ").append(borderStyle).append("'>")
+
+                                    // 左側：單號與借出人
+                                    .append("<div>")
+                                    .append("<i class='el-icon-document' style='color: #909399; margin-right: 4px;'></i>")
+                                    .append("<span style='font-family: monospace; color: #303133; margin-right: 10px;'>").append(borrow.getBorrowNo()).append("</span>")
+                                    .append("<i class='el-icon-user' style='color: #909399; margin-right: 4px;'></i>")
+                                    .append("<span>").append(borrow.getBorrowerName()).append("</span>")
+                                    .append("</div>")
+
+                                    // 右側：狀態標籤
+                                    .append("<div>")
+                                    .append("<span style='display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; transform: scale(0.9); border: 1px solid ").append(status.getColor()).append("; color: ").append(status.getColor()).append(";'>")
+                                    .append(status.getDescription())
+                                    .append("</span>")
+                                    .append("</div>")
                                     .append("</div>");
                         }
                     }
-                    borrowInfo.append("</div>");
+                    borrowInfo.append("</div>"); // End 清單容器
+                    borrowInfo.append("</div>"); // End 外層容器
+
                     failMsg.append(borrowInfo);
+
                     log.warn("無法刪除物品，存在未完成的借出記錄，ItemId: {}, ItemName: {}, 借出記錄數: {}",
                             itemId, item.getItemName(), activeBorrows.size());
                     continue;
@@ -402,6 +456,11 @@ public class InvItemServiceImpl implements IInvItemService {
                     log.info("已刪除 {} 筆庫存異動記錄，ItemId: {}", recordCount, itemId);
                 }
 
+                // 4.4 刪除實體圖片檔案
+                if (StringUtils.isNotEmpty(item.getImageUrl())) {
+                    deleteImageFile(item.getImageUrl(), item.getItemName());
+                }
+
                 // 5. 最後刪除物品本身
                 int result = invItemMapper.deleteInvItemByItemId(itemId);
                 if (result > 0) {
@@ -427,7 +486,7 @@ public class InvItemServiceImpl implements IInvItemService {
 
         // 建立結果訊息
         StringBuilder resultMsg = new StringBuilder();
-        
+
         // 使用 HTML 格式構建訊息
         if (successCount > 0 && failCount > 0) {
             // 部分成功
@@ -453,5 +512,37 @@ public class InvItemServiceImpl implements IInvItemService {
         }
 
         return resultMsg.toString();
+    }
+
+    /**
+     * 刪除實體圖片檔案
+     *
+     * @param imageUrl 圖片相對路徑（從 inv_item.image_url）
+     * @param itemName 物品名稱（用於日誌）
+     */
+    private void deleteImageFile(String imageUrl, String itemName) {
+        try {
+            if (StringUtils.isEmpty(imageUrl)) {
+                return;
+            }
+
+            // 組成完整路徑
+            String fullPath = uploadPath + File.separator + imageUrl.replace("/profile/", "");
+            File imageFile = new File(fullPath);
+
+            if (imageFile.exists()) {
+                boolean deleted = imageFile.delete();
+                if (deleted) {
+                    log.info("成功刪除圖片檔案，物品: {}, 路徑: {}", itemName, fullPath);
+                } else {
+                    log.warn("圖片檔案刪除失敗，物品: {}, 路徑: {}", itemName, fullPath);
+                }
+            } else {
+                log.warn("圖片檔案不存在，物品: {}, 路徑: {}", itemName, fullPath);
+            }
+        } catch (Exception e) {
+            // 圖片刪除失敗不應影響物品刪除，只記錄警告
+            log.error("刪除圖片檔案時發生異常，物品: {}, 圖片路徑: {}, 錯誤: {}", itemName, imageUrl, e.getMessage(), e);
+        }
     }
 }

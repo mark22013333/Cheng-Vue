@@ -66,15 +66,15 @@ public class BookItemServiceImpl implements IBookItemService {
                 }
                 log.warn("書籍資訊存在但物品不存在，ItemId: {}，將重新建立物品並關聯", existingBook.getItemId());
             }
-            
+
             // 如果書籍資訊存在但物品不存在或已刪除，重新爬取並建立物品
             log.info("開始爬取書籍資訊以重建物品，ISBN: {}", isbn);
             BookInfoDTO bookInfoDTO = isbnCrawlerService.crawlByIsbn(isbn);
-            
+
             if (!bookInfoDTO.getSuccess()) {
                 throw new ServiceException("爬取書籍資訊失敗: " + bookInfoDTO.getErrorMessage());
             }
-            
+
             // 建立新物品並更新現有書籍資訊的關聯
             return recreateItemForExistingBook(existingBook, bookInfoDTO);
         }
@@ -101,7 +101,7 @@ public class BookItemServiceImpl implements IBookItemService {
         if (StringUtils.isEmpty(isbn)) {
             throw new ServiceException("ISBN 不能為空");
         }
-        
+
         if (bookInfoDTO == null || !bookInfoDTO.getSuccess()) {
             throw new ServiceException("書籍資訊無效");
         }
@@ -119,7 +119,7 @@ public class BookItemServiceImpl implements IBookItemService {
                 }
                 log.warn("書籍資訊存在但物品不存在，ItemId: {}，將重新建立物品並關聯", existingBook.getItemId());
             }
-            
+
             // 如果書籍資訊存在但物品不存在或已刪除，重新建立物品
             return recreateItemForExistingBook(existingBook, bookInfoDTO);
         }
@@ -149,40 +149,40 @@ public class BookItemServiceImpl implements IBookItemService {
         existingBook.setCrawlTime(new Date());
         existingBook.setUpdateBy(SecurityUtils.getUsername());
         existingBook.setUpdateTime(new Date());
-        
+
         int bookInfoResult = invBookInfoService.updateInvBookInfo(existingBook);
         if (bookInfoResult <= 0) {
             throw new ServiceException("更新書籍資訊失敗");
         }
         log.info("更新書籍資訊成功，ISBN: {}", existingBook.getIsbn());
-        
+
         // 2. 同步更新關聯的物品表 (inv_item)
         if (existingBook.getItemId() != null) {
             InvItem item = invItemMapper.selectInvItemByItemId(existingBook.getItemId());
             if (item != null) {
                 // 更新物品名稱
                 item.setItemName(bookInfoDTO.getTitle());
-                
+
                 // 更新規格（語言/裝訂/出版日期）
                 item.setSpecification(buildSpecification(bookInfoDTO));
-                
+
                 // 更新品牌（出版社）
                 item.setBrand(bookInfoDTO.getPublisher());
-                
+
                 // 更新型號（版本）
                 item.setModel(bookInfoDTO.getEdition());
-                
+
                 // 更新描述（簡介）
                 item.setDescription(truncateDescription(bookInfoDTO.getIntroduction()));
-                
+
                 // 更新圖片路徑
                 if (StringUtils.isNotEmpty(bookInfoDTO.getCoverImagePath())) {
                     item.setImageUrl(bookInfoDTO.getCoverImagePath());
                 }
-                
+
                 item.setUpdateBy(SecurityUtils.getUsername());
                 item.setUpdateTime(new Date());
-                
+
                 int itemResult = invItemMapper.updateInvItem(item);
                 if (itemResult <= 0) {
                     log.warn("更新物品資訊失敗，ItemId: {}", item.getItemId());
@@ -248,13 +248,13 @@ public class BookItemServiceImpl implements IBookItemService {
             if (bookInfoResult <= 0) {
                 throw new ServiceException("更新書籍資訊失敗");
             }
-            log.info("更新書籍資訊關聯成功，BookInfoId: {}, 新 ItemId: {}", 
-                existingBook.getBookInfoId(), item.getItemId());
+            log.info("更新書籍資訊關聯成功，BookInfoId: {}, 新 ItemId: {}",
+                    existingBook.getBookInfoId(), item.getItemId());
 
             // 3. 初始化或更新庫存記錄
             // 先檢查是否已存在庫存記錄（可能是舊物品的殘留）
             InvStock existingStock = invStockMapper.selectInvStockByItemId(item.getItemId());
-            
+
             if (existingStock != null) {
                 // 更新現有庫存記錄
                 log.info("發現舊庫存記錄，StockId: {}，將重置為初始狀態", existingStock.getStockId());
@@ -265,7 +265,7 @@ public class BookItemServiceImpl implements IBookItemService {
                 existingStock.setDamagedQty(0);
                 existingStock.setLostQty(0);
                 existingStock.setUpdateTime(new Date());
-                
+
                 int stockResult = invStockMapper.updateInvStock(existingStock);
                 if (stockResult <= 0) {
                     throw new ServiceException("更新庫存記錄失敗");
@@ -456,7 +456,7 @@ public class BookItemServiceImpl implements IBookItemService {
         // 保留前 2000 字元
         return description.length() > 2000 ? description.substring(0, 2000) + "..." : description;
     }
-    
+
     /**
      * 只更新書籍資訊，不影響庫存
      * 專門用於重新抓取 ISBN 資料的情境
@@ -467,48 +467,48 @@ public class BookItemServiceImpl implements IBookItemService {
         if (itemId == null || bookInfoDTO == null) {
             throw new ServiceException("參數不能為空");
         }
-        
+
         try {
             // 1. 檢查物品是否存在
             InvItem existingItem = invItemMapper.selectInvItemByItemId(itemId);
             if (existingItem == null) {
                 throw new ServiceException("物品不存在，ItemId: " + itemId);
             }
-            
+
             log.info("開始只更新書籍資訊（不影響庫存），ItemId: {}, ISBN: {}", itemId, bookInfoDTO.getIsbn());
-            
+
             // 2. 更新物品表 (inv_item) 的書籍相關欄位
             existingItem.setItemName(bookInfoDTO.getTitle());
             existingItem.setSpecification(buildSpecification(bookInfoDTO));
             existingItem.setBrand(bookInfoDTO.getPublisher());
             existingItem.setModel(bookInfoDTO.getEdition());
             existingItem.setDescription(truncateDescription(bookInfoDTO.getIntroduction()));
-            
+
             // 更新圖片路徑（如果有新圖片）
             if (StringUtils.isNotEmpty(bookInfoDTO.getCoverImagePath())) {
                 existingItem.setImageUrl(bookInfoDTO.getCoverImagePath());
             }
-            
-            existingItem.setUpdateBy(SecurityUtils.getUsername());
+
+            existingItem.setUpdateBy(getUsername());
             existingItem.setUpdateTime(new Date());
-            
+
             int itemResult = invItemMapper.updateInvItem(existingItem);
             if (itemResult <= 0) {
                 throw new ServiceException("更新物品記錄失敗");
             }
             log.info("更新物品記錄成功，ItemId: {}", itemId);
-            
+
             // 3. 更新書籍資訊表 (inv_book_info)
             // 先嘗試透過 itemId 查詢
             InvBookInfo bookInfo = invBookInfoService.selectInvBookInfoByItemId(itemId);
-            
+
             // 如果找不到，再透過 ISBN 查詢（避免重複 ISBN 導致插入失敗）
             if (bookInfo == null) {
                 log.info("未找到該物品的書籍資訊，嘗試透過 ISBN 查詢，ItemId: {}, ISBN: {}", itemId, bookInfoDTO.getIsbn());
                 bookInfo = invBookInfoService.selectInvBookInfoByIsbn(bookInfoDTO.getIsbn());
-                
+
                 if (bookInfo != null) {
-                    log.warn("發現該 ISBN 已被其他記錄使用，將更新該記錄並關聯到目前物品，BookInfoId: {}, OldItemId: {}, NewItemId: {}", 
+                    log.warn("發現該 ISBN 已被其他記錄使用，將更新該記錄並關聯到目前物品，BookInfoId: {}, OldItemId: {}, NewItemId: {}",
                             bookInfo.getBookInfoId(), bookInfo.getItemId(), itemId);
                     // 更新 itemId 關聯
                     bookInfo.setItemId(itemId);
@@ -519,11 +519,11 @@ public class BookItemServiceImpl implements IBookItemService {
                     bookInfo.setItemId(itemId);
                     bookInfo.setIsbn(bookInfoDTO.getIsbn());
                     bookInfo.setStatus("0");
-                    bookInfo.setCreateBy(SecurityUtils.getUsername());
+                    bookInfo.setCreateBy(getUsername());
                     bookInfo.setCreateTime(new Date());
                 }
             }
-            
+
             // 更新所有書籍資訊欄位
             bookInfo.setTitle(bookInfoDTO.getTitle());
             bookInfo.setAuthor(bookInfoDTO.getAuthor());
@@ -538,32 +538,50 @@ public class BookItemServiceImpl implements IBookItemService {
             bookInfo.setIntroduction(bookInfoDTO.getIntroduction());
             bookInfo.setSourceUrl(bookInfoDTO.getSourceUrl());
             bookInfo.setCrawlTime(new Date());
-            bookInfo.setUpdateBy(SecurityUtils.getUsername());
+            bookInfo.setUpdateBy(getUsername());
             bookInfo.setUpdateTime(new Date());
-            
+
             int bookInfoResult;
             if (bookInfo.getBookInfoId() == null) {
                 bookInfoResult = invBookInfoService.insertInvBookInfo(bookInfo);
             } else {
                 bookInfoResult = invBookInfoService.updateInvBookInfo(bookInfo);
             }
-            
+
             if (bookInfoResult <= 0) {
                 throw new ServiceException("更新書籍資訊失敗");
             }
             log.info("更新書籍資訊成功，ItemId: {}, BookInfoId: {}", itemId, bookInfo.getBookInfoId());
-            
+
             // 4. 完全不動庫存表 (inv_stock)
             log.info("跳過庫存更新，保持原有庫存數量不變");
-            
+
             return true;
-            
+
         } catch (ServiceException e) {
             log.error("更新書籍資訊失敗: {}", e.getMessage(), e);
             throw e;
         } catch (Exception e) {
             log.error("更新書籍資訊時發生未預期的錯誤: {}", e.getMessage(), e);
             throw new ServiceException("更新書籍資訊失敗: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 安全地取得使用者名稱
+     * <p>
+     * 在執行緒池環境中，即使透過 TaskDecorator 複製了 SecurityContext，
+     * 仍可能出現意外情況導致無法取得使用者名稱。
+     * 此方法提供備用方案，確保程式不會因此中斷。
+     *
+     * @return 使用者名稱，如果無法取得則返回 "system"
+     */
+    private String getUsername() {
+        try {
+            return SecurityUtils.getUsername();
+        } catch (Exception e) {
+            log.warn("無法取得使用者名稱，使用系統帳號: {}", e.getMessage());
+            return "system";
         }
     }
 }
