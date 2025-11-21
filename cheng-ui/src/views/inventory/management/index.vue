@@ -57,6 +57,18 @@
       </el-col>
       <el-col :span="1.5">
         <el-button
+          type="danger"
+          plain
+          icon="el-icon-delete"
+          size="mini"
+          :disabled="multiple"
+          @click="handleDelete"
+          v-hasPermi="['inventory:management:remove']"
+        >刪除
+        </el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
           type="warning"
           plain
           icon="el-icon-download"
@@ -177,6 +189,15 @@
             v-hasPermi="['inventory:management:edit']"
           >修改
           </el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-delete"
+            @click="handleDelete(scope.row)"
+            v-hasPermi="['inventory:management:remove']"
+            style="color: #F56C6C;"
+          >刪除
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -242,7 +263,19 @@
         <el-descriptions-item label="單位">{{ detailData.unit }}</el-descriptions-item>
         <el-descriptions-item label="供應商">{{ detailData.supplier }}</el-descriptions-item>
         <el-descriptions-item label="存放位置">{{ detailData.location }}</el-descriptions-item>
-        <el-descriptions-item label="條碼">{{ detailData.barcode }}</el-descriptions-item>
+        <el-descriptions-item label="條碼">
+          <span>{{ detailData.barcode }}</span>
+          <el-button
+            v-if="detailData.barcode && isValidIsbn(detailData.barcode)"
+            type="primary"
+            size="mini"
+            icon="el-icon-refresh"
+            :loading="refreshingIsbn"
+            @click="handleRefreshIsbn"
+            style="margin-left: 10px;"
+          >重新抓取
+          </el-button>
+        </el-descriptions-item>
         <el-descriptions-item label="最低庫存">{{ detailData.minStock }}</el-descriptions-item>
         <el-descriptions-item label="最高庫存">{{ detailData.maxStock }}</el-descriptions-item>
 
@@ -465,6 +498,7 @@ import {
   stockOut
 } from "@/api/inventory/management"
 import { listCategory } from "@/api/inventory/category"
+import { refreshIsbn } from "@/api/inventory/scan"
 import ImageUpload from '@/components/ImageUpload'
 import { getImageUrl } from '@/utils/image'
 import CategoryManagement from './components/CategoryManagement'
@@ -544,6 +578,8 @@ export default {
       editDialogTitle: "修改物品資訊",
       isEdit: true,
       editForm: {},
+      // ISBN 重新抓取狀態
+      refreshingIsbn: false,
       editRules: {
         itemCode: [
           {required: true, message: "物品編碼不能為空", trigger: "blur"}
@@ -614,6 +650,75 @@ export default {
       getManagement(itemId).then(response => {
         this.editForm = response.data;
         this.editDialogVisible = true;
+      });
+    },
+    /** 刪除按鈕操作 */
+    handleDelete(row) {
+      const itemIds = row.itemId ? [row.itemId] : this.ids;
+      const itemNames = row.itemName ? [row.itemName] : this.managementList
+        .filter(item => itemIds.includes(item.itemId))
+        .map(item => item.itemName);
+      
+      const confirmMessage = `
+        <div style="text-align: left;">
+          <p style="color: #E6A23C; font-weight: bold; margin-bottom: 10px;">
+            <i class="el-icon-warning"></i> 警告：此操作將會同時刪除以下相關資料
+          </p>
+          <ul style="margin: 10px 0; padding-left: 20px; color: #909399; font-size: 13px;">
+            <li>物品基本資訊</li>
+            <li>書籍詳細資訊（如有）</li>
+            <li>庫存記錄</li>
+            <li>所有歷史異動記錄</li>
+          </ul>
+          <p style="font-weight: bold; margin-top: 15px; margin-bottom: 10px;">確定要刪除以下物品嗎？</p>
+          <ul style="padding-left: 20px;">
+            ${itemNames.map(name => '<li>' + name + '</li>').join('')}
+          </ul>
+        </div>
+      `;
+      
+      this.$confirm(confirmMessage, '刪除確認', {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '確定刪除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        return delManagement(itemIds);
+      }).then((response) => {
+        this.getList();
+        if (response.code === 200) {
+          // 成功或部分成功的情況
+          const message = response.msg || "刪除成功";
+          if (message.includes('失敗')) {
+            // 部分失敗，使用通知框顯示詳細訊息
+            this.$notify({
+              title: '⚠️ 刪除結果',
+              dangerouslyUseHTMLString: true,
+              message: `<div style="max-height: 400px; overflow-y: auto;">${message}</div>`,
+              type: 'warning',
+              duration: 8000,
+              customClass: 'delete-result-notification'
+            });
+          } else {
+            // 完全成功
+            this.$message.success(message);
+          }
+        } else {
+          // 完全失敗
+          this.$notify({
+            title: '❌ 刪除失敗',
+            dangerouslyUseHTMLString: true,
+            message: `<div style="max-height: 400px; overflow-y: auto;">${response.msg || "刪除失敗"}</div>`,
+            type: 'error',
+            duration: 10000,
+            customClass: 'delete-result-notification'
+          });
+        }
+      }).catch((error) => {
+        // 使用者取消或其他錯誤
+        if (error && error !== 'cancel') {
+          console.error('刪除操作錯誤:', error);
+        }
       });
     },
     /** 查看詳情 */
@@ -766,6 +871,86 @@ export default {
     getCategoryList() {
       listCategory({ status: '0' }).then(response => {
         this.categoryList = response.rows || [];
+      });
+    },
+    /** 驗證是否為有效的 ISBN */
+    isValidIsbn(barcode) {
+      if (!barcode) return false;
+      // ISBN-10 或 ISBN-13 格式驗證
+      const isbn = barcode.replace(/[-\s]/g, '');
+      return /^(97[89])?\d{9}[\dXx]$/.test(isbn);
+    },
+    /** 重新抓取 ISBN 資料 */
+    handleRefreshIsbn() {
+      if (!this.detailData || !this.detailData.barcode) {
+        this.$modal.msgWarning("條碼為空，無法抓取");
+        return;
+      }
+
+      this.$confirm(
+        `<div style="margin-bottom: 10px;">確定要重新抓取 ISBN <strong>${this.detailData.barcode}</strong> 的書籍資料嗎？</div>` +
+        `<div style="color: #909399; font-size: 12px;">
+          <p style="margin: 5px 0;"><strong>更新範圍：</strong></p>
+          <ul style="margin: 5px 0; padding-left: 20px; text-align: left;">
+            <li>書名、作者、出版社</li>
+            <li>封面圖片、簡介</li>
+            <li>規格、版本資訊</li>
+          </ul>
+          <p style="margin: 5px 0; color: #67C23A;"><strong>✅ 不影響：</strong>庫存數量、借出狀態</p>
+          <p style="margin: 5px 0; color: #E6A23C;"><strong>⚠️ 注意：</strong>如果新資料不完整，則不會更新</p>
+        </div>`,
+        "重新抓取確認",
+        {
+          confirmButtonText: "確定抓取",
+          cancelButtonText: "取消",
+          type: "warning",
+          dangerouslyUseHTMLString: true,
+          center: false
+        }
+      ).then(() => {
+        this.refreshingIsbn = true;
+        refreshIsbn(this.detailData.itemId).then(response => {
+          const result = response.data;
+          
+          // 顯示更新結果
+          if (result.updatedFields && result.updatedFields.length > 0) {
+            const changeDetails = Object.entries(result.changes)
+              .map(([key, value]) => `<li><strong>${key}</strong>: ${value}</li>`)
+              .join('');
+            
+            this.$alert(
+              `<div style="text-align: left;">
+                <p style="margin-bottom: 10px; color: #67C23A; font-weight: bold;">${result.message}</p>
+                <p style="margin: 10px 0; color: #606266; font-size: 13px;">
+                  資料完整性：舊資料 <strong>${result.existingScore}</strong> 分 → 新資料 <strong>${result.newScore}</strong> 分
+                </p>
+                <p style="margin-bottom: 5px; font-weight: bold;">變更詳情：</p>
+                <ul style="padding-left: 20px;">${changeDetails}</ul>
+              </div>`,
+              "更新成功",
+              {
+                dangerouslyUseHTMLString: true,
+                confirmButtonText: "知道了"
+              }
+            );
+          } else {
+            this.$modal.msgInfo(result.message || "資料無變化，無需更新");
+          }
+          
+          // 重新載入詳情資料
+          return getManagement(this.detailData.itemId);
+        }).then(response => {
+          this.detailData = response.data;
+          // 重新整理列表
+          this.getList();
+        }).catch(error => {
+          const errorMsg = error.msg || error.message || "抓取失敗，請稍後再試";
+          this.$modal.msgError(errorMsg);
+        }).finally(() => {
+          this.refreshingIsbn = false;
+        });
+      }).catch(() => {
+        // 使用者取消
       });
     },
     /** 提交編輯 */
@@ -949,5 +1134,43 @@ export default {
     margin: 1px !important;
     min-width: 28px;
   }
+}
+
+/* 刪除結果通知樣式優化 */
+.delete-result-notification {
+  width: 500px;
+  max-width: 90vw;
+}
+
+.delete-result-notification .el-notification__content {
+  text-align: left;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+/* 通知內容中的 code 標籤樣式 */
+.delete-result-notification code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+}
+
+/* 通知內容滾動條美化 */
+.delete-result-notification ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.delete-result-notification ::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.delete-result-notification ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.delete-result-notification ::-webkit-scrollbar-track {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
 }
 </style>

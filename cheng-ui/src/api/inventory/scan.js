@@ -26,3 +26,12 @@ export function scanCode(data) {
     data: data
   })
 }
+
+// 重新抓取 ISBN 資料並更新（只更新書籍資訊，不影響庫存）
+export function refreshIsbn(itemId) {
+  return request({
+    url: '/inventory/scan/refreshIsbn',
+    method: 'post',
+    data: { itemId }
+  })
+}

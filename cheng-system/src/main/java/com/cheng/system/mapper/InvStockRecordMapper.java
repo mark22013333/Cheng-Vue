@@ -73,4 +73,12 @@ public interface InvStockRecordMapper {
      * @return 結果
      */
     int deleteInvStockRecordByRecordIds(Long[] recordIds);
+
+    /**
+     * 根據物品ID刪除庫存異動記錄
+     *
+     * @param itemId 物品ID
+     * @return 刪除記錄數
+     */
+    int deleteInvStockRecordByItemId(Long itemId);
 }

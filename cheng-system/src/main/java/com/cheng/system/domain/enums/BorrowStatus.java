@@ -111,4 +111,20 @@ public enum BorrowStatus {
     public boolean needsReturn() {
         return this == BORROWED || this == OVERDUE || this == PARTIAL_RETURNED;
     }
+
+    /**
+     * 取得狀態對應的顏色（Element UI 色系）
+     *
+     * @return 顏色代碼
+     */
+    public String getColor() {
+        return switch (this) {
+            case PENDING -> "#409EFF";      // 待審核 - 藍色
+            case BORROWED -> "#E6A23C";     // 已借出 - 橙色
+            case REJECTED -> "#909399";     // 審核拒絕 - 灰色
+            case RETURNED -> "#67C23A";     // 已歸還 - 綠色
+            case PARTIAL_RETURNED -> "#F56C6C"; // 部分歸還 - 紅色
+            case OVERDUE -> "#F56C6C";      // 逾期 - 紅色
+        };
+    }
 }

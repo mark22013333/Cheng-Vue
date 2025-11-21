@@ -122,4 +122,13 @@ public interface InvBorrowMapper {
      * @return 今日借出記錄數量
      */
     int countTodayBorrows();
+
+    /**
+     * 檢查物品是否有未完成的借出記錄
+     * 未完成狀態包括：待審核(0)、已借出(1)、部分歸還(4)、逾期(5)
+     *
+     * @param itemId 物品ID
+     * @return 未完成的借出記錄列表
+     */
+    List<InvBorrow> selectActiveBorrowsByItemId(Long itemId);
 }

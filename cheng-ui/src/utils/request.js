@@ -99,13 +99,35 @@ service.interceptors.response.use(res => {
     }
       return Promise.reject('無效的會話，或者會話已過期，請重新登入。')
     } else if (code === 500) {
-      Message({ message: msg, type: 'error' })
+      // 檢查是否包含 HTML 標籤
+      const isHtml = /<[^>]+>/.test(msg)
+      if (isHtml) {
+        Notification.error({
+          title: '操作失敗',
+          dangerouslyUseHTMLString: true,
+          message: `<div style="max-height: 400px; overflow-y: auto;">${msg}</div>`,
+          duration: 8000
+        })
+      } else {
+        Message({ message: msg, type: 'error' })
+      }
       return Promise.reject(new Error(msg))
     } else if (code === 601) {
       Message({ message: msg, type: 'warning' })
       return Promise.reject('error')
     } else if (code !== 200) {
-      Notification.error({ title: msg })
+      // 檢查是否包含 HTML 標籤
+      const isHtml = /<[^>]+>/.test(msg)
+      if (isHtml) {
+        Notification.error({
+          title: '錯誤',
+          dangerouslyUseHTMLString: true,
+          message: `<div style="max-height: 400px; overflow-y: auto;">${msg}</div>`,
+          duration: 8000
+        })
+      } else {
+        Notification.error({ title: msg })
+      }
       return Promise.reject('error')
     } else {
       return res.data

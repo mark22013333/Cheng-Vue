@@ -1,172 +1,190 @@
 <template>
   <div class="app-container home">
-    <el-row :gutter="20">
-      <el-col :sm="24" :lg="12" style="padding-left: 20px">
-        <h2>CoolApps後台管理框架</h2>
-        <p>
 
-        </p>
-        <p>
-          <b>目前版本:</b> <span>v{{ version }}</span>
-        </p>
-        <p>
-          <el-tag type="danger">&yen;線上測試中</el-tag>
-        </p>
-      </el-col>
-
-      <el-col :sm="24" :lg="12" style="padding-left: 50px">
-        <el-row>
-          <el-col :span="12">
-          </el-col>
-        </el-row>
-        <el-row>
-        </el-row>
-      </el-col>
-    </el-row>
-    <el-divider/>
-    <el-row :gutter="20">
-      <el-col :xs="24" :sm="24" :md="12" :lg="8">
-        <el-card class="update-log">
-          <div slot="header" class="clearfix">
-            <span>聯絡訊息</span>
-          </div>
-          <div class="body">
-            <p>
-              <el-button
-                size="mini"
-                icon="el-icon-s-home"
-                plain
-                @click="goTarget('https://mark22013333.github.io/')">
-                部落格
-              </el-button>
-            </p>
+    <el-row :gutter="20" class="mb-20">
+      <el-col :xs="24" :sm="24" :md="16" :lg="17">
+        <el-card shadow="hover" class="welcome-card">
+          <div class="welcome-content">
+            <div class="logo-wrapper">
+              <svg class="welcome-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#A0CFFF" d="M266.7 128h576c70.7 0 128 57.3 128 128v576c0 70.7-57.3 128-128 128h-576c-70.7 0-128-57.3-128-128v-576c0-70.7 57.3-128 128-128z"/>
+                <path fill="#79BBFF" d="M192 213.3h576c70.7 0 128 57.3 128 128v576c0 70.7-57.3 128-128 128h-576c-70.7 0-128-57.3-128-128v-576c0-70.7 57.3-128 128-128z"/>
+                <path fill="#409EFF" d="M117.3 298.7h576c70.7 0 128 57.3 128 128v576c0 70.7-57.3 128-128 128h-576c-70.7 0-128-57.3-128-128v-576c0-70.7 57.3-128 128-128z"/>
+              </svg>
+            </div>
+            <div class="welcome-text">
+              <h2 class="welcome-title">CoolApps 後台管理系統</h2>
+              <p class="welcome-subtitle">歡迎回來，高效管理您的應用程式與資料數據。</p>
+              <div class="version-tags">
+                <el-tag type="primary" effect="dark" size="small">
+                  <i class="el-icon-price-tag"></i> {{ version }}
+                </el-tag>
+                <el-tag type="danger" effect="plain" size="small" class="ml-10">
+                  <i class="el-icon-warning-outline"></i> 測試環境
+                </el-tag>
+              </div>
+            </div>
           </div>
         </el-card>
       </el-col>
-      <el-col :xs="24" :sm="24" :md="12" :lg="8">
-        <el-card class="update-log">
-          <div slot="header" class="clearfix">
-            <span>更新日誌</span>
+
+      <el-col :xs="24" :sm="24" :md="8" :lg="7">
+        <el-card shadow="hover" class="info-card">
+          <div slot="header" class="card-header">
+            <span><i class="el-icon-user-solid"></i> 開發資訊</span>
           </div>
-          <el-collapse accordion>
-            <el-collapse-item title="v1.6.1 - 2025-11-15">
-              <ol>
-                <li>新增 LINE Rich Menu 的發布功能，同時也新增了完整的圖片上傳、自動裁切/壓縮機制...等，並優化了前後端交互體驗。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.5.4 - 2025-11-02">
-              <ol>
-                <li>導入全系統日誌追蹤功能 (TraceId)。</li>
-                <li>導入開發工具 (Git Hooks, Mapper 驗證) 並擴充 LINE 模組功能。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.5.3 - 2025-10-26">
-              <ol>
-                <li>導入排程任務範本 (TaskTypeProvider) 動態註冊機制。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.5.2 - 2025-10-25">
-              <ol>
-                <li>整合 Selenium 爬蟲框架。</li>
-                <li>新增 CA102 爬蟲 (臺灣證券交易所-即時重大訊息)。</li>
-                <li>新增 CA103 爬蟲 (臺灣證券交易所-上市公司每日收盤價)。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.5.1 - 2025-10-22">
-              <ol>
-                <li>建立爬蟲模組並整合 Quartz 定時任務排程。</li>
-                <li>更新「定時任務」模組的新增/修改彈窗。</li>
-                <li>新增「設定方式」切換功能：「從範本選擇」或「手動輸入」。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.4.0 - 2025-10-22">
-              <ol>
-                <li>導入 Flyway 實作資料庫版本控制與自動化遷移。</li>
-                <li>優化報表篩選，僅顯示已使用的物品分類。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.3.4 - 2025-10-14">
-              <ol>
-                <li>全面更新登入頁面視覺設計，提升使用者體驗。</li>
-                <li>增強手機端掃描功能，支援快速入庫與詳情檢視。</li>
-                <li>針對庫存管理主頁面進行響應式設計（RWD）優化，改善在手機等小螢幕裝置上的表格與操作按鈕佈局，提升行動裝置操作體驗。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.2.3 - 2025-10-13">
-              <ol>
-                <li>Docker 容器化部署流程，進行了全面的架構調整與功能增強。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.2.2 - 2025-10-10">
-              <ol>
-                <li>個人中心 (User Profile) UI/UX 全面升級。</li>
-                <li>庫存管理 (Inventory) 新增圖片功能。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.2.1 - 2025-10-05">
-              <ol>
-                <li>整合物品與庫存管理，並新增可拖曳調整寬度的側邊選單。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.2.0 - 2025-10-03">
-              <ol>
-                <li>整合 ISBN 掃描與書籍資訊爬蟲功能。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.1.1 - 2025-09-23">
-              <ol>
-                <li>新增「庫存管理」模組，包含物品管理、庫存查詢、借出管理、掃描功能與庫存報表等頁面。</li>
-                <li>新增一個全域浮動的掃描按鈕元件，提升操作便利性。</li>
-                <li>為掃描功能整合了 html5-qrcode 套件。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.0.1 - 2025-09-23">
-              <ol>
-                <li>整合了 Jasypt，對設定檔 (application.yml) 中的敏感資訊（如資料庫密碼、Token Secret）進行加密處理。</li>
-                <li>將加密演算法升級為更安全的 PBEWITHHMACSHA512ANDAES_256。</li>
-              </ol>
-            </el-collapse-item>
-            <el-collapse-item title="v1.0.0 - 2025-09-22">
-              <ol>
-                <li>CoolApps前後端分離系統正式發布</li>
-              </ol>
-            </el-collapse-item>
-          </el-collapse>
+          <div class="contact-body">
+            <div class="contact-row">
+              <span class="label">開發者</span>
+              <span class="value">Mark Cheng</span>
+            </div>
+            <div class="contact-row">
+              <span class="label">地點</span>
+              <span class="value">台灣 (Taiwan)</span>
+            </div>
+            <div class="contact-row">
+              <span class="label">發布日</span>
+              <span class="value">2025-09-22</span>
+            </div>
+            <el-button
+              class="blog-btn"
+              type="primary"
+              plain
+              size="small"
+              icon="el-icon-s-promotion"
+              @click="goTarget('https://mark22013333.github.io/')">
+              造訪部落格
+            </el-button>
+          </div>
         </el-card>
       </el-col>
-      <!--      <el-col :xs="24" :sm="24" :md="12" :lg="8">-->
-      <!--        <el-card class="update-log">-->
-      <!--          <div slot="header" class="clearfix">-->
-      <!--            <span>捐贈支援</span>-->
-      <!--          </div>-->
-      <!--          <div class="body">-->
-      <!--            <img-->
-      <!--              src="@/assets/images/pay.png"-->
-      <!--              alt="donate"-->
-      <!--              width="100%"-->
-      <!--            />-->
-      <!--            <span style="display: inline-block; height: 30px; line-height: 30px"-->
-      <!--            >你可以請作者喝杯咖啡表示鼓勵</span-->
-      <!--            >-->
-      <!--          </div>-->
-      <!--        </el-card>-->
-      <!--      </el-col>-->
     </el-row>
+
+    <el-row :gutter="20" class="mb-20">
+      <el-col :xs="12" :sm="12" :md="6" :lg="6" v-for="(stat, index) in statCards" :key="index">
+        <el-card shadow="hover" class="stat-card-item" :body-style="{ padding: '20px' }">
+          <div class="stat-wrapper">
+            <div class="stat-icon-box" :class="stat.colorClass">
+              <i :class="stat.icon"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-text">{{ stat.label }}</div>
+              <div class="stat-number">{{ stat.value }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row>
+      <el-col :span="24">
+        <el-card shadow="never" class="changelog-card">
+          <div slot="header" class="card-header">
+            <div class="header-title">
+              <i class="el-icon-notebook-2"></i>
+              <span>系統更新日誌</span>
+            </div>
+            <el-tag size="small" type="info" effect="plain">共 {{ versionLogs.length }} 個版本紀錄</el-tag>
+          </div>
+
+          <div class="changelog-container">
+            <el-timeline>
+              <el-timeline-item
+                v-for="(log, index) in versionLogs"
+                :key="index"
+                :timestamp="log.date"
+                :type="index === 0 ? 'success' : 'primary'"
+                :icon="log.icon"
+                :color="log.color"
+                placement="top">
+
+                <el-card shadow="hover" class="timeline-card">
+                  <div class="timeline-header">
+                    <div class="version-title">
+                      <span class="v-num">{{ log.version }}</span>
+                      <el-tag :type="log.tagType" size="mini" effect="dark">{{ log.tag }}</el-tag>
+                    </div>
+                  </div>
+                  <ul class="version-list">
+                    <li v-for="(item, idx) in log.items" :key="idx">{{ item }}</li>
+                  </ul>
+                </el-card>
+
+              </el-timeline-item>
+            </el-timeline>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
   </div>
 </template>
 
 <script>
+import request from "@/utils/request"
+import { versionLogs, getLatestVersion } from "@/data/changelog"
+
 export default {
   name: "Index",
   data() {
     return {
-      // 版本號
-      version: "1.6.1"
+      launchDate: new Date("2025-09-22"),
+      onlineUsers: 0,
+      totalUsers: 0,
+      versionLogs  // 從 changelog.js 引入的版本日誌資料
     }
+  },
+  computed: {
+    // 自動取得最新版本號（從 versionLogs 第一筆資料）
+    version() {
+      return getLatestVersion()
+    },
+    totalVersions() {
+      return this.versionLogs.length
+    },
+    daysSinceLaunch() {
+      const today = new Date()
+      const diffTime = Math.abs(today - this.launchDate)
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    },
+    // 產生統計卡片數據結構，方便 v-for
+    statCards() {
+      return [
+        {label: "版本迭代", value: this.totalVersions, icon: "el-icon-data-line", colorClass: "primary"},
+        {label: "執行天數", value: this.daysSinceLaunch, icon: "el-icon-time", colorClass: "success"},
+        {label: "線上人數", value: this.onlineUsers, icon: "el-icon-user", colorClass: "warning"},
+        {label: "註冊帳號", value: this.totalUsers, icon: "el-icon-s-custom", colorClass: "info"}
+      ]
+    }
+  },
+  mounted() {
+    this.getOnlineUsers()
+    this.getTotalUsers()
   },
   methods: {
     goTarget(href) {
       window.open(href, "_blank")
+    },
+    getOnlineUsers() {
+      request({
+        url: "/monitor/online/list",
+        method: "get"
+      }).then(response => {
+        this.onlineUsers = response.total || 0
+      }).catch(() => {
+        this.onlineUsers = 0
+      })
+    },
+    getTotalUsers() {
+      request({
+        url: "/system/user/list",
+        method: "get",
+        params: {pageNum: 1, pageSize: 1}
+      }).then(response => {
+        this.totalUsers = response.total || 0
+      }).catch(() => {
+        this.totalUsers = 0
+      })
     }
   }
 }
@@ -174,67 +192,236 @@ export default {
 
 <style scoped lang="scss">
 .home {
-  blockquote {
-    padding: 10px 20px;
-    margin: 0 0 20px;
-    font-size: 17.5px;
-    border-left: 5px solid #eee;
-  }
+  padding: 20px;
+  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  background-color: #f5f7f9;
+  min-height: 100vh;
 
-  hr {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    border: 0;
-    border-top: 1px solid #eee;
-  }
-
-  .col-item {
+  .mb-20 {
     margin-bottom: 20px;
   }
 
-  ul {
-    padding: 0;
-    margin: 0;
+  .ml-10 {
+    margin-left: 10px;
   }
 
-  font-family: "open sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 13px;
-  color: #676a6c;
-  overflow-x: hidden;
+  // 1. 歡迎卡片優化
+  .welcome-card {
+    height: 100%;
+    border: none;
 
-  ul {
-    list-style-type: none;
-  }
+    .welcome-content {
+      display: flex;
+      align-items: center;
 
-  h4 {
-    margin-top: 0px;
-  }
+      .logo-wrapper {
+        padding-right: 25px;
+        border-right: 1px solid #eee;
+        margin-right: 25px;
 
-  h2 {
-    margin-top: 10px;
-    font-size: 26px;
-    font-weight: 100;
-  }
+        // Icon 縮小
+        .welcome-icon {
+          width: 64px;
+          height: 64px;
+          color: #409EFF;
+        }
+      }
 
-  p {
-    margin-top: 10px;
+      .welcome-text {
+        .welcome-title {
+          font-size: 24px;
+          font-weight: 600;
+          color: #303133;
+          margin: 0 0 8px 0;
+        }
 
-    b {
-      font-weight: 700;
+        .welcome-subtitle {
+          font-size: 14px;
+          color: #909399;
+          margin: 0 0 15px 0;
+        }
+      }
     }
   }
 
-  .update-log {
-    ol {
-      display: block;
-      list-style-type: decimal;
-      margin-block-start: 1em;
-      margin-block-end: 1em;
-      margin-inline-start: 0;
-      margin-inline-end: 0;
-      padding-inline-start: 40px;
+  // 2. 聯絡資訊卡片優化
+  .info-card {
+    height: 100%;
+    border: none;
+
+    .card-header {
+      font-weight: bold;
+      color: #303133;
+    }
+
+    .contact-body {
+      .contact-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 14px;
+
+        .label {
+          color: #909399;
+        }
+
+        .value {
+          color: #606266;
+          font-weight: 500;
+        }
+      }
+
+      .blog-btn {
+        width: 100%;
+        margin-top: 10px;
+      }
+    }
+  }
+
+  // 3. 統計卡片 (獨立分離)
+  .stat-card-item {
+    border: none;
+    margin-bottom: 10px;
+    transition: transform 0.2s;
+
+    &:hover {
+      transform: translateY(-4px);
+    }
+
+    .stat-wrapper {
+      display: flex;
+      align-items: center;
+
+      .stat-icon-box {
+        width: 48px; // 原本 60px，縮小
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        flex-shrink: 0;
+
+        i {
+          font-size: 24px; // Icon 字體縮小
+          color: #fff;
+        }
+
+        // 顏色定義
+        &.primary {
+          background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        &.success {
+          background: linear-gradient(135deg, #42e695, #3bb2b8);
+        }
+
+        &.warning {
+          background: linear-gradient(135deg, #f6d365, #fda085);
+        }
+
+        &.info {
+          background: linear-gradient(135deg, #84fab0, #8fd3f4);
+        }
+      }
+
+      .stat-info {
+        .stat-text {
+          color: #909399;
+          font-size: 13px;
+          margin-bottom: 4px;
+        }
+
+        .stat-number {
+          color: #303133;
+          font-size: 24px;
+          font-weight: bold;
+        }
+      }
+    }
+  }
+
+  // 4. 更新日誌 (改用 Timeline 樣式，更清晰)
+  .changelog-card {
+    border: none;
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .header-title {
+        font-size: 16px;
+        font-weight: 600;
+
+        i {
+          margin-right: 6px;
+          color: #409EFF;
+        }
+      }
+    }
+
+    .changelog-container {
+      padding: 10px 0;
+
+      // 替換原本的 collapse 為 timeline，解決擠壓
+      .timeline-card {
+        border: 1px solid #EBEEF5;
+
+        .timeline-header {
+          display: flex;
+          align-items: center;
+          margin-bottom: 12px;
+
+          .version-title {
+            display: flex;
+            align-items: center;
+
+            .v-num {
+              font-size: 16px;
+              font-weight: bold;
+              margin-right: 10px;
+              color: #303133;
+            }
+          }
+        }
+
+        .version-list {
+          padding-left: 18px;
+          margin: 0;
+
+          li {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #606266;
+            margin-bottom: 4px;
+          }
+        }
+      }
+    }
+  }
+
+  // RWD 手機適配
+  @media (max-width: 768px) {
+    .welcome-card {
+      .welcome-content {
+        flex-direction: column;
+        text-align: center;
+
+        .logo-wrapper {
+          border-right: none;
+          border-bottom: 1px solid #eee;
+          margin-right: 0;
+          margin-bottom: 15px;
+          padding-right: 0;
+          padding-bottom: 15px;
+        }
+      }
+    }
+
+    .stat-card-item {
+      margin-bottom: 15px;
     }
   }
 }
 </style>
-

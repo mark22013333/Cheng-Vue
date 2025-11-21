@@ -149,4 +149,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </delete>
 
+    <delete id="deleteInvStockRecordByItemId" parameterType="Long">
+        delete from inv_stock_record where item_id = #{itemId}
+    </delete>
+
 </mapper>
