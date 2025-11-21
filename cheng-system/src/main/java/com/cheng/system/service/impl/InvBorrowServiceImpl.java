@@ -2,10 +2,12 @@ package com.cheng.system.service.impl;
 
 import com.cheng.common.utils.DateUtils;
 import com.cheng.system.domain.InvBorrow;
+import com.cheng.system.domain.InvItem;
 import com.cheng.system.domain.InvReturn;
 import com.cheng.system.domain.InvStock;
 import com.cheng.system.domain.enums.BorrowStatus;
 import com.cheng.system.mapper.InvBorrowMapper;
+import com.cheng.system.mapper.InvItemMapper;
 import com.cheng.system.mapper.InvReturnMapper;
 import com.cheng.system.mapper.InvStockMapper;
 import com.cheng.system.service.IInvBorrowService;
@@ -35,6 +37,9 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
 
     @Autowired
     private InvReturnMapper invReturnMapper;
+
+    @Autowired
+    private InvItemMapper invItemMapper;
 
     /**
      * 查詢借出記錄
@@ -172,6 +177,13 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
         // 檢查物品是否可借出（檢查可用庫存）
         if (!checkItemAvailable(invBorrow.getItemId(), invBorrow.getQuantity())) {
             throw new RuntimeException("物品庫存不足，無法提交借出申請");
+        }
+
+        // 取得物品資訊並儲存到借出記錄（冗餘設計，保留歷史記錄）
+        InvItem item = invItemMapper.selectInvItemByItemId(invBorrow.getItemId());
+        if (item != null) {
+            invBorrow.setItemName(item.getItemName());
+            invBorrow.setItemCode(item.getItemCode());
         }
 
         // 設定借出時間

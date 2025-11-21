@@ -3,10 +3,14 @@
     :title="title"
     :visible.sync="dialogVisible"
     width="500px"
+    :modal="false"
     :close-on-click-modal="false"
-    :close-on-press-escape="false"
-    :show-close="canClose"
+    :close-on-press-escape="true"
+    :show-close="true"
     :before-close="handleClose"
+    append-to-body
+    class="progress-dialog-draggable"
+    custom-class="progress-dialog-custom"
   >
     <div class="progress-container">
       <!-- 進度條 -->
@@ -53,7 +57,9 @@ export default {
       showLogs: false,
       canClose: false,
       canRetry: false,
-      retryCallback: null
+      retryCallback: null,
+      allowBackgroundWork: true, // 允許在背景執行
+      dragEnabled: false // 標記是否已啟用拖曳
     }
   },
   computed: {
@@ -85,6 +91,11 @@ export default {
       this.canClose = false
       this.canRetry = false
       this.retryCallback = null
+      
+      // 對話框渲染後啟用拖曳功能
+      this.$nextTick(() => {
+        this.enableDrag()
+      })
     },
     
     /**
@@ -166,9 +177,73 @@ export default {
      * 處理關閉
      */
     handleClose() {
-      if (this.canClose) {
+      // 進度未完成時，詢問是否在背景繼續執行
+      if (!this.canClose && this.percentage < 100) {
+        this.$confirm(
+          '任務仍在處理中，關閉視窗後將在背景繼續執行。確定要關閉視窗嗎？',
+          '提示',
+          {
+            confirmButtonText: '關閉視窗',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        ).then(() => {
+          this.close()
+          this.$emit('minimize') // 通知父組件最小化
+        }).catch(() => {})
+      } else {
         this.close()
       }
+    },
+    
+    /**
+     * 啟用對話框拖曳功能
+     */
+    enableDrag() {
+      // 避免重複綁定
+      if (this.dragEnabled) return
+      
+      // 使用 $el 確保找到當前組件的對話框
+      const dialogWrapper = this.$el.querySelector('.el-dialog')
+      if (!dialogWrapper) return
+      
+      const dialogHeader = dialogWrapper.querySelector('.el-dialog__header')
+      if (!dialogHeader) return
+      
+      this.dragEnabled = true
+      
+      dialogHeader.style.cursor = 'move'
+      dialogHeader.style.userSelect = 'none'
+      
+      let isDragging = false
+      let currentX
+      let currentY
+      let initialX
+      let initialY
+      let xOffset = 0
+      let yOffset = 0
+      
+      dialogHeader.addEventListener('mousedown', (e) => {
+        initialX = e.clientX - xOffset
+        initialY = e.clientY - yOffset
+        isDragging = true
+      })
+      
+      document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+          e.preventDefault()
+          currentX = e.clientX - initialX
+          currentY = e.clientY - initialY
+          xOffset = currentX
+          yOffset = currentY
+          
+          dialogWrapper.style.transform = `translate(${currentX}px, ${currentY}px)`
+        }
+      })
+      
+      document.addEventListener('mouseup', () => {
+        isDragging = false
+      })
     },
     
     /**
@@ -251,5 +326,47 @@ export default {
 
 .dialog-footer {
   text-align: right;
+}
+</style>
+
+<style>
+/* 非模態對話框樣式（不使用 scoped） */
+.progress-dialog-custom {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid #dcdfe6;
+}
+
+.progress-dialog-custom .el-dialog__header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 15px 20px;
+  border-radius: 4px 4px 0 0;
+}
+
+.progress-dialog-custom .el-dialog__title {
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.progress-dialog-custom .el-dialog__headerbtn .el-dialog__close {
+  color: #fff;
+  font-size: 20px;
+}
+
+.progress-dialog-custom .el-dialog__headerbtn:hover .el-dialog__close {
+  color: #f5f7fa;
+}
+
+/* 拖曳提示（標題列加上圖示） */
+.progress-dialog-custom .el-dialog__header::before {
+  content: '⋮⋮';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: -2px;
 }
 </style>

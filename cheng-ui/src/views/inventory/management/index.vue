@@ -270,7 +270,6 @@
             type="primary"
             size="mini"
             icon="el-icon-refresh"
-            :loading="refreshingIsbn"
             @click="handleRefreshIsbn"
             style="margin-left: 10px;"
           >重新抓取
@@ -368,6 +367,9 @@
         <el-descriptions-item label="備註" :span="2">{{ detailData.remark }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
+
+    <!-- 進度對話框 -->
+    <ProgressDialog ref="progressDialog" />
 
     <!-- 編輯對話框 -->
     <el-dialog :title="editDialogTitle" :visible.sync="editDialogVisible" width="800px" append-to-body>
@@ -498,8 +500,9 @@ import {
   stockOut
 } from "@/api/inventory/management"
 import { listCategory } from "@/api/inventory/category"
-import { refreshIsbn } from "@/api/inventory/scan"
+import { createRefreshTask } from "@/api/inventory/scan"
 import ImageUpload from '@/components/ImageUpload'
+import ProgressDialog from '@/components/ProgressDialog'
 import { getImageUrl } from '@/utils/image'
 import CategoryManagement from './components/CategoryManagement'
 
@@ -507,6 +510,7 @@ export default {
   name: "InvManagement",
   components: {
     ImageUpload,
+    ProgressDialog,
     CategoryManagement
   },
   data() {
@@ -578,8 +582,8 @@ export default {
       editDialogTitle: "修改物品資訊",
       isEdit: true,
       editForm: {},
-      // ISBN 重新抓取狀態
-      refreshingIsbn: false,
+      // SSE 連線管理（用於並行抓取）
+      sseConnections: new Map(),
       editRules: {
         itemCode: [
           {required: true, message: "物品編碼不能為空", trigger: "blur"}
@@ -880,15 +884,19 @@ export default {
       const isbn = barcode.replace(/[-\s]/g, '');
       return /^(97[89])?\d{9}[\dXx]$/.test(isbn);
     },
-    /** 重新抓取 ISBN 資料 */
+    /** 重新抓取 ISBN 資料（使用 SSE + ProgressDialog） */
     handleRefreshIsbn() {
       if (!this.detailData || !this.detailData.barcode) {
         this.$modal.msgWarning("條碼為空，無法抓取");
         return;
       }
-
+      
+      const itemId = this.detailData.itemId;
+      const isbn = this.detailData.barcode;
+      const itemName = this.detailData.itemName;
+      
       this.$confirm(
-        `<div style="margin-bottom: 10px;">確定要重新抓取 ISBN <strong>${this.detailData.barcode}</strong> 的書籍資料嗎？</div>` +
+        `<div style="margin-bottom: 10px;">確定要重新抓取 ISBN <strong>${isbn}</strong> 的書籍資料嗎？</div>` +
         `<div style="color: #909399; font-size: 12px;">
           <p style="margin: 5px 0;"><strong>更新範圍：</strong></p>
           <ul style="margin: 5px 0; padding-left: 20px; text-align: left;">
@@ -898,6 +906,7 @@ export default {
           </ul>
           <p style="margin: 5px 0; color: #67C23A;"><strong>✅ 不影響：</strong>庫存數量、借出狀態</p>
           <p style="margin: 5px 0; color: #E6A23C;"><strong>⚠️ 注意：</strong>如果新資料不完整，則不會更新</p>
+          <p style="margin: 10px 0; color: #409EFF;"><strong>💡 提示：</strong>可同時抓取多本書籍</p>
         </div>`,
         "重新抓取確認",
         {
@@ -908,47 +917,195 @@ export default {
           center: false
         }
       ).then(() => {
-        this.refreshingIsbn = true;
-        refreshIsbn(this.detailData.itemId).then(response => {
-          const result = response.data;
+        // 1. 建立任務並取得 taskId
+        createRefreshTask(itemId).then(response => {
+          const taskId = response.data;
+          let dialogMinimized = false; // 標記對話框是否被最小化
           
-          // 顯示更新結果
-          if (result.updatedFields && result.updatedFields.length > 0) {
-            const changeDetails = Object.entries(result.changes)
-              .map(([key, value]) => `<li><strong>${key}</strong>: ${value}</li>`)
-              .join('');
-            
-            this.$alert(
-              `<div style="text-align: left;">
-                <p style="margin-bottom: 10px; color: #67C23A; font-weight: bold;">${result.message}</p>
-                <p style="margin: 10px 0; color: #606266; font-size: 13px;">
-                  資料完整性：舊資料 <strong>${result.existingScore}</strong> 分 → 新資料 <strong>${result.newScore}</strong> 分
-                </p>
-                <p style="margin-bottom: 5px; font-weight: bold;">變更詳情：</p>
-                <ul style="padding-left: 20px;">${changeDetails}</ul>
-              </div>`,
-              "更新成功",
-              {
-                dangerouslyUseHTMLString: true,
-                confirmButtonText: "知道了"
+          // 2. 開啟進度對話框
+          this.$refs.progressDialog.show({
+            title: `重新抓取書籍資料 - ${itemName}`,
+            message: '準備中...',
+            showLogs: true
+          });
+          
+          // 監聽對話框最小化事件
+          const handleMinimize = () => {
+            dialogMinimized = true;
+            this.$notify.info({
+              title: '背景執行中',
+              message: `《${itemName}》仍在背景抓取資料...`,
+              duration: 3000
+            });
+          };
+          this.$refs.progressDialog.$once('minimize', handleMinimize);
+          
+          // 3. 建立 SSE 連線
+          const baseURL = process.env.VUE_APP_BASE_API || '';
+          const eventSource = new EventSource(
+            `${baseURL}/inventory/scan/refreshIsbn/subscribe/${taskId}?itemId=${itemId}`
+          );
+          
+          // 儲存連線（用於並行抓取）
+          this.sseConnections.set(taskId, eventSource);
+          
+          // 監聽進度事件
+          eventSource.addEventListener('progress', (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              // 只有對話框未最小化時才更新進度
+              if (!dialogMinimized) {
+                this.$refs.progressDialog.updateProgress(data.progress, data.message);
               }
-            );
-          } else {
-            this.$modal.msgInfo(result.message || "資料無變化，無需更新");
-          }
+            } catch (error) {
+              console.error('解析進度事件失敗', error);
+            }
+          });
           
-          // 重新載入詳情資料
-          return getManagement(this.detailData.itemId);
-        }).then(response => {
-          this.detailData = response.data;
-          // 重新整理列表
-          this.getList();
+          // 監聽成功事件
+          eventSource.addEventListener('success', (event) => {
+            try {
+              const result = JSON.parse(event.data);
+              
+              // 如果對話框已最小化，使用通知提示
+              if (dialogMinimized) {
+                this.$notify.success({
+                  title: '✅ 書籍資訊更新成功',
+                  message: `《${itemName}》資料已更新完成`,
+                  duration: 5000
+                });
+              } else {
+                // 設定進度對話框為成功狀態
+                this.$refs.progressDialog.setSuccess(result.message || '書籍資訊更新成功');
+              }
+              
+              // 關閉 SSE 連線
+              eventSource.close();
+              this.sseConnections.delete(taskId);
+              
+              // 顯示變更詳情
+              if (result.updatedFields && result.updatedFields.length > 0) {
+                setTimeout(() => {
+                  const changeDetails = Object.entries(result.changes)
+                    .map(([key, value]) => `<li><strong>${key}</strong>: ${value}</li>`)
+                    .join('');
+                  
+                  this.$alert(
+                    `<div style="text-align: left;">
+                      <p style="margin-bottom: 10px; color: #67C23A; font-weight: bold;">${result.message}</p>
+                      <p style="margin: 10px 0; color: #606266; font-size: 13px;">
+                        資料完整性：舊資料 <strong>${result.existingScore}</strong> 分 → 新資料 <strong>${result.newScore}</strong> 分
+                      </p>
+                      <p style="margin-bottom: 5px; font-weight: bold;">變更詳情：</p>
+                      <ul style="padding-left: 20px;">${changeDetails}</ul>
+                    </div>`,
+                    "更新成功",
+                    {
+                      dangerouslyUseHTMLString: true,
+                      confirmButtonText: "知道了"
+                    }
+                  );
+                }, 500);
+              }
+              
+              // 重新載入詳情資料
+              getManagement(itemId).then(response => {
+                this.detailData = response.data;
+                // 重新整理列表
+                this.getList();
+              });
+              
+            } catch (error) {
+              console.error('解析成功事件失敗', error);
+            }
+          });
+          
+          // 監聽警告事件（例如：資料相同無需更新）
+          eventSource.addEventListener('warning', (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              const warningMsg = data.message || '無需更新';
+              
+              if (dialogMinimized) {
+                this.$notify.warning({
+                  title: '⚠️ 提示',
+                  message: `《${itemName}》${warningMsg}`,
+                  duration: 5000
+                });
+              } else {
+                this.$refs.progressDialog.setWarning(warningMsg);
+              }
+              
+              // 重新載入詳情資料
+              getManagement(itemId).then(response => {
+                this.detailData = response.data;
+              });
+            } catch (error) {
+              console.error('解析警告事件失敗', error);
+            } finally {
+              eventSource.close();
+              this.sseConnections.delete(taskId);
+            }
+          });
+          
+          // 監聽錯誤事件
+          eventSource.addEventListener('error', (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              const errorMsg = data.message || '處理失敗';
+              
+              if (dialogMinimized) {
+                this.$notify.error({
+                  title: '❌ 抓取失敗',
+                  message: `《${itemName}》${errorMsg}`,
+                  duration: 5000
+                });
+              } else {
+                this.$refs.progressDialog.setError(errorMsg);
+              }
+            } catch (error) {
+              console.error('解析錯誤事件失敗', error);
+            } finally {
+              eventSource.close();
+              this.sseConnections.delete(taskId);
+            }
+          });
+          
+          // 監聽連線錯誤（僅處理真正的網路錯誤）
+          eventSource.onerror = (event) => {
+            console.error('SSE 連線錯誤', event);
+            
+            // 如果連線已經正常關閉（任務完成），不做任何處理
+            if (eventSource.readyState === EventSource.CLOSED) {
+              return;
+            }
+            
+            // 只有在連線異常中斷時才顯示錯誤
+            if (eventSource.readyState === EventSource.CONNECTING) {
+              // 正在重連，暫時不顯示錯誤
+              return;
+            }
+            
+            const errorMsg = '連線中斷，請重試';
+            if (dialogMinimized) {
+              this.$notify.error({
+                title: '❌ 連線中斷',
+                message: `《${itemName}》${errorMsg}`,
+                duration: 5000
+              });
+            } else {
+              this.$refs.progressDialog.setError(errorMsg);
+            }
+            
+            eventSource.close();
+            this.sseConnections.delete(taskId);
+          };
+          
         }).catch(error => {
-          const errorMsg = error.msg || error.message || "抓取失敗，請稍後再試";
+          const errorMsg = error.msg || error.message || "建立任務失敗";
           this.$modal.msgError(errorMsg);
-        }).finally(() => {
-          this.refreshingIsbn = false;
         });
+        
       }).catch(() => {
         // 使用者取消
       });
@@ -974,6 +1131,16 @@ export default {
           }
         }
       });
+    }
+  },
+  beforeDestroy() {
+    // 關閉所有 SSE 連線
+    if (this.sseConnections) {
+      this.sseConnections.forEach((eventSource, taskId) => {
+        eventSource.close();
+        console.log('關閉 SSE 連線:', taskId);
+      });
+      this.sseConnections.clear();
     }
   }
 };

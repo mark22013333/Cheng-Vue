@@ -27,7 +27,17 @@ export function scanCode(data) {
   })
 }
 
-// 重新抓取 ISBN 資料並更新（只更新書籍資訊，不影響庫存）
+// 建立重新抓取 ISBN 任務
+export function createRefreshTask(itemId) {
+  return request({
+    url: '/inventory/scan/refreshIsbn/create',
+    method: 'post',
+    data: { itemId }
+  })
+}
+
+// 重新抓取 ISBN 資料並更新（同步版本，已棄用，建議使用 SSE）
+// @deprecated
 export function refreshIsbn(itemId) {
   return request({
     url: '/inventory/scan/refreshIsbn',
