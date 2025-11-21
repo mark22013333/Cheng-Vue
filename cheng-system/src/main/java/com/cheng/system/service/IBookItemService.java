@@ -54,4 +54,19 @@ public interface IBookItemService {
      * @return 更新結果
      */
     int updateBookInfo(Long itemId, BookInfoDTO bookInfoDTO);
+
+    /**
+     * 只更新書籍資訊，不影響庫存
+     * 用於重新抓取 ISBN 資料的情境
+     * <p>
+     * 1. 更新 inv_item 表的書籍相關欄位（書名、規格、品牌、型號、圖片、描述）
+     * 2. 更新 inv_book_info 表的所有書籍資訊欄位
+     * 3. 不修改 inv_stock 表的任何庫存數量
+     * 4. 下載和更新封面圖片
+     *
+     * @param itemId      物品ID
+     * @param bookInfoDTO 書籍資訊
+     * @return 是否更新成功
+     */
+    boolean updateBookInfoOnly(Long itemId, BookInfoDTO bookInfoDTO);
 }

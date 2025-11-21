@@ -123,4 +123,12 @@ public interface IInvItemService {
      * @return 結果
      */
     String importItem(List<InvItem> itemList, Boolean isUpdateSupport, String operName);
+
+    /**
+     * 安全刪除物品（檢查借出記錄、級聯刪除相關表）
+     *
+     * @param itemIds 需要刪除的物品ID陣列
+     * @return 刪除結果訊息
+     */
+    String safeDeleteInvItemByItemIds(Long[] itemIds);
 }

@@ -1,26 +1,19 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="renderer" content="webkit">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
-    <title><%= webpackConfig.name %></title>
-    <!--[if lt IE 11]><script>window.location.href='/html/ie.html';</script><![endif]-->
-	  <style>
-    html,
-    body,
-    #app {
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="renderer" content="webkit">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="icon" href="/favicon.ico">
+  <title><%= webpackConfig.name %></title>
+  <style>
+    html, body, #app {
       height: 100%;
-      margin: 0px;
-      padding: 0px;
-    }
-    .chromeframe {
-      margin: 0.2em 0;
-      background: #ccc;
-      color: #000;
-      padding: 0.2em 0;
+      margin: 0;
+      padding: 0;
+      //overflow: hidden;
+      background-color: #2b32b2;
     }
 
     #loader-wrapper {
@@ -30,247 +23,254 @@
       width: 100%;
       height: 100%;
       z-index: 999999;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      /* --- 改動1: 動態流動背景 --- */
+      background: linear-gradient(-45deg, #1488cc, #2b32b2, #667eea, #764ba2);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      /* --- 改動2: 增加 3D 景深 --- */
+      perspective: 1000px;
+    }
+
+    @keyframes gradientBG {
+      0% {
+        background-position: 0 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0 50%;
+      }
+    }
+
+    .mouse-glow {
+      position: absolute;
+      width: 800px; /* 加大光暈 */
+      height: 800px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      mix-blend-mode: screen; /* 改用 screen 讓光更亮 */
+      transition: opacity 0.5s ease;
+    }
+
+    /* 容器增加 3D 保留屬性 */
+    .loader-container {
+      position: relative;
+      z-index: 10;
+      transform-style: preserve-3d;
     }
 
     #loader {
-      display: block;
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 80px;
-      height: 80px;
-      margin: -40px 0 0 -40px;
-      z-index: 1001;
-      transition: transform 0.3s ease-out;
-      pointer-events: none;
+      position: relative;
+      width: 100px; /* 稍微加大圖示 */
+      height: 100px;
     }
 
     #loader .dot {
       position: absolute;
       width: 16px;
       height: 16px;
-      background: rgba(255, 255, 255, 0.9);
+      background: #fff;
       border-radius: 50%;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
     }
 
     #loader .dot:nth-child(1) {
       top: 0;
-      left: 32px;
-      animation: dotPulse 1.4s ease-in-out 0s infinite;
+      left: 42px;
+      animation-delay: 0s;
     }
 
     #loader .dot:nth-child(2) {
-      top: 11px;
-      right: 11px;
-      animation: dotPulse 1.4s ease-in-out 0.175s infinite;
+      top: 12px;
+      right: 12px;
+      animation-delay: 0.175s;
     }
 
     #loader .dot:nth-child(3) {
+      top: 42px;
       right: 0;
-      top: 32px;
-      animation: dotPulse 1.4s ease-in-out 0.35s infinite;
+      animation-delay: 0.35s;
     }
 
     #loader .dot:nth-child(4) {
-      bottom: 11px;
-      right: 11px;
-      animation: dotPulse 1.4s ease-in-out 0.525s infinite;
+      bottom: 12px;
+      right: 12px;
+      animation-delay: 0.525s;
     }
 
     #loader .dot:nth-child(5) {
       bottom: 0;
-      left: 32px;
-      animation: dotPulse 1.4s ease-in-out 0.7s infinite;
+      left: 42px;
+      animation-delay: 0.7s;
     }
 
     #loader .dot:nth-child(6) {
-      bottom: 11px;
-      left: 11px;
-      animation: dotPulse 1.4s ease-in-out 0.875s infinite;
+      bottom: 12px;
+      left: 12px;
+      animation-delay: 0.875s;
     }
 
     #loader .dot:nth-child(7) {
+      top: 42px;
       left: 0;
-      top: 32px;
-      animation: dotPulse 1.4s ease-in-out 1.05s infinite;
+      animation-delay: 1.05s;
     }
 
     #loader .dot:nth-child(8) {
-      top: 11px;
-      left: 11px;
-      animation: dotPulse 1.4s ease-in-out 1.225s infinite;
+      top: 12px;
+      left: 12px;
+      animation-delay: 1.225s;
+    }
+
+    .dot {
+      animation: dotPulse 1.4s ease-in-out infinite;
     }
 
     @keyframes dotPulse {
       0%, 100% {
         transform: scale(1);
-        opacity: 1;
+        opacity: 0.8;
       }
       50% {
-        transform: scale(1.5);
-        opacity: 0.5;
+        transform: scale(1.8);
+        opacity: 1;
+        box-shadow: 0 0 30px rgba(255, 255, 255, 1);
       }
     }
 
-    .mouse-glow {
-      position: fixed;
-      width: 300px;
-      height: 300px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
-      pointer-events: none;
-      transform: translate(-50%, -50%);
-      transition: opacity 0.3s ease;
-      z-index: 1000;
-      opacity: 0;
-    }
-
-
-    @-webkit-keyframes spin {
-      0% {
-        -webkit-transform: rotate(0deg);
-        -ms-transform: rotate(0deg);
-        transform: rotate(0deg);
-      }
-      100% {
-        -webkit-transform: rotate(360deg);
-        -ms-transform: rotate(360deg);
-        transform: rotate(360deg);
-      }
-    }
-
-    @keyframes spin {
-      0% {
-        -webkit-transform: rotate(0deg);
-        -ms-transform: rotate(0deg);
-        transform: rotate(0deg);
-      }
-      100% {
-        -webkit-transform: rotate(360deg);
-        -ms-transform: rotate(360deg);
-        transform: rotate(360deg);
-      }
-    }
-
-
-    .loaded #loader-wrapper {
-      opacity: 0;
-      -webkit-transition: all 0.5s ease-out;
-      transition: all 0.5s ease-out;
-    }
-
-    .loaded #loader {
-      opacity: 0;
-      -webkit-transition: all 0.3s ease-out;
-      transition: all 0.3s ease-out;
-    }
-
-    .loaded #loader-wrapper {
-      visibility: hidden;
-      -webkit-transform: translateY(-100%);
-      -ms-transform: translateY(-100%);
-      transform: translateY(-100%);
-      -webkit-transition: all 0.3s 1s ease-out;
-      transition: all 0.3s 1s ease-out;
-    }
-
-    .no-js #loader-wrapper {
-      display: none;
-    }
-
-    .no-js h1 {
-      color: #222222;
-    }
-
-    #loader-wrapper .load_title {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    .load_title {
+      margin-top: 50px;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       color: #FFF;
-      font-size: 22px;
-      font-weight: 600;
-      width: 100%;
       text-align: center;
-      z-index: 9999999999999;
-      position: absolute;
-      top: 60%;
-      opacity: 1;
-      line-height: 30px;
-      letter-spacing: 1px;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-      -webkit-animation: fadeInOut 2s ease-in-out infinite;
-      animation: fadeInOut 2s ease-in-out infinite;
+      z-index: 10;
+      text-shadow: 0 10px 20px rgba(0, 0, 0, 0.4); /* 加深陰影增加浮空感 */
+      position: relative;
+      transform-style: preserve-3d;
     }
 
-    #loader-wrapper .load_title span {
+    .load_title h2 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 3px;
+    }
+
+    .load_title span {
       display: block;
       margin-top: 12px;
-      font-weight: 400;
-      font-style: normal;
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.9);
-      opacity: 0.85;
-      letter-spacing: 0.5px;
+      font-size: 16px;
+      opacity: 0.9;
+      font-weight: 300;
+      letter-spacing: 1px;
     }
 
-    @-webkit-keyframes fadeInOut {
-      0%, 100% { opacity: 0.7; }
-      50% { opacity: 1; }
+    .loaded #loader-wrapper {
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.6s ease-out;
+      pointer-events: none;
     }
 
-    @keyframes fadeInOut {
-      0%, 100% { opacity: 0.7; }
-      50% { opacity: 1; }
+    .loaded .loader-container,
+    .loaded .load_title {
+      transform: translateY(-100px) scale(0.9); /* 退場時往上飛遠 */
+      opacity: 0;
+      transition: all 0.5s ease-out;
     }
   </style>
-  </head>
-  <body>
-    <div id="app">
-	    <div id="loader-wrapper">
-        <div class="mouse-glow" id="mouseGlow"></div>
-		    <div id="loader">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        </div>
-        <div class="load_title">CoolApps 管理系統<span>正在鋪設網路地毯，馬上就好！</span></div>
+</head>
+<body>
+<div id="app">
+  <div id="loader-wrapper">
+    <div class="mouse-glow" id="mouseGlow"></div>
+
+    <div class="loader-container" id="parallaxContent">
+      <div id="loader">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
       </div>
-	  </div>
-    <script>
-      // 滑鼠跟隨效果
-      document.addEventListener('DOMContentLoaded', function() {
-        var loaderWrapper = document.getElementById('loader-wrapper');
-        var loader = document.getElementById('loader');
-        var mouseGlow = document.getElementById('mouseGlow');
+    </div>
 
-        if (loaderWrapper && loader && mouseGlow) {
-          loaderWrapper.addEventListener('mousemove', function(e) {
-            // 滑鼠光暈效果
-            mouseGlow.style.left = e.clientX + 'px';
-            mouseGlow.style.top = e.clientY + 'px';
-            mouseGlow.style.opacity = '1';
+    <div class="load_title" id="parallaxText">
+      <h2>CoolApps 管理系統</h2>
+      <span>正在鋪設網路地毯，馬上就好！</span>
+    </div>
+  </div>
+</div>
 
-            // Loading 圖示跟隨滑鼠（輕微偏移）
-            var rect = loaderWrapper.getBoundingClientRect();
-            var centerX = rect.width / 2;
-            var centerY = rect.height / 2;
-            var moveX = (e.clientX - centerX) * 0.05;
-            var moveY = (e.clientY - centerY) * 0.05;
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var glow = document.getElementById('mouseGlow');
+    var content = document.getElementById('parallaxContent');
+    var text = document.getElementById('parallaxText');
 
-            loader.style.transform = 'translate(' + moveX + 'px, ' + moveY + 'px)';
-          });
+    var mouseX = window.innerWidth / 2;
+    var mouseY = window.innerHeight / 2;
 
-          loaderWrapper.addEventListener('mouseleave', function() {
-            mouseGlow.style.opacity = '0';
-            loader.style.transform = 'translate(0, 0)';
-          });
-        }
-      });
-    </script>
-  </body>
+    var currentX = mouseX;
+    var currentY = mouseY;
+
+    document.addEventListener('mousemove', function (e) {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+
+      if (glow) {
+        glow.style.left = mouseX + 'px';
+        glow.style.top = mouseY + 'px';
+      }
+    });
+
+    function animate() {
+      var centerX = window.innerWidth / 2;
+      var centerY = window.innerHeight / 2;
+
+      // Lerp 係數改大一點點 (0.05 -> 0.08) 讓反應更靈敏
+      currentX += (mouseX - currentX) * 0.08;
+      currentY += (mouseY - currentY) * 0.08;
+
+      // --- 改動3: 增強移動幅度 (分母越小動越多) ---
+      // Loader 原本 /25 -> 改為 /12 (動很大)
+      var moveX_Loader = (currentX - centerX) / 12;
+      var moveY_Loader = (currentY - centerY) / 12;
+
+      // Text 原本 /40 -> 改為 /25
+      var moveX_Text = (currentX - centerX) / 25;
+      var moveY_Text = (currentY - centerY) / 25;
+
+      if (content) {
+        // 增加旋轉倍率 (* 1.5)
+        content.style.transform =
+          'translate(' + moveX_Loader + 'px, ' + moveY_Loader + 'px) ' +
+          'rotateX(' + (-moveY_Loader * 1.5) + 'deg) ' +
+          'rotateY(' + (moveX_Loader * 1.5) + 'deg)';
+      }
+
+      if (text) {
+        text.style.transform = 'translate(' + moveX_Text + 'px, ' + moveY_Text + 'px)';
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  });
+</script>
+</body>
 </html>

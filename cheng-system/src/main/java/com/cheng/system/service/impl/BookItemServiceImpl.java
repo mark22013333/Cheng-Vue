@@ -456,4 +456,114 @@ public class BookItemServiceImpl implements IBookItemService {
         // 保留前 2000 字元
         return description.length() > 2000 ? description.substring(0, 2000) + "..." : description;
     }
+    
+    /**
+     * 只更新書籍資訊，不影響庫存
+     * 專門用於重新抓取 ISBN 資料的情境
+     */
+    @Override
+    @Transactional
+    public boolean updateBookInfoOnly(Long itemId, BookInfoDTO bookInfoDTO) {
+        if (itemId == null || bookInfoDTO == null) {
+            throw new ServiceException("參數不能為空");
+        }
+        
+        try {
+            // 1. 檢查物品是否存在
+            InvItem existingItem = invItemMapper.selectInvItemByItemId(itemId);
+            if (existingItem == null) {
+                throw new ServiceException("物品不存在，ItemId: " + itemId);
+            }
+            
+            log.info("開始只更新書籍資訊（不影響庫存），ItemId: {}, ISBN: {}", itemId, bookInfoDTO.getIsbn());
+            
+            // 2. 更新物品表 (inv_item) 的書籍相關欄位
+            existingItem.setItemName(bookInfoDTO.getTitle());
+            existingItem.setSpecification(buildSpecification(bookInfoDTO));
+            existingItem.setBrand(bookInfoDTO.getPublisher());
+            existingItem.setModel(bookInfoDTO.getEdition());
+            existingItem.setDescription(truncateDescription(bookInfoDTO.getIntroduction()));
+            
+            // 更新圖片路徑（如果有新圖片）
+            if (StringUtils.isNotEmpty(bookInfoDTO.getCoverImagePath())) {
+                existingItem.setImageUrl(bookInfoDTO.getCoverImagePath());
+            }
+            
+            existingItem.setUpdateBy(SecurityUtils.getUsername());
+            existingItem.setUpdateTime(new Date());
+            
+            int itemResult = invItemMapper.updateInvItem(existingItem);
+            if (itemResult <= 0) {
+                throw new ServiceException("更新物品記錄失敗");
+            }
+            log.info("更新物品記錄成功，ItemId: {}", itemId);
+            
+            // 3. 更新書籍資訊表 (inv_book_info)
+            // 先嘗試透過 itemId 查詢
+            InvBookInfo bookInfo = invBookInfoService.selectInvBookInfoByItemId(itemId);
+            
+            // 如果找不到，再透過 ISBN 查詢（避免重複 ISBN 導致插入失敗）
+            if (bookInfo == null) {
+                log.info("未找到該物品的書籍資訊，嘗試透過 ISBN 查詢，ItemId: {}, ISBN: {}", itemId, bookInfoDTO.getIsbn());
+                bookInfo = invBookInfoService.selectInvBookInfoByIsbn(bookInfoDTO.getIsbn());
+                
+                if (bookInfo != null) {
+                    log.warn("發現該 ISBN 已被其他記錄使用，將更新該記錄並關聯到目前物品，BookInfoId: {}, OldItemId: {}, NewItemId: {}", 
+                            bookInfo.getBookInfoId(), bookInfo.getItemId(), itemId);
+                    // 更新 itemId 關聯
+                    bookInfo.setItemId(itemId);
+                } else {
+                    // 確實不存在，建立新記錄
+                    log.info("該 ISBN 不存在於資料庫，將建立新記錄，ItemId: {}, ISBN: {}", itemId, bookInfoDTO.getIsbn());
+                    bookInfo = new InvBookInfo();
+                    bookInfo.setItemId(itemId);
+                    bookInfo.setIsbn(bookInfoDTO.getIsbn());
+                    bookInfo.setStatus("0");
+                    bookInfo.setCreateBy(SecurityUtils.getUsername());
+                    bookInfo.setCreateTime(new Date());
+                }
+            }
+            
+            // 更新所有書籍資訊欄位
+            bookInfo.setTitle(bookInfoDTO.getTitle());
+            bookInfo.setAuthor(bookInfoDTO.getAuthor());
+            bookInfo.setPublisher(bookInfoDTO.getPublisher());
+            bookInfo.setPublishDate(bookInfoDTO.getPublishDate());
+            bookInfo.setPublishLocation(bookInfoDTO.getPublishLocation());
+            bookInfo.setLanguage(bookInfoDTO.getLanguage());
+            bookInfo.setEdition(bookInfoDTO.getEdition());
+            bookInfo.setBinding(bookInfoDTO.getBinding());
+            bookInfo.setClassification(bookInfoDTO.getClassification());
+            bookInfo.setCoverImagePath(bookInfoDTO.getCoverImagePath());
+            bookInfo.setIntroduction(bookInfoDTO.getIntroduction());
+            bookInfo.setSourceUrl(bookInfoDTO.getSourceUrl());
+            bookInfo.setCrawlTime(new Date());
+            bookInfo.setUpdateBy(SecurityUtils.getUsername());
+            bookInfo.setUpdateTime(new Date());
+            
+            int bookInfoResult;
+            if (bookInfo.getBookInfoId() == null) {
+                bookInfoResult = invBookInfoService.insertInvBookInfo(bookInfo);
+            } else {
+                bookInfoResult = invBookInfoService.updateInvBookInfo(bookInfo);
+            }
+            
+            if (bookInfoResult <= 0) {
+                throw new ServiceException("更新書籍資訊失敗");
+            }
+            log.info("更新書籍資訊成功，ItemId: {}, BookInfoId: {}", itemId, bookInfo.getBookInfoId());
+            
+            // 4. 完全不動庫存表 (inv_stock)
+            log.info("跳過庫存更新，保持原有庫存數量不變");
+            
+            return true;
+            
+        } catch (ServiceException e) {
+            log.error("更新書籍資訊失敗: {}", e.getMessage(), e);
+            throw e;
+        } catch (Exception e) {
+            log.error("更新書籍資訊時發生未預期的錯誤: {}", e.getMessage(), e);
+            throw new ServiceException("更新書籍資訊失敗: " + e.getMessage());
+        }
+    }
 }

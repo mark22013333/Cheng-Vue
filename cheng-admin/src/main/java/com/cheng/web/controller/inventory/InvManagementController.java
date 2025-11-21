@@ -144,13 +144,18 @@ public class InvManagementController extends BaseController {
     }
 
     /**
-     * 刪除物品資訊
+     * 刪除物品資訊（級聯刪除相關表）
      */
     @PreAuthorize("@ss.hasPermi('inventory:management:remove')")
     @Log(title = "物品資訊", businessType = BusinessType.DELETE)
     @DeleteMapping("/{itemIds}")
     public AjaxResult remove(@PathVariable Long[] itemIds) {
-        return toAjax(invItemService.deleteInvItemByItemIds(itemIds));
+        try {
+            String resultMsg = invItemService.safeDeleteInvItemByItemIds(itemIds);
+            return success(resultMsg);
+        } catch (Exception e) {
+            return error(e.getMessage());
+        }
     }
 
     /**

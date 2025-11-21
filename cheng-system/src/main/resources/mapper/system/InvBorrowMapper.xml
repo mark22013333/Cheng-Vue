@@ -237,4 +237,11 @@
         where borrow_id = #{borrowId}
     </update>
 
+    <select id="selectActiveBorrowsByItemId" parameterType="Long" resultMap="InvBorrowResult">
+        <include refid="selectInvBorrowVo"/>
+        where b.item_id = #{itemId}
+          and b.status in ('0', '1', '4', '5')
+        order by b.borrow_time desc
+    </select>
+
 </mapper>
