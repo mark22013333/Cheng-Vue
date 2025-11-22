@@ -67,8 +67,4 @@ docker-compose.zeabur.yml
 
 ######################################################################
 # Vue 3 Upgrade Documentation (Internal)
-/cheng-ui/DEPENDENCY_UPGRADE_ANALYSIS.md
-/cheng-ui/PHASE1_CHECKLIST.md
-/cheng-ui/ROLLBACK_PLAN.md
-/cheng-ui/TESTING_CHECKLIST.md
-/cheng-ui/VUE3_UPGRADE_PROGRESS.md
+/cheng-ui/*.md
