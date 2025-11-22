@@ -1,5 +1,6 @@
 package com.cheng.common.enums;
 
+import com.cheng.common.utils.EnumUtils;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -10,7 +11,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Getter
 @RequiredArgsConstructor
-public enum Status {
+public enum Status implements CodedEnum<Integer> {
 
     /**
      * 停用
@@ -32,15 +33,7 @@ public enum Status {
      * @return 狀態
      */
     public static Status fromCode(Integer code) {
-        if (code == null) {
-            return null;
-        }
-        for (Status status : values()) {
-            if (status.code.equals(code)) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("未知的狀態代碼: " + code);
+        return EnumUtils.fromCodeOrThrow(Status.class, code);
     }
 
     /**

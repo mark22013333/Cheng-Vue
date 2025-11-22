@@ -18,6 +18,8 @@ import com.cheng.common.annotation.Log;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.enums.BusinessType;
+import com.cheng.common.enums.ScanResult;
+import com.cheng.common.enums.ScanType;
 import com.cheng.system.domain.InvStock;
 import com.cheng.system.domain.InvBorrow;
 import com.cheng.system.domain.InvStockRecord;
@@ -167,10 +169,10 @@ public class InvReportController extends BaseController {
         List<InvScanLog> allList = invScanLogService.selectInvScanLogList(new InvScanLog());
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("totalScans", allList.size());
-        statistics.put("successScans", allList.stream().filter(s -> "0".equals(s.getScanResult())).count());
-        statistics.put("failedScans", allList.stream().filter(s -> "1".equals(s.getScanResult())).count());
-        statistics.put("barcodeScans", allList.stream().filter(s -> "1".equals(s.getScanType())).count());
-        statistics.put("qrcodeScans", allList.stream().filter(s -> "2".equals(s.getScanType())).count());
+        statistics.put("successScans", allList.stream().filter(s -> ScanResult.SUCCESS.getCode().equals(s.getScanResult())).count());
+        statistics.put("failedScans", allList.stream().filter(s -> ScanResult.FAILURE.getCode().equals(s.getScanResult())).count());
+        statistics.put("barcodeScans", allList.stream().filter(s -> ScanType.BARCODE.getCode().equals(s.getScanType())).count());
+        statistics.put("qrcodeScans", allList.stream().filter(s -> ScanType.QRCODE.getCode().equals(s.getScanType())).count());
 
         TableDataInfo dataInfo = getDataTable(list);
         dataInfo.put("statistics", statistics);

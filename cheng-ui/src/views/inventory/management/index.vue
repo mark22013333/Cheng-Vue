@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-tabs v-model="activeTab" type="card">
+    <el-tabs v-model="activeTab" type="card" @tab-click="handleTabChange">
       <!-- 物品管理頁籤 -->
       <el-tab-pane label="物品管理" name="items">
     <!-- 搜尋表單 -->
@@ -876,6 +876,17 @@ export default {
       listCategory({ status: '0' }).then(response => {
         this.categoryList = response.rows || [];
       });
+    },
+    /** Tab 切換事件（重新整理資料） */
+    handleTabChange(tab) {
+      // 切換頁籤時重新整理對應的資料
+      if (tab.name === 'items') {
+        // 物品管理頁籤 - 重新整理物品列表
+        this.getList();
+      } else if (tab.name === 'categories') {
+        // 分類管理頁籤 - CategoryManagement 組件會自己載入資料
+        // 這裡不需要特別處理，因為子組件有自己的生命週期
+      }
     },
     /** 驗證是否為有效的 ISBN */
     isValidIsbn(barcode) {
