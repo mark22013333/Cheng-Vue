@@ -5,16 +5,16 @@ import modal from './modal'
 import download from './download'
 
 export default {
-  install(Vue) {
+  install(app) {
     // 頁籤操作
-    Vue.prototype.$tab = tab
+    app.config.globalProperties.$tab = tab
     // 認證物件
-    Vue.prototype.$auth = auth
+    app.config.globalProperties.$auth = auth
     // 暫存物件
-    Vue.prototype.$cache = cache
+    app.config.globalProperties.$cache = cache
     // 模態框物件
-    Vue.prototype.$modal = modal
+    app.config.globalProperties.$modal = modal
     // 下載檔案
-    Vue.prototype.$download = download
+    app.config.globalProperties.$download = download
   }
 }

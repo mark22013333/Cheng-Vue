@@ -1,7 +1,5 @@
-import Vue from 'vue'
-import store from '@/store'
 import DataDict from '@/utils/dict'
-import {getDicts as getDicts} from '@/api/system/dict/data'
+import { getDicts as getDicts } from '@/api/system/dict/data'
 
 function searchDictByKey(dict, key) {
   if (key == null && key == "") {
@@ -18,13 +16,14 @@ function searchDictByKey(dict, key) {
   }
 }
 
-function install() {
-  Vue.use(DataDict, {
+function install(app) {
+  app.use(DataDict, {
     metas: {
       '*': {
         labelField: 'dictLabel',
         valueField: 'dictValue',
         request(dictMeta) {
+          const store = app.config.globalProperties.$store
           const storeDict = searchDictByKey(store.getters.dict, dictMeta.type)
           if (storeDict) {
             return new Promise(resolve => { resolve(storeDict) })

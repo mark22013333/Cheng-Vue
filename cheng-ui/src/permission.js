@@ -1,11 +1,11 @@
 import router from './router'
 import store from './store'
-import {Message} from 'element-ui'
+import { ElMessage } from 'element-plus'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
-import {getToken} from '@/utils/auth'
-import {isPathMatch} from '@/utils/validate'
-import {isRelogin} from '@/utils/request'
+import { getToken } from '@/utils/auth'
+import { isPathMatch } from '@/utils/validate'
+import { isRelogin } from '@/utils/request'
 
 NProgress.configure({ showSpinner: false })
 
@@ -33,12 +33,14 @@ router.beforeEach((to, from, next) => {
           isRelogin.show = false
           store.dispatch('GenerateRoutes').then(accessRoutes => {
             // 根據roles權限產生可訪問的路由表
-            router.addRoutes(accessRoutes) // 動態新增可訪問路由表
-            next({...to, replace: true}) // hack方法 確認addRoutes已完成
+            accessRoutes.forEach(route => {
+              router.addRoute(route) // 動態新增可訪問路由表
+            })
+            next({...to, replace: true}) // hack方法 確認addRoute已完成
           })
         }).catch(err => {
             store.dispatch('LogOut').then(() => {
-              Message.error(err)
+              ElMessage.error(err)
               next({ path: '/' })
             })
           })

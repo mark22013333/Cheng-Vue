@@ -1,9 +1,6 @@
-import Vue from 'vue'
-import Router from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 /* Layout */
 import Layout from '@/layout'
-
-Vue.use(Router)
 
 /**
  * Note: 路由設定項
@@ -236,20 +233,10 @@ export const dynamicRoutes = [
   }
 ]
 
-// 防止連續點擊多次路由報錯
-let routerPush = Router.prototype.push
-let routerReplace = Router.prototype.replace
-// push
-Router.prototype.push = function push(location) {
-  return routerPush.call(this, location).catch(err => err)
-}
-// replace
-Router.prototype.replace = function push(location) {
-  return routerReplace.call(this, location).catch(err => err)
-}
-
-export default new Router({
-  mode: 'history', // 移除url中的#
-  scrollBehavior: () => ({y: 0}),
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  scrollBehavior: () => ({ top: 0 }),
   routes: constantRoutes
 })
+
+export default router

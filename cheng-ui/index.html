@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="renderer" content="webkit">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="icon" href="/favicon.ico">
+  <title>CoolApps管理系統</title>
+  <style>
+    html, body, #app {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    #loader-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 999999;
+      background: linear-gradient(-45deg, #1488cc, #2b32b2, #667eea, #764ba2);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      perspective: 1000px;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0 50%; }
+    }
+
+    .mouse-glow {
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      mix-blend-mode: screen;
+      transition: opacity 0.5s ease;
+    }
+
+    .loader-container {
+      position: relative;
+      z-index: 10;
+      transform-style: preserve-3d;
+    }
+
+    #loader {
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+
+    #loader .dot {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
+    }
+
+    #loader .dot:nth-child(1) { top: 0; left: 42px; animation-delay: 0s; }
+    #loader .dot:nth-child(2) { top: 12px; right: 12px; animation-delay: 0.175s; }
+    #loader .dot:nth-child(3) { top: 42px; right: 0; animation-delay: 0.35s; }
+    #loader .dot:nth-child(4) { bottom: 12px; right: 12px; animation-delay: 0.525s; }
+    #loader .dot:nth-child(5) { bottom: 0; left: 42px; animation-delay: 0.7s; }
+    #loader .dot:nth-child(6) { bottom: 12px; left: 12px; animation-delay: 0.875s; }
+    #loader .dot:nth-child(7) { top: 42px; left: 0; animation-delay: 1.05s; }
+    #loader .dot:nth-child(8) { top: 12px; left: 12px; animation-delay: 1.225s; }
+
+    .dot {
+      animation: dotPulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+      50% {
+        transform: scale(1.8);
+        opacity: 1;
+        box-shadow: 0 0 30px rgba(255, 255, 255, 1);
+      }
+    }
+
+    .load_title {
+      margin-top: 50px;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #FFF;
+      text-align: center;
+      z-index: 10;
+      text-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      position: relative;
+      transform-style: preserve-3d;
+    }
+
+    .load_title h2 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 3px;
+    }
+
+    .load_title span {
+      display: block;
+      margin-top: 12px;
+      font-size: 16px;
+      opacity: 0.9;
+      font-weight: 300;
+      letter-spacing: 1px;
+    }
+
+    .loaded #loader-wrapper {
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.6s ease-out;
+      pointer-events: none;
+    }
+
+    .loaded .loader-container,
+    .loaded .load_title {
+      transform: translateY(-100px) scale(0.9);
+      opacity: 0;
+      transition: all 0.5s ease-out;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="loader-wrapper">
+    <div class="mouse-glow" id="mouseGlow"></div>
+    <div class="loader-container" id="parallaxContent">
+      <div id="loader">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+    <div class="load_title" id="parallaxText">
+      <h2>CoolApps 管理系統</h2>
+      <span>正在鋪設網路地毯，馬上就好！</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var glow = document.getElementById('mouseGlow');
+    var content = document.getElementById('parallaxContent');
+    var text = document.getElementById('parallaxText');
+    var mouseX = window.innerWidth / 2;
+    var mouseY = window.innerHeight / 2;
+    var currentX = mouseX;
+    var currentY = mouseY;
+
+    document.addEventListener('mousemove', function (e) {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      if (glow) {
+        glow.style.left = mouseX + 'px';
+        glow.style.top = mouseY + 'px';
+      }
+    });
+
+    function animate() {
+      var centerX = window.innerWidth / 2;
+      var centerY = window.innerHeight / 2;
+      currentX += (mouseX - currentX) * 0.08;
+      currentY += (mouseY - currentY) * 0.08;
+      var moveX_Loader = (currentX - centerX) / 12;
+      var moveY_Loader = (currentY - centerY) / 12;
+      var moveX_Text = (currentX - centerX) / 25;
+      var moveY_Text = (currentY - centerY) / 25;
+
+      if (content) {
+        content.style.transform =
+          'translate(' + moveX_Loader + 'px, ' + moveY_Loader + 'px) ' +
+          'rotateX(' + (-moveY_Loader * 1.5) + 'deg) ' +
+          'rotateY(' + (moveX_Loader * 1.5) + 'deg)';
+      }
+
+      if (text) {
+        text.style.transform = 'translate(' + moveX_Text + 'px, ' + moveY_Text + 'px)';
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  });
+</script>
+
+<!-- Vite 入口 -->
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

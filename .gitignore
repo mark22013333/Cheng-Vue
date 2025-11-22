@@ -51,3 +51,24 @@ nbdist/
 /cheng.deploy/frontend-dist
 /cheng.deploy/temp
 /cheng.deploy/docs
+/cheng.deploy/nginx/proxy-ssl.conf
+/cheng.deploy/README.md
+
+######################################################################
+# Documentation & Development Notes
+/docs/
+/sql/
+docker-compose.zeabur.yml
+
+######################################################################
+# IDE Settings
+.vscode/
+.windsurf/
+
+######################################################################
+# Vue 3 Upgrade Documentation (Internal)
+/cheng-ui/DEPENDENCY_UPGRADE_ANALYSIS.md
+/cheng-ui/PHASE1_CHECKLIST.md
+/cheng-ui/ROLLBACK_PLAN.md
+/cheng-ui/TESTING_CHECKLIST.md
+/cheng-ui/VUE3_UPGRADE_PROGRESS.md
