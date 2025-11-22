@@ -41,7 +41,7 @@
                b.item_name,
                c.category_name,
                b.borrower_id,
-               b.borrower_name,
+               COALESCE(b.borrower_name, u.nick_name, u.user_name) as borrower_name,
                b.borrower_dept,
                d.dept_name as borrower_dept_name,
                b.quantity,
@@ -63,15 +63,15 @@
                  left join inv_item i on b.item_id = i.item_id
                  left join inv_category c on i.category_id = c.category_id
                  left join sys_dept d on b.borrower_dept = d.dept_id
+                 left join sys_user u on b.borrower_id = u.user_id
     </sql>
 
     <select id="selectInvBorrowList" parameterType="InvBorrow" resultMap="InvBorrowResult">
         <include refid="selectInvBorrowVo"/>
         <where>
             <if test="borrowNo != null and borrowNo != ''">and b.borrow_no like concat('%', #{borrowNo}, '%')</if>
-            <if test="itemName != null and itemName != ''">and i.item_name like concat('%', #{itemName}, '%')</if>
-            <if test="borrowerName != null and borrowerName != ''">and b.borrower_name like concat('%', #{borrowerName},
-                '%')
+            <if test="itemName != null and itemName != ''">and b.item_name like concat('%', #{itemName}, '%')</if>
+            <if test="borrowerName != null and borrowerName != ''">and (b.borrower_name like concat('%', #{borrowerName}, '%') OR u.nick_name like concat('%', #{borrowerName}, '%') OR u.user_name like concat('%', #{borrowerName}, '%'))
             </if>
             <if test="status != null and status != ''">and b.status = #{status}</if>
             <if test="beginBorrowTime != null and beginBorrowTime != ''"><!-- 開始借出時間 -->

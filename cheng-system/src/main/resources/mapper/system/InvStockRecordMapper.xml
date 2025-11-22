@@ -26,11 +26,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="selectInvStockRecordVo">
         select r.record_id, r.item_id, i.item_code, i.item_name, r.record_type, r.quantity, 
-               r.before_qty, r.after_qty, r.unit_price, r.total_amount, r.operator_id, r.operator_name, 
+               r.before_qty, r.after_qty, r.unit_price, r.total_amount, r.operator_id, 
+               COALESCE(r.operator_name, u.nick_name, u.user_name) as operator_name, 
                r.dept_id, d.dept_name, r.record_time, r.reason, r.remark 
         from inv_stock_record r
         left join inv_item i on r.item_id = i.item_id
         left join sys_dept d on r.dept_id = d.dept_id
+        left join sys_user u on r.operator_id = u.user_id
     </sql>
 
     <select id="selectInvStockRecordList" parameterType="InvStockRecord" resultMap="InvStockRecordResult">
@@ -39,7 +41,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="itemCode != null and itemCode != ''"> and i.item_code like concat('%', #{itemCode}, '%')</if>
             <if test="itemName != null and itemName != ''"> and i.item_name like concat('%', #{itemName}, '%')</if>
             <if test="recordType != null and recordType != ''"> and r.record_type = #{recordType}</if>
-            <if test="operatorName != null and operatorName != ''"> and r.operator_name like concat('%', #{operatorName}, '%')</if>
+            <if test="operatorName != null and operatorName != ''"> and (r.operator_name like concat('%', #{operatorName}, '%') OR u.nick_name like concat('%', #{operatorName}, '%') OR u.user_name like concat('%', #{operatorName}, '%'))</if>
             <if test="params.beginRecordTime != null and params.beginRecordTime != ''"><!-- 開始記錄時間 -->
                 and date_format(r.record_time,'%y%m%d') &gt;= date_format(#{params.beginRecordTime},'%y%m%d')
             </if>

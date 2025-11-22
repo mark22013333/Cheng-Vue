@@ -185,7 +185,7 @@
         </el-row>
 
         <!-- 報表表格 -->
-        <el-table v-loading="loading" :data="reportData" class="report-table">
+        <el-table v-loading="loading" :data="reportData" :key="currentReport" class="report-table">
           <!-- 庫存報表欄位 -->
           <template v-if="currentReport === 'stock'">
             <el-table-column prop="itemCode" label="物品編碼" min-width="120" />
@@ -228,6 +228,7 @@
 
           <!-- 異動報表欄位 -->
           <template v-if="currentReport === 'movement'">
+            <el-table-column prop="recordTime" label="操作時間" min-width="160" />
             <el-table-column prop="itemName" label="物品名稱" min-width="150" />
             <el-table-column prop="recordType" label="操作類型" min-width="100">
               <template slot-scope="scope">
@@ -236,17 +237,17 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="quantity" label="數量" min-width="80" />
-            <el-table-column prop="beforeQty" label="操作前數量" min-width="110" />
-            <el-table-column prop="afterQty" label="操作後數量" min-width="110" />
             <el-table-column prop="operatorName" label="操作人" min-width="100" />
-            <el-table-column prop="recordTime" label="操作時間" min-width="160" />
-            <el-table-column prop="reason" label="原因" min-width="150" />
+            <el-table-column prop="beforeQty" label="操作前數量" min-width="100" />
+            <el-table-column prop="quantity" label="異動數量" min-width="90" />
+            <el-table-column prop="afterQty" label="操作後數量" min-width="100" />
+            <el-table-column prop="reason" label="原因" min-width="150" show-overflow-tooltip />
           </template>
 
           <!-- 掃描報表欄位 -->
           <template v-if="currentReport === 'scan'">
             <el-table-column prop="scanTime" label="掃描時間" min-width="160" />
+            <el-table-column prop="operatorName" label="掃描人" min-width="100" />
             <el-table-column prop="scanType" label="掃描類型" min-width="100">
               <template slot-scope="scope">
                 <el-tag :type="scope.row.scanType === '1' ? 'primary' : 'success'">
@@ -255,13 +256,22 @@
               </template>
             </el-table-column>
             <el-table-column prop="scanCode" label="掃描內容" min-width="150" />
-            <el-table-column prop="itemName" label="物品名稱" min-width="150" />
-            <el-table-column prop="operatorName" label="掃描人" min-width="100" />
+            <el-table-column label="物品名稱" min-width="150">
+              <template slot-scope="scope">
+                <span>{{ scope.row.itemName || '（未識別）' }}</span>
+              </template>
+            </el-table-column>
             <el-table-column prop="scanResult" label="掃描結果" min-width="100">
               <template slot-scope="scope">
                 <el-tag :type="scope.row.scanResult === '0' ? 'success' : 'danger'">
                   {{ scope.row.scanResult === '0' ? '成功' : '失敗' }}
                 </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="errorMsg" label="錯誤訊息" min-width="150" show-overflow-tooltip>
+              <template slot-scope="scope">
+                <span v-if="scope.row.errorMsg" style="color: #F56C6C;">{{ scope.row.errorMsg }}</span>
+                <span v-else style="color: #909399;">-</span>
               </template>
             </el-table-column>
           </template>
@@ -341,12 +351,35 @@ export default {
       });
     },
 
+    /** 重置查詢參數（切換報表時使用） */
+    resetQueryParams() {
+      // 立即清空舊資料，避免切換時顯示錯亂
+      this.reportData = [];
+      this.reportStats = [];
+      this.total = 0;
+      
+      this.dateRange = [];
+      this.queryParams = {
+        pageNum: 1,
+        pageSize: 10,
+        categoryId: null,
+        dateType: 'borrow',
+        beginTime: null,
+        endTime: null,
+        beginBorrowTime: null,
+        endBorrowTime: null,
+        beginActualReturn: null,
+        endActualReturn: null,
+        params: {}
+      };
+    },
+
     /** 庫存報表 */
     handleStockReport() {
       this.currentReport = 'stock';
       this.reportTitle = '庫存狀況報表';
       this.showChart = true;
-      this.queryParams.pageNum = 1;
+      this.resetQueryParams();
       this.loadReportData();
     },
 
@@ -355,7 +388,7 @@ export default {
       this.currentReport = 'borrow';
       this.reportTitle = '借出歸還報表';
       this.showChart = true;
-      this.queryParams.pageNum = 1;
+      this.resetQueryParams();
       this.loadReportData();
     },
 
@@ -364,7 +397,7 @@ export default {
       this.currentReport = 'movement';
       this.reportTitle = '庫存異動報表';
       this.showChart = false;
-      this.queryParams.pageNum = 1;
+      this.resetQueryParams();
       this.loadReportData();
     },
 
@@ -373,7 +406,7 @@ export default {
       this.currentReport = 'scan';
       this.reportTitle = '掃描記錄報表';
       this.showChart = false;
-      this.queryParams.pageNum = 1;
+      this.resetQueryParams();
       this.loadReportData();
     },
 
@@ -447,22 +480,9 @@ export default {
       this.loadReportData();
     },
 
-    /** 重置 */
+    /** 重置（同一報表內的搜尋重置） */
     resetQuery() {
-      this.dateRange = [];
-      this.queryParams = {
-        pageNum: 1,
-        pageSize: 10,
-        categoryId: null,
-        dateType: 'borrow',
-        beginTime: null,
-        endTime: null,
-        beginBorrowTime: null,
-        endBorrowTime: null,
-        beginActualReturn: null,
-        endActualReturn: null,
-        params: {}
-      };
+      this.resetQueryParams();
       this.loadReportData();
     },
 

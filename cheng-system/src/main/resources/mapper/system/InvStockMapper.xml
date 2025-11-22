@@ -33,7 +33,7 @@
                i.item_code,
                i.item_name,
                i.category_id,
-               IFNULL(c.category_name, '') as category_name,
+               IFNULL(c.category_name, '未分類') as category_name,
                IFNULL(i.specification, '') as specification,
                IFNULL(i.unit, '') as unit,
                IFNULL(i.min_stock, 0) as min_stock,

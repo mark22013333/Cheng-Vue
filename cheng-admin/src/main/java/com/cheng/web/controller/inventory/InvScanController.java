@@ -5,6 +5,8 @@ import com.cheng.common.annotation.Log;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.enums.BusinessType;
+import com.cheng.common.enums.ScanResult;
+import com.cheng.common.enums.ScanType;
 import com.cheng.common.utils.ServletUtils;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.ip.IpUtils;
@@ -54,13 +56,13 @@ public class InvScanController extends BaseController {
     private final IBookItemService bookItemService;
     private final InvItemMapper invItemMapper;
     private final IInvBookInfoService invBookInfoService;
-    
+
     /**
      * SSE 連線管理
      * Key: taskId, Value: SseEmitter
      */
     private final Map<String, SseEmitter> sseEmitters = new ConcurrentHashMap<>();
-    
+
     /**
      * Spring 管理的執行緒池（用於並行抓取）
      * 由 AsyncConfig 配置，支援 SecurityContext 和 MDC 傳遞
@@ -79,26 +81,32 @@ public class InvScanController extends BaseController {
     @PostMapping("/isbn")
     public AjaxResult scanIsbn(@RequestBody @Validated IsbnScanRequest request) {
         String isbn = request.getIsbn().trim();
+        Long itemId = null;
+        String itemName = null;
 
         try {
             // 1. 驗證 ISBN 格式
             if (!isValidIsbn(isbn)) {
+                saveScanLog(isbn, null, null, ScanResult.FAILURE.getCode(), "ISBN 格式不正確");
                 return AjaxResult.error("ISBN 格式不正確，請輸入10位或13位數字");
             }
 
-            // 2. 寫入掃描記錄
-            saveScanLog(isbn);
-
-            // 3. 透過 CA101 Handler 爬取書籍資訊
+            // 2. 透過 CA101 Handler 爬取書籍資訊
             CrawlerHandler<?, ?> handler = CrawlerHandler.getHandler(CrawlerType.CA101);
             if (handler == null) {
+                saveScanLog(isbn, null, null, ScanResult.FAILURE.getCode(), "CA101 爬蟲服務未初始化");
                 return AjaxResult.error("CA101 爬蟲服務未初始化");
             }
 
             BookInfoDTO bookInfo = handler.crawlSingleAndSave(isbn, BookInfoDTO.class);
 
-            // 4. 透過 BookItemService 儲存到資料庫
+            // 3. 透過 BookItemService 儲存到資料庫
             InvItem bookItem = bookItemService.createOrGetBookItem(isbn, bookInfo);
+            itemId = bookItem.getItemId();
+            itemName = bookItem.getItemName();
+
+            // 4. 寫入掃描成功記錄（在取得物品資訊後）
+            saveScanLog(isbn, itemId, itemName, ScanResult.SUCCESS.getCode(), null);
 
             // 5. 查詢包含庫存資訊的完整資料
             InvItemWithStockDTO itemWithStock = invItemMapper.selectItemWithStockByItemId(bookItem.getItemId());
@@ -123,26 +131,37 @@ public class InvScanController extends BaseController {
 
         } catch (Exception e) {
             log.error("ISBN 掃描處理失敗 - ISBN: {}, 錯誤: {}", isbn, e.getMessage(), e);
+            // 記錄失敗情況
+            saveScanLog(isbn, itemId, itemName, ScanResult.FAILURE.getCode(), e.getMessage());
             return AjaxResult.error("處理失敗: " + e.getMessage());
         }
     }
 
     /**
      * 儲存掃描記錄
+     *
+     * @param scanCode   掃描內容
+     * @param itemId     物品ID（可為null）
+     * @param itemName   物品名稱（可為null）
+     * @param scanResult 掃描結果（使用 ScanResult enum）
+     * @param errorMsg   錯誤訊息（可為null）
      */
-    private void saveScanLog(String isbn) {
+    private void saveScanLog(String scanCode, Long itemId, String itemName, String scanResult, String errorMsg) {
         try {
-            InvScanLog log = new InvScanLog();
-            log.setScanType("1"); // 條碼類型
-            log.setScanCode(isbn);
-            log.setScanResult("0"); // 成功
-            log.setOperatorId(getUserId());
-            log.setOperatorName(getUsername());
-            log.setScanTime(new Date());
-            log.setIpAddress(IpUtils.getIpAddr());
-            log.setUserAgent(ServletUtils.getRequest().getHeader(HttpHeaders.USER_AGENT));
+            InvScanLog scanLog = new InvScanLog();
+            scanLog.setScanType(ScanType.BARCODE.getCode());
+            scanLog.setScanCode(scanCode);
+            scanLog.setItemId(itemId);
+            scanLog.setItemName(itemName != null ? itemName : "");
+            scanLog.setScanResult(scanResult);
+            scanLog.setOperatorId(getUserId());
+            scanLog.setOperatorName(getUsername());
+            scanLog.setScanTime(new Date());
+            scanLog.setIpAddress(IpUtils.getIpAddr());
+            scanLog.setUserAgent(ServletUtils.getRequest().getHeader(HttpHeaders.USER_AGENT));
+            scanLog.setErrorMsg(errorMsg != null ? errorMsg : "");
 
-            invScanLogService.insertInvScanLog(log);
+            invScanLogService.insertInvScanLog(scanLog);
         } catch (Exception e) {
             log.warn("寫入掃描記錄失敗: {}", e.getMessage());
             // 不中斷主流程
@@ -171,13 +190,13 @@ public class InvScanController extends BaseController {
     @PostMapping("/refreshIsbn/create")
     public AjaxResult createRefreshTask(@RequestBody @Validated RefreshIsbnRequest request) {
         // 產生任務 ID
-        String taskId = "refresh-" + UUID.randomUUID().toString();
-        
+        String taskId = "refresh-" + UUID.randomUUID();
+
         log.info("建立重新抓取任務，TaskId: {}, ItemId: {}", taskId, request.getItemId());
-        
+
         return AjaxResult.success("任務已建立", taskId);
     }
-    
+
     /**
      * 訂閱重新抓取任務進度（SSE）
      */
@@ -186,38 +205,38 @@ public class InvScanController extends BaseController {
     public SseEmitter subscribeRefreshTask(
             @PathVariable String taskId,
             @RequestParam Long itemId) {
-        
+
         log.info("收到 SSE 訂閱請求: taskId={}, itemId={}", taskId, itemId);
-        
+
         // 建立 SseEmitter（超時 10 分鐘）
         SseEmitter emitter = new SseEmitter(10 * 60 * 1000L);
-        
+
         // 儲存連線
         sseEmitters.put(taskId, emitter);
-        
+
         // 設定完成/超時/錯誤回調
         emitter.onCompletion(() -> {
             log.info("SSE 連線正常完成: taskId={}", taskId);
             sseEmitters.remove(taskId);
         });
-        
+
         emitter.onTimeout(() -> {
             log.warn("SSE 連線超時: taskId={}", taskId);
             sseEmitters.remove(taskId);
         });
-        
+
         emitter.onError((e) -> {
             log.error("SSE 連線錯誤: taskId={}", taskId, e);
             sseEmitters.remove(taskId);
         });
-        
+
         // 使用 Spring 管理的執行緒池非同步執行抓取任務
         // taskExecutor 會自動複製 SecurityContext 和 MDC
         taskExecutor.execute(() -> executeRefreshTask(taskId, itemId, emitter));
-        
+
         return emitter;
     }
-    
+
     /**
      * 執行重新抓取任務
      */
@@ -225,16 +244,16 @@ public class InvScanController extends BaseController {
         try {
             // 發送開始事件
             sendSseEvent(emitter, "progress", Map.of(
-                "progress", 0,
-                "message", "開始重新抓取書籍資料..."
+                    "progress", 0,
+                    "message", "開始重新抓取書籍資料..."
             ));
-            
+
             // 1. 檢查物品是否存在
             sendSseEvent(emitter, "progress", Map.of(
-                "progress", 10,
-                "message", "檢查物品資訊..."
+                    "progress", 10,
+                    "message", "檢查物品資訊..."
             ));
-            
+
             InvItem existingItem = invItemMapper.selectInvItemByItemId(itemId);
             if (existingItem == null) {
                 sendSseEvent(emitter, "error", Map.of("message", "物品不存在"));
@@ -242,7 +261,7 @@ public class InvScanController extends BaseController {
                 sseEmitters.remove(taskId);
                 return;
             }
-            
+
             // 2. 檢查是否有條碼（ISBN）
             String isbn = existingItem.getBarcode();
             if (StringUtils.isEmpty(isbn) || !isValidIsbn(isbn)) {
@@ -251,14 +270,14 @@ public class InvScanController extends BaseController {
                 sseEmitters.remove(taskId);
                 return;
             }
-            
+
             // 3. 爬取最新的書籍資訊
             sendSseEvent(emitter, "progress", Map.of(
-                "progress", 30,
-                "message", "正在從網路抓取書籍資料...",
-                "isbn", isbn
+                    "progress", 30,
+                    "message", "正在從網路抓取書籍資料...",
+                    "isbn", isbn
             ));
-            
+
             log.info("開始重新抓取 ISBN 資料，TaskId: {}, ItemId: {}, ISBN: {}", taskId, itemId, isbn);
             CrawlerHandler<?, ?> handler = CrawlerHandler.getHandler(CrawlerType.CA101);
             if (handler == null) {
@@ -267,43 +286,43 @@ public class InvScanController extends BaseController {
                 sseEmitters.remove(taskId);
                 return;
             }
-            
+
             BookInfoDTO newBookInfo = handler.crawlSingleAndSave(isbn, BookInfoDTO.class);
             if (!newBookInfo.getSuccess()) {
                 sendSseEvent(emitter, "error", Map.of(
-                    "message", "爬取書籍資訊失敗: " + newBookInfo.getErrorMessage()
+                        "message", "爬取書籍資訊失敗: " + newBookInfo.getErrorMessage()
                 ));
                 emitter.complete();
                 sseEmitters.remove(taskId);
                 return;
             }
-            
+
             // 4. 驗證新資料的完整性
             sendSseEvent(emitter, "progress", Map.of(
-                "progress", 60,
-                "message", "驗證資料完整性..."
+                    "progress", 60,
+                    "message", "驗證資料完整性..."
             ));
-            
+
             ValidationResult validation = validateBookInfoCompleteness(existingItem, newBookInfo);
             if (!validation.isValid()) {
                 // 如果是資料相同，發送 warning 而不是 error
                 String eventType = validation.getMessage().contains("資料完全相同") ? "warning" : "error";
                 sendSseEvent(emitter, eventType, Map.of(
-                    "message", validation.getMessage(),
-                    "existingScore", validation.getExistingScore(),
-                    "newScore", validation.getNewScore()
+                        "message", validation.getMessage(),
+                        "existingScore", validation.getExistingScore(),
+                        "newScore", validation.getNewScore()
                 ));
                 emitter.complete();
                 sseEmitters.remove(taskId);
                 return;
             }
-            
+
             // 5. 更新書籍資訊（不影響庫存）
             sendSseEvent(emitter, "progress", Map.of(
-                "progress", 80,
-                "message", "更新書籍資訊..."
+                    "progress", 80,
+                    "message", "更新書籍資訊..."
             ));
-            
+
             boolean updated = bookItemService.updateBookInfoOnly(itemId, newBookInfo);
             if (!updated) {
                 sendSseEvent(emitter, "error", Map.of("message", "更新書籍資訊失敗"));
@@ -311,19 +330,19 @@ public class InvScanController extends BaseController {
                 sseEmitters.remove(taskId);
                 return;
             }
-            
+
             // 6. 查詢更新後的完整資料
             sendSseEvent(emitter, "progress", Map.of(
-                "progress", 90,
-                "message", "載入更新後的資料..."
+                    "progress", 90,
+                    "message", "載入更新後的資料..."
             ));
-            
+
             InvItemWithStockDTO updatedItem = invItemMapper.selectItemWithStockByItemId(itemId);
             if (updatedItem != null) {
                 updatedItem.calculateStockStatus();
                 updatedItem.calculateStockValue();
             }
-            
+
             // 7. 發送成功事件
             Map<String, Object> result = new HashMap<>();
             result.put("progress", 100);
@@ -333,17 +352,17 @@ public class InvScanController extends BaseController {
             result.put("updatedFields", validation.getUpdatedFields());
             result.put("existingScore", validation.getExistingScore());
             result.put("newScore", validation.getNewScore());
-            
+
             sendSseEvent(emitter, "success", result);
-            
+
             log.info("ISBN 資料更新成功，TaskId: {}, ItemId: {}, ISBN: {}, 更新欄位: {}",
                     taskId, itemId, isbn, validation.getUpdatedFields());
-            
+
             // 完成連線
             Thread.sleep(500); // 確保前端收到最後一次更新
             emitter.complete();
             sseEmitters.remove(taskId);
-            
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("任務被中斷: taskId={}", taskId);
@@ -352,7 +371,7 @@ public class InvScanController extends BaseController {
             log.error("重新抓取 ISBN 資料失敗 - TaskId: {}, ItemId: {}, 錯誤: {}", taskId, itemId, e.getMessage(), e);
             try {
                 sendSseEvent(emitter, "error", Map.of(
-                    "message", "處理失敗: " + e.getMessage()
+                        "message", "處理失敗: " + e.getMessage()
                 ));
                 emitter.complete();
             } catch (Exception ex) {
@@ -361,25 +380,26 @@ public class InvScanController extends BaseController {
             sseEmitters.remove(taskId);
         }
     }
-    
+
     /**
      * 發送 SSE 事件
      */
     private void sendSseEvent(SseEmitter emitter, String eventName, Map<String, Object> data) {
         try {
             emitter.send(SseEmitter.event()
-                .name(eventName)
-                .data(data));
+                    .name(eventName)
+                    .data(data));
         } catch (IOException e) {
             log.error("發送 SSE 事件失敗: {}", eventName, e);
             throw new RuntimeException("SSE 推送失敗", e);
         }
     }
-    
+
     /**
      * 重新抓取 ISBN 資料並更新現有物品資訊（同步版本，保留向後相容）
      * 只更新書籍資訊，不影響庫存
      * 會比對新舊資料完整性，只在新資料更完整時才更新
+     *
      * @deprecated 建議使用 SSE 版本 (createRefreshTask + subscribeRefreshTask)
      */
     @Deprecated

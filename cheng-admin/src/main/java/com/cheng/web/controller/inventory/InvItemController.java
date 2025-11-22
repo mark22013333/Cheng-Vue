@@ -5,20 +5,27 @@ import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
 import com.cheng.common.enums.BusinessType;
+import com.cheng.common.enums.ScanResult;
+import com.cheng.common.utils.ServletUtils;
+import com.cheng.common.utils.ip.IpUtils;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.system.domain.InvItem;
+import com.cheng.system.domain.InvScanLog;
 import com.cheng.system.dto.InvItemWithStockDTO;
 import com.cheng.system.mapper.InvItemMapper;
 import com.cheng.system.service.IInvItemService;
+import com.cheng.system.service.IInvScanLogService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -34,6 +41,7 @@ public class InvItemController extends BaseController {
 
     private final IInvItemService invItemService;
     private final InvItemMapper invItemMapper;
+    private final IInvScanLogService invScanLogService;
 
     /**
      * 查詢物品資訊列表
@@ -99,13 +107,23 @@ public class InvItemController extends BaseController {
     @PreAuthorize("@ss.hasPermi('inventory:scan:use')")
     @PostMapping("/scan")
     public AjaxResult scanItem(@RequestBody ScanRequest scanRequest) {
+        String scanCode = scanRequest.getScanCode();
+        String scanType = scanRequest.getScanType();
+        Long itemId = null;
+        String itemName = null;
+
         try {
             // 1. 先透過條碼或QR碼查找物品
-            InvItem item = invItemService.scanItemByCode(scanRequest.getScanCode(), scanRequest.getScanType());
+            InvItem item = invItemService.scanItemByCode(scanCode, scanType);
 
             if (item == null) {
+                // 記錄掃描失敗
+                saveScanLog(scanCode, scanType, null, null, ScanResult.FAILURE.getCode(), "未找到對應的物品");
                 return error("未找到對應的物品");
             }
+
+            itemId = item.getItemId();
+            itemName = item.getItemName();
 
             // 2. 查詢包含庫存信息的完整資料
             InvItemWithStockDTO itemWithStock = invItemMapper.selectItemWithStockByItemId(item.getItemId());
@@ -114,13 +132,42 @@ public class InvItemController extends BaseController {
             if (itemWithStock != null) {
                 itemWithStock.calculateStockStatus();
                 itemWithStock.calculateStockValue();
-                return success(itemWithStock);
-            } else {
-                // 如果沒有庫存記錄，返回物品基本信息
-                return success(item);
             }
+
+            // 4. 記錄掃描成功
+            saveScanLog(scanCode, scanType, itemId, itemName, ScanResult.SUCCESS.getCode(), null);
+
+            return success(itemWithStock != null ? itemWithStock : item);
+
         } catch (Exception e) {
+            // 記錄掃描失敗
+            saveScanLog(scanCode, scanType, itemId, itemName, ScanResult.FAILURE.getCode(), e.getMessage());
             return error(e.getMessage());
+        }
+    }
+
+    /**
+     * 儲存掃描記錄
+     */
+    private void saveScanLog(String scanCode, String scanType, Long itemId, String itemName, String scanResult, String errorMsg) {
+        try {
+            InvScanLog scanLog = new InvScanLog();
+            scanLog.setScanType(scanType);
+            scanLog.setScanCode(scanCode);
+            scanLog.setItemId(itemId);
+            scanLog.setItemName(itemName != null ? itemName : "");
+            scanLog.setScanResult(scanResult);
+            scanLog.setOperatorId(getUserId());
+            scanLog.setOperatorName(getUsername());
+            scanLog.setScanTime(new Date());
+            scanLog.setIpAddress(IpUtils.getIpAddr());
+            scanLog.setUserAgent(ServletUtils.getRequest().getHeader(HttpHeaders.USER_AGENT));
+            scanLog.setErrorMsg(errorMsg != null ? errorMsg : "");
+
+            invScanLogService.insertInvScanLog(scanLog);
+        } catch (Exception e) {
+            log.warn("寫入掃描記錄失敗: {}", e.getMessage());
+            // 不中斷主流程
         }
     }
 
