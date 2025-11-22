@@ -4,6 +4,7 @@ import com.cheng.common.annotation.DataScope;
 import com.cheng.common.constant.UserConstants;
 import com.cheng.common.core.domain.entity.SysRole;
 import com.cheng.common.core.domain.entity.SysUser;
+import com.cheng.common.enums.SystemConfigKey;
 import com.cheng.common.exception.ServiceException;
 import com.cheng.common.utils.SecurityUtils;
 import com.cheng.common.utils.StringUtils;
@@ -468,7 +469,7 @@ public class SysUserServiceImpl implements ISysUserService {
                 if (StringUtils.isNull(u)) {
                     BeanValidators.validateWithException(validator, user);
                     deptService.checkDeptDataScope(user.getDeptId());
-                    String password = configService.selectConfigByKey("sys.user.initPassword");
+                    String password = configService.selectConfigByKey(SystemConfigKey.USER_INIT_PASSWORD.getCode());
                     user.setPassword(SecurityUtils.encryptPassword(password));
                     user.setCreateBy(operName);
                     userMapper.insertUser(user);

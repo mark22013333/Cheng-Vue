@@ -5,6 +5,7 @@ import com.cheng.common.constant.Constants;
 import com.cheng.common.constant.UserConstants;
 import com.cheng.common.core.domain.model.LoginUser;
 import com.cheng.common.core.redis.RedisCache;
+import com.cheng.common.enums.SystemConfigKey;
 import com.cheng.common.exception.ServiceException;
 import com.cheng.common.exception.user.*;
 import com.cheng.common.utils.DateUtils;
@@ -134,7 +135,7 @@ public class SysLoginService {
             throw new UserPasswordNotMatchException();
         }
         // IP黑名單校驗
-        String blackStr = configService.selectConfigByKey("sys.login.blackIPList");
+        String blackStr = configService.selectConfigByKey(SystemConfigKey.LOGIN_BLACK_IP_LIST.getCode());
         if (IpUtils.isMatchedIp(blackStr, IpUtils.getIpAddr())) {
             AsyncManager.me().execute(AsyncFactory.recordLogininfor(username, Constants.LOGIN_FAIL, MessageUtils.message("login.blocked")));
             throw new BlackListException();

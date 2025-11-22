@@ -6,6 +6,7 @@ import com.cheng.common.constant.UserConstants;
 import com.cheng.common.core.redis.RedisCache;
 import com.cheng.common.core.text.Convert;
 import com.cheng.common.enums.DataSourceType;
+import com.cheng.common.enums.SystemConfigKey;
 import com.cheng.common.exception.ServiceException;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.system.domain.SysConfig;
@@ -84,7 +85,7 @@ public class SysConfigServiceImpl implements ISysConfigService {
      */
     @Override
     public boolean selectCaptchaEnabled() {
-        String captchaEnabled = selectConfigByKey("sys.account.captchaEnabled");
+        String captchaEnabled = selectConfigByKey(SystemConfigKey.ACCOUNT_CAPTCHA_ENABLED.getCode());
         if (StringUtils.isEmpty(captchaEnabled)) {
             return true;
         }
@@ -191,9 +192,9 @@ public class SysConfigServiceImpl implements ISysConfigService {
      */
     @Override
     public boolean checkConfigKeyUnique(SysConfig config) {
-        Long configId = StringUtils.isNull(config.getConfigId()) ? -1L : config.getConfigId();
+        long configId = StringUtils.isNull(config.getConfigId()) ? -1L : config.getConfigId();
         SysConfig info = configMapper.checkConfigKeyUnique(config.getConfigKey());
-        if (StringUtils.isNotNull(info) && info.getConfigId().longValue() != configId.longValue()) {
+        if (StringUtils.isNotNull(info) && info.getConfigId() != configId) {
             return UserConstants.NOT_UNIQUE;
         }
         return UserConstants.UNIQUE;

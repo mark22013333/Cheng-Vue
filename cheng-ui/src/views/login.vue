@@ -74,7 +74,7 @@
 
           <div class="form-options">
             <el-checkbox v-model="loginForm.rememberMe">記住我</el-checkbox>
-            <span class="forgot-pwd">忘記密碼?</span>
+<!--            <span class="forgot-pwd">忘記密碼?</span>-->
           </div>
 
           <el-button

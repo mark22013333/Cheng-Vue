@@ -3,6 +3,7 @@ package com.cheng.web.controller.system;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.domain.model.RegisterBody;
+import com.cheng.common.enums.SystemConfigKey;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.framework.web.service.SysRegisterService;
 import com.cheng.system.service.ISysConfigService;
@@ -26,7 +27,7 @@ public class SysRegisterController extends BaseController {
 
     @PostMapping("/register")
     public AjaxResult register(@RequestBody RegisterBody user) {
-        if (!(Boolean.parseBoolean(configService.selectConfigByKey("sys.account.registerUser")))) {
+        if (!(Boolean.parseBoolean(configService.selectConfigByKey(SystemConfigKey.ACCOUNT_REGISTER_USER.getCode())))) {
             return error("目前系統沒有開啟註冊功能！");
         }
         String msg = registerService.register(user);
