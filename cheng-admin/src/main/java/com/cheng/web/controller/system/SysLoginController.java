@@ -7,6 +7,7 @@ import com.cheng.common.core.domain.entity.SysUser;
 import com.cheng.common.core.domain.model.LoginBody;
 import com.cheng.common.core.domain.model.LoginUser;
 import com.cheng.common.core.text.Convert;
+import com.cheng.common.enums.SystemConfigKey;
 import com.cheng.common.utils.DateUtils;
 import com.cheng.common.utils.SecurityUtils;
 import com.cheng.common.utils.StringUtils;
@@ -103,13 +104,13 @@ public class SysLoginController {
 
     // 檢查初始密碼是否提醒修改
     public boolean initPasswordIsModify(Date pwdUpdateDate) {
-        Integer initPasswordModify = Convert.toInt(configService.selectConfigByKey("sys.account.initPasswordModify"));
+        Integer initPasswordModify = Convert.toInt(configService.selectConfigByKey(SystemConfigKey.ACCOUNT_INIT_PASSWORD_MODIFY.getCode()));
         return initPasswordModify != null && initPasswordModify == 1 && pwdUpdateDate == null;
     }
 
     // 檢查密碼是否過期
     public boolean passwordIsExpiration(Date pwdUpdateDate) {
-        Integer passwordValidateDays = Convert.toInt(configService.selectConfigByKey("sys.account.passwordValidateDays"));
+        Integer passwordValidateDays = Convert.toInt(configService.selectConfigByKey(SystemConfigKey.ACCOUNT_PASSWORD_VALIDATE_DAYS.getCode()));
         if (passwordValidateDays != null && passwordValidateDays > 0) {
             if (StringUtils.isNull(pwdUpdateDate)) {
                 // 如果從未修改過初始密碼，直接提醒過期
