@@ -41,8 +41,8 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="mini" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -52,7 +52,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['system:config:add']"
         >新增</el-button>
@@ -62,7 +62,7 @@
           type="success"
           plain
           icon="el-icon-edit"
-          size="mini"
+          size="small"
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['system:config:edit']"
@@ -73,7 +73,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['system:config:remove']"
@@ -85,7 +85,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['system:config:export']"
         >匯出
@@ -96,7 +96,7 @@
           type="danger"
           plain
           icon="el-icon-refresh"
-          size="mini"
+          size="small"
           @click="handleRefreshCache"
           v-hasPermi="['system:config:remove']"
         >重新整理暫存
@@ -112,27 +112,27 @@
       <el-table-column :show-overflow-tooltip="true" align="center" label="參數鍵名" prop="configKey"/>
       <el-table-column :show-overflow-tooltip="true" align="center" label="參數鍵值" prop="configValue"/>
       <el-table-column align="center" label="系統內建" prop="configType">
-        <template slot-scope="scope">
+        <template #default="scope">
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.configType"/>
         </template>
       </el-table-column>
       <el-table-column :show-overflow-tooltip="true" align="center" label="備註" prop="remark"/>
       <el-table-column align="center" label="建立時間" prop="createTime" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['system:config:edit']"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"

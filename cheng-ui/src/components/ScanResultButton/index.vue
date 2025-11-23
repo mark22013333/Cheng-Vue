@@ -93,6 +93,7 @@
 <script>
 import DraggableMixin from '@/mixins/draggable'
 import { quickStockIn } from '@/api/inventory/management'
+import eventBus from '@/utils/eventBus'
 
 export default {
   name: 'ScanResultButton',
@@ -111,12 +112,12 @@ export default {
     this.loadButtonPosition()
     this.loadScanResults()
     
-    // 監聽掃描成功事件
-    this.$root.$on('scan-success', this.handleScanSuccess)
+    // 監聽掃描成功事件（Vue 3 使用 eventBus）
+    eventBus.on('scan-success', this.handleScanSuccess)
   },
   
-  beforeDestroy() {
-    this.$root.$off('scan-success', this.handleScanSuccess)
+  beforeUnmount() {
+    eventBus.off('scan-success', this.handleScanSuccess)
   },
   
   methods: {
@@ -168,7 +169,7 @@ export default {
     
     /** +1 入庫 */
     addToInventory(result, index) {
-      this.$set(result, 'adding', true)
+      result.adding = true
       
       // 呼叫入庫 API
       quickStockIn({
@@ -183,7 +184,7 @@ export default {
           this.removeResult(index)
         }, 500)
       }).catch(error => {
-        this.$set(result, 'adding', false)
+        result.adding = false
         this.$message.error('入庫失敗：' + (error.msg || '未知錯誤'))
       })
     },
@@ -323,7 +324,7 @@ export default {
     margin-bottom: 0;
   }
   
-  ::v-deep .el-card__body {
+  :deep(.el-card__body) {
     padding: 15px;
   }
 }
@@ -399,7 +400,7 @@ export default {
 .card-content {
   margin-top: 10px;
   
-  ::v-deep .el-collapse-item__header {
+  :deep(.el-collapse-item__header) {
     font-size: 13px;
     font-weight: bold;
   }

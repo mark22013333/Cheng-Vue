@@ -16,39 +16,52 @@ const isWhiteList = (path) => {
 }
 
 router.beforeEach((to, from, next) => {
+  console.log('[Permission] beforeEach - from:', from.path, 'to:', to.path);
   NProgress.start()
   if (getToken()) {
+    console.log('[Permission] Has token');
     to.meta.title && store.dispatch('settings/setTitle', to.meta.title)
     /* has token*/
     if (to.path === '/login') {
+      console.log('[Permission] Already logged in, redirect to /');
       next({ path: '/' })
       NProgress.done()
     } else if (isWhiteList(to.path)) {
+      console.log('[Permission] In whitelist, allow');
       next()
     } else {
       if (store.getters.roles.length === 0) {
+        console.log('[Permission] No roles, fetching user info...');
         isRelogin.show = true
         // 判斷目前使用者是否已拉取完user_info訊息
         store.dispatch('GetInfo').then(() => {
+          console.log('[Permission] GetInfo success, generating routes...');
           isRelogin.show = false
           store.dispatch('GenerateRoutes').then(accessRoutes => {
-            // 根據roles權限產生可訪問的路由表
-            accessRoutes.forEach(route => {
-              router.addRoute(route) // 動態新增可訪問路由表
-            })
+            console.log('[Permission] GenerateRoutes success, routes:', accessRoutes.length);
+            // 路由已在 store 中添加完成，直接重新導航
             next({...to, replace: true}) // hack方法 確認addRoute已完成
+          }).catch(err => {
+            console.error('[Permission] GenerateRoutes error:', err);
+            isRelogin.show = false
+            NProgress.done()
           })
         }).catch(err => {
-            store.dispatch('LogOut').then(() => {
-              ElMessage.error(err)
-              next({ path: '/' })
-            })
+          console.error('[Permission] GetInfo error:', err);
+          isRelogin.show = false
+          store.dispatch('LogOut').then(() => {
+            ElMessage.error(err)
+            next({ path: '/' })
+            NProgress.done()
           })
+        })
       } else {
+        console.log('[Permission] Has roles, allow');
         next()
       }
     }
   } else {
+    console.log('[Permission] No token');
     // 沒有token
     if (isWhiteList(to.path)) {
       // 在免登入白名單，直接進入

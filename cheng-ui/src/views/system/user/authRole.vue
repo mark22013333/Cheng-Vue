@@ -19,7 +19,7 @@
     <h4 class="form-header h4">角色訊息</h4>
     <el-table v-loading="loading" :row-key="getRowKey" @row-click="clickRow" ref="table" @selection-change="handleSelectionChange" :data="roles.slice((pageNum-1)*pageSize,pageNum*pageSize)">
       <el-table-column align="center" label="序號" type="index">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ (pageNum - 1) * pageSize + scope.$index + 1 }}</span>
         </template>
       </el-table-column>
@@ -28,7 +28,7 @@
       <el-table-column align="center" label="角色名稱" prop="roleName"/>
       <el-table-column align="center" label="權限字串" prop="roleKey"/>
       <el-table-column align="center" label="建立時間" prop="createTime" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>

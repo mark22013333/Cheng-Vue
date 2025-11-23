@@ -71,8 +71,8 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="mini" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -82,7 +82,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['monitor:operlog:remove']"
@@ -94,7 +94,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           @click="handleClean"
           v-hasPermi="['monitor:operlog:remove']"
         >清除
@@ -105,7 +105,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['monitor:operlog:export']"
         >匯出
@@ -119,7 +119,7 @@
       <el-table-column align="center" label="日誌編號" prop="operId"/>
       <el-table-column :show-overflow-tooltip="true" align="center" label="系統模組" prop="title"/>
       <el-table-column align="center" label="操作類型" prop="businessType">
-        <template slot-scope="scope">
+        <template #default="scope">
           <dict-tag :options="dict.type.sys_oper_type" :value="scope.row.businessType"/>
         </template>
       </el-table-column>
@@ -128,25 +128,25 @@
       <el-table-column label="操作地址" align="center" prop="operIp" width="130" :show-overflow-tooltip="true" />
       <el-table-column :show-overflow-tooltip="true" align="center" label="操作地點" prop="operLocation"/>
       <el-table-column align="center" label="操作狀態" prop="status">
-        <template slot-scope="scope">
+        <template #default="scope">
           <dict-tag :options="dict.type.sys_common_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column label="操作日期" align="center" prop="operTime" width="160" sortable="custom" :sort-orders="['descending', 'ascending']">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.operTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column :show-overflow-tooltip="true" :sort-orders="['descending', 'ascending']" align="center" label="消耗時間" prop="costTime"
                        sortable="custom" width="110">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ scope.row.costTime }}毫秒</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-view"
             @click="handleView(scope.row,scope.index)"
@@ -167,7 +167,7 @@
 
     <!-- 操作日誌詳細 -->
     <el-dialog :visible.sync="open" append-to-body title="操作日誌詳細" width="800px">
-      <el-form ref="form" :model="form" label-width="100px" size="mini">
+      <el-form ref="form" :model="form" label-width="100px" size="small">
         <el-row>
           <el-col :span="12">
             <el-form-item label="操作模組：">{{ form.title }} / {{ typeFormat(form) }}</el-form-item>

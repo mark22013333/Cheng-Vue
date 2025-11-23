@@ -16,8 +16,8 @@ export function getImageUrl(imagePath) {
     return imagePath;
   }
 
-  // 取得 API 基礎路徑，防止 undefined
-  const baseApi = process.env.VUE_APP_BASE_API || '';
+  // 取得 API 基礎路徑，防止 undefined（Vite 使用 import.meta.env）
+  const baseApi = import.meta.env.VITE_APP_BASE_API || '';
 
   // 如果路徑已經是以 /profile 開頭的完整路徑
   if (imagePath.startsWith('/profile')) {
@@ -62,7 +62,7 @@ export function getImageUrl(imagePath) {
  * @returns {string} API 基礎 URL
  */
 export function getBaseApiUrl() {
-  return process.env.VUE_APP_BASE_API || '';
+  return import.meta.env.VITE_APP_BASE_API || '';
 }
 
 /**

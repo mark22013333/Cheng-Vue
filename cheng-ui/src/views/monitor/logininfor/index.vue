@@ -47,8 +47,8 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="mini" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -58,7 +58,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['monitor:logininfor:remove']"
@@ -70,7 +70,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           @click="handleClean"
           v-hasPermi="['monitor:logininfor:remove']"
         >清除
@@ -81,7 +81,7 @@
           type="primary"
           plain
           icon="el-icon-unlock"
-          size="mini"
+          size="small"
           :disabled="single"
           @click="handleUnlock"
           v-hasPermi="['monitor:logininfor:unlock']"
@@ -93,7 +93,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['monitor:logininfor:export']"
         >匯出
@@ -112,14 +112,14 @@
       <el-table-column :show-overflow-tooltip="true" align="center" label="瀏覽器" prop="browser"/>
       <el-table-column align="center" label="作業系統" prop="os"/>
       <el-table-column align="center" label="登入狀態" prop="status">
-        <template slot-scope="scope">
+        <template #default="scope">
           <dict-tag :options="dict.type.sys_common_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column :show-overflow-tooltip="true" align="center" label="操作訊息" prop="msg"/>
       <el-table-column :sort-orders="['descending', 'ascending']" align="center" label="登入日期" prop="loginTime"
                        sortable="custom" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.loginTime) }}</span>
         </template>
       </el-table-column>

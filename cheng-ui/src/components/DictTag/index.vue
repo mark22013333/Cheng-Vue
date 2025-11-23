@@ -14,7 +14,7 @@
           :disable-transitions="true"
           :key="item.value"
           :index="index"
-          :type="item.raw.listClass == 'primary' ? '' : item.raw.listClass"
+          :type="getTagType(item.raw.listClass)"
           :class="item.raw.cssClass"
         >
           {{ item.label + ' ' }}
@@ -71,6 +71,21 @@ export default {
       return unmatch // 返回標誌的值
     },
 
+  },
+  methods: {
+    /**
+     * 取得 el-tag 的 type 屬性值
+     * Element Plus 只接受 ['primary', 'success', 'info', 'warning', 'danger'] 或空字串
+     * 將空字串轉換為 undefined，避免 prop 驗證警告
+     */
+    getTagType(listClass) {
+      if (!listClass || listClass === '' || listClass === 'default' || listClass === 'primary') {
+        return undefined  // 使用預設類型（Element Plus 會顯示為 primary 樣式）
+      }
+      // 確保值在允許的範圍內
+      const validTypes = ['success', 'info', 'warning', 'danger']
+      return validTypes.includes(listClass) ? listClass : undefined
+    }
   },
   filters: {
     handleArray(array) {

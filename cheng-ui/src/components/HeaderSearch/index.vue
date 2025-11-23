@@ -1,24 +1,25 @@
 <template>
-  <div class="header-search">
+  <div class="header-search" style="display: inline-flex; align-items: center; justify-content: center;">
     <svg-icon class-name="search-icon" icon-class="search" @click.stop="click" />
     <el-dialog
-      :visible.sync="show"
+      v-model="show"
       width="600px"
       @close="close"
       :show-close="false"
       append-to-body
+      :z-index="9999"
     >
       <el-input
         v-model="search"
         ref="headerSearchSelectRef"
         size="large"
         @input="querySearch"
-        prefix-icon="el-icon-search"
+        prefix-icon="Search"
         placeholder="選單搜尋，支援標題、URL模糊查詢"
         clearable
-        @keyup.enter.native="selectActiveResult"
-        @keydown.up.native="navigateResult('up')"
-        @keydown.down.native="navigateResult('down')"
+        @keyup.enter="selectActiveResult"
+        @keydown.up="navigateResult('up')"
+        @keydown.down="navigateResult('down')"
       >
       </el-input>
       <el-scrollbar wrap-class="right-scrollbar-wrapper">
@@ -45,7 +46,6 @@
 
 <script>
 import Fuse from 'fuse.js/dist/fuse.min.js'
-import path from 'path'
 import {isHttp} from '@/utils/validate'
 
 export default {
@@ -140,7 +140,7 @@ export default {
         if (router.hidden) { continue }
 
         const data = {
-          path: !isHttp(router.path) ? path.resolve(basePath, router.path) : router.path,
+          path: !isHttp(router.path) ? this.resolvePath(basePath, router.path) : router.path,
           title: [...prefixTitle],
           icon: ''
         }
@@ -196,16 +196,23 @@ export default {
       if (this.options.length > 0 && this.activeIndex >= 0) {
         this.change(this.options[this.activeIndex])
       }
+    },
+    // 瀏覽器兼容的路徑合併函數（替代 Node.js 的 path.resolve）
+    resolvePath(basePath, relativePath) {
+      if (!relativePath) return basePath || '/'
+      if (relativePath.startsWith('/')) return relativePath
+      
+      const base = basePath ? basePath.replace(/\/$/, '') : ''
+      const relative = relativePath.replace(/^\//, '')
+      return base ? `${base}/${relative}` : `/${relative}`
     }
   }
 }
 </script>
 
 <style lang='scss' scoped>
-::v-deep {
-  .el-dialog__header {
-    padding: 0 !important;
-  }
+:deep(.el-dialog__header) {
+  padding: 0 !important;
 }
 
 .header-search {

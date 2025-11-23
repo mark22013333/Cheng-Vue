@@ -107,7 +107,7 @@ export default {
       configLoading: false,
       upload: {
         isUploading: false,
-        url: process.env.VUE_APP_BASE_API + '/line/user/import',
+        url: import.meta.env.VITE_APP_BASE_API + '/line/user/import',
         headers: { Authorization: 'Bearer ' + getToken() }
       }
     }
@@ -298,7 +298,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-::v-deep .el-upload-dragger {
+:deep(.el-upload-dragger) {
   width: 100%;
 }
 </style>

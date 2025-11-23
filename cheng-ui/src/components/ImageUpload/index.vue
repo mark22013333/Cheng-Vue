@@ -288,21 +288,20 @@ export default {
 </script>
 <style scoped lang="scss">
 // .el-upload--picture-card 控制加號部分
-::v-deep.hide .el-upload--picture-card {
+:deep(.hide .el-upload--picture-card) {
   display: none;
 }
 
-::v-deep .el-upload-list--picture-card.is-disabled + .el-upload--picture-card {
+:deep(.el-upload-list--picture-card.is-disabled + .el-upload--picture-card) {
   display: none !important;
 }
 
 // 去掉動畫效果
-::v-deep .el-list-enter-active,
-::v-deep .el-list-leave-active {
+:deep(.el-list-enter-active), :deep(.el-list-leave-active) {
   transition: all 0s;
 }
 
-::v-deep .el-list-enter, .el-list-leave-active {
+:deep(.el-list-enter, .el-list-leave-active) {
   opacity: 0;
   transform: translateY(0);
 }

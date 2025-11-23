@@ -32,7 +32,6 @@
 
 <script>
 import ScrollPane from './ScrollPane'
-import path from 'path'
 
 export default {
   components: { ScrollPane },
@@ -108,7 +107,7 @@ export default {
       let tags = []
       routes.forEach(route => {
         if (route.meta && route.meta.affix) {
-          const tagPath = path.resolve(basePath, route.path)
+          const tagPath = this.resolvePath(basePath, route.path)
           tags.push({
             fullPath: tagPath,
             path: tagPath,
@@ -233,6 +232,15 @@ export default {
     },
     handleScroll() {
       this.closeMenu()
+    },
+    // 瀏覽器兼容的路徑合併函數（替代 Node.js 的 path.resolve）
+    resolvePath(basePath, relativePath) {
+      if (!relativePath) return basePath || '/'
+      if (relativePath.startsWith('/')) return relativePath
+      
+      const base = basePath ? basePath.replace(/\/$/, '') : ''
+      const relative = relativePath.replace(/^\//, '')
+      return base ? `${base}/${relative}` : `/${relative}`
     }
   }
 }
@@ -259,6 +267,11 @@ export default {
       font-size: 12px;
       margin-left: 5px;
       margin-top: 4px;
+      
+      /* icon 與文字間距 */
+      .svg-icon {
+        margin-right: 4px;
+      }
       &:first-of-type {
         margin-left: 15px;
       }

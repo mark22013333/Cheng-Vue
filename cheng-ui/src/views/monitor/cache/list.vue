@@ -46,9 +46,9 @@
               align="center"
               class-name="small-padding fixed-width"
             >
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-button
-                  size="mini"
+                  size="small"
                   type="text"
                   icon="el-icon-delete"
                   @click="handleClearCacheName(scope.row)"
@@ -96,9 +96,9 @@
               align="center"
               class-name="small-padding fixed-width"
             >
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-button
-                  size="mini"
+                  size="small"
                   type="text"
                   icon="el-icon-delete"
                   @click="handleClearCacheKey(scope.row)"

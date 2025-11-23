@@ -38,8 +38,8 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="el-icon-search" size="small" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -49,7 +49,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['inventory:item:add']"
         >新增</el-button>
@@ -59,7 +59,7 @@
           type="success"
           plain
           icon="el-icon-edit"
-          size="mini"
+          size="small"
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['inventory:item:edit']"
@@ -70,7 +70,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['inventory:item:remove']"
@@ -81,7 +81,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['inventory:item:export']"
         >匯出</el-button>
@@ -91,7 +91,7 @@
           type="info"
           plain
           icon="el-icon-upload2"
-          size="mini"
+          size="small"
           @click="handleImport"
           v-hasPermi="['inventory:item:import']"
         >匯入</el-button>
@@ -101,7 +101,7 @@
           type="primary"
           plain
           icon="el-icon-camera"
-          size="mini"
+          size="small"
           @click="handleScan"
           v-hasPermi="['inventory:item:scan']"
         >掃描</el-button>
@@ -119,7 +119,7 @@
       <el-table-column label="品牌" align="center" prop="brand" />
       <el-table-column label="型號" align="center" prop="model" />
       <el-table-column label="庫存數量" align="center" prop="stockQuantity">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span :class="{'text-danger': scope.row.stockQuantity <= scope.row.minStock}">
             {{ scope.row.stockQuantity }}
           </span>
@@ -128,28 +128,28 @@
       <el-table-column label="可用數量" align="center" prop="availableQuantity" />
       <el-table-column label="存放位置" align="center" prop="location" />
       <el-table-column label="狀態" align="center" prop="status">
-        <template slot-scope="scope">
+        <template #default="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['inventory:item:edit']"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['inventory:item:remove']"
           >刪除</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-view"
             @click="handleDetail(scope.row)"

@@ -29,8 +29,8 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="mini" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -40,7 +40,7 @@
           type="primary"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleGenTable"
           v-hasPermi="['tool:gen:code']"
@@ -52,7 +52,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="openCreateTable"
           v-hasRole="['admin']"
         >建立
@@ -63,7 +63,7 @@
           type="info"
           plain
           icon="el-icon-upload"
-          size="mini"
+          size="small"
           @click="openImportTable"
           v-hasPermi="['tool:gen:import']"
         >匯入
@@ -74,7 +74,7 @@
           type="success"
           plain
           icon="el-icon-edit"
-          size="mini"
+          size="small"
           :disabled="single"
           @click="handleEditTable"
           v-hasPermi="['tool:gen:edit']"
@@ -85,7 +85,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['tool:gen:remove']"
@@ -98,7 +98,7 @@
     <el-table ref="tables" v-loading="loading" :data="tableList" @selection-change="handleSelectionChange" :default-sort="defaultSort" @sort-change="handleSortChange">
       <el-table-column type="selection" align="center" width="55"></el-table-column>
       <el-table-column align="center" label="序號" type="index" width="50">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{(queryParams.pageNum - 1) * queryParams.pageSize + scope.$index + 1}}</span>
         </template>
       </el-table-column>
@@ -110,7 +110,7 @@
       <el-table-column :sort-orders="['descending', 'ascending']" align="center" label="更新時間" prop="updateTime"
                        sortable="custom" width="160"/>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
             type="text"
             size="small"

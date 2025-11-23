@@ -36,10 +36,10 @@
             <div class="card-title">
               <i :class="channel.icon" :style="{ color: channel.color }"></i>
               <span class="type-label">{{ channel.label }}</span>
-              <el-tag v-if="isEnabled(channel.config.status)" type="success" size="mini" effect="plain">
+              <el-tag v-if="isEnabled(channel.config.status)" type="success" size="small" effect="plain">
                 執行中
               </el-tag>
-              <el-tag v-else type="info" size="mini" effect="plain">
+              <el-tag v-else type="info" size="small" effect="plain">
                 已停用
               </el-tag>
             </div>
@@ -95,11 +95,11 @@
               <el-tag
                 v-if="isEnabled(channel.config.webhookStatus)"
                 type="success"
-                size="mini"
+                size="small"
               >
                 已驗證
               </el-tag>
-              <el-tag v-else type="info" size="mini">未驗證</el-tag>
+              <el-tag v-else type="info" size="small">未驗證</el-tag>
             </div>
 
             <!-- 快速操作 -->
@@ -136,7 +136,7 @@
             <div class="card-title">
               <i :class="channel.icon" :style="{ color: channel.color }"></i>
               <span class="type-label">{{ channel.label }}</span>
-              <el-tag type="info" size="mini" effect="plain">
+              <el-tag type="info" size="small" effect="plain">
                 未設定
               </el-tag>
             </div>
@@ -150,7 +150,7 @@
             <p class="empty-desc">{{ channel.description }}</p>
             <el-button
               :type="channel.type === 'MAIN' ? 'warning' : 'primary'"
-              size="medium"
+              size="default"
               icon="el-icon-plus"
               @click="handleAdd(channel.type)"
               v-hasPermi="['line:config:add']"
@@ -392,7 +392,7 @@ export default {
       &.channel-main {
         border-left: 4px solid #E6A23C;
 
-        ::v-deep .el-card__header {
+        :deep(.el-card__header) {
           background: linear-gradient(135deg, #FDF6EC 0%, #FFF 100%);
           border-bottom: 1px solid #F5DAB1;
         }
@@ -402,7 +402,7 @@ export default {
       &.channel-sub {
         border-left: 4px solid #409EFF;
 
-        ::v-deep .el-card__header {
+        :deep(.el-card__header) {
           background: linear-gradient(135deg, #ECF5FF 0%, #FFF 100%);
           border-bottom: 1px solid #B3D8FF;
         }
@@ -412,7 +412,7 @@ export default {
       &.channel-test {
         border-left: 4px solid #909399;
 
-        ::v-deep .el-card__header {
+        :deep(.el-card__header) {
           background: linear-gradient(135deg, #F4F4F5 0%, #FFF 100%);
           border-bottom: 1px solid #DCDFE6;
         }
@@ -420,7 +420,7 @@ export default {
 
       // 空狀態卡片
       &.empty-card {
-        ::v-deep .el-card__header {
+        :deep(.el-card__header) {
           background: #FAFAFA;
         }
 

@@ -1,5 +1,5 @@
 <template>
-  <el-drawer size="280px" :visible="showSettings" :with-header="false" :append-to-body="true" :before-close="closeSetting" :lock-scroll="false">
+  <el-drawer size="280px" v-model="showSettings" :with-header="false" :append-to-body="true" :before-close="closeSetting" :lock-scroll="false" :z-index="3000">
     <div class="drawer-container">
       <div>
         <div class="setting-drawer-content">
@@ -31,7 +31,7 @@
 
           <div class="drawer-item">
             <span>主題顏色</span>
-            <theme-picker style="float: right;height: 26px;margin: -3px 8px 0 0;" @change="themeChange" />
+            <theme-picker style="height: 26px;" @change="themeChange" />
           </div>
         </div>
 
@@ -76,9 +76,12 @@
 
         <el-divider/>
 
-        <el-button icon="el-icon-document-add" plain size="small" type="primary" @click="saveSetting">儲存設定
+        <el-button size="small" type="primary" icon="DocumentAdd" @click="saveSetting">
+          儲存設定
         </el-button>
-        <el-button size="small" plain icon="el-icon-refresh" @click="resetSetting">重置設定</el-button>
+        <el-button size="small" type="info" icon="Refresh" @click="resetSetting">
+          重置設定
+        </el-button>
       </div>
     </div>
   </el-drawer>
@@ -86,9 +89,14 @@
 
 <script>
 import ThemePicker from '@/components/ThemePicker'
+import { DocumentAdd, Refresh } from '@element-plus/icons-vue'
 
 export default {
-  components: { ThemePicker },
+  components: { 
+    ThemePicker,
+    DocumentAdd,
+    Refresh
+  },
   expose: ['openSetting'],
   data() {
     return {
@@ -290,6 +298,9 @@ export default {
       color: rgba(0, 0, 0, .65);
       font-size: 14px;
       padding: 12px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .drawer-switch {

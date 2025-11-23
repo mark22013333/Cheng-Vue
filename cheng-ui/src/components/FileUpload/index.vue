@@ -17,7 +17,7 @@
       v-if="!disabled"
     >
       <!-- 上傳按鈕 -->
-      <el-button size="mini" type="primary">選取檔案</el-button>
+      <el-button size="small" type="primary">選取檔案</el-button>
       <!-- 上傳提示 -->
       <div class="el-upload__tip" slot="tip" v-if="showTip">
         請上傳

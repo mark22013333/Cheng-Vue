@@ -68,7 +68,7 @@
             <el-button
               v-if="selectedAreaIndex !== null"
               type="text"
-              size="mini"
+              size="small"
               icon="el-icon-delete"
               @click="removeArea"
             >

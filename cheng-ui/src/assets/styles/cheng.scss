@@ -47,8 +47,9 @@
 .mb10 {
   margin-bottom: 10px;
 }
+
 .ml10 {
-	margin-left: 10px;
+  margin-left: 10px;
 }
 
 .mt20 {
@@ -62,8 +63,9 @@
 .mb20 {
   margin-bottom: 20px;
 }
+
 .ml20 {
-	margin-left: 20px;
+  margin-left: 20px;
 }
 
 .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
@@ -73,7 +75,7 @@
   color: inherit;
 }
 
-.el-message-box__status + .el-message-box__message{
+.el-message-box__status + .el-message-box__message {
   word-break: break-word;
 }
 
@@ -146,9 +148,9 @@
 }
 
 /** 表格更多操作下拉樣式 */
-.el-table .el-dropdown-link,.el-table .el-dropdown-selfdefine {
-	cursor: pointer;
-	margin-left: 5px;
+.el-table .el-dropdown-link, .el-table .el-dropdown-selfdefine {
+  cursor: pointer;
+  margin-left: 5px;
 }
 
 .el-table .el-dropdown, .el-icon-arrow-down {
@@ -283,5 +285,224 @@
 
 /* 分割面板樣式 */
 .splitpanes.default-theme .splitpanes__pane {
-  background-color: #fff!important;
+  background-color: #fff !important;
+}
+
+/* Element Plus 表格樣式修正 */
+.el-table {
+  /* 表格標題列文字置中 */
+  .el-table__header th {
+    text-align: center;
+  }
+
+  /* 表格操作列按鈕對齊 */
+  .el-table__body td {
+    vertical-align: middle;
+  }
+
+  /* 操作列按鈕間距和對齊 */
+  .fixed-width {
+    text-align: center;
+
+    .el-button,
+    .el-dropdown {
+      margin: 0 2px;
+    }
+  }
+}
+
+/* 左側選單頁籤文字置中 */
+.el-tabs__item {
+  text-align: center;
+}
+
+/* Splitpanes 左側面板的頁籤文字置中 */
+.splitpanes__pane {
+  .el-tabs__item {
+    justify-content: center;
+  }
+}
+
+/* Tags-View 上方頁籤文字置中 */
+.tags-view-item {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 統一 Header 區域 Icon 大小 */
+.navbar {
+  .right-menu-item {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    svg, .svg-icon {
+      width: 18px !important;
+      height: 18px !important;
+      font-size: 18px !important;
+      vertical-align: middle !important;
+    }
+  }
+}
+
+/* 修復 Element Plus 輸入框雙層邊框問題 */
+.el-input__wrapper {
+  box-shadow: 0 0 0 1px var(--el-input-border-color, var(--el-border-color)) inset !important;
+}
+
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--el-input-hover-border-color) inset !important;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--el-input-focus-border-color) inset !important;
+}
+
+/* 提高下拉選單 z-index */
+.el-dropdown-menu,
+.el-select-dropdown,
+.el-popper,
+.size-select-dropdown {
+  z-index: 9999 !important;
+}
+
+/* 修復搜尋框樣式 */
+#header-search {
+  .el-dialog,
+  .el-overlay {
+    z-index: 9999 !important;
+  }
+}
+
+/* Screenfull 和其他 header icon 容器對齊 */
+.navbar .right-menu-item {
+  #screenfull,
+  .size-select-dropdown {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* 統一所有頁面的按鈕樣式 */
+.el-button {
+  /* Element Plus link 類型按鈕統一樣式 */
+  &.is-link {
+    padding: 5px 8px;
+    font-size: 12px;
+
+    /* icon 與文字間距 */
+    .el-icon {
+      margin-right: 2px;
+    }
+  }
+
+  /* 小尺寸按鈕統一樣式 */
+  &.el-button--small {
+    padding: 5px 15px;
+    font-size: 12px;
+    border-radius: 4px;
+
+    /* icon 與文字間距 */
+    .el-icon {
+      margin-right: 4px;
+    }
+    
+    /* 兼容 Vue 2 icon 寫法 */
+    [class*="el-icon-"] {
+      margin-right: 4px;
+    }
+  }
+  
+  /* 預設尺寸按鈕統一樣式 */
+  &.el-button--default {
+    padding: 8px 15px;
+    font-size: 14px;
+    border-radius: 4px;
+    
+    /* icon 與文字間距 */
+    .el-icon {
+      margin-right: 4px;
+    }
+    
+    /* 兼容 Vue 2 icon 寫法 */
+    [class*="el-icon-"] {
+      margin-right: 4px;
+    }
+  }
+  
+  /* Plain 按鈕樣式調整 */
+  &.is-plain {
+    border-radius: 4px;
+  }
+  
+  /* 確保 icon 正確對齊 */
+  .el-icon {
+    vertical-align: middle;
+  }
+  
+  /* 兼容 Vue 2 的 icon 寫法 */
+  [class*="el-icon-"] {
+    vertical-align: middle;
+  }
+}
+
+/* 表格操作列按鈕樣式 */
+.el-table {
+  .el-button--small.is-link {
+    padding: 0;
+    margin-right: 8px;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+/* 表單搜尋區域按鈕樣式 */
+.el-form {
+  .el-form-item__content {
+    .el-button {
+      margin-left: 8px;
+
+      &:first-child {
+        margin-left: 0;
+      }
+    }
+  }
+}
+
+/* 統一輸入框樣式 */
+.el-input {
+  border-radius: 4px;
+  
+  .el-input__wrapper {
+    border-radius: 4px;
+  }
+}
+
+.el-select {
+  .el-input__wrapper {
+    border-radius: 4px;
+  }
+}
+
+.el-date-editor {
+  .el-input__wrapper {
+    border-radius: 4px;
+  }
+}
+
+/* 側邊欄選單 icon 樣式 */
+.sidebar-container {
+  .el-menu-item,
+  .el-submenu__title {
+    .svg-icon {
+      width: 18px;
+      height: 18px;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+  }
 }

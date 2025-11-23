@@ -10,7 +10,7 @@
         <div class="card-header">
           <div class="logo-wrapper">
             <div class="logo-icon">
-              <i class="el-icon-s-cooperation"></i>
+              <el-icon><Connection /></el-icon>
             </div>
             <div class="logo-ring"></div>
           </div>
@@ -22,7 +22,7 @@
 
           <el-form-item prop="username">
             <div class="input-group" :class="{ 'is-focused': focusedInput === 'username' }">
-              <i class="el-icon-user prefix-icon"></i>
+              <el-icon class="prefix-icon"><User /></el-icon>
               <el-input
                 v-model="loginForm.username"
                 placeholder="使用者帳號 / User ID"
@@ -34,7 +34,7 @@
 
           <el-form-item prop="password">
             <div class="input-group" :class="{ 'is-focused': focusedInput === 'password' }">
-              <i class="el-icon-lock prefix-icon"></i>
+              <el-icon class="prefix-icon"><Lock /></el-icon>
               <el-input
                 v-model="loginForm.password"
                 :type="showPassword ? 'text' : 'password'"
@@ -43,18 +43,17 @@
                 @blur="focusedInput = ''"
                 @keyup.enter.native="handleLogin"
               />
-              <i
-                class="suffix-icon"
-                :class="showPassword ? 'el-icon-view' : 'el-icon-lock'"
-                @click="togglePassword"
-              ></i>
+              <el-icon class="suffix-icon" @click="togglePassword">
+                <View v-if="showPassword" />
+                <Hide v-else />
+              </el-icon>
             </div>
           </el-form-item>
 
           <el-form-item prop="code" v-if="captchaEnabled">
             <div class="captcha-row">
               <div class="input-group captcha-input" :class="{ 'is-focused': focusedInput === 'code' }">
-                <i class="el-icon-key prefix-icon"></i>
+                <el-icon class="prefix-icon"><Key /></el-icon>
                 <el-input
                   v-model="loginForm.code"
                   placeholder="驗證碼"
@@ -66,7 +65,7 @@
               <div class="captcha-img-wrapper" @click="getCode">
                 <img :src="codeUrl" alt="captcha" class="captcha-img"/>
                 <div class="captcha-overlay">
-                  <i class="el-icon-refresh"></i>
+                  <el-icon><Refresh /></el-icon>
                 </div>
               </div>
             </div>
@@ -80,10 +79,10 @@
           <el-button
             class="submit-btn"
             :loading="loading"
-            @click.native.prevent="handleLogin"
+            @click.prevent="handleLogin"
           >
             {{ loading ? '驗證身分中...' : '登 入 系 統' }}
-            <i class="el-icon-right" v-if="!loading"></i>
+            <el-icon v-if="!loading"><Right /></el-icon>
           </el-button>
 
           <div class="register-hint" v-if="register">
@@ -104,12 +103,14 @@
 import {getCodeImg} from "@/api/login";
 import Cookies from "js-cookie";
 import {decrypt, encrypt} from '@/utils/jsencrypt';
+import { Connection, User, Lock, View, Hide, Key, Refresh, Right } from '@element-plus/icons-vue'
 
 export default {
   name: "Login",
+  components: { Connection, User, Lock, View, Hide, Key, Refresh, Right },
   data() {
     return {
-      title: process.env.VUE_APP_TITLE || "CoolApps Admin",
+      title: import.meta.env.VITE_APP_TITLE || "CoolApps Admin",
       codeUrl: "",
       loginForm: {
         username: "admin",
@@ -218,9 +219,15 @@ export default {
             Cookies.remove('rememberMe');
           }
           this.$store.dispatch("Login", this.loginForm).then(() => {
-            this.$router.push({path: this.redirect || "/"}).catch(() => {
+            console.log('[Login] Login success, redirecting to:', this.redirect || "/");
+            this.$router.push({path: this.redirect || "/"}).then(() => {
+              console.log('[Login] Router push success');
+            }).catch((err) => {
+              console.error('[Login] Router push error:', err);
+              this.loading = false;
             });
-          }).catch(() => {
+          }).catch((err) => {
+            console.error('[Login] Login failed:', err);
             this.loading = false;
             if (this.captchaEnabled) {
               this.getCode();
@@ -353,6 +360,13 @@ $text-light: #e2e8f0;
   color: #fff;
   z-index: 2;
   text-shadow: 0 0 15px $primary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  :deep(.el-icon) {
+    font-size: 32px;
+  }
 }
 
 .logo-ring {
@@ -423,6 +437,8 @@ $text-light: #e2e8f0;
     color: #64748b;
     margin-right: 12px;
     transition: color 0.3s;
+    display: flex;
+    align-items: center;
   }
 
   .suffix-icon {
@@ -431,18 +447,27 @@ $text-light: #e2e8f0;
     cursor: pointer;
     padding: 5px;
     transition: color 0.3s;
+    display: flex;
+    align-items: center;
 
     &:hover {
       color: #fff;
     }
   }
 
-  // Element UI Input Override
-  ::v-deep .el-input__inner {
+  // Element Plus Input Override (Vue 3 語法)
+  :deep(.el-input__wrapper) {
+    background: transparent !important;
+    border: none;
+    box-shadow: none !important;
+    padding: 0;
+  }
+
+  :deep(.el-input__inner) {
     background: transparent;
     border: none;
     height: 100%;
-    color: #fff;
+    color: #fff !important;
     font-size: 15px;
     padding: 0;
 
@@ -517,17 +542,17 @@ $text-light: #e2e8f0;
   margin-bottom: 24px;
   padding: 0 4px;
 
-  ::v-deep .el-checkbox__label {
+  :deep(.el-checkbox__label) {
     color: #94a3b8;
     font-size: 13px;
   }
 
-  ::v-deep .el-checkbox__inner {
+  :deep(.el-checkbox__inner) {
     background: transparent;
     border-color: #475569;
   }
 
-  ::v-deep .el-checkbox__input.is-checked .el-checkbox__inner {
+  :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
     background: $primary;
     border-color: $primary;
   }

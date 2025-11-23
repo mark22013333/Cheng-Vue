@@ -139,13 +139,13 @@ export default {
 
 <style lang="scss" scoped>
 .user-info-form {
-  ::v-deep .el-form-item__label {
+  :deep(.el-form-item__label) {
     font-weight: 600;
     color: #303133;
     margin-bottom: 8px;
   }
 
-  ::v-deep .el-input__inner {
+  :deep(.el-input__inner) {
     border-radius: 6px;
     transition: all 0.3s;
 
@@ -155,7 +155,7 @@ export default {
     }
   }
 
-  ::v-deep .el-radio-button {
+  :deep(.el-radio-button) {
     .el-radio-button__inner {
       border-radius: 6px;
       padding: 12px 20px;
@@ -181,7 +181,7 @@ export default {
     padding-top: 24px;
     border-top: 1px solid #f0f2f5;
 
-    ::v-deep .el-form-item__content {
+    :deep(.el-form-item__content) {
       display: flex;
       gap: 12px;
     }

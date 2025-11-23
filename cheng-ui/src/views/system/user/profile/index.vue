@@ -109,7 +109,7 @@
                 性別
               </div>
               <div class="info-value">
-                <el-tag size="mini" :type="user.sex === '0' ? 'primary' : 'danger'">
+                <el-tag size="small" :type="user.sex === '0' ? 'primary' : 'danger'">
                   {{ user.sex === '0' ? '男' : user.sex === '1' ? '女' : '未設定' }}
                 </el-tag>
               </div>
@@ -457,12 +457,12 @@ export default {
   margin-bottom: 20px;
   transition: all 0.3s ease;
   
-  ::v-deep .el-card__header {
+  :deep(.el-card__header) {
     border-bottom: 2px solid #f0f2f5;
     padding: 20px;
   }
 
-  ::v-deep .el-card__body {
+  :deep(.el-card__body) {
     padding: 24px;
   }
 
@@ -486,7 +486,7 @@ export default {
       color: #4facfe;
     }
 
-    ::v-deep .el-card__header {
+    :deep(.el-card__header) {
       border-bottom-color: rgba(79, 172, 254, 0.2);
     }
   }
@@ -496,7 +496,7 @@ export default {
       color: #43e97b;
     }
 
-    ::v-deep .el-card__header {
+    :deep(.el-card__header) {
       border-bottom-color: rgba(67, 233, 123, 0.2);
     }
   }
@@ -506,7 +506,7 @@ export default {
       color: #fa709a;
     }
 
-    ::v-deep .el-card__header {
+    :deep(.el-card__header) {
       border-bottom-color: rgba(250, 112, 154, 0.2);
     }
   }
@@ -560,11 +560,11 @@ export default {
 }
 
 .profile-tabs {
-  ::v-deep .el-tabs__header {
+  :deep(.el-tabs__header) {
     margin-bottom: 24px;
   }
 
-  ::v-deep .el-tabs__item {
+  :deep(.el-tabs__item) {
     font-size: 15px;
     padding: 0 24px;
     height: 44px;
@@ -575,29 +575,29 @@ export default {
     }
   }
 
-  ::v-deep .el-tabs__active-bar {
+  :deep(.el-tabs__active-bar) {
     height: 3px;
     background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
   }
 
   // 主題色標籤列
-  .edit-card.theme-blue & ::v-deep .el-tabs__active-bar {
+  .edit-card.theme-blue & :deep(.el-tabs__active-bar) {
     background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
   }
 
-  .edit-card.theme-green & ::v-deep .el-tabs__active-bar {
+  .edit-card.theme-green & :deep(.el-tabs__active-bar) {
     background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
   }
 
-  .edit-card.theme-orange & ::v-deep .el-tabs__active-bar {
+  .edit-card.theme-orange & :deep(.el-tabs__active-bar) {
     background: linear-gradient(90deg, #fa709a 0%, #fee140 100%);
   }
 
-  .edit-card.theme-purple & ::v-deep .el-tabs__active-bar {
+  .edit-card.theme-purple & :deep(.el-tabs__active-bar) {
     background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
   }
 
-  ::v-deep .el-tabs__nav-wrap::after {
+  :deep(.el-tabs__nav-wrap::after) {
     background: #e4e7ed;
   }
 }

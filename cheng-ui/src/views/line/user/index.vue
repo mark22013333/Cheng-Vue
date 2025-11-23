@@ -53,8 +53,8 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="el-icon-search" size="small" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -65,7 +65,7 @@
           type="primary"
           plain
           icon="el-icon-upload"
-          size="mini"
+          size="small"
           @click="handleImport"
           v-hasPermi="['line:user:import']"
         >
@@ -77,7 +77,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['line:user:export']"
         >
@@ -89,7 +89,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['line:user:remove']"
@@ -102,7 +102,7 @@
           type="warning"
           plain
           icon="el-icon-remove-outline"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleBatchAddBlacklist"
           v-hasPermi="['line:user:edit']"
@@ -115,7 +115,7 @@
           type="success"
           plain
           icon="el-icon-circle-check"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleBatchRemoveBlacklist"
           v-hasPermi="['line:user:edit']"
@@ -130,40 +130,40 @@
     <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="頭像" align="center" width="80">
-        <template slot-scope="scope">
-          <el-avatar :src="scope.row.linePictureUrl" size="medium">
+        <template #default="scope">
+          <el-avatar :src="scope.row.linePictureUrl" size="default">
             <i class="el-icon-user-solid"></i>
           </el-avatar>
         </template>
       </el-table-column>
       <el-table-column label="顯示名稱" align="center" prop="lineDisplayName" :show-overflow-tooltip="true" min-width="120" />
       <el-table-column label="LINE ID" align="center" prop="lineUserId" :show-overflow-tooltip="true" min-width="150">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ scope.row.lineUserId }}</span>
           <el-button
             type="text"
             icon="el-icon-document-copy"
-            size="mini"
+            size="small"
             @click="handleCopy(scope.row.lineUserId)"
             style="margin-left: 5px"
           ></el-button>
         </template>
       </el-table-column>
       <el-table-column label="關注狀態" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag v-if="scope.row.followStatus === 'FOLLOWING'" type="success" size="small">關注中</el-tag>
           <el-tag v-else-if="scope.row.followStatus === 'BLACKLISTED'" type="danger" size="small">黑名單</el-tag>
           <el-tag v-else type="info" size="small">未關注</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="綁定狀態" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag v-if="scope.row.bindStatus === 'BOUND'" type="primary" size="small">已綁定</el-tag>
           <el-tag v-else type="warning" size="small">未綁定</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="互動統計" align="center" width="120">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tooltip placement="top">
             <div slot="content">
               發送：{{ scope.row.totalMessagesSent || 0 }}<br/>
@@ -177,22 +177,22 @@
         </template>
       </el-table-column>
       <el-table-column label="最後互動" align="center" prop="lastInteractionTime" width="160">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span v-if="scope.row.lastInteractionTime">{{ parseTime(scope.row.lastInteractionTime, '{y}-{m}-{d} {h}:{i}') }}</span>
           <span v-else>-</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="220" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-view"
             @click="handleDetail(scope.row)"
             v-hasPermi="['line:user:query']"
           >詳情</el-button>
-          <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)">
-            <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
+          <el-dropdown size="small" @command="(command) => handleCommand(command, scope.row)">
+            <el-button size="small" type="text" icon="el-icon-d-arrow-right">更多</el-button>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item command="bind" icon="el-icon-link" v-hasPermi="['line:user:bind']">
                 綁定

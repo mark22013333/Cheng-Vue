@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="display: inline-flex; align-items: center; justify-content: center;">
     <svg-icon :icon-class="isFullscreen?'exit-fullscreen':'fullscreen'" @click="click" />
   </div>
 </template>
@@ -17,7 +17,7 @@ export default {
   mounted() {
     this.init()
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.destroy()
   },
   methods: {

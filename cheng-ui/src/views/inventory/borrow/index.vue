@@ -39,8 +39,8 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="el-icon-search" size="small" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -50,7 +50,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['inventory:borrow:add']"
         >新增借出
@@ -62,7 +62,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['inventory:borrow:export']"
         >匯出
@@ -132,33 +132,33 @@
       <el-table-column label="借用人" align="center" prop="borrowerName"/>
       <el-table-column label="借用目的" align="center" prop="purpose" show-overflow-tooltip/>
       <el-table-column label="借出時間" align="center" prop="borrowTime" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.borrowTime, '{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="預計歸還" align="center" prop="expectedReturn" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.expectedReturn, '{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="實際歸還" align="center" prop="actualReturn" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span v-if="scope.row.actualReturn">{{ parseTime(scope.row.actualReturn, '{y}-{m}-{d} {h}:{i}') }}</span>
           <span v-else>-</span>
         </template>
       </el-table-column>
       <el-table-column label="狀態" align="center" prop="status">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag :type="getStatusType(scope.row.status)">
             {{ getStatusText(scope.row.status) }}
           </el-tag>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <!-- 只有待審核狀態可以修改 -->
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
@@ -168,7 +168,7 @@
           </el-button>
           <!-- 只有待審核狀態顯示審核按鈕 -->
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-check"
             @click="handleApprove(scope.row)"
@@ -178,7 +178,7 @@
           </el-button>
           <!-- 已借出、部分歸還、逾期狀態可以歸還 -->
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-refresh-left"
             @click="handleReturn(scope.row)"
@@ -188,7 +188,7 @@
           </el-button>
           <!-- 已歸還或部分歸還狀態顯示查看歸還記錄按鈕 -->
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-document"
             @click="handleViewReturnRecords(scope.row)"
@@ -320,20 +320,20 @@
         <el-table-column label="歸還時間" align="center" prop="returnTime" width="160"/>
         <el-table-column label="歸還數量" align="center" prop="returnQuantity" width="100"/>
         <el-table-column label="物品狀態" align="center" width="100">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag v-if="scope.row.itemCondition === 'good'" type="success">完好</el-tag>
             <el-tag v-else-if="scope.row.itemCondition === 'damaged'" type="warning">損壞</el-tag>
             <el-tag v-else-if="scope.row.itemCondition === 'lost'" type="danger">遺失</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="是否逾期" align="center" width="120">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag v-if="scope.row.isOverdue === '1'" type="danger">逾期 {{ scope.row.overdueDays }} 天</el-tag>
             <el-tag v-else type="success">準時</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="說明" align="center" min-width="150" :show-overflow-tooltip="true">
-          <template slot-scope="scope">
+          <template #default="scope">
             {{ scope.row.damageDescription || scope.row.remark || '-' }}
           </template>
         </el-table-column>

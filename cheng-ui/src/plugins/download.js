@@ -1,11 +1,11 @@
 import axios from 'axios'
-import {Loading, Message} from 'element-ui'
-import {saveAs} from 'file-saver'
-import {getToken} from '@/utils/auth'
+import { ElLoading, ElMessage } from 'element-plus'
+import { saveAs } from 'file-saver'
+import { getToken } from '@/utils/auth'
 import errorCode from '@/utils/errorCode'
-import {blobValidate} from "@/utils/cheng"
+import { blobValidate } from "@/utils/cheng"
 
-const baseURL = process.env.VUE_APP_BASE_API
+const baseURL = import.meta.env.VITE_APP_BASE_API
 let downloadLoadingInstance
 
 export default {
@@ -45,9 +45,8 @@ export default {
   },
   zip(url, name) {
     var url = baseURL + url
-    downloadLoadingInstance = Loading.service({
+    downloadLoadingInstance = ElLoading.service({
       text: "正在下載數據，請稍候",
-      spinner: "el-icon-loading",
       background: "rgba(0, 0, 0, 0.7)",
     })
     axios({
@@ -66,7 +65,7 @@ export default {
       downloadLoadingInstance.close()
     }).catch((r) => {
       console.error(r)
-      Message.error('下載檔案出現錯誤，請聯絡管理員！')
+      ElMessage.error('下載檔案出現錯誤，請聯絡管理員！')
       downloadLoadingInstance.close()
     })
   },
@@ -77,7 +76,7 @@ export default {
     const resText = await data.text()
     const rspObj = JSON.parse(resText)
     const errMsg = errorCode[rspObj.code] || rspObj.msg || errorCode['default']
-    Message.error(errMsg)
+    ElMessage.error(errMsg)
   }
 }
 

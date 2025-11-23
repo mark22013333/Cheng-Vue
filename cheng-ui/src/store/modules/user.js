@@ -1,8 +1,8 @@
 import router from '@/router'
-import {MessageBox,} from 'element-ui'
-import {getInfo, login, logout} from '@/api/login'
-import {getToken, removeToken, setToken} from '@/utils/auth'
-import {isEmpty, isHttp} from "@/utils/validate"
+import { ElMessageBox } from 'element-plus'
+import { getInfo, login, logout } from '@/api/login'
+import { getToken, removeToken, setToken } from '@/utils/auth'
+import { isEmpty, isHttp } from "@/utils/validate"
 import defAva from '@/assets/images/profile.jpg'
 
 const user = {
@@ -94,7 +94,7 @@ const user = {
           commit('SET_AVATAR', avatar)
           /* 初始密碼提示 */
           if(res.isDefaultModifyPwd) {
-            MessageBox.confirm('您的密碼還是初始密碼，請修改密碼！', '安全提示', {
+            ElMessageBox.confirm('您的密碼還是初始密碼，請修改密碼！', '安全提示', {
               confirmButtonText: '確定',
               cancelButtonText: '取消',
               type: 'warning'
@@ -104,7 +104,7 @@ const user = {
           }
           /* 過期密碼提示 */
           if(!res.isDefaultModifyPwd && res.isPasswordExpired) {
-            MessageBox.confirm('您的密碼已過期，請尽快修改密碼！', '安全提示', {
+            ElMessageBox.confirm('您的密碼已過期，請尽快修改密碼！', '安全提示', {
               confirmButtonText: '確定',
               cancelButtonText: '取消',
               type: 'warning'

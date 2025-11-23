@@ -20,8 +20,8 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="mini" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -31,7 +31,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['system:menu:add']"
         >新增</el-button>
@@ -41,7 +41,7 @@
           type="info"
           plain
           icon="el-icon-sort"
-          size="mini"
+          size="small"
           @click="toggleExpandAll"
         >展開/折叠
         </el-button>
@@ -59,7 +59,7 @@
     >
       <el-table-column :show-overflow-tooltip="true" label="選單名稱" prop="menuName" width="160"></el-table-column>
       <el-table-column align="center" label="圖標" prop="icon" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <svg-icon :icon-class="scope.row.icon" />
         </template>
       </el-table-column>
@@ -67,33 +67,33 @@
       <el-table-column :show-overflow-tooltip="true" label="權限標識" prop="perms"></el-table-column>
       <el-table-column :show-overflow-tooltip="true" label="元件路徑" prop="component"></el-table-column>
       <el-table-column label="狀態" prop="status" width="80">
-        <template slot-scope="scope">
+        <template #default="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column align="center" label="建立時間" prop="createTime">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['system:menu:edit']"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-plus"
             @click="handleAdd(scope.row)"
             v-hasPermi="['system:menu:add']"
           >新增</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
@@ -305,14 +305,15 @@
 
 <script>
 import {addMenu, delMenu, getMenu, listMenu, updateMenu} from "@/api/system/menu"
-import Treeselect from "@riophae/vue-treeselect"
-import "@riophae/vue-treeselect/dist/vue-treeselect.css"
+// TODO: vue-treeselect 無 Vue 3 版本
+// import Treeselect from "@riophae/vue-treeselect"
+// import "@riophae/vue-treeselect/dist/vue-treeselect.css"
 import IconSelect from "@/components/IconSelect"
 
 export default {
   name: "Menu",
   dicts: ['sys_show_hide', 'sys_normal_disable'],
-  components: { Treeselect, IconSelect },
+  components: { IconSelect },
   data() {
     return {
       // 遮罩層

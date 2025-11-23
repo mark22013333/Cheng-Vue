@@ -30,8 +30,8 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="mini" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -41,7 +41,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['monitor:job:add']"
         >新增
@@ -52,7 +52,7 @@
           type="success"
           plain
           icon="el-icon-edit"
-          size="mini"
+          size="small"
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['monitor:job:edit']"
@@ -64,7 +64,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['monitor:job:remove']"
@@ -76,7 +76,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['monitor:job:export']"
         >匯出
@@ -87,7 +87,7 @@
           type="info"
           plain
           icon="el-icon-s-operation"
-          size="mini"
+          size="small"
           @click="handleJobLog"
           v-hasPermi="['monitor:job:query']"
         >日誌
@@ -101,14 +101,14 @@
       <el-table-column align="center" label="任務編號" prop="jobId" width="100"/>
       <el-table-column :show-overflow-tooltip="true" align="center" label="任務名稱" prop="jobName"/>
       <el-table-column align="center" label="任務組名" prop="jobGroup">
-        <template slot-scope="scope">
+        <template #default="scope">
           <dict-tag :options="dict.type.sys_job_group" :value="scope.row.jobGroup"/>
         </template>
       </el-table-column>
       <el-table-column :show-overflow-tooltip="true" align="center" label="呼叫目標字串" prop="invokeTarget"/>
       <el-table-column :show-overflow-tooltip="true" align="center" label="Cron執行表達式" prop="cronExpression"/>
       <el-table-column align="center" label="狀態">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-switch
             v-model="scope.row.status"
             active-value="0"
@@ -118,9 +118,9 @@
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
@@ -128,16 +128,16 @@
           >修改
           </el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['monitor:job:remove']"
           >刪除
           </el-button>
-          <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)"
+          <el-dropdown size="small" @command="(command) => handleCommand(command, scope.row)"
                        v-hasPermi="['monitor:job:changeStatus', 'monitor:job:query']">
-            <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
+            <el-button size="small" type="text" icon="el-icon-d-arrow-right">更多</el-button>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item command="handleRun" icon="el-icon-caret-right"
                                 v-hasPermi="['monitor:job:changeStatus']">執行一次
@@ -388,7 +388,7 @@
 
     <!-- 任務日誌詳細 -->
     <el-dialog :visible.sync="openView" append-to-body title="任務詳細" width="700px">
-      <el-form ref="form" :model="form" label-width="120px" size="mini">
+      <el-form ref="form" :model="form" label-width="120px" size="small">
         <el-row>
           <el-col :span="12">
             <el-form-item label="任務編號：">{{ form.jobId }}</el-form-item>

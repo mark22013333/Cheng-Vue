@@ -1,11 +1,11 @@
 import axios from 'axios'
-import {Loading, Message, MessageBox, Notification} from 'element-ui'
+import { ElLoading, ElMessage, ElMessageBox, ElNotification } from 'element-plus'
 import store from '@/store'
-import {getToken} from '@/utils/auth'
+import { getToken } from '@/utils/auth'
 import errorCode from '@/utils/errorCode'
-import {blobValidate, tansParams} from "@/utils/cheng"
+import { blobValidate, tansParams } from "@/utils/cheng"
 import cache from '@/plugins/cache'
-import {saveAs} from 'file-saver'
+import { saveAs } from 'file-saver'
 
 let downloadLoadingInstance
 // 是否顯示重新登入
@@ -15,7 +15,7 @@ axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
 // 建立axios實體
 const service = axios.create({
   // axios中請求設定有baseURL選項，表示請求URL公開部分
-  baseURL: process.env.VUE_APP_BASE_API,
+  baseURL: import.meta.env.VITE_APP_BASE_API,
   // 逾時
   timeout: 10000
 })
@@ -84,7 +84,7 @@ service.interceptors.response.use(res => {
     if (code === 401) {
       if (!isRelogin.show) {
         isRelogin.show = true
-        MessageBox.confirm('登入狀態已過期，您可以繼續留在該頁面，或者重新登入', '系統提示', {
+        ElMessageBox.confirm('登入狀態已過期，您可以繼續留在該頁面，或者重新登入', '系統提示', {
           confirmButtonText: '重新登入',
           cancelButtonText: '取消',
           type: 'warning'
@@ -102,31 +102,31 @@ service.interceptors.response.use(res => {
       // 檢查是否包含 HTML 標籤
       const isHtml = /<[^>]+>/.test(msg)
       if (isHtml) {
-        Notification.error({
+        ElNotification.error({
           title: '操作失敗',
           dangerouslyUseHTMLString: true,
           message: `<div style="max-height: 400px; overflow-y: auto;">${msg}</div>`,
           duration: 8000
         })
       } else {
-        Message({ message: msg, type: 'error' })
+        ElMessage({ message: msg, type: 'error' })
       }
       return Promise.reject(new Error(msg))
     } else if (code === 601) {
-      Message({ message: msg, type: 'warning' })
+      ElMessage({ message: msg, type: 'warning' })
       return Promise.reject('error')
     } else if (code !== 200) {
       // 檢查是否包含 HTML 標籤
       const isHtml = /<[^>]+>/.test(msg)
       if (isHtml) {
-        Notification.error({
+        ElNotification.error({
           title: '錯誤',
           dangerouslyUseHTMLString: true,
           message: `<div style="max-height: 400px; overflow-y: auto;">${msg}</div>`,
           duration: 8000
         })
       } else {
-        Notification.error({ title: msg })
+        ElNotification.error({ title: msg })
       }
       return Promise.reject('error')
     } else {
@@ -143,16 +143,15 @@ service.interceptors.response.use(res => {
     } else if (message.includes("Request failed with status code")) {
       message = "系統介面" + message.substr(message.length - 3) + "異常"
     }
-    Message({ message: message, type: 'error', duration: 5 * 1000 })
+    ElMessage({ message: message, type: 'error', duration: 5 * 1000 })
     return Promise.reject(error)
   }
 )
 
 // 共用下載方法
 export function download(url, params, filename, config) {
-  downloadLoadingInstance = Loading.service({
+  downloadLoadingInstance = ElLoading.service({
     text: "正在下載數據，請稍候",
-    spinner: "el-icon-loading",
     background: "rgba(0, 0, 0, 0.7)",
   })
   return service.post(url, params, {
@@ -169,12 +168,12 @@ export function download(url, params, filename, config) {
       const resText = await data.text()
       const rspObj = JSON.parse(resText)
       const errMsg = errorCode[rspObj.code] || rspObj.msg || errorCode['default']
-      Message.error(errMsg)
+      ElMessage.error(errMsg)
     }
     downloadLoadingInstance.close()
   }).catch((r) => {
     console.error(r)
-    Message.error('下載檔案出現錯誤，請聯絡管理員！')
+    ElMessage.error('下載檔案出現錯誤，請聯絡管理員！')
     downloadLoadingInstance.close()
   })
 }

@@ -192,7 +192,7 @@
             <el-table-column prop="lastInTime" label="最後進貨時間" min-width="160"/>
             <el-table-column prop="location" label="存放位置" min-width="120"/>
             <el-table-column label="庫存狀態" min-width="100">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-tag :type="getStockStatusType(scope.row)">
                   {{ getStockStatusText(scope.row) }}
                 </el-tag>
@@ -209,7 +209,7 @@
             <el-table-column prop="expectedReturn" label="預計歸還" min-width="160"/>
             <el-table-column prop="actualReturn" label="實際歸還" min-width="160"/>
             <el-table-column label="狀態" min-width="100">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-tag :type="getBorrowStatusType(scope.row.status)">
                   {{ getBorrowStatusText(scope.row.status) }}
                 </el-tag>
@@ -221,7 +221,7 @@
             <el-table-column prop="recordTime" label="操作時間" min-width="160"/>
             <el-table-column prop="itemName" label="物品名稱" min-width="150"/>
             <el-table-column prop="recordType" label="操作類型" min-width="100">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-tag :type="getRecordTypeTag(scope.row.recordType)">
                   {{ getRecordTypeText(scope.row.recordType) }}
                 </el-tag>
@@ -238,7 +238,7 @@
             <el-table-column prop="scanTime" label="掃描時間" min-width="160"/>
             <el-table-column prop="operatorName" label="掃描人" min-width="100"/>
             <el-table-column prop="scanType" label="掃描類型" min-width="100">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-tag :type="scope.row.scanType === '1' ? 'primary' : 'success'">
                   {{ scope.row.scanType === '1' ? '條碼' : 'QR碼' }}
                 </el-tag>
@@ -246,19 +246,19 @@
             </el-table-column>
             <el-table-column prop="scanCode" label="掃描內容" min-width="150"/>
             <el-table-column label="物品名稱" min-width="150">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <span>{{ scope.row.itemName || '（未識別）' }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="scanResult" label="掃描結果" min-width="100">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-tag :type="scope.row.scanResult === '0' ? 'success' : 'danger'">
                   {{ scope.row.scanResult === '0' ? '成功' : '失敗' }}
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="errorMsg" label="錯誤訊息" min-width="150" show-overflow-tooltip>
-              <template slot-scope="scope">
+              <template #default="scope">
                 <span v-if="scope.row.errorMsg" style="color: #F56C6C;">{{ scope.row.errorMsg }}</span>
                 <span v-else style="color: #909399;">-</span>
               </template>
@@ -714,7 +714,7 @@ export default {
 }
 
 /* 覆蓋 el-col 的寬度限制，讓 flexbox 自動均分 */
-.stat-row ::v-deep .el-col {
+.stat-row :deep(.el-col) {
   flex: 1; /* 自動填滿空間 */
   max-width: none; /* 移除最大寬度限制 (原本是 25%) */
 }
@@ -726,7 +726,7 @@ export default {
   transition: all 0.3s;
 }
 
-::v-deep .stat-card .el-card__body {
+:deep(.stat-card .el-card__body) {
   padding: 10px;
 }
 
@@ -739,17 +739,16 @@ export default {
   width: 100% !important;
 }
 
-::v-deep .el-table {
+:deep(.el-table) {
   width: 100%;
 }
 
-::v-deep .el-table__body-wrapper {
+:deep(.el-table__body-wrapper) {
   overflow-x: auto;
 }
 
 /* 表格字體調整 */
-::v-deep .el-table td,
-::v-deep .el-table th {
+:deep(.el-table td), :deep(.el-table th) {
   white-space: nowrap;
   padding: 8px 0; /* 稍微放寬行高 */
   font-size: 14px; /* 強制設定標準字體大小，防止被縮小 */

@@ -1,5 +1,5 @@
 <template>
-  <el-scrollbar ref="scrollContainer" :vertical="false" class="scroll-container" @wheel.native.prevent="handleScroll">
+  <el-scrollbar ref="scrollContainer" :vertical="false" class="scroll-container" @wheel.prevent="handleScroll">
     <slot />
   </el-scrollbar>
 </template>
@@ -16,14 +16,23 @@ export default {
   },
   computed: {
     scrollWrapper() {
-      return this.$refs.scrollContainer.$refs.wrap
+      // Element Plus Vue 3 版本的結構
+      return this.$refs.scrollContainer?.$refs?.wrap$ || this.$refs.scrollContainer?.$refs?.wrap
     }
   },
   mounted() {
-    this.scrollWrapper.addEventListener('scroll', this.emitScroll, true)
+    this.$nextTick(() => {
+      const wrapper = this.scrollWrapper
+      if (wrapper && wrapper.addEventListener) {
+        wrapper.addEventListener('scroll', this.emitScroll, true)
+      }
+    })
   },
-  beforeDestroy() {
-    this.scrollWrapper.removeEventListener('scroll', this.emitScroll)
+  beforeUnmount() {
+    const wrapper = this.scrollWrapper
+    if (wrapper && wrapper.removeEventListener) {
+      wrapper.removeEventListener('scroll', this.emitScroll)
+    }
   },
   methods: {
     handleScroll(e) {
@@ -35,11 +44,16 @@ export default {
       this.$emit('scroll')
     },
     moveToTarget(currentTag) {
-      const $container = this.$refs.scrollContainer.$el
-      const $containerWidth = $container.offsetWidth
+      const $container = this.$refs.scrollContainer?.$el
       const $scrollWrapper = this.scrollWrapper
       const tagList = this.$parent.$refs.tag
 
+      // 防禦性檢查：確保所有必要元素都存在
+      if (!$container || !$scrollWrapper || !tagList || tagList.length === 0) {
+        return
+      }
+
+      const $containerWidth = $container.offsetWidth
       let firstTag = null
       let lastTag = null
 
@@ -58,6 +72,11 @@ export default {
         const currentIndex = tagList.findIndex(item => item === currentTag)
         const prevTag = tagList[currentIndex - 1]
         const nextTag = tagList[currentIndex + 1]
+
+        // 防禦性檢查：確保前後標籤都存在
+        if (!prevTag || !nextTag) {
+          return
+        }
 
         // the tag's offsetLeft after of nextTag
         const afterNextTagOffsetLeft = nextTag.$el.offsetLeft + nextTag.$el.offsetWidth + tagAndTagSpacing
@@ -82,13 +101,11 @@ export default {
   position: relative;
   overflow: hidden;
   width: 100%;
-  ::v-deep {
-    .el-scrollbar__bar {
-      bottom: 0px;
-    }
-    .el-scrollbar__wrap {
-      height: 49px;
-    }
+  :deep(.el-scrollbar__bar) {
+    bottom: 0px;
+  }
+  :deep(.el-scrollbar__wrap) {
+    height: 49px;
   }
 }
 </style>

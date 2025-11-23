@@ -15,10 +15,13 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       vue(),
-      vueJsx(),
+      // 暫時禁用 vueJsx 插件，因為專案中使用 Vue 2 JSX 語法
+      // vueJsx({
+      //   include: [/\.vue$/]
+      // }),
       // SVG Icon 支援
       createSvgIconsPlugin({
-        iconDirs: [path.resolve(process.cwd(), 'src/assets/icons')],
+        iconDirs: [path.resolve(process.cwd(), 'src/assets/icons/svg')],
         symbolId: 'icon-[name]',
       }),
       // Gzip 壓縮
@@ -43,7 +46,6 @@ export default defineConfig(({ mode }) => {
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: `@use "@/assets/styles/element-variables.scss" as *;`,
           api: 'modern-compiler'
         }
       }

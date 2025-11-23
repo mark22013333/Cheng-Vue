@@ -40,10 +40,15 @@ export default {
   },
   methods: {
     async setTheme(val) {
+      console.log('[ThemePicker] 開始變更主題顏色:', val)
+      
       const oldVal = this.chalk ? this.theme : ORIGINAL_THEME
       if (typeof val !== 'string') return
       const themeCluster = this.getThemeCluster(val.replace('#', ''))
       const originalCluster = this.getThemeCluster(oldVal.replace('#', ''))
+
+      console.log('[ThemePicker] 舊顏色:', oldVal, '新顏色:', val)
+      console.log('[ThemePicker] 新顏色色階:', themeCluster)
 
       const getHandler = (variable, id) => {
         return () => {
@@ -57,29 +62,32 @@ export default {
             document.head.appendChild(styleTag)
           }
           styleTag.innerText = newStyle
+          console.log('[ThemePicker] 已更新 Element Plus 主題 CSS')
         }
       }
 
       if (!this.chalk) {
         const url = `/styles/theme-chalk/index.css`
+        console.log('[ThemePicker] 載入 Element Plus 主題 CSS:', url)
         await this.getCSSString(url, 'chalk')
       }
 
       const chalkHandler = getHandler('chalk', 'chalk-style')
       chalkHandler()
 
-      const styles = [].slice.call(document.querySelectorAll('style'))
-        .filter(style => {
-          const text = style.innerText
-          return new RegExp(oldVal, 'i').test(text) && !/Chalk Variables/.test(text)
-        })
-      styles.forEach(style => {
-        const { innerText } = style
-        if (typeof innerText !== 'string') return
-        style.innerText = this.updateStyle(innerText, originalCluster, themeCluster)
-      })
+      // 【重要】不再修改任何頁面上的 style 標籤
+      // 只修改 Element Plus 官方主題 CSS (#chalk-style)
+      // 這樣可以完全避免破壞自定義樣式
+      console.log('[ThemePicker] ⚠️  已停用頁面 style 標籤修改，只修改 Element Plus 主題')
+      console.log('[ThemePicker] 主題變更完成')
 
       this.$emit('change', val)
+      
+      // 儲存到 store
+      this.$store.dispatch('settings/changeSetting', {
+        key: 'theme',
+        value: val
+      })
     },
 
     updateStyle(style, oldCluster, newCluster) {

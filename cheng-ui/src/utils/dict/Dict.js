@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import {mergeRecursive} from "@/utils/cheng"
+import { mergeRecursive } from "@/utils/cheng"
 import DictMeta from './DictMeta'
 import DictData from './DictData'
 
@@ -32,8 +31,9 @@ export default class Dict {
     this._dictMetas = opts.types.map(t => DictMeta.parse(t))
     this._dictMetas.forEach(dictMeta => {
       const type = dictMeta.type
-      Vue.set(this.label, type, {})
-      Vue.set(this.type, type, [])
+      // Vue 3 不需要 Vue.set，直接賦值即可
+      this.label[type] = {}
+      this.type[type] = []
       if (dictMeta.lazy) {
         return
       }
@@ -75,7 +75,8 @@ function loadDict(dict, dictMeta) {
       }
       dict.type[type].splice(0, Number.MAX_SAFE_INTEGER, ...dicts)
       dicts.forEach(d => {
-        Vue.set(dict.label[type], d.value, d.label)
+        // Vue 3 不需要 Vue.set，直接賦值即可
+        dict.label[type][d.value] = d.label
       })
       return dicts
     })

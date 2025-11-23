@@ -1,8 +1,8 @@
-module.exports = {
+export default {
   /**
    * 網頁標題
    */
-  title: process.env.VUE_APP_TITLE,
+  title: import.meta.env.VITE_APP_TITLE,
 
   /**
    * 側邊欄主題 深色主題theme-dark，淺色主題theme-light

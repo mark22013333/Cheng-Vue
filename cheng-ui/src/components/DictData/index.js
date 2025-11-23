@@ -1,5 +1,6 @@
 import DataDict from '@/utils/dict'
 import { getDicts as getDicts } from '@/api/system/dict/data'
+import store from '@/store'
 
 function searchDictByKey(dict, key) {
   if (key == null && key == "") {
@@ -23,7 +24,6 @@ function install(app) {
         labelField: 'dictLabel',
         valueField: 'dictValue',
         request(dictMeta) {
-          const store = app.config.globalProperties.$store
           const storeDict = searchDictByKey(store.getters.dict, dictMeta.type)
           if (storeDict) {
             return new Promise(resolve => { resolve(storeDict) })

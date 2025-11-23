@@ -93,7 +93,7 @@
                     <i class="el-icon-reading"></i> 書籍
                   </el-tag>
                 </h3>
-                <el-descriptions :column="2" border size="medium">
+                <el-descriptions :column="2" border size="default">
                   <el-descriptions-item label="物品編碼">
                     <el-tag size="small">{{ scanResult.itemCode }}</el-tag>
                   </el-descriptions-item>
@@ -137,19 +137,19 @@
         <el-divider content-position="left">掃描歷史</el-divider>
         <el-table :data="scanHistory" style="width: 100%" stripe>
           <el-table-column prop="scanTime" label="掃描時間" width="180">
-            <template slot-scope="scope">
+            <template #default="scope">
               {{ parseTime(scope.row.scanTime, '{y}-{m}-{d} {h}:{i}:{s}') }}
             </template>
           </el-table-column>
           <el-table-column prop="codeType" label="類型" width="80">
-            <template slot-scope="scope">
+            <template #default="scope">
               <el-tag :type="scope.row.codeType === 'ISBN' ? 'warning' : 'info'" size="small">
                 {{ scope.row.codeType || '一般' }}
               </el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="scanType" label="掃描方式" width="100">
-            <template slot-scope="scope">
+            <template #default="scope">
               <el-tag :type="scope.row.scanType === '1' ? 'primary' : 'success'" size="small">
                 {{ scope.row.scanType === '1' ? '條碼' : 'QR碼' }}
               </el-tag>
@@ -158,15 +158,15 @@
           <el-table-column prop="scanCode" label="掃描內容" width="180"/>
           <el-table-column prop="itemName" label="物品名稱" show-overflow-tooltip/>
           <el-table-column prop="scanResult" label="結果" width="80">
-            <template slot-scope="scope">
+            <template #default="scope">
               <el-tag :type="scope.row.scanResult === '0' ? 'success' : 'danger'" size="small">
                 {{ scope.row.scanResult === '0' ? '成功' : '失敗' }}
               </el-tag>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="150" fixed="right">
-            <template slot-scope="scope">
-              <el-button size="mini" type="primary" @click="handleRescan(scope.row)">
+            <template #default="scope">
+              <el-button size="small" type="primary" @click="handleRescan(scope.row)">
                 <i class="el-icon-refresh"></i> 重新掃描
               </el-button>
             </template>

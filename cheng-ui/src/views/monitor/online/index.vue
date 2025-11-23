@@ -18,8 +18,8 @@
         />
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="mini" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
 
     </el-form>
@@ -29,7 +29,7 @@
       style="width: 100%;"
     >
       <el-table-column align="center" label="序號" type="index">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{(pageNum - 1) * pageSize + scope.$index + 1}}</span>
         </template>
       </el-table-column>
@@ -41,14 +41,14 @@
       <el-table-column align="center" label="瀏覽器" prop="browser"/>
       <el-table-column align="center" label="作業系統" prop="os"/>
       <el-table-column align="center" label="登入時間" prop="loginTime" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.loginTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-delete"
             @click="handleForceLogout(scope.row)"

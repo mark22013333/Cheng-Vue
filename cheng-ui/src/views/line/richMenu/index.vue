@@ -42,8 +42,8 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="el-icon-search" size="small" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -54,7 +54,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['line:richMenu:add']"
         >
@@ -66,7 +66,7 @@
           type="success"
           plain
           icon="el-icon-edit"
-          size="mini"
+          size="small"
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['line:richMenu:edit']"
@@ -79,7 +79,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['line:richMenu:remove']"
@@ -92,7 +92,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['line:richMenu:export']"
         >
@@ -106,7 +106,7 @@
     <el-table v-loading="loading" :data="richMenuList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="預覽圖" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-image
             v-if="scope.row.localImagePath"
             :src="getImageUrl(scope.row.localImagePath)"
@@ -123,11 +123,11 @@
         </template>
       </el-table-column>
       <el-table-column label="選單名稱" align="center" prop="name" :show-overflow-tooltip="true" min-width="150">
-        <template slot-scope="scope">
-          <el-tag v-if="scope.row.isDefault === 1" type="success" size="mini" style="margin-right: 5px">
+        <template #default="scope">
+          <el-tag v-if="scope.row.isDefault === 1" type="success" size="small" style="margin-right: 5px">
             預設
           </el-tag>
-          <el-tag v-if="scope.row.selected === 1" type="primary" size="mini" style="margin-right: 5px">
+          <el-tag v-if="scope.row.selected === 1" type="primary" size="small" style="margin-right: 5px">
             使用中
           </el-tag>
           {{ scope.row.name }}
@@ -135,26 +135,26 @@
       </el-table-column>
       <el-table-column label="頻道名稱" align="center" prop="channelName" width="120" />
       <el-table-column label="版型類型" align="center" width="140">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag size="small" type="info">{{ getTemplateTypeName(scope.row.templateType) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="圖片尺寸" align="center" prop="imageSize" width="120" />
       <el-table-column label="狀態" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag v-if="scope.row.status === 'DRAFT'" type="info" size="small">草稿</el-tag>
           <el-tag v-else-if="scope.row.status === 'ACTIVE'" type="success" size="small">啟用</el-tag>
           <el-tag v-else type="warning" size="small">停用</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="LINE Menu ID" align="center" prop="richMenuId" :show-overflow-tooltip="true" width="200">
-        <template slot-scope="scope">
+        <template #default="scope">
           <div v-if="scope.row.richMenuId" style="display: flex; align-items: center; justify-content: center;">
             <span style="margin-right: 5px; font-size: 12px;">{{ scope.row.richMenuId.substring(0, 15) }}...</span>
             <el-button
               type="text"
               icon="el-icon-document-copy"
-              size="mini"
+              size="small"
               @click="handleCopyRichMenuId(scope.row.richMenuId)"
               style="padding: 0;"
               title="複製 Rich Menu ID"
@@ -165,28 +165,28 @@
       </el-table-column>
       <el-table-column label="版本" align="center" prop="version" width="70" />
       <el-table-column label="建立時間" align="center" prop="createTime" width="160">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="280" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['line:richMenu:edit']"
           >編輯</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-upload2"
             @click="handlePublish(scope.row)"
             v-hasPermi="['line:richMenu:publish']"
           >{{ scope.row.richMenuId ? '重新發布' : '發布' }}</el-button>
-          <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)" style="margin-left: 10px">
-            <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
+          <el-dropdown size="small" @command="(command) => handleCommand(command, scope.row)" style="margin-left: 10px">
+            <el-button size="small" type="text" icon="el-icon-d-arrow-right">更多</el-button>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item
                 v-if="scope.row.richMenuId && scope.row.isDefault !== 1"

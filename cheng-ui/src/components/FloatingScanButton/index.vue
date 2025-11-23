@@ -82,7 +82,7 @@
               <h4>
                 {{ scanResult.itemName }}
                 <el-tag v-if="scanResult.barcode && isValidIsbn(scanResult.barcode)"
-                        type="warning" size="mini" style="margin-left: 8px;">
+                        type="warning" size="small" style="margin-left: 8px;">
                   <i class="el-icon-reading"></i> 書籍
                 </el-tag>
               </h4>
@@ -129,7 +129,7 @@
       append-to-body
     >
       <div v-if="itemDetail" class="detail-content">
-        <el-descriptions :column="1" border size="medium">
+        <el-descriptions :column="1" border size="default">
           <el-descriptions-item label="物品名稱">
             <strong>{{ itemDetail.itemName }}</strong>
           </el-descriptions-item>
@@ -185,6 +185,7 @@
 import {Html5QrcodeScanner, Html5QrcodeScanType} from "html5-qrcode";
 import {scanIsbn, scanCode} from "@/api/inventory/scan";
 import {quickStockIn, getManagement} from "@/api/inventory/management";
+import eventBus from '@/utils/eventBus';
 import {createCrawlTask, getTaskStatus} from "@/api/inventory/crawlTask";
 
 export default {
@@ -775,15 +776,15 @@ export default {
       if (index === -1) return;
       
       // 更新任務狀態
-      this.$set(this.activeTasks, index, task);
+      this.activeTasks[index] = task;
       this.saveActiveTasks(); // 儲存任務列表
       
       // 檢查是否完成
       if (task.status === 'COMPLETED') {
         console.log('任務完成，準備觸發 scan-success 事件:', task.bookInfo);
         
-        // 觸發全域事件，讓掃描結果按鈕接收
-        this.$root.$emit('scan-success', task.bookInfo);
+        // 觸發全域事件，讓掃描結果按鈕接收（Vue 3 使用 eventBus）
+        eventBus.emit('scan-success', task.bookInfo);
         
         // 任務完成通知
         this.$notify({

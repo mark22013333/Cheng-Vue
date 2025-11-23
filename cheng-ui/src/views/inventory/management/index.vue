@@ -37,8 +37,8 @@
                          style="width: 150px"/>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="el-icon-search" size="small" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -49,7 +49,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['inventory:management:add']"
         >新增物品
@@ -60,7 +60,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['inventory:management:remove']"
@@ -72,7 +72,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['inventory:management:export']"
         >匯出
@@ -83,7 +83,7 @@
           type="info"
           plain
           icon="el-icon-warning"
-          size="mini"
+          size="small"
           @click="showLowStockOnly"
         >低庫存提醒
         </el-button>
@@ -94,7 +94,7 @@
             v-model="globalLowStockThreshold"
             :min="0"
             :max="1000"
-            size="mini"
+            size="small"
             placeholder="低庫存閾值"
             style="width: 130px"
             @change="handleThresholdChange"
@@ -111,7 +111,7 @@
       <el-table-column label="物品編碼" align="center" prop="itemCode" min-width="180" sortable="custom"
                        :show-overflow-tooltip="true"/>
       <el-table-column label="圖片" align="center" width="80">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-image
             v-if="scope.row.imageUrl"
             :src="getImageUrl(scope.row.imageUrl)"
@@ -131,14 +131,14 @@
       <el-table-column label="作者" align="center" prop="author" width="120" :show-overflow-tooltip="true" v-if="hasAuthorColumn"/>
       <el-table-column label="規格" align="center" prop="specification" width="120"/>
       <el-table-column label="品牌/型號" align="center" width="150">
-        <template slot-scope="scope">
+        <template #default="scope">
           {{ scope.row.brand }} {{ scope.row.model }}
         </template>
       </el-table-column>
 
       <!-- 庫存資訊 -->
       <el-table-column label="總數量" align="center" prop="totalQuantity" width="80">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag v-if="scope.row.totalQuantity > 0" type="success">{{ scope.row.totalQuantity }}</el-tag>
           <el-tag v-else type="danger">0</el-tag>
         </template>
@@ -146,7 +146,7 @@
       <el-table-column label="可用" align="center" prop="availableQty" width="70"/>
       <el-table-column label="借出" align="center" prop="borrowedQty" width="70"/>
       <el-table-column label="庫存狀態" align="center" prop="stockStatusText" width="90">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag v-if="scope.row.stockStatus === '0'" type="success">{{ scope.row.stockStatusText }}</el-tag>
           <el-tag v-else-if="scope.row.stockStatus === '1'" type="warning">{{ scope.row.stockStatusText }}</el-tag>
           <el-tag v-else type="danger">{{ scope.row.stockStatusText }}</el-tag>
@@ -156,9 +156,9 @@
                        :show-overflow-tooltip="true"/>
 
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column" min-width="120" fixed="right">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-view"
             @click="handleView(scope.row)"
@@ -166,7 +166,7 @@
           >詳情
           </el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-top"
             @click="handleStockIn(scope.row)"
@@ -174,7 +174,7 @@
           >入庫
           </el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-bottom"
             @click="handleStockOut(scope.row)"
@@ -182,7 +182,7 @@
           >出庫
           </el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
@@ -190,7 +190,7 @@
           >修改
           </el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
@@ -268,7 +268,7 @@
           <el-button
             v-if="detailData.barcode && isValidIsbn(detailData.barcode)"
             type="primary"
-            size="mini"
+            size="small"
             icon="el-icon-refresh"
             @click="handleRefreshIsbn"
             style="margin-left: 10px;"
@@ -295,7 +295,7 @@
         <!-- 歷史成本 -->
         <el-descriptions-item label="歷史採購成本" :span="2">
           <span style="color: #909399; font-weight: bold;">{{ formatMoney(detailData.historicalCost) }}</span>
-          <el-tag type="info" size="mini" style="margin-left: 8px;">已支付總成本</el-tag>
+          <el-tag type="info" size="small" style="margin-left: 8px;">已支付總成本</el-tag>
         </el-descriptions-item>
 
         <!-- 當前庫存資產 -->
@@ -330,15 +330,15 @@
         <!-- 損失明細 -->
         <el-descriptions-item label="損壞損失" :span="2" v-if="detailData.damagedQty > 0">
           <span style="color: #E6A23C; font-weight: bold;">-{{ formatMoney(detailData.damagedValue) }}</span>
-          <el-tag type="warning" size="mini" style="margin-left: 8px;">{{ detailData.damagedQty }} 件損壞</el-tag>
+          <el-tag type="warning" size="small" style="margin-left: 8px;">{{ detailData.damagedQty }} 件損壞</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="遺失損失" :span="2" v-if="detailData.lostQty > 0">
           <span style="color: #F56C6C; font-weight: bold;">-{{ formatMoney(detailData.lostValue) }}</span>
-          <el-tag type="danger" size="mini" style="margin-left: 8px;">{{ detailData.lostQty }} 件遺失</el-tag>
+          <el-tag type="danger" size="small" style="margin-left: 8px;">{{ detailData.lostQty }} 件遺失</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="累計損失" :span="2" v-if="detailData.totalLoss > 0">
           <span style="color: #F56C6C; font-weight: bold; font-size: 16px;">-{{ formatMoney(detailData.totalLoss) }}</span>
-          <el-tag type="danger" size="mini" style="margin-left: 8px;">⚠️ 總損失</el-tag>
+          <el-tag type="danger" size="small" style="margin-left: 8px;">⚠️ 總損失</el-tag>
         </el-descriptions-item>
 
         <el-descriptions-item label="最後入庫時間" :span="2">{{

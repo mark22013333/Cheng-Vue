@@ -52,8 +52,8 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="mini" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -63,7 +63,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['monitor:job:remove']"
@@ -75,7 +75,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           @click="handleClean"
           v-hasPermi="['monitor:job:remove']"
         >清除
@@ -86,7 +86,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['monitor:job:export']"
         >匯出
@@ -97,7 +97,7 @@
           type="warning"
           plain
           icon="el-icon-close"
-          size="mini"
+          size="small"
           @click="handleClose"
         >關閉
         </el-button>
@@ -110,26 +110,26 @@
       <el-table-column align="center" label="日誌編號" prop="jobLogId" width="80"/>
       <el-table-column :show-overflow-tooltip="true" align="center" label="任務名稱" prop="jobName"/>
       <el-table-column :show-overflow-tooltip="true" align="center" label="任務組名" prop="jobGroup">
-        <template slot-scope="scope">
+        <template #default="scope">
           <dict-tag :options="dict.type.sys_job_group" :value="scope.row.jobGroup"/>
         </template>
       </el-table-column>
       <el-table-column :show-overflow-tooltip="true" align="center" label="呼叫目標字串" prop="invokeTarget"/>
       <el-table-column :show-overflow-tooltip="true" align="center" label="日誌訊息" prop="jobMessage"/>
       <el-table-column align="center" label="執行狀態" prop="status">
-        <template slot-scope="scope">
+        <template #default="scope">
           <dict-tag :options="dict.type.sys_common_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column align="center" label="執行時間" prop="createTime" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-view"
             @click="handleView(scope.row)"
@@ -150,7 +150,7 @@
 
     <!-- 呼叫日誌詳細 -->
     <el-dialog :visible.sync="open" append-to-body title="呼叫日誌詳細" width="700px">
-      <el-form ref="form" :model="form" label-width="100px" size="mini">
+      <el-form ref="form" :model="form" label-width="100px" size="small">
         <el-row>
           <el-col :span="12">
             <el-form-item label="日誌序號：">{{ form.jobLogId }}</el-form-item>

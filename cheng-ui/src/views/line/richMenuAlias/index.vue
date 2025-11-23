@@ -18,8 +18,8 @@
         />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="el-icon-search" size="small" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -29,7 +29,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['line:richMenuAlias:add']"
         >新增</el-button>
@@ -39,7 +39,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['line:richMenuAlias:remove']"
@@ -50,7 +50,7 @@
           type="info"
           plain
           icon="el-icon-refresh"
-          size="mini"
+          size="small"
           @click="handleSync"
           v-hasPermi="['line:richMenuAlias:sync']"
         >從 LINE 同步</el-button>
@@ -62,19 +62,19 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="ID" align="center" prop="id" width="80" />
       <el-table-column label="Alias ID" align="center" prop="aliasId" :show-overflow-tooltip="true">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag>{{ scope.row.aliasId }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="Rich Menu" align="center" prop="richMenuName" :show-overflow-tooltip="true" />
       <el-table-column label="LINE Rich Menu ID" align="center" prop="lineRichMenuId" width="220" :show-overflow-tooltip="true">
-        <template slot-scope="scope">
+        <template #default="scope">
           <div v-if="scope.row.lineRichMenuId" style="display: flex; align-items: center; justify-content: center; gap: 5px;">
             <span style="font-size: 12px; color: #606266;">
               {{ scope.row.lineRichMenuId.substring(0, 18) }}...
             </span>
             <el-button
-              size="mini"
+              size="small"
               type="text"
               icon="el-icon-document-copy"
               @click="handleCopyRichMenuId(scope.row.lineRichMenuId)"
@@ -87,14 +87,14 @@
       <el-table-column label="頻道" align="center" prop="channelName" width="120" />
       <el-table-column label="描述" align="center" prop="description" :show-overflow-tooltip="true" />
       <el-table-column label="建立時間" align="center" prop="createTime" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"

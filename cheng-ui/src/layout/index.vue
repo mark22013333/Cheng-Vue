@@ -21,7 +21,6 @@
 import {AppMain, Navbar, Settings, Sidebar, TagsView} from './components'
 import ResizeMixin from './mixin/ResizeHandler'
 import {mapState} from 'vuex'
-import variables from '@/assets/styles/variables.scss'
 import FloatingScanButton from '@/components/FloatingScanButton'
 import ScanResultButton from '@/components/ScanResultButton'
 
@@ -40,7 +39,7 @@ export default {
   computed: {
     ...mapState({
       theme: state => state.settings.theme,
-      sideTheme: state => state.settings.sideTheme,
+      sideTheme: state => state.sideTheme,
       sidebar: state => state.app.sidebar,
       device: state => state.app.device,
       needTagsView: state => state.settings.tagsView,
@@ -53,9 +52,6 @@ export default {
         withoutAnimation: this.sidebar.withoutAnimation,
         mobile: this.device === 'mobile'
       }
-    },
-    variables() {
-      return variables
     }
   },
   methods: {
@@ -70,8 +66,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  @import "~@/assets/styles/mixin.scss";
-  @import "~@/assets/styles/variables.scss";
+  @import "@/assets/styles/mixin.scss";
+  @import "@/assets/styles/variables.scss";
 
   .app-wrapper {
     @include clearfix;

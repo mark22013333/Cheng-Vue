@@ -19,8 +19,8 @@
         />
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="mini" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
     <el-row>
@@ -31,12 +31,12 @@
         <el-table-column :show-overflow-tooltip="true" label="信箱" prop="email"/>
         <el-table-column :show-overflow-tooltip="true" label="手機" prop="phonenumber"/>
         <el-table-column align="center" label="狀態" prop="status">
-          <template slot-scope="scope">
+          <template #default="scope">
             <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
           </template>
         </el-table-column>
         <el-table-column align="center" label="建立時間" prop="createTime" width="180">
-          <template slot-scope="scope">
+          <template #default="scope">
             <span>{{ parseTime(scope.row.createTime) }}</span>
           </template>
         </el-table-column>

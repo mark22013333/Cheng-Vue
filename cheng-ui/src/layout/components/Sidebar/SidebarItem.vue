@@ -8,8 +8,8 @@
       </app-link>
     </template>
 
-    <el-submenu v-else ref="subMenu" :index="resolvePath(item.path)" popper-append-to-body>
-      <template slot="title">
+    <el-sub-menu v-else ref="subMenu" :index="resolvePath(item.path)" popper-append-to-body>
+      <template #title>
         <item v-if="item.meta" :icon="item.meta && item.meta.icon" :title="item.meta.title" />
       </template>
       <sidebar-item
@@ -20,12 +20,11 @@
         :base-path="resolvePath(child.path)"
         class="nest-menu"
       />
-    </el-submenu>
+    </el-sub-menu>
   </div>
 </template>
 
 <script>
-import path from 'path'
 import {isExternal} from '@/utils/validate'
 import Item from './Item'
 import AppLink from './Link'
@@ -88,11 +87,22 @@ export default {
       if (isExternal(this.basePath)) {
         return this.basePath
       }
+      
+      // 實現路徑合併（替代 Node.js 的 path.resolve）
+      const resolvePath = (basePath, relativePath) => {
+        if (!relativePath) return basePath || '/'
+        if (relativePath.startsWith('/')) return relativePath
+        
+        const base = basePath ? basePath.replace(/\/$/, '') : ''
+        const relative = relativePath.replace(/^\//, '')
+        return base ? `${base}/${relative}` : `/${relative}`
+      }
+      
       if (routeQuery) {
         let query = JSON.parse(routeQuery)
-        return { path: path.resolve(this.basePath, routePath), query: query }
+        return { path: resolvePath(this.basePath, routePath), query: query }
       }
-      return path.resolve(this.basePath, routePath)
+      return resolvePath(this.basePath, routePath)
     }
   }
 }

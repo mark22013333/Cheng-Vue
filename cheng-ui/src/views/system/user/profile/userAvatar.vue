@@ -62,7 +62,7 @@
                 :http-request="requestUpload"
                 :show-file-list="false"
                 :before-upload="beforeUpload">
-                <el-button type="primary" icon="el-icon-folder-opened" size="medium">
+                <el-button type="primary" icon="el-icon-folder-opened" size="default">
                   選擇圖片
                 </el-button>
               </el-upload>
@@ -70,16 +70,16 @@
             </div>
             <div class="control-group">
               <el-button-group>
-                <el-button icon="el-icon-zoom-in" size="medium" @click="changeScale(1)" title="放大圖片">
+                <el-button icon="el-icon-zoom-in" size="default" @click="changeScale(1)" title="放大圖片">
                   <span style="font-size: 12px; margin-left: 4px;">放大</span>
                 </el-button>
-                <el-button icon="el-icon-zoom-out" size="medium" @click="changeScale(-1)" title="縮小圖片">
+                <el-button icon="el-icon-zoom-out" size="default" @click="changeScale(-1)" title="縮小圖片">
                   <span style="font-size: 12px; margin-left: 4px;">縮小</span>
                 </el-button>
-                <el-button icon="el-icon-refresh-left" size="medium" @click="rotateLeft()" title="逆時針旋轉">
+                <el-button icon="el-icon-refresh-left" size="default" @click="rotateLeft()" title="逆時針旋轉">
                   <span style="font-size: 12px; margin-left: 4px;">↶</span>
                 </el-button>
-                <el-button icon="el-icon-refresh-right" size="medium" @click="rotateRight()" title="順時針旋轉">
+                <el-button icon="el-icon-refresh-right" size="default" @click="rotateRight()" title="順時針旋轉">
                   <span style="font-size: 12px; margin-left: 4px;">↷</span>
                 </el-button>
               </el-button-group>
@@ -130,8 +130,8 @@
 
       <!-- 底部按鈕 -->
       <div slot="footer" class="dialog-footer">
-        <el-button @click="open = false" size="medium">取消</el-button>
-        <el-button type="primary" @click="uploadImg()" size="medium" :loading="uploading">
+        <el-button @click="open = false" size="default">取消</el-button>
+        <el-button type="primary" @click="uploadImg()" size="default" :loading="uploading">
           <i class="el-icon-upload2" v-if="!uploading"></i>
           {{ uploading ? '上傳中...' : '確定上傳' }}
         </el-button>
@@ -360,7 +360,7 @@ export default {
 }
 
 // 對話框樣式
-::v-deep .avatar-dialog {
+:deep(.avatar-dialog) {
   border-radius: 12px;
 
   .el-dialog__header {
@@ -526,7 +526,7 @@ export default {
   }
 
   .upload-tips {
-    ::v-deep .el-alert {
+    :deep(.el-alert) {
       padding: 12px;
 
       .el-alert__title {

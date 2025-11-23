@@ -46,8 +46,8 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="mini" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -57,7 +57,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['system:role:add']"
         >新增</el-button>
@@ -67,7 +67,7 @@
           type="success"
           plain
           icon="el-icon-edit"
-          size="mini"
+          size="small"
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['system:role:edit']"
@@ -78,7 +78,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['system:role:remove']"
@@ -90,7 +90,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['system:role:export']"
         >匯出
@@ -106,7 +106,7 @@
       <el-table-column :show-overflow-tooltip="true" label="權限字串" prop="roleKey" width="150"/>
       <el-table-column label="顯示順序" prop="roleSort" width="100"/>
       <el-table-column align="center" label="狀態" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-switch
             v-model="scope.row.status"
             active-value="0"
@@ -116,38 +116,40 @@
         </template>
       </el-table-column>
       <el-table-column align="center" label="建立時間" prop="createTime" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope" v-if="scope.row.roleId !== 1">
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['system:role:edit']"
-          >修改</el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['system:role:remove']"
-          >刪除
-          </el-button>
-          <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)" v-hasPermi="['system:role:edit']">
-            <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
-            <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="handleDataScope" icon="el-icon-circle-check"
-                                v-hasPermi="['system:role:edit']">數據權限
-              </el-dropdown-item>
-              <el-dropdown-item command="handleAuthUser" icon="el-icon-user"
-                                v-hasPermi="['system:role:edit']">分配使用者
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
+        <template #default="scope">
+          <span v-if="scope.row.roleId !== 1">
+            <el-button
+              size="small"
+              type="text"
+              icon="el-icon-edit"
+              @click="handleUpdate(scope.row)"
+              v-hasPermi="['system:role:edit']"
+            >修改</el-button>
+            <el-button
+              size="small"
+              type="text"
+              icon="el-icon-delete"
+              @click="handleDelete(scope.row)"
+              v-hasPermi="['system:role:remove']"
+            >刪除
+            </el-button>
+            <el-dropdown size="small" @command="(command) => handleCommand(command, scope.row)" v-hasPermi="['system:role:edit']">
+              <el-button size="small" type="text" icon="el-icon-d-arrow-right">更多</el-button>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item command="handleDataScope" icon="el-icon-circle-check"
+                                  v-hasPermi="['system:role:edit']">數據權限
+                </el-dropdown-item>
+                <el-dropdown-item command="handleAuthUser" icon="el-icon-user"
+                                  v-hasPermi="['system:role:edit']">分配使用者
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
+          </span>
         </template>
       </el-table-column>
     </el-table>
@@ -501,18 +503,18 @@ export default {
     },
     // 樹權限（全選/全不選）
     handleCheckedTreeNodeAll(value, type) {
-      if (type == 'menu') {
+      if (type == 'menu' && this.$refs.menu) {
         this.$refs.menu.setCheckedNodes(value ? this.menuOptions: [])
-      } else if (type == 'dept') {
+      } else if (type == 'dept' && this.$refs.dept) {
         this.$refs.dept.setCheckedNodes(value ? this.deptOptions: [])
       }
     },
     // 樹權限（父子聯動）
     handleCheckedTreeConnect(value, type) {
-      if (type == 'menu') {
-        this.form.menuCheckStrictly = value ? true: false
-      } else if (type == 'dept') {
-        this.form.deptCheckStrictly = value ? true: false
+      if (type === 'menu') {
+        this.form.menuCheckStrictly = !!value
+      } else if (type === 'dept') {
+        this.form.deptCheckStrictly = !!value
       }
     },
     /** 新增按鈕操作 */
@@ -534,9 +536,9 @@ export default {
           roleMenu.then(res => {
             let checkedKeys = res.checkedKeys
             checkedKeys.forEach((v) => {
-                this.$nextTick(()=>{
-                    this.$refs.menu.setChecked(v, true ,false)
-                })
+                if (this.$refs.menu) {
+                    this.$refs.menu.setChecked(v, true, false)
+                }
             })
           })
         })
@@ -545,7 +547,7 @@ export default {
     },
     /** 選擇角色權限範圍觸發 */
     dataScopeSelectChange(value) {
-      if(value !== '2') {
+      if(value !== '2' && this.$refs.dept) {
         this.$refs.dept.setCheckedKeys([])
       }
     },
@@ -558,7 +560,9 @@ export default {
         this.openDataScope = true
         this.$nextTick(() => {
           deptTreeSelect.then(res => {
-            this.$refs.dept.setCheckedKeys(res.checkedKeys)
+            if (this.$refs.dept) {
+              this.$refs.dept.setCheckedKeys(res.checkedKeys)
+            }
           })
         })
       })

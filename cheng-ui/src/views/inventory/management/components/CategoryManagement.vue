@@ -7,7 +7,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['inventory:category:add']"
         >新增分類
@@ -18,7 +18,7 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['inventory:category:remove']"
@@ -30,7 +30,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['inventory:category:export']"
         >匯出Excel
@@ -47,14 +47,14 @@
       <el-table-column label="分類編碼" align="center" prop="categoryCode" :show-overflow-tooltip="true" width="120"/>
       <el-table-column label="排序" align="center" prop="sortOrder" width="80"/>
       <el-table-column label="預設分類" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag v-if="scope.row.remark && scope.row.remark.includes('預設分類')" type="success" size="small">
             預設
           </el-tag>
         </template>
       </el-table-column>
       <el-table-column label="狀態" align="center" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-switch
             v-model="scope.row.status"
             active-value="0"
@@ -66,20 +66,20 @@
       <el-table-column label="備註" align="center" prop="remark" :show-overflow-tooltip="true" min-width="150"/>
       <el-table-column label="建立者" align="center" prop="createBy" width="100"/>
       <el-table-column label="建立時間" align="center" prop="createTime" width="160">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="更新時間" align="center" prop="updateTime" width="160">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span v-if="scope.row.updateTime">{{ parseTime(scope.row.updateTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
           <span v-else>-</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
@@ -87,7 +87,7 @@
           >修改
           </el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"

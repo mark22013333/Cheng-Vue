@@ -1,7 +1,8 @@
 <script>
+import { h } from 'vue'
+
 export default {
   name: 'MenuItem',
-  functional: true,
   props: {
     icon: {
       type: String,
@@ -12,19 +13,20 @@ export default {
       default: ''
     }
   },
-  render(h, context) {
-    const { icon, title } = context.props
+  render() {
+    const { icon, title } = this
     const vnodes = []
 
     if (icon) {
-      vnodes.push(<svg-icon icon-class={icon}/>)
+      // Vue 3 寫法：props 使用小寫 + 連字符，並包裝在物件中
+      vnodes.push(h('svg-icon', { 'icon-class': icon }))
     }
 
     if (title) {
       if (title.length > 5) {
-        vnodes.push(<span slot='title' title={(title)}>{(title)}</span>)
+        vnodes.push(h('span', { title: title }, title))
       } else {
-        vnodes.push(<span slot='title'>{(title)}</span>)
+        vnodes.push(h('span', null, title))
       }
     }
     return vnodes

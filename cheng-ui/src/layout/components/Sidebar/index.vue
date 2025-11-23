@@ -34,7 +34,6 @@
 import {mapGetters, mapState} from "vuex"
 import Logo from "./Logo"
 import SidebarItem from "./SidebarItem"
-import variables from "@/assets/styles/variables.scss"
 
 export default {
     components: { SidebarItem, Logo },
@@ -59,7 +58,13 @@ export default {
             return this.$store.state.settings.sidebarLogo
         },
         variables() {
-            return variables
+            // Vite 不支援 import SCSS 文件，直接定義顏色變數
+            return {
+                menuBackground: '#304156',
+                menuLightBackground: '#ffffff',
+                menuColor: '#bfcbd9',
+                menuLightColor: '#303133'
+            }
         },
         isCollapse() {
             return !this.sidebar.opened

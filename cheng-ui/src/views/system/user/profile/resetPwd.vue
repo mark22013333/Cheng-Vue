@@ -174,7 +174,7 @@ export default {
   .security-tip {
     margin-bottom: 24px;
 
-    ::v-deep .el-alert__content {
+    :deep(.el-alert__content) {
       ul {
         margin: 8px 0 0 0;
         padding-left: 20px;
@@ -189,13 +189,13 @@ export default {
   }
 
   .pwd-form {
-    ::v-deep .el-form-item__label {
+    :deep(.el-form-item__label) {
       font-weight: 600;
       color: #303133;
       margin-bottom: 8px;
     }
 
-    ::v-deep .el-input__inner {
+    :deep(.el-input__inner) {
       border-radius: 6px;
       transition: all 0.3s;
 
@@ -253,7 +253,7 @@ export default {
       padding-top: 24px;
       border-top: 1px solid #f0f2f5;
 
-      ::v-deep .el-form-item__content {
+      :deep(.el-form-item__content) {
         display: flex;
         gap: 12px;
       }

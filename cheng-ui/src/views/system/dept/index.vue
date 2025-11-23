@@ -20,8 +20,8 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="mini" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -31,7 +31,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['system:dept:add']"
         >新增</el-button>
@@ -41,7 +41,7 @@
           type="info"
           plain
           icon="el-icon-sort"
-          size="mini"
+          size="small"
           @click="toggleExpandAll"
         >展開/折叠
         </el-button>
@@ -60,26 +60,26 @@
       <el-table-column label="部門名稱" prop="deptName" width="260"></el-table-column>
       <el-table-column prop="orderNum" label="排序" width="200"></el-table-column>
       <el-table-column label="狀態" prop="status" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column align="center" label="建立時間" prop="createTime" width="200">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['system:dept:edit']"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-plus"
             @click="handleAdd(scope.row)"
@@ -87,7 +87,7 @@
           >新增</el-button>
           <el-button
             v-if="scope.row.parentId != 0"
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
@@ -162,13 +162,14 @@
 
 <script>
 import {addDept, delDept, getDept, listDept, listDeptExcludeChild, updateDept} from "@/api/system/dept"
-import Treeselect from "@riophae/vue-treeselect"
-import "@riophae/vue-treeselect/dist/vue-treeselect.css"
+// TODO: vue-treeselect 無 Vue 3 版本
+// import Treeselect from "@riophae/vue-treeselect"
+// import "@riophae/vue-treeselect/dist/vue-treeselect.css"
 
 export default {
   name: "Dept",
   dicts: ['sys_normal_disable'],
-  components: { Treeselect },
+  // components: { Treeselect },
   data() {
     return {
       // 遮罩層

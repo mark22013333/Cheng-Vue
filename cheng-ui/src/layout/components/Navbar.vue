@@ -22,17 +22,19 @@
           <img :src="avatar" class="user-avatar">
           <span class="user-nickname"> {{ nickName }} </span>
         </div>
-        <el-dropdown-menu slot="dropdown">
-          <router-link to="/user/profile">
-            <el-dropdown-item>個人中心</el-dropdown-item>
-          </router-link>
-          <el-dropdown-item @click.native="setLayout" v-if="setting">
-            <span>介面設定</span>
-          </el-dropdown-item>
-          <el-dropdown-item divided @click.native="logout">
-            <span>登出</span>
-          </el-dropdown-item>
-        </el-dropdown-menu>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <router-link to="/user/profile">
+              <el-dropdown-item>個人中心</el-dropdown-item>
+            </router-link>
+            <el-dropdown-item @click="setLayout" v-if="setting">
+              <span>介面設定</span>
+            </el-dropdown-item>
+            <el-dropdown-item divided @click="logout">
+              <span>登出</span>
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
       </el-dropdown>
     </div>
   </div>
@@ -146,19 +148,26 @@ export default {
     }
 
     .right-menu-item {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       padding: 0 8px;
       height: 100%;
       font-size: 18px;
       color: #5a5e66;
-      vertical-align: text-bottom;
+      vertical-align: middle;
 
       &.hover-effect {
         cursor: pointer;
-        transition: background .3s;
+        transition: background .3s, border-radius .3s;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin: 0 2px;
 
         &:hover {
-          background: rgba(0, 0, 0, .025)
+          background: rgba(0, 0, 0, .08);
+          border-radius: 50%;
         }
       }
     }

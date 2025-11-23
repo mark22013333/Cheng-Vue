@@ -15,7 +15,6 @@
 
 <script>
 import logoImg from '@/assets/logo/logo.png'
-import variables from '@/assets/styles/variables.scss'
 
 export default {
   name: 'SidebarLogo',
@@ -27,7 +26,13 @@ export default {
   },
   computed: {
     variables() {
-      return variables
+      // Vite 不支援 import SCSS 文件，直接定義顏色變數
+      return {
+        menuBackground: '#304156',
+        menuLightBackground: '#ffffff',
+        logoTitleColor: '#ffffff',
+        logoLightTitleColor: '#001529'
+      }
     },
     sideTheme() {
       return this.$store.state.settings.sideTheme
@@ -35,7 +40,7 @@ export default {
   },
   data() {
     return {
-      title: process.env.VUE_APP_TITLE,
+      title: import.meta.env.VITE_APP_TITLE,
       logo: logoImg
     }
   }

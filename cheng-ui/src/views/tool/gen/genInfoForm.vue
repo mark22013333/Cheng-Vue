@@ -89,6 +89,16 @@
               <i class="el-icon-question"></i>
             </el-tooltip>
           </span>
+          <!-- TODO: 暫時使用 el-select 替代 treeselect，待後續使用 el-tree-select -->
+          <el-select v-model="info.parentMenuId" placeholder="請選擇系統選單" clearable>
+            <el-option
+              v-for="menu in menus"
+              :key="menu.id"
+              :label="menu.label"
+              :value="menu.id"
+            />
+          </el-select>
+          <!-- 
           <treeselect
             :append-to-body="true"
             v-model="info.parentMenuId"
@@ -97,6 +107,7 @@
             :show-count="true"
             placeholder="請選擇系統選單"
           />
+          -->
         </el-form-item>
       </el-col>
 
@@ -223,11 +234,12 @@
 </template>
 
 <script>
-import Treeselect from "@riophae/vue-treeselect"
-import "@riophae/vue-treeselect/dist/vue-treeselect.css"
+// TODO: vue-treeselect 無 Vue 3 版本，暫時註解，待後續使用 Element Plus el-tree-select 替代
+// import Treeselect from "@riophae/vue-treeselect"
+// import "@riophae/vue-treeselect/dist/vue-treeselect.css"
 
 export default {
-  components: { Treeselect },
+  // components: { Treeselect },
   props: {
     info: {
       type: Object,

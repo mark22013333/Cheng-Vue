@@ -1,10 +1,10 @@
 <template>
   <section class="app-main">
-    <transition name="fade-transform" mode="out-in">
+    <router-view v-if="!$route.meta.link" v-slot="{ Component }">
       <keep-alive :include="cachedViews">
-        <router-view v-if="!$route.meta.link" :key="key" />
+        <component :is="Component" :key="key" v-if="Component" />
       </keep-alive>
-    </transition>
+    </router-view>
     <iframe-toggle />
     <copyright />
   </section>

@@ -102,7 +102,7 @@
                   <div class="timeline-header">
                     <div class="version-title">
                       <span class="v-num">{{ log.version }}</span>
-                      <el-tag :type="log.tagType" size="mini" effect="dark">{{ log.tag }}</el-tag>
+                      <el-tag :type="log.tagType" size="small" effect="dark">{{ log.tag }}</el-tag>
                     </div>
                   </div>
                   <ul class="version-list">

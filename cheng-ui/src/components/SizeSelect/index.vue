@@ -1,13 +1,15 @@
 <template>
-  <el-dropdown trigger="click" @command="handleSetSize">
-    <div>
+  <el-dropdown trigger="click" @command="handleSetSize" popper-class="size-select-dropdown">
+    <div style="display: inline-flex; align-items: center; justify-content: center;">
       <svg-icon class-name="size-icon" icon-class="size" />
     </div>
-    <el-dropdown-menu slot="dropdown">
-      <el-dropdown-item v-for="item of sizeOptions" :key="item.value" :disabled="size===item.value" :command="item.value">
-        {{ item.label }}
-      </el-dropdown-item>
-    </el-dropdown-menu>
+    <template #dropdown>
+      <el-dropdown-menu>
+        <el-dropdown-item v-for="item of sizeOptions" :key="item.value" :disabled="size===item.value" :command="item.value">
+          {{ item.label }}
+        </el-dropdown-item>
+      </el-dropdown-menu>
+    </template>
   </el-dropdown>
 </template>
 
@@ -30,25 +32,19 @@ export default {
   },
   methods: {
     handleSetSize(size) {
-      this.$ELEMENT.size = size
+      // 儲存到 Vuex 和 Cookie
       this.$store.dispatch('app/setSize', size)
-      this.refreshView()
+      
+      // Vue 3 Element Plus 需要重新載入頁面才能應用大小變更
       this.$message({
-        message: 'Switch Size Success',
+        message: '介面大小將在重新整理後生效',
         type: 'success'
       })
-    },
-    refreshView() {
-      // In order to make the cached page re-rendered
-      this.$store.dispatch('tagsView/delAllCachedViews', this.$route)
-
-      const { fullPath } = this.$route
-
-      this.$nextTick(() => {
-        this.$router.replace({
-          path: '/redirect' + fullPath
-        })
-      })
+      
+      // 1秒後重新載入頁面
+      setTimeout(() => {
+        location.reload()
+      }, 1000)
     }
   }
 }

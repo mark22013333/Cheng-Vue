@@ -594,19 +594,19 @@ export default {
   }
 }
 
-::v-deep .el-divider__text {
+:deep(.el-divider__text) {
   font-weight: 600;
   color: #606266;
 }
 
 // Webhook URL 唯讀欄位游標樣式
-::v-deep .el-input__inner[readonly] {
+:deep(.el-input__inner[readonly]) {
   cursor: not-allowed;
   background-color: #f5f7fa;
 }
 
 // 頻道類型下拉選單顯示正常指針游標
-::v-deep .el-select:not(.is-disabled) .el-input__inner {
+:deep(.el-select:not(.is-disabled) .el-input__inner ) {
   cursor: pointer;
 }
 </style>

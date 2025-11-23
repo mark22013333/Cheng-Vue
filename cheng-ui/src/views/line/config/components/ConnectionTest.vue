@@ -289,7 +289,7 @@ export default {
 
 // 綠光呼吸燈效果
 .breathing-success {
-  ::v-deep .el-timeline-item__node {
+  :deep(.el-timeline-item__node) {
     animation: breathing 2s ease-in-out infinite;
   }
 }

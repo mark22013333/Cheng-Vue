@@ -3,31 +3,41 @@
     <el-row>
       <el-tooltip v-if="search" :content="showSearch ? '隱藏搜尋' : '顯示搜尋'" class="item" effect="dark"
                   placement="top">
-        <el-button size="mini" circle icon="el-icon-search" @click="toggleSearch()" />
+        <el-button size="small" circle @click="toggleSearch()">
+          <el-icon><Search /></el-icon>
+        </el-button>
       </el-tooltip>
       <el-tooltip class="item" content="重新整理" effect="dark" placement="top">
-        <el-button size="mini" circle icon="el-icon-refresh" @click="refresh()" />
+        <el-button size="small" circle @click="refresh()">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
       </el-tooltip>
       <el-tooltip v-if="Object.keys(columns).length > 0" class="item" content="顯隱列" effect="dark" placement="top">
-        <el-button size="mini" circle icon="el-icon-menu" @click="showColumn()" v-if="showColumnsType == 'transfer'"/>
+        <el-button size="small" circle @click="showColumn()" v-if="showColumnsType == 'transfer'">
+          <el-icon><Menu /></el-icon>
+        </el-button>
         <el-dropdown trigger="click" :hide-on-click="false" style="padding-left: 12px" v-if="showColumnsType == 'checkbox'">
-          <el-button size="mini" circle icon="el-icon-menu" />
-          <el-dropdown-menu slot="dropdown">
+          <el-button size="small" circle>
+            <el-icon><Menu /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
             <!-- 全選/反選 按鈕 -->
             <el-dropdown-item>
               <el-checkbox :indeterminate="isIndeterminate" v-model="isChecked" @change="toggleCheckAll"> 列展示 </el-checkbox>
             </el-dropdown-item>
             <div class="check-line"></div>
-            <template v-for="(item, key) in columns">
-              <el-dropdown-item :key="key">
+            <template v-for="(item, key) in columns" :key="key">
+              <el-dropdown-item>
                 <el-checkbox v-model="item.visible" @change="checkboxChange($event, key)" :label="item.label" />
               </el-dropdown-item>
             </template>
-          </el-dropdown-menu>
+            </el-dropdown-menu>
+          </template>
         </el-dropdown>
       </el-tooltip>
     </el-row>
-    <el-dialog :title="title" :visible.sync="open" append-to-body>
+    <el-dialog :title="title" v-model="open" append-to-body>
       <el-transfer
         :titles="['顯示', '隱藏']"
         v-model="value"
@@ -39,8 +49,15 @@
 </template>
 
 <script>
+import { Search, Refresh, Menu } from '@element-plus/icons-vue'
+
 export default {
   name: "RightToolbar",
+  components: {
+    Search,
+    Refresh,
+    Menu
+  },
   data() {
     return {
       // 顯隱數據
@@ -169,13 +186,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-::v-deep .el-transfer__button {
+:deep(.el-transfer__button) {
   border-radius: 50%;
   padding: 12px;
   display: block;
   margin-left: 0px;
 }
-::v-deep .el-transfer__button:first-child {
+:deep(.el-transfer__button:first-child) {
   margin-bottom: 10px;
 }
 .check-line {
