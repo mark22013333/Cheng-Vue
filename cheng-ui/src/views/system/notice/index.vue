@@ -1,12 +1,12 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="公告標題" prop="noticeTitle">
         <el-input
           v-model="queryParams.noticeTitle"
           placeholder="請輸入公告標題"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="操作人員" prop="createBy">
@@ -14,7 +14,7 @@
           v-model="queryParams.createBy"
           placeholder="請輸入操作人員"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="類型" prop="noticeType">
@@ -28,8 +28,8 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -39,7 +39,6 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="small"
           @click="handleAdd"
           v-hasPermi="['system:notice:add']"
         >新增</el-button>
@@ -49,7 +48,6 @@
           type="success"
           plain
           icon="el-icon-edit"
-          size="small"
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['system:notice:edit']"
@@ -60,14 +58,13 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['system:notice:remove']"
         >刪除
         </el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="noticeList" @selection-change="handleSelectionChange">
@@ -98,15 +95,15 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button
-            size="small"
-            type="text"
+            type="primary"
+            link
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['system:notice:edit']"
           >修改</el-button>
           <el-button
-            size="small"
-            type="text"
+            type="primary"
+            link
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['system:notice:remove']"
@@ -119,13 +116,13 @@
     <pagination
       v-show="total>0"
       :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
+      v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize"
       @pagination="getList"
     />
 
     <!-- 新增或修改公告對話框 -->
-    <el-dialog :title="title" :visible.sync="open" width="780px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="780px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="12">
@@ -163,10 +160,12 @@
           </el-col>
         </el-row>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">確 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitForm">確 定</el-button>
+          <el-button @click="cancel">取 消</el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>

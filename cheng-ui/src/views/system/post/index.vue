@@ -1,12 +1,12 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="職位編碼" prop="postCode">
         <el-input
           v-model="queryParams.postCode"
           placeholder="請輸入職位編碼"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="職位名稱" prop="postName">
@@ -14,7 +14,7 @@
           v-model="queryParams.postName"
           placeholder="請輸入職位名稱"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="狀態" prop="status">
@@ -28,8 +28,14 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
+        <el-button type="primary" @click="handleQuery">
+          <el-icon><Search /></el-icon>
+          搜尋
+        </el-button>
+        <el-button @click="resetQuery">
+          <el-icon><Refresh /></el-icon>
+          重置
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -38,47 +44,49 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
-          size="small"
           @click="handleAdd"
           v-hasPermi="['system:post:add']"
-        >新增</el-button>
+        >
+          <el-icon><Plus /></el-icon>
+          新增
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
           type="success"
           plain
-          icon="el-icon-edit"
-          size="small"
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['system:post:edit']"
-        >修改</el-button>
+        >
+          <el-icon><Edit /></el-icon>
+          修改
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['system:post:remove']"
-        >刪除
+        >
+          <el-icon><Delete /></el-icon>
+          刪除
         </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
           type="warning"
           plain
-          icon="el-icon-download"
-          size="small"
           @click="handleExport"
           v-hasPermi="['system:post:export']"
-        >匯出
+        >
+          <el-icon><Download /></el-icon>
+          匯出
         </el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="postList" @selection-change="handleSelectionChange">
@@ -100,16 +108,16 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button
-            size="small"
-            type="text"
-            icon="el-icon-edit"
+            type="primary"
+            link
+            icon="Edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['system:post:edit']"
           >修改</el-button>
           <el-button
-            size="small"
-            type="text"
-            icon="el-icon-delete"
+            type="primary"
+            link
+            icon="Delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['system:post:remove']"
           >刪除
@@ -121,13 +129,13 @@
     <pagination
       v-show="total>0"
       :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
+      v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize"
       @pagination="getList"
     />
 
     <!-- 新增或修改職位對話框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="職位名稱" prop="postName">
           <el-input v-model="form.postName" placeholder="請輸入職位名稱"/>
@@ -151,20 +159,24 @@
           <el-input v-model="form.remark" placeholder="請輸入内容" type="textarea"/>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">確 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitForm">確 定</el-button>
+          <el-button @click="cancel">取 消</el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script>
 import {addPost, delPost, getPost, listPost, updatePost} from "@/api/system/post"
+import { Search, Refresh, Plus, Edit, Delete, Download } from '@element-plus/icons-vue'
 
 export default {
   name: "Post",
   dicts: ['sys_normal_disable'],
+  components: { Search, Refresh, Plus, Edit, Delete, Download },
   data() {
     return {
       // 遮罩層

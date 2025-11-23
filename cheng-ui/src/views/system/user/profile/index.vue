@@ -7,7 +7,6 @@
           <el-button 
             :type="layoutMode === 'side' ? 'primary' : ''" 
             icon="el-icon-menu" 
-            size="small"
             @click="layoutMode = 'side'">
           </el-button>
         </el-tooltip>
@@ -15,7 +14,6 @@
           <el-button 
             :type="layoutMode === 'stack' ? 'primary' : ''" 
             icon="el-icon-s-unfold" 
-            size="small"
             @click="layoutMode = 'stack'">
           </el-button>
         </el-tooltip>
@@ -23,14 +21,13 @@
           <el-button 
             :type="layoutMode === 'wide' ? 'primary' : ''" 
             icon="el-icon-full-screen" 
-            size="small"
             @click="layoutMode = 'wide'">
           </el-button>
         </el-tooltip>
       </el-button-group>
 
       <div class="theme-selector">
-        <el-select v-model="cardTheme" size="small" style="width: 140px;">
+        <el-select v-model="cardTheme" style="width: 140px;">
           <el-option label="🎨 預設主題" value="default"></el-option>
           <el-option label="💙 藍色主題" value="blue"></el-option>
           <el-option label="💚 綠色主題" value="green"></el-option>
@@ -48,7 +45,7 @@
           <div class="user-title">
             <h2>{{ user.nickName || user.userName }}</h2>
             <p class="user-subtitle">
-              <el-tag size="small" type="success" effect="plain">{{ roleGroup }}</el-tag>
+              <el-tag type="success" effect="plain">{{ roleGroup }}</el-tag>
               <span class="dept-info" v-if="user.dept">
                 <i class="el-icon-office-building"></i>
                 {{ user.dept.deptName }}
@@ -109,7 +106,7 @@
                 性別
               </div>
               <div class="info-value">
-                <el-tag size="small" :type="user.sex === '0' ? 'primary' : 'danger'">
+                <el-tag :type="user.sex === '0' ? 'primary' : 'danger'">
                   {{ user.sex === '0' ? '男' : user.sex === '1' ? '女' : '未設定' }}
                 </el-tag>
               </div>
@@ -182,7 +179,7 @@
                         <div class="security-item-desc">定期修改密碼可以提高帳號安全性</div>
                       </div>
                     </div>
-                    <el-button size="small" @click="selectedTab = 'resetPwd'">修改密碼</el-button>
+                    <el-button @click="selectedTab = 'resetPwd'">修改密碼</el-button>
                   </div>
                   <div class="security-item">
                     <div class="security-item-info">
@@ -192,7 +189,7 @@
                         <div class="security-item-desc">{{ user.phonenumber ? '已綁定: ' + user.phonenumber : '未綁定' }}</div>
                       </div>
                     </div>
-                    <el-button size="small" @click="selectedTab = 'userinfo'">{{ user.phonenumber ? '修改' : '綁定' }}</el-button>
+                    <el-button @click="selectedTab = 'userinfo'">{{ user.phonenumber ? '修改' : '綁定' }}</el-button>
                   </div>
                   <div class="security-item">
                     <div class="security-item-info">
@@ -202,7 +199,7 @@
                         <div class="security-item-desc">{{ user.email ? '已綁定: ' + user.email : '未綁定' }}</div>
                       </div>
                     </div>
-                    <el-button size="small" @click="selectedTab = 'userinfo'">{{ user.email ? '修改' : '綁定' }}</el-button>
+                    <el-button @click="selectedTab = 'userinfo'">{{ user.email ? '修改' : '綁定' }}</el-button>
                   </div>
                 </div>
               </div>

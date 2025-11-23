@@ -1,12 +1,12 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" label-width="68px">
       <el-form-item label="登入地址" prop="ipaddr">
         <el-input
           v-model="queryParams.ipaddr"
           placeholder="請輸入登入地址"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="使用者名稱" prop="userName">
@@ -14,12 +14,18 @@
           v-model="queryParams.userName"
           placeholder="請輸入使用者名稱"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
+        <el-button type="primary" @click="handleQuery">
+          <el-icon class="el-icon--left"><Search /></el-icon>
+          搜尋
+        </el-button>
+        <el-button @click="resetQuery">
+          <el-icon class="el-icon--left"><Refresh /></el-icon>
+          重置
+        </el-button>
       </el-form-item>
 
     </el-form>
@@ -48,26 +54,29 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button
-            size="small"
-            type="text"
-            icon="el-icon-delete"
+            type="primary"
+            link
             @click="handleForceLogout(scope.row)"
             v-hasPermi="['monitor:online:forceLogout']"
-          >強制登出
+          >
+            <el-icon><Delete /></el-icon>
+            強制登出
           </el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total>0" :total="total" :page.sync="pageNum" :limit.sync="pageSize" />
+    <pagination v-show="total>0" :total="total" v-model:page="pageNum" v-model:limit="pageSize" />
   </div>
 </template>
 
 <script>
+import { Search, Refresh, Delete } from '@element-plus/icons-vue'
 import {forceLogout, list} from "@/api/monitor/online"
 
 export default {
   name: "Online",
+  components: { Search, Refresh, Delete },
   data() {
     return {
       // 遮罩層

@@ -1,12 +1,12 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch">
       <el-form-item label="選單名稱" prop="menuName">
         <el-input
           v-model="queryParams.menuName"
           placeholder="請輸入選單名稱"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="狀態" prop="status">
@@ -20,8 +20,14 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
+        <el-button type="primary" @click="handleQuery">
+          <el-icon><Search /></el-icon>
+          搜尋
+        </el-button>
+        <el-button @click="resetQuery">
+          <el-icon><Refresh /></el-icon>
+          重置
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -30,23 +36,24 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
-          size="small"
           @click="handleAdd"
           v-hasPermi="['system:menu:add']"
-        >新增</el-button>
+        >
+          <el-icon><Plus /></el-icon>
+          新增
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
           type="info"
           plain
-          icon="el-icon-sort"
-          size="small"
           @click="toggleExpandAll"
-        >展開/折叠
+        >
+          <el-icon><Sort /></el-icon>
+          展開/折叠
         </el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table
@@ -79,23 +86,23 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button
-            size="small"
-            type="text"
-            icon="el-icon-edit"
+            type="primary"
+            link
+            icon="Edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['system:menu:edit']"
           >修改</el-button>
           <el-button
-            size="small"
-            type="text"
-            icon="el-icon-plus"
+            type="primary"
+            link
+            icon="Plus"
             @click="handleAdd(scope.row)"
             v-hasPermi="['system:menu:add']"
           >新增</el-button>
           <el-button
-            size="small"
-            type="text"
-            icon="el-icon-delete"
+            type="primary"
+            link
+            icon="Delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['system:menu:remove']"
           >刪除
@@ -105,7 +112,7 @@
     </el-table>
 
     <!-- 新增或修改選單對話框 -->
-    <el-dialog :title="title" :visible.sync="open" width="680px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="680px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="24">
@@ -295,10 +302,12 @@
           </el-col>
         </el-row>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">確 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitForm">確 定</el-button>
+          <el-button @click="cancel">取 消</el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>
@@ -309,11 +318,12 @@ import {addMenu, delMenu, getMenu, listMenu, updateMenu} from "@/api/system/menu
 // import Treeselect from "@riophae/vue-treeselect"
 // import "@riophae/vue-treeselect/dist/vue-treeselect.css"
 import IconSelect from "@/components/IconSelect"
+import { Search, Refresh, Plus, Edit, Delete, Sort } from '@element-plus/icons-vue'
 
 export default {
   name: "Menu",
   dicts: ['sys_show_hide', 'sys_normal_disable'],
-  components: { IconSelect },
+  components: { IconSelect, Search, Refresh, Plus, Edit, Delete, Sort },
   data() {
     return {
       // 遮罩層

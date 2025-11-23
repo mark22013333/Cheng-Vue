@@ -1,13 +1,13 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="操作地址" prop="operIp">
         <el-input
           v-model="queryParams.operIp"
           placeholder="請輸入操作地址"
           clearable
           style="width: 240px;"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="系統模組" prop="title">
@@ -16,7 +16,7 @@
           placeholder="請輸入系統模組"
           clearable
           style="width: 240px;"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="操作人員" prop="operName">
@@ -25,7 +25,7 @@
           placeholder="請輸入操作人員"
           clearable
           style="width: 240px;"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="類型" prop="businessType">
@@ -71,8 +71,14 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
+        <el-button type="primary" @click="handleQuery">
+          <el-icon class="el-icon--left"><Search /></el-icon>
+          搜尋
+        </el-button>
+        <el-button @click="resetQuery">
+          <el-icon class="el-icon--left"><Refresh /></el-icon>
+          重置
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -81,37 +87,37 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['monitor:operlog:remove']"
-        >刪除
+        >
+          <el-icon class="el-icon--left"><Delete /></el-icon>
+          刪除
         </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="small"
           @click="handleClean"
           v-hasPermi="['monitor:operlog:remove']"
-        >清除
+        >
+          <el-icon class="el-icon--left"><Delete /></el-icon>
+          清除
         </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
           type="warning"
           plain
-          icon="el-icon-download"
-          size="small"
           @click="handleExport"
           v-hasPermi="['monitor:operlog:export']"
-        >匯出
+        >
+          <el-icon class="el-icon--left"><Download /></el-icon>
+          匯出
         </el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table ref="tables" v-loading="loading" :data="list" @selection-change="handleSelectionChange" :default-sort="defaultSort" @sort-change="handleSortChange">
@@ -146,12 +152,13 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button
-            size="small"
-            type="text"
-            icon="el-icon-view"
+            type="primary"
+            link
             @click="handleView(scope.row,scope.index)"
             v-hasPermi="['monitor:operlog:query']"
-          >詳細
+          >
+            <el-icon><View /></el-icon>
+            詳細
           </el-button>
         </template>
       </el-table-column>
@@ -160,14 +167,14 @@
     <pagination
       v-show="total>0"
       :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
+      v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize"
       @pagination="getList"
     />
 
     <!-- 操作日誌詳細 -->
-    <el-dialog :visible.sync="open" append-to-body title="操作日誌詳細" width="800px">
-      <el-form ref="form" :model="form" label-width="100px" size="small">
+    <el-dialog v-model="open" append-to-body title="操作日誌詳細" width="800px">
+      <el-form ref="form" :model="form" label-width="100px">
         <el-row>
           <el-col :span="12">
             <el-form-item label="操作模組：">{{ form.title }} / {{ typeFormat(form) }}</el-form-item>
@@ -205,18 +212,22 @@
           </el-col>
         </el-row>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="open = false">關 閉</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="open = false">關 閉</el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script>
+import { Search, Refresh, Delete, Download, View } from '@element-plus/icons-vue'
 import {cleanOperlog, delOperlog, list} from "@/api/monitor/operlog"
 
 export default {
   name: "Operlog",
+  components: { Search, Refresh, Delete, Download, View },
   dicts: ['sys_oper_type', 'sys_common_status'],
   data() {
     return {

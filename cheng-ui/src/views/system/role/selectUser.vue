@@ -1,13 +1,13 @@
 <template>
   <!-- 授權使用者 -->
-  <el-dialog :visible.sync="visible" append-to-body title="選擇使用者" top="5vh" width="800px">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true">
+  <el-dialog v-model="visible" append-to-body title="選擇使用者" top="5vh" width="800px">
+    <el-form :model="queryParams" ref="queryForm" :inline="true">
       <el-form-item label="使用者名稱" prop="userName">
         <el-input
           v-model="queryParams.userName"
           placeholder="請輸入使用者名稱"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="手機號碼" prop="phonenumber">
@@ -15,12 +15,12 @@
           v-model="queryParams.phonenumber"
           placeholder="請輸入手機號碼"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
     <el-row>
@@ -44,15 +44,17 @@
       <pagination
         v-show="total>0"
         :total="total"
-        :page.sync="queryParams.pageNum"
-        :limit.sync="queryParams.pageSize"
+        v-model:page="queryParams.pageNum"
+        v-model:limit="queryParams.pageSize"
         @pagination="getList"
       />
     </el-row>
-    <div slot="footer" class="dialog-footer">
-      <el-button type="primary" @click="handleSelectUser">確 定</el-button>
-      <el-button @click="visible = false">取 消</el-button>
-    </div>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button type="primary" @click="handleSelectUser">確 定</el-button>
+        <el-button @click="visible = false">取 消</el-button>
+      </div>
+    </template>
   </el-dialog>
 </template>
 

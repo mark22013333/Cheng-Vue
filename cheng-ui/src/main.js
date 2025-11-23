@@ -83,10 +83,10 @@ app.mount('#app')
 setTimeout(() => {
   const body = document.body
   const loaderWrapper = document.getElementById('loader-wrapper')
-  
+
   // 添加 loaded class 觸發淡出動畫
   body.classList.add('loaded')
-  
+
   // 等待動畫完成後完全移除元素
   setTimeout(() => {
     if (loaderWrapper) {

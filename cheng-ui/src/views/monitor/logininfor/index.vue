@@ -1,13 +1,13 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="75px">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="90px">
       <el-form-item label="IP位置" prop="ipaddr">
         <el-input
           v-model="queryParams.ipaddr"
           placeholder="請輸入IP位置"
           clearable
           style="width: 240px;"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="使用者名稱" prop="userName">
@@ -16,7 +16,7 @@
           placeholder="請輸入使用者名稱"
           clearable
           style="width: 240px;"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="狀態" prop="status">
@@ -47,8 +47,14 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
+        <el-button type="primary" @click="handleQuery">
+          <el-icon class="el-icon--left"><Search /></el-icon>
+          搜尋
+        </el-button>
+        <el-button @click="resetQuery">
+          <el-icon class="el-icon--left"><Refresh /></el-icon>
+          重置
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -57,49 +63,49 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['monitor:logininfor:remove']"
-        >刪除
+        >
+          <el-icon class="el-icon--left"><Delete /></el-icon>
+          刪除
         </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="small"
           @click="handleClean"
           v-hasPermi="['monitor:logininfor:remove']"
-        >清除
+        >
+          <el-icon class="el-icon--left"><Delete /></el-icon>
+          清除
         </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
           type="primary"
           plain
-          icon="el-icon-unlock"
-          size="small"
           :disabled="single"
           @click="handleUnlock"
           v-hasPermi="['monitor:logininfor:unlock']"
-        >解鎖
+        >
+          <el-icon class="el-icon--left"><Unlock /></el-icon>
+          解鎖
         </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
           type="warning"
           plain
-          icon="el-icon-download"
-          size="small"
           @click="handleExport"
           v-hasPermi="['monitor:logininfor:export']"
-        >匯出
+        >
+          <el-icon class="el-icon--left"><Download /></el-icon>
+          匯出
         </el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table ref="tables" v-loading="loading" :data="list" @selection-change="handleSelectionChange" :default-sort="defaultSort" @sort-change="handleSortChange">
@@ -128,18 +134,20 @@
     <pagination
       v-show="total>0"
       :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
+      v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize"
       @pagination="getList"
     />
   </div>
 </template>
 
 <script>
+import { Search, Refresh, Delete, Unlock, Download } from '@element-plus/icons-vue'
 import {cleanLogininfor, delLogininfor, list, unlockLogininfor} from "@/api/monitor/logininfor"
 
 export default {
   name: "Logininfor",
+  components: { Search, Refresh, Delete, Unlock, Download },
   dicts: ['sys_common_status'],
   data() {
     return {

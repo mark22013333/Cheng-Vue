@@ -125,7 +125,7 @@
                                label="部門" prop="dept.deptName"/>
               <el-table-column v-if="columns.phonenumber.visible" key="phonenumber" align="center" label="手機號碼"
                                prop="phonenumber" width="120"/>
-              <el-table-column v-if="columns.status.visible" key="status" align="center" label="狀態">
+              <el-table-column v-if="columns.status.visible" key="status" align="center" label="狀態" width="80">
                 <template #default="scope">
                   <el-switch v-model="scope.row.status" active-value="0" inactive-value="1"
                              @change="handleStatusChange(scope.row)"></el-switch>
@@ -137,18 +137,18 @@
                   <span>{{ parseTime(scope.row.createTime) }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
+              <el-table-column label="操作" align="center" width="180" class-name="small-padding fixed-width">
                 <template #default="scope">
                   <span v-if="scope.row.userId !== 1">
-                  <el-button size="small" type="primary" link icon="Edit" @click="handleUpdate(scope.row)"
+                  <el-button type="primary" link icon="Edit" @click="handleUpdate(scope.row)"
                              v-hasPermi="['system:user:edit']">修改
                   </el-button>
-                  <el-button v-hasPermi="['system:user:remove']" icon="Delete" size="small" type="primary" link
+                  <el-button v-hasPermi="['system:user:remove']" icon="Delete" type="primary" link
                              @click="handleDelete(scope.row)">刪除
                   </el-button>
-                  <el-dropdown size="small" @command="(command) => handleCommand(command, scope.row)"
+                  <el-dropdown @command="(command) => handleCommand(command, scope.row)"
                                v-hasPermi="['system:user:resetPwd', 'system:user:edit']">
-                    <el-button size="small" type="primary" link icon="DArrowRight">更多</el-button>
+                    <el-button type="primary" link icon="DArrowRight">更多</el-button>
                     <template #dropdown>
                         <el-dropdown-menu>
                           <el-dropdown-item v-hasPermi="['system:user:resetPwd']" command="handleResetPwd"

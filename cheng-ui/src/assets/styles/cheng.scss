@@ -105,6 +105,12 @@
     .el-button [class*="el-icon-"] + span {
       margin-left: 1px;
     }
+    
+    /* 縮小表格行高 */
+    td {
+      padding: 5px 0 !important;
+      text-align: center;  /* 表格內容置中 */
+    }
   }
 }
 
@@ -129,7 +135,29 @@
   margin-top: 5px;
   border: 1px solid #e5e6e7;
   background: #FFFFFF none;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px;
   border-radius: 4px;
+  
+  /* 美化滾動條 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
 }
 
 @media (max-width: 768px) {
@@ -391,6 +419,8 @@
   &.is-link {
     padding: 5px 8px;
     font-size: 12px;
+    height: auto;
+    line-height: 1;
 
     /* icon 與文字間距 */
     .el-icon {
@@ -402,7 +432,7 @@
   &.el-button--small {
     padding: 5px 15px;
     font-size: 12px;
-    border-radius: 4px;
+    border-radius: 20px;  /* 更圓的按鈕 */
 
     /* icon 與文字間距 */
     .el-icon {
@@ -419,7 +449,7 @@
   &.el-button--default {
     padding: 8px 15px;
     font-size: 14px;
-    border-radius: 4px;
+    border-radius: 20px;  /* 更圓的按鈕 */
     
     /* icon 與文字間距 */
     .el-icon {
@@ -434,7 +464,7 @@
   
   /* Plain 按鈕樣式調整 */
   &.is-plain {
-    border-radius: 4px;
+    border-radius: 20px;  /* 更圓的按鈕 */
   }
   
   /* 確保 icon 正確對齊 */
@@ -452,10 +482,35 @@
 .el-table {
   .el-button--small.is-link {
     padding: 0;
-    margin-right: 8px;
+    margin-right: 10px;
+    height: auto;
+    line-height: 1.5;
+    vertical-align: middle;
 
     &:last-child {
       margin-right: 0;
+    }
+  }
+  
+  /* 操作欄整體容器對齊 */
+  .small-padding.fixed-width .cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 4px 0 !important;
+    min-height: 38px;
+  }
+  
+  /* 操作欄 dropdown 按鈕對齊 */
+  .el-dropdown {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    
+    .el-button {
+      vertical-align: middle;
+      margin: 0;
     }
   }
 }
@@ -482,6 +537,23 @@
   }
 }
 
+/* 表單內的輸入框統一寬度 */
+.el-form--inline {
+  .el-form-item {
+    .el-input {
+      width: 240px;
+    }
+    
+    .el-select {
+      width: 240px;
+    }
+    
+    .el-date-editor {
+      width: 240px;
+    }
+  }
+}
+
 .el-select {
   .el-input__wrapper {
     border-radius: 4px;
@@ -504,5 +576,43 @@
       margin-right: 10px;
       vertical-align: middle;
     }
+  }
+}
+
+/* RightToolbar 樣式修復 */
+.top-right-btn {
+  /* 增加上方空間，避免 tooltip 被切到 */
+  padding-top: 8px;
+  
+  .el-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  /* 圓形按鈕樣式優化 - 確保 icon 完美置中 */
+  .el-button.is-circle {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px !important;
+    border-radius: 50% !important;
+    width: 32px;
+    height: 32px;
+    
+    .el-icon {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      margin: 0 !important;
+      line-height: 1 !important;
+    }
+  }
+  
+  /* dropdown 內的圓形按鈕 */
+  .el-dropdown .el-button.is-circle {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 }

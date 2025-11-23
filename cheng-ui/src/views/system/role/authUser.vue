@@ -1,13 +1,13 @@
 <template>
   <div class="app-container">
-     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch">
+     <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch">
        <el-form-item label="使用者名稱" prop="userName">
         <el-input
           v-model="queryParams.userName"
           placeholder="請輸入使用者名稱"
           clearable
           style="width: 240px"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
        <el-form-item label="手機號碼" prop="phonenumber">
@@ -16,12 +16,12 @@
           placeholder="請輸入手機號碼"
           clearable
           style="width: 240px"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -31,7 +31,6 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="small"
           @click="openSelectUser"
           v-hasPermi="['system:role:add']"
         >新增使用者
@@ -42,7 +41,6 @@
           type="danger"
           plain
           icon="el-icon-circle-close"
-          size="small"
           :disabled="multiple"
           @click="cancelAuthUserAll"
           v-hasPermi="['system:role:remove']"
@@ -54,12 +52,11 @@
           type="warning"
           plain
           icon="el-icon-close"
-          size="small"
           @click="handleClose"
         >關閉
         </el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
@@ -81,8 +78,8 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button
-            size="small"
-            type="text"
+            type="primary"
+            link
             icon="el-icon-circle-close"
             @click="cancelAuthUser(scope.row)"
             v-hasPermi="['system:role:remove']"
@@ -95,8 +92,8 @@
     <pagination
       v-show="total>0"
       :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
+      v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize"
       @pagination="getList"
     />
     <select-user ref="select" :roleId="queryParams.roleId" @ok="handleQuery" />

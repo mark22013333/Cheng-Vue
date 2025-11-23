@@ -1,13 +1,13 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="字典名稱" prop="dictName">
         <el-input
           v-model="queryParams.dictName"
           placeholder="請輸入字典名稱"
           clearable
           style="width: 240px"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="字典類型" prop="dictType">
@@ -16,7 +16,7 @@
           placeholder="請輸入字典類型"
           clearable
           style="width: 240px"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="狀態" prop="status">
@@ -46,8 +46,8 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button icon="el-icon-search" size="small" type="primary" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-search" type="primary" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -57,7 +57,6 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="small"
           @click="handleAdd"
           v-hasPermi="['system:dict:add']"
         >新增</el-button>
@@ -67,7 +66,6 @@
           type="success"
           plain
           icon="el-icon-edit"
-          size="small"
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['system:dict:edit']"
@@ -78,7 +76,6 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['system:dict:remove']"
@@ -90,7 +87,6 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="small"
           @click="handleExport"
           v-hasPermi="['system:dict:export']"
         >匯出
@@ -101,13 +97,12 @@
           type="danger"
           plain
           icon="el-icon-refresh"
-          size="small"
           @click="handleRefreshCache"
           v-hasPermi="['system:dict:remove']"
         >重新整理暫存
         </el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="typeList" @selection-change="handleSelectionChange">
@@ -135,15 +130,15 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button
-            size="small"
-            type="text"
+            type="primary"
+            link
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['system:dict:edit']"
           >修改</el-button>
           <el-button
-            size="small"
-            type="text"
+            type="primary"
+            link
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['system:dict:remove']"
@@ -156,13 +151,13 @@
     <pagination
       v-show="total>0"
       :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
+      v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize"
       @pagination="getList"
     />
 
     <!-- 新增或修改參數設定對話框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="字典名稱" prop="dictName">
           <el-input v-model="form.dictName" placeholder="請輸入字典名稱"/>
@@ -183,10 +178,12 @@
           <el-input v-model="form.remark" placeholder="請輸入内容" type="textarea"></el-input>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">確 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitForm">確 定</el-button>
+          <el-button @click="cancel">取 消</el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>
