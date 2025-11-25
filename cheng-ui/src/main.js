@@ -1,96 +1,84 @@
 import { createApp } from 'vue'
 
 import Cookies from 'js-cookie'
-import useClipboard from 'vue-clipboard3'
 
 import ElementPlus from 'element-plus'
-import zhTw from 'element-plus/es/locale/lang/zh-tw'
 import 'element-plus/dist/index.css'
-import '@/assets/styles/element-variables.scss'
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import 'element-plus/theme-chalk/dark/css-vars.css'
+import locale from 'element-plus/es/locale/lang/zh-tw'
 
-import '@/assets/styles/index.scss'
-import '@/assets/styles/cheng.scss'
+import '@/assets/styles/index.scss' // global css
+
 import App from './App'
 import store from './store'
 import router from './router'
-import directive from './directive'
-import plugins from './plugins'
+import directive from './directive' // directive
+
+// 註冊指令
+import plugins from './plugins' // plugins
 import { download } from '@/utils/request'
 
+// svg圖標
 import 'virtual:svg-icons-register'
-import './permission'
-
-import { getDicts } from "@/api/system/dict/data"
-import { getConfigKey } from "@/api/system/config"
-import { addDateRange, handleTree, parseTime, resetForm, selectDictLabel, selectDictLabels } from "@/utils/cheng"
-import Pagination from "@/components/Pagination"
-import RightToolbar from "@/components/RightToolbar"
-import Editor from "@/components/Editor"
-import FileUpload from "@/components/FileUpload"
-import ImageUpload from "@/components/ImageUpload"
-import ImagePreview from "@/components/ImagePreview"
-import DictTag from '@/components/DictTag'
-import DictData from '@/components/DictData'
 import SvgIcon from '@/components/SvgIcon'
+import elementIcons from '@/components/SvgIcon/svgicon'
+
+import './permission' // permission control
+
+import { useDict } from '@/utils/dict'
+import { getConfigKey } from "@/api/system/config"
+import { parseTime, resetForm, addDateRange, handleTree, selectDictLabel, selectDictLabels } from '~/utils/cheng'
+
+// 分頁元件
+import Pagination from '@/components/Pagination'
+// 自定義表格工具元件
+import RightToolbar from '@/components/RightToolbar'
+// 富文字元件
+import Editor from "@/components/Editor"
+// 文件上傳元件
+import FileUpload from "@/components/FileUpload"
+// 圖片上傳元件
+import ImageUpload from "@/components/ImageUpload"
+// 圖片預覽元件
+import ImagePreview from "@/components/ImagePreview"
+// 字典標籤元件
+import DictTag from '@/components/DictTag'
 
 const app = createApp(App)
 
-// 註冊所有 Element Plus Icons
-for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, component)
-}
-
 // 全域方法掛載
-app.config.globalProperties.getDicts = getDicts
-app.config.globalProperties.getConfigKey = getConfigKey
+app.config.globalProperties.useDict = useDict
+app.config.globalProperties.download = download
 app.config.globalProperties.parseTime = parseTime
 app.config.globalProperties.resetForm = resetForm
+app.config.globalProperties.handleTree = handleTree
 app.config.globalProperties.addDateRange = addDateRange
+app.config.globalProperties.getConfigKey = getConfigKey
 app.config.globalProperties.selectDictLabel = selectDictLabel
 app.config.globalProperties.selectDictLabels = selectDictLabels
-app.config.globalProperties.download = download
-app.config.globalProperties.handleTree = handleTree
-app.config.globalProperties.useClipboard = useClipboard
 
 // 全域元件掛載
-app.component('SvgIcon', SvgIcon)
 app.component('DictTag', DictTag)
 app.component('Pagination', Pagination)
-app.component('RightToolbar', RightToolbar)
-app.component('Editor', Editor)
 app.component('FileUpload', FileUpload)
 app.component('ImageUpload', ImageUpload)
 app.component('ImagePreview', ImagePreview)
+app.component('RightToolbar', RightToolbar)
+app.component('Editor', Editor)
 
-app.use(store)
 app.use(router)
-app.config.globalProperties.$store = store
-
-app.use(directive)
+app.use(store)
 app.use(plugins)
+app.use(elementIcons)
+app.component('svg-icon', SvgIcon)
 
+directive(app)
+
+// 使用 element-plus 並且設定全域的大小
 app.use(ElementPlus, {
-  size: Cookies.get('size') || 'medium',  // 使用 medium 大小（與 store 預設值一致）
-  locale: zhTw
+  locale: locale,
+  // 可用 large、default、small
+  size: Cookies.get('size') || 'default'
 })
 
-app.use(DictData)
-
 app.mount('#app')
-
-// 移除載入動畫遮罩
-setTimeout(() => {
-  const body = document.body
-  const loaderWrapper = document.getElementById('loader-wrapper')
-
-  // 添加 loaded class 觸發淡出動畫
-  body.classList.add('loaded')
-
-  // 等待動畫完成後完全移除元素
-  setTimeout(() => {
-    if (loaderWrapper) {
-      loaderWrapper.remove()
-    }
-  }, 600) // 配合 CSS transition 時間
-}, 500)

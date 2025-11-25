@@ -1,6 +1,6 @@
 import JSEncrypt from 'jsencrypt/bin/jsencrypt.min'
 
-// 密鑰對產生 http://web.chacuo.net/netrsakeypair
+// 密钥對產生 http://web.chacuo.net/netrsakeypair
 
 const publicKey = 'MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKoR8mX0rGKLqzcWmOzbfj64K8ZIgOdH\n' +
   'nzkXSOVOZbFu/TJhZ7rFAN+eaGkl3C4buccQd/EjEsj9ir7ijT7h96MCAwEAAQ=='
@@ -17,14 +17,14 @@ const privateKey = 'MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEAqhHyZfSsYour
 // 加密
 export function encrypt(txt) {
   const encryptor = new JSEncrypt()
-  encryptor.setPublicKey(publicKey) // 設定公鑰
-  return encryptor.encrypt(txt) // 對數據進行加密
+  encryptor.setPublicKey(publicKey) // 設定公钥
+  return encryptor.encrypt(txt) // 對資料進行加密
 }
 
 // 解密
 export function decrypt(txt) {
   const encryptor = new JSEncrypt()
-  encryptor.setPrivateKey(privateKey) // 設定私鑰
-  return encryptor.decrypt(txt) // 對數據進行解密
+  encryptor.setPrivateKey(privateKey) // 設定私钥
+  return encryptor.decrypt(txt) // 對資料進行解密
 }
 

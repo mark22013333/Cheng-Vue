@@ -1,43 +1,44 @@
 import request from '@/utils/request'
 
-/**
- * 取得所有任務類型
- */
-export function listJobTypes() {
+// 查詢任務類型列表
+export function listJobTypes(query) {
   return request({
-    url: '/monitor/job/types',
-    method: 'get'
+    url: '/monitor/jobType/list',
+    method: 'get',
+    params: query
   })
 }
 
-/**
- * 根據分類取得任務類型
- * @param {string} category - 分類名稱
- */
-export function listJobTypesByCategory(category) {
-  return request({
-    url: `/monitor/job/types/category/${category}`,
-    method: 'get'
-  })
-}
-
-/**
- * 取得所有分類
- */
-export function listJobCategories() {
-  return request({
-    url: '/monitor/job/types/categories',
-    method: 'get'
-  })
-}
-
-/**
- * 根據 code 取得任務類型詳情
- * @param {string} code - 任務代碼
- */
+// 根據代號取得任務類型
 export function getJobTypeByCode(code) {
   return request({
-    url: `/monitor/job/types/${code}`,
+    url: '/monitor/jobType/' + code,
     method: 'get'
+  })
+}
+
+// 新增任務類型
+export function addJobType(data) {
+  return request({
+    url: '/monitor/jobType',
+    method: 'post',
+    data: data
+  })
+}
+
+// 修改任務類型
+export function updateJobType(data) {
+  return request({
+    url: '/monitor/jobType',
+    method: 'put',
+    data: data
+  })
+}
+
+// 刪除任務類型
+export function delJobType(jobTypeId) {
+  return request({
+    url: '/monitor/jobType/' + jobTypeId,
+    method: 'delete'
   })
 }

@@ -10,7 +10,7 @@ export default {
   sideTheme: 'theme-dark',
 
   /**
-   * 系統介面設定
+   * 是否系統版面配置
    */
   showSettings: true,
 
@@ -52,5 +52,6 @@ export default {
   /**
    * 底部版權文字内容
    */
-  footerContent: 'Copyright © 2025–present CoolApps. All Rights Reserved.'
+  footerContent: 'Copyright © 2025 Cool-Apps Technology. All Rights Reserved.'
 }
+

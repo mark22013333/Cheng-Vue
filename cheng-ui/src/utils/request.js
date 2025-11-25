@@ -1,20 +1,20 @@
 import axios from 'axios'
-import { ElLoading, ElMessage, ElMessageBox, ElNotification } from 'element-plus'
-import store from '@/store'
+import { ElNotification , ElMessageBox, ElMessage, ElLoading } from 'element-plus'
 import { getToken } from '@/utils/auth'
 import errorCode from '@/utils/errorCode'
-import { blobValidate, tansParams } from "@/utils/cheng"
+import { tansParams, blobValidate } from '~/utils/cheng'
 import cache from '@/plugins/cache'
 import { saveAs } from 'file-saver'
+import useUserStore from '@/store/modules/user'
 
 let downloadLoadingInstance
 // 是否顯示重新登入
 export let isRelogin = { show: false }
 
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
-// 建立axios實體
+// 建立axios實例
 const service = axios.create({
-  // axios中請求設定有baseURL選項，表示請求URL公開部分
+  // axios中請求配置有baseURL選項，表示請求URL公共部分
   baseURL: import.meta.env.VITE_APP_BASE_API,
   // 逾時
   timeout: 10000
@@ -24,7 +24,7 @@ const service = axios.create({
 service.interceptors.request.use(config => {
   // 是否需要設定 token
   const isToken = (config.headers || {}).isToken === false
-  // 是否需要防止數據重複提交
+  // 是否需要防止資料重複提交
   const isRepeatSubmit = (config.headers || {}).repeatSubmit === false
   if (getToken() && !isToken) {
     config.headers['Authorization'] = 'Bearer ' + getToken() // 讓每個請求攜帶自定義token 請根據實際情況自行修改
@@ -42,22 +42,22 @@ service.interceptors.request.use(config => {
       data: typeof config.data === 'object' ? JSON.stringify(config.data) : config.data,
       time: new Date().getTime()
     }
-    const requestSize = Object.keys(JSON.stringify(requestObj)).length // 請求數據大小
-    const limitSize = 5 * 1024 * 1024 // 限制存放數據5M
+    const requestSize = Object.keys(JSON.stringify(requestObj)).length // 請求資料大小
+    const limitSize = 5 * 1024 * 1024 // 限制存放資料5M
     if (requestSize >= limitSize) {
-      console.warn(`[${config.url}]: ` + '請求數據大小超出允許的5M限制，無法進行防重複提交驗證。')
+      console.warn(`[${config.url}]: ` + '請求資料大小超出允許的5M限制，無法進行防重複提交驗證。')
       return config
     }
     const sessionObj = cache.session.getJSON('sessionObj')
     if (sessionObj === undefined || sessionObj === null || sessionObj === '') {
       cache.session.setJSON('sessionObj', requestObj)
     } else {
-      const s_url = sessionObj.url                  // 請求地址
-      const s_data = sessionObj.data                // 請求數據
-      const s_time = sessionObj.time                // 請求時間
-      const interval = 1000                         // 間隔時間(ms)，小於此時間視為重複提交
+      const s_url = sessionObj.url                // 請求位置
+      const s_data = sessionObj.data              // 請求資料
+      const s_time = sessionObj.time              // 請求時間
+      const interval = 1000                       // 間隔時間(ms)，小於此時間視為重複提交
       if (s_data === requestObj.data && requestObj.time - s_time < interval && s_url === requestObj.url) {
-        const message = '數據正在處理，請勿重複提交'
+        const message = '資料正在處理，請勿重複提交'
         console.warn(`[${s_url}]: ` + message)
         return Promise.reject(new Error(message))
       } else {
@@ -77,71 +77,45 @@ service.interceptors.response.use(res => {
     const code = res.data.code || 200
     // 取得錯誤訊息
     const msg = errorCode[code] || res.data.msg || errorCode['default']
-    // 二進制數據則直接返回
+    // 二進制資料則直接返回
     if (res.request.responseType ===  'blob' || res.request.responseType ===  'arraybuffer') {
       return res.data
     }
     if (code === 401) {
       if (!isRelogin.show) {
         isRelogin.show = true
-        ElMessageBox.confirm('登入狀態已過期，您可以繼續留在該頁面，或者重新登入', '系統提示', {
-          confirmButtonText: '重新登入',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
+        ElMessageBox.confirm('登入狀態已過期，您可以繼續留在該頁面，或者重新登入', '系統提示', { confirmButtonText: '重新登入', cancelButtonText: '取消', type: 'warning' }).then(() => {
           isRelogin.show = false
-          store.dispatch('LogOut').then(() => {
+          useUserStore().logOut().then(() => {
             location.href = '/index'
           })
       }).catch(() => {
         isRelogin.show = false
       })
     }
-      return Promise.reject('無效的會話，或者會話已過期，請重新登入。')
+      return Promise.reject('無效的Session，或者Session已過期，請重新登入。')
     } else if (code === 500) {
-      // 檢查是否包含 HTML 標籤
-      const isHtml = /<[^>]+>/.test(msg)
-      if (isHtml) {
-        ElNotification.error({
-          title: '操作失敗',
-          dangerouslyUseHTMLString: true,
-          message: `<div style="max-height: 400px; overflow-y: auto;">${msg}</div>`,
-          duration: 8000
-        })
-      } else {
-        ElMessage({ message: msg, type: 'error' })
-      }
+      ElMessage({ message: msg, type: 'error' })
       return Promise.reject(new Error(msg))
     } else if (code === 601) {
       ElMessage({ message: msg, type: 'warning' })
-      return Promise.reject('error')
+      return Promise.reject(new Error(msg))
     } else if (code !== 200) {
-      // 檢查是否包含 HTML 標籤
-      const isHtml = /<[^>]+>/.test(msg)
-      if (isHtml) {
-        ElNotification.error({
-          title: '錯誤',
-          dangerouslyUseHTMLString: true,
-          message: `<div style="max-height: 400px; overflow-y: auto;">${msg}</div>`,
-          duration: 8000
-        })
-      } else {
-        ElNotification.error({ title: msg })
-      }
+      ElNotification.error({ title: msg })
       return Promise.reject('error')
     } else {
-      return res.data
+      return  Promise.resolve(res.data)
     }
   },
   error => {
     console.log('err' + error)
     let { message } = error
     if (message == "Network Error") {
-      message = "後端介面連線異常"
+      message = "後端API連接異常"
     } else if (message.includes("timeout")) {
-      message = "系統介面請求逾時"
+      message = "系統API請求逾時"
     } else if (message.includes("Request failed with status code")) {
-      message = "系統介面" + message.substr(message.length - 3) + "異常"
+      message = "系統API" + message.substr(message.length - 3) + "異常"
     }
     ElMessage({ message: message, type: 'error', duration: 5 * 1000 })
     return Promise.reject(error)
@@ -150,10 +124,7 @@ service.interceptors.response.use(res => {
 
 // 共用下載方法
 export function download(url, params, filename, config) {
-  downloadLoadingInstance = ElLoading.service({
-    text: "正在下載數據，請稍候",
-    background: "rgba(0, 0, 0, 0.7)",
-  })
+  downloadLoadingInstance = ElLoading.service({ text: "正在下載資料，請稍候", background: "rgba(0, 0, 0, 0.7)", })
   return service.post(url, params, {
     transformRequest: [(params) => { return tansParams(params) }],
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -173,7 +144,7 @@ export function download(url, params, filename, config) {
     downloadLoadingInstance.close()
   }).catch((r) => {
     console.error(r)
-    ElMessage.error('下載檔案出現錯誤，請聯絡管理員！')
+    ElMessage.error('下載文件出現錯誤，請聯絡管理員！')
     downloadLoadingInstance.close()
   })
 }

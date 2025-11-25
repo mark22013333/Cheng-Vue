@@ -41,7 +41,7 @@
                 placeholder="密碼 / Password"
                 @focus="focusedInput = 'password'"
                 @blur="focusedInput = ''"
-                @keyup.enter.native="handleLogin"
+                @keyup.enter="handleLogin"
               />
               <el-icon class="suffix-icon" @click="togglePassword">
                 <View v-if="showPassword" />
@@ -59,7 +59,7 @@
                   placeholder="驗證碼"
                   @focus="focusedInput = 'code'"
                   @blur="focusedInput = ''"
-                  @keyup.enter.native="handleLogin"
+                  @keyup.enter="handleLogin"
                 />
               </div>
               <div class="captcha-img-wrapper" @click="getCode">
@@ -104,6 +104,7 @@ import {getCodeImg} from "@/api/login";
 import Cookies from "js-cookie";
 import {decrypt, encrypt} from '@/utils/jsencrypt';
 import { Connection, User, Lock, View, Hide, Key, Refresh, Right } from '@element-plus/icons-vue'
+import useUserStore from '@/store/modules/user'
 
 export default {
   name: "Login",
@@ -218,7 +219,8 @@ export default {
             Cookies.remove("password");
             Cookies.remove('rememberMe');
           }
-          this.$store.dispatch("Login", this.loginForm).then(() => {
+          const userStore = useUserStore();
+          userStore.login(this.loginForm).then(() => {
             console.log('[Login] Login success, redirecting to:', this.redirect || "/");
             this.$router.push({path: this.redirect || "/"}).then(() => {
               console.log('[Login] Router push success');

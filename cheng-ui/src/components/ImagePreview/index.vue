@@ -4,65 +4,67 @@
     fit="cover"
     :style="`width:${realWidth};height:${realHeight};`"
     :preview-src-list="realSrcList"
+    preview-teleported
   >
-    <div slot="error" class="image-slot">
-      <i class="el-icon-picture-outline"></i>
-    </div>
+    <template #error>
+      <div class="image-slot">
+        <el-icon><picture-filled /></el-icon>
+      </div>
+    </template>
   </el-image>
 </template>
 
-<script>
-import {isExternal} from "@/utils/validate"
+<script setup>
+import { isExternal } from "@/utils/validate"
 
-export default {
-  name: "ImagePreview",
-  props: {
-    src: {
-      type: String,
-      default: ""
-    },
-    width: {
-      type: [Number, String],
-      default: ""
-    },
-    height: {
-      type: [Number, String],
-      default: ""
-    }
+const props = defineProps({
+  src: {
+    type: String,
+    default: ""
   },
-  computed: {
-    realSrc() {
-      if (!this.src) {
-        return
-      }
-      let real_src = this.src.split(",")[0]
-      if (isExternal(real_src)) {
-        return real_src
-      }
-      return process.env.VUE_APP_BASE_API + real_src
-    },
-    realSrcList() {
-      if (!this.src) {
-        return
-      }
-      let real_src_list = this.src.split(",")
-      let srcList = []
-      real_src_list.forEach(item => {
-        if (isExternal(item)) {
-          return srcList.push(item)
-        }
-        return srcList.push(process.env.VUE_APP_BASE_API + item)
-      })
-      return srcList
-    },
-    realWidth() {
-      return typeof this.width == "string" ? this.width : `${this.width}px`
-    },
-    realHeight() {
-      return typeof this.height == "string" ? this.height : `${this.height}px`
-    }
+  width: {
+    type: [Number, String],
+    default: ""
+  },
+  height: {
+    type: [Number, String],
+    default: ""
   }
-}
+})
+
+const realSrc = computed(() => {
+  if (!props.src) {
+    return
+  }
+  let real_src = props.src.split(",")[0]
+  if (isExternal(real_src)) {
+    return real_src
+  }
+  return import.meta.env.VITE_APP_BASE_API + real_src
+})
+
+const realSrcList = computed(() => {
+  if (!props.src) {
+    return
+  }
+  let real_src_list = props.src.split(",")
+  let srcList = []
+  real_src_list.forEach(item => {
+    if (isExternal(item)) {
+      return srcList.push(item)
+    }
+    return srcList.push(import.meta.env.VITE_APP_BASE_API + item)
+  })
+  return srcList
+})
+
+const realWidth = computed(() =>
+  typeof props.width == "string" ? props.width : `${props.width}px`
+)
+
+const realHeight = computed(() =>
+  typeof props.height == "string" ? props.height : `${props.height}px`
+)
 </script>
 
 <style lang="scss" scoped>

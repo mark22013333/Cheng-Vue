@@ -4,6 +4,7 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 import path from 'path'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import viteCompression from 'vite-plugin-compression'
+import autoImport from 'unplugin-auto-import/vite'
 
 const pathSrc = path.resolve(__dirname, 'src')
 
@@ -15,10 +16,19 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       vue(),
-      // 暫時禁用 vueJsx 插件，因為專案中使用 Vue 2 JSX 語法
-      // vueJsx({
-      //   include: [/\.vue$/]
-      // }),
+      // Vue 3 JSX 支援（排除 tool/build 下的 Vue 2 JSX 文件）
+      vueJsx({
+        exclude: [/\/tool\/build\//]
+      }),
+      // 自動匯入 Vue 3 API、Vue Router 和 Pinia API
+      autoImport({
+        imports: [
+          'vue',
+          'vue-router',
+          'pinia'
+        ],
+        dts: false
+      }),
       // SVG Icon 支援
       createSvgIconsPlugin({
         iconDirs: [path.resolve(process.cwd(), 'src/assets/icons/svg')],

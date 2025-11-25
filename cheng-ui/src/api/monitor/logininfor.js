@@ -25,7 +25,7 @@ export function unlockLogininfor(userName) {
   })
 }
 
-// 清除登入日誌
+// 清空登入日誌
 export function cleanLogininfor() {
   return request({
     url: '/monitor/logininfor/clean',

@@ -31,7 +31,7 @@ public class SseController {
      * 
      * @param channel 頻道名稱
      * @param taskId 任務 ID
-     * @param timeout 超時時間（毫秒），預設 30 分鐘
+     * @param timeout 逾時時間（毫秒），預設 30 分鐘
      * @return SseEmitter
      */
     @Anonymous

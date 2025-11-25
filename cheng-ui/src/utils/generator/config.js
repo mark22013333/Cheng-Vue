@@ -1,14 +1,14 @@
 export const formConf = {
-  formRef: 'elForm',
+  formRef: 'formRef',
   formModel: 'formData',
-  size: 'medium',
+  size: 'default',
   labelPosition: 'right',
   labelWidth: 100,
   formRules: 'rules',
   gutter: 15,
   disabled: false,
   span: 24,
-  formBtns: true
+  formBtns: true,
 }
 
 export const inputComponents = [
@@ -16,11 +16,12 @@ export const inputComponents = [
     label: '單行文字',
     tag: 'el-input',
     tagIcon: 'input',
+    type: 'text',
     placeholder: '請輸入',
     defaultValue: undefined,
     span: 24,
     labelWidth: null,
-    style: { width: '100%' },
+    style: {width: '100%'},
     clearable: true,
     prepend: '',
     append: '',
@@ -33,7 +34,7 @@ export const inputComponents = [
     required: true,
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/input'
+    document: 'https://element-plus.org/zh-CN/component/input',
   },
   {
     label: '多行文字',
@@ -46,9 +47,9 @@ export const inputComponents = [
     labelWidth: null,
     autosize: {
       minRows: 4,
-      maxRows: 4
+      maxRows: 4,
     },
-    style: { width: '100%' },
+    style: {width: '100%'},
     maxlength: null,
     'show-word-limit': false,
     readonly: false,
@@ -56,18 +57,19 @@ export const inputComponents = [
     required: true,
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/input'
+    document: 'https://element-plus.org/zh-CN/component/input',
   },
   {
     label: '密碼',
     tag: 'el-input',
     tagIcon: 'password',
+    type: 'password',
     placeholder: '請輸入',
     defaultValue: undefined,
     span: 24,
     'show-password': true,
     labelWidth: null,
-    style: { width: '100%' },
+    style: {width: '100%'},
     clearable: true,
     prepend: '',
     append: '',
@@ -80,7 +82,7 @@ export const inputComponents = [
     required: true,
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/input'
+    document: 'https://element-plus.org/zh-CN/component/input',
   },
   {
     label: '計數器',
@@ -100,8 +102,8 @@ export const inputComponents = [
     required: true,
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/input-number'
-  }
+    document: 'https://element-plus.org/zh-CN/component/input-number',
+  },
 ]
 
 export const selectComponents = [
@@ -113,52 +115,59 @@ export const selectComponents = [
     defaultValue: undefined,
     span: 24,
     labelWidth: null,
-    style: { width: '100%' },
+    style: {width: '100%'},
     clearable: true,
     disabled: false,
     required: true,
     filterable: false,
     multiple: false,
-    options: [{
-      label: '選項一',
-      value: 1
-    }, {
-      label: '選項二',
-      value: 2
-    }],
+    options: [
+      {
+        label: '選項一',
+        value: 1,
+      },
+      {
+        label: '選項二',
+        value: 2,
+      },
+    ],
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/select'
+    document: 'https://element-plus.org/zh-CN/component/select',
   },
   {
-    label: '級聯選擇',
+    label: '聯集選擇',
     tag: 'el-cascader',
     tagIcon: 'cascader',
     placeholder: '請選擇',
     defaultValue: [],
     span: 24,
     labelWidth: null,
-    style: { width: '100%' },
+    style: {width: '100%'},
     props: {
       props: {
-        multiple: false
-      }
+        multiple: false,
+      },
     },
     'show-all-levels': true,
     disabled: false,
     clearable: true,
     filterable: false,
     required: true,
-    options: [{
-      id: 1,
-      value: 1,
-      label: '選項1',
-      children: [{
-        id: 2,
-        value: 2,
-        label: '選項1-1'
-      }]
-    }],
+    options: [
+      {
+        id: 1,
+        value: 1,
+        label: '選項1',
+        children: [
+          {
+            id: 2,
+            value: 2,
+            label: '選項1-1',
+          },
+        ],
+      },
+    ],
     dataType: 'dynamic',
     labelKey: 'label',
     valueKey: 'value',
@@ -166,31 +175,34 @@ export const selectComponents = [
     separator: '/',
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/cascader'
+    document: 'https://element-plus.org/zh-CN/component/cascader',
   },
   {
     label: '單選框組',
     tag: 'el-radio-group',
     tagIcon: 'radio',
-    defaultValue: undefined,
+    defaultValue: 0,
     span: 24,
     labelWidth: null,
     style: {},
     optionType: 'default',
     border: false,
-    size: 'medium',
+    size: 'default',
     disabled: false,
     required: true,
-    options: [{
-      label: '選項一',
-      value: 1
-    }, {
-      label: '選項二',
-      value: 2
-    }],
+    options: [
+      {
+        label: '選項一',
+        value: 1,
+      },
+      {
+        label: '選項二',
+        value: 2,
+      },
+    ],
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/radio'
+    document: 'https://element-plus.org/zh-CN/component/radio',
   },
   {
     label: '多選框組',
@@ -202,19 +214,22 @@ export const selectComponents = [
     style: {},
     optionType: 'default',
     border: false,
-    size: 'medium',
+    size: 'default',
     disabled: false,
     required: true,
-    options: [{
-      label: '選項一',
-      value: 1
-    }, {
-      label: '選項二',
-      value: 2
-    }],
+    options: [
+      {
+        label: '選項一',
+        value: 1,
+      },
+      {
+        label: '選項二',
+        value: 2,
+      },
+    ],
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/checkbox'
+    document: 'https://element-plus.org/zh-CN/component/checkbox',
   },
   {
     label: '開關',
@@ -234,7 +249,7 @@ export const selectComponents = [
     'inactive-value': false,
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/switch'
+    document: 'https://element-plus.org/zh-CN/component/switch',
   },
   {
     label: '滑塊',
@@ -252,28 +267,25 @@ export const selectComponents = [
     range: false,
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/slider'
+    document: 'https://element-plus.org/zh-CN/component/slider',
   },
   {
     label: '時間選擇',
     tag: 'el-time-picker',
     tagIcon: 'time',
     placeholder: '請選擇',
-    defaultValue: null,
+    defaultValue: '',
     span: 24,
     labelWidth: null,
-    style: { width: '100%' },
+    style: {width: '100%'},
     disabled: false,
     clearable: true,
     required: true,
-    'picker-options': {
-      selectableRange: '00:00:00-23:59:59'
-    },
     format: 'HH:mm:ss',
     'value-format': 'HH:mm:ss',
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/time-picker'
+    document: 'https://element-plus.org/zh-CN/component/time-picker',
   },
   {
     label: '時間範圍',
@@ -282,7 +294,7 @@ export const selectComponents = [
     defaultValue: null,
     span: 24,
     labelWidth: null,
-    style: { width: '100%' },
+    style: {width: '100%'},
     disabled: false,
     clearable: true,
     required: true,
@@ -294,7 +306,7 @@ export const selectComponents = [
     'value-format': 'HH:mm:ss',
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/time-picker'
+    document: 'https://element-plus.org/zh-CN/component/time-picker',
   },
   {
     label: '日期選擇',
@@ -305,16 +317,16 @@ export const selectComponents = [
     type: 'date',
     span: 24,
     labelWidth: null,
-    style: { width: '100%' },
+    style: {width: '100%'},
     disabled: false,
     clearable: true,
     required: true,
-    format: 'yyyy-MM-dd',
-    'value-format': 'yyyy-MM-dd',
+    format: 'YYYY-MM-DD',
+    'value-format': 'YYYY-MM-DD',
     readonly: false,
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/date-picker'
+    document: 'https://element-plus.org/zh-CN/component/date-picker',
   },
   {
     label: '日期範圍',
@@ -323,7 +335,7 @@ export const selectComponents = [
     defaultValue: null,
     span: 24,
     labelWidth: null,
-    style: { width: '100%' },
+    style: {width: '100%'},
     type: 'daterange',
     'range-separator': '至',
     'start-placeholder': '開始日期',
@@ -331,12 +343,12 @@ export const selectComponents = [
     disabled: false,
     clearable: true,
     required: true,
-    format: 'yyyy-MM-dd',
-    'value-format': 'yyyy-MM-dd',
+    format: 'YYYY-MM-DD',
+    'value-format': 'YYYY-MM-DD',
     readonly: false,
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/date-picker'
+    document: 'https://element-plus.org/zh-CN/component/date-picker',
   },
   {
     label: '評分',
@@ -354,7 +366,7 @@ export const selectComponents = [
     required: true,
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/rate'
+    document: 'https://element-plus.org/zh-CN/component/rate',
   },
   {
     label: '顏色選擇',
@@ -366,10 +378,10 @@ export const selectComponents = [
     'color-format': '',
     disabled: false,
     required: true,
-    size: 'medium',
+    size: 'default',
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/color-picker'
+    document: 'https://element-plus.org/zh-CN/component/color-picker',
   },
   {
     label: '上傳',
@@ -391,8 +403,10 @@ export const selectComponents = [
     multiple: false,
     regList: [],
     changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/upload'
-  }
+    document: 'https://element-plus.org/zh-CN/component/upload',
+    tip: '只能上傳不超過 2MB 的文件',
+    style: {width: '100%'},
+  },
 ]
 
 export const layoutComponents = [
@@ -402,10 +416,10 @@ export const layoutComponents = [
     type: 'default',
     justify: 'start',
     align: 'top',
-    label: '列容器',
+    label: '行容器',
     layoutTree: true,
     children: [],
-    document: 'https://element.eleme.cn/#/zh-CN/component/layout'
+    document: 'https://element-plus.org/zh-CN/component/layout',
   },
   {
     layout: 'colFormItem',
@@ -417,11 +431,11 @@ export const layoutComponents = [
     span: 24,
     default: '主要按鈕',
     type: 'primary',
-    icon: 'el-icon-search',
-    size: 'medium',
+    icon: 'Search',
+    size: 'default',
     disabled: false,
-    document: 'https://element.eleme.cn/#/zh-CN/component/button'
-  }
+    document: 'https://element-plus.org/zh-CN/component/button',
+  },
 ]
 
 // 元件rule的觸發方式，無觸發方式的元件不產生rule
@@ -434,5 +448,5 @@ export const trigger = {
   'el-cascader': 'change',
   'el-time-picker': 'change',
   'el-date-picker': 'change',
-  'el-rate': 'change'
+  'el-rate': 'change',
 }

@@ -1,159 +1,85 @@
+import { defineStore } from 'pinia'
 import auth from '@/plugins/auth'
-import router, {constantRoutes, dynamicRoutes} from '@/router'
-import {getRouters} from '@/api/menu'
+import router, { constantRoutes, dynamicRoutes } from '@/router'
+import { getRouters } from '@/api/menu'
 import Layout from '@/layout/index'
 import ParentView from '@/components/ParentView'
 import InnerLink from '@/layout/components/InnerLink'
 
-const permission = {
-  state: {
-    routes: [],
-    addRoutes: [],
-    defaultRoutes: [],
-    topbarRouters: [],
-    sidebarRouters: []
-  },
-  mutations: {
-    SET_ROUTES: (state, routes) => {
-      state.addRoutes = routes
-      state.routes = constantRoutes.concat(routes)
-    },
-    SET_DEFAULT_ROUTES: (state, routes) => {
-      state.defaultRoutes = constantRoutes.concat(routes)
-    },
-    SET_TOPBAR_ROUTES: (state, routes) => {
-      state.topbarRouters = routes
-    },
-    SET_SIDEBAR_ROUTERS: (state, routes) => {
-      state.sidebarRouters = routes
-    },
-  },
-  actions: {
-    // 產生路由
-    GenerateRoutes({ commit }) {
-      return new Promise(resolve => {
-        // 向後端請求路由數據
-        getRouters().then(res => {
-          console.log('[Permission] 後端返回的路由數據:', res.data)
-          
-          // 檢查路由名稱是否有重複
-          if (res.data && Array.isArray(res.data)) {
-            const systemRoute = res.data.find(r => r.path === '/system')
-            if (systemRoute && systemRoute.children) {
-              console.log('[Permission] ========== 後端返回的 System 子路由 ==========')
-              systemRoute.children.forEach((c, i) => {
-                console.log(`  ${i+1}. path="${c.path}" name="${c.name}" component="${c.component}"`)
-              })
-            }
+// 匹配views裡面所有的.vue文件
+const modules = import.meta.glob('./../../views/**/*.vue')
+
+const usePermissionStore = defineStore(
+  'permission',
+  {
+    state: () => ({
+      routes: [],
+      addRoutes: [],
+      defaultRoutes: [],
+      topbarRouters: [],
+      sidebarRouters: []
+    }),
+    actions: {
+      setRoutes(routes) {
+        this.addRoutes = routes
+        this.routes = constantRoutes.concat(routes)
+      },
+      setDefaultRoutes(routes) {
+        this.defaultRoutes = constantRoutes.concat(routes)
+      },
+      setTopbarRoutes(routes) {
+        this.topbarRouters = routes
+      },
+      setSidebarRouters(routes) {
+        this.sidebarRouters = routes
+      },
+      generateRoutes(roles) {
+        return new Promise(resolve => {
+          // 向後端請求路由資料
+          getRouters().then(res => {
+            console.log('[路由調試] 後端返回的原始路由數據:', JSON.stringify(res.data, null, 2))
             
-            // 檢查所有路由名稱
-            const allNames = new Map()
-            res.data.forEach(parent => {
-              if (parent.children) {
-                parent.children.forEach(child => {
-                  if (child.name) {
-                    if (allNames.has(child.name)) {
-                      console.error(`[Permission] ❌ 路由名稱重複: "${child.name}" 出現在 ${allNames.get(child.name)} 和 ${parent.path}`)
-                    } else {
-                      allNames.set(child.name, parent.path)
-                    }
-                  }
+            const sdata = JSON.parse(JSON.stringify(res.data))
+            const rdata = JSON.parse(JSON.stringify(res.data))
+            const defaultData = JSON.parse(JSON.stringify(res.data))
+            const sidebarRoutes = filterAsyncRouter(sdata)
+            const rewriteRoutes = filterAsyncRouter(rdata, false, true)
+            const defaultRoutes = filterAsyncRouter(defaultData)
+            const asyncRoutes = filterDynamicRoutes(dynamicRoutes)
+
+            console.log('[路由調試] 處理後的 rewriteRoutes:', JSON.stringify(rewriteRoutes, null, 2))
+            console.log('[路由調試] 處理後的 sidebarRoutes:', JSON.stringify(sidebarRoutes, null, 2))
+
+            // 新增動態路由
+            asyncRoutes.forEach(route => { 
+              console.log('[路由調試] 添加動態路由:', route.path)
+              router.addRoute(route) 
+            })
+            
+            // 新增後端返回的路由
+            rewriteRoutes.forEach(route => { 
+              console.log('[路由調試] 添加後端路由:', route.path, '組件:', route.component)
+              console.log('[路由調試] 子路由數量:', route.children?.length || 0)
+              if (route.children && route.children.length > 0) {
+                route.children.forEach(child => {
+                  console.log('[路由調試]   - 子路由:', child.path, '有組件:', !!child.component)
                 })
               }
+              router.addRoute(route) 
             })
-          }
-          
-          const sdata = JSON.parse(JSON.stringify(res.data))
-          const rdata = JSON.parse(JSON.stringify(res.data))
-          const sidebarRoutes = filterAsyncRouter(sdata)
-          const rewriteRoutes = filterAsyncRouter(rdata, false, true)
-          console.log('[Permission] 處理後的路由:', rewriteRoutes)
-          const asyncRoutes = filterDynamicRoutes(dynamicRoutes)
-          
-          // Vue Router 4: 使用 addRoute 代替 addRoutes
-          asyncRoutes.forEach(route => {
-            router.addRoute(route)
+
+            console.log('[路由調試] 所有已註冊的路由:', router.getRoutes().map(r => r.path))
+
+            this.setRoutes(rewriteRoutes)
+            this.setSidebarRouters(constantRoutes.concat(sidebarRoutes))
+            this.setDefaultRoutes(sidebarRoutes)
+            this.setTopbarRoutes(defaultRoutes)
+            resolve(rewriteRoutes)
           })
-          
-          // Vue Router 4: 直接添加完整路由對象（含 children）
-          rewriteRoutes.forEach(route => {
-            console.log('[Permission] ========== 添加路由 ==========')
-            console.log('[Permission] 路由 path:', route.path)
-            console.log('[Permission] 路由 name:', route.name)
-            console.log('[Permission] 路由 component:', route.component)
-            console.log('[Permission] 子路由數量:', route.children ? route.children.length : 0)
-            
-            if (route.children && route.children.length > 0) {
-              console.log('[Permission] 子路由詳情:')
-              route.children.forEach((c, i) => {
-                console.log(`  ${i+1}. path="${c.path}" name="${c.name}" component=${c.component ? '✓' : '✗'}`)
-              })
-            }
-            
-            // Vue Router 4: 直接添加整個路由對象（包括 children）
-            router.addRoute(route)
-            console.log('[Permission] ✅ 已添加路由:', route.path)
-          })
-          
-          // ========== 最終驗證：檢查路由註冊 ==========
-          console.log('[Permission] ========== 路由註冊完成 ==========')
-          
-          const allRoutes = router.getRoutes()
-          console.log('[Permission] 總路由數:', allRoutes.length)
-          
-          // 檢查父路由
-          const parentRoutes = allRoutes.filter(r => r.children && r.children.length > 0)
-          console.log('[Permission] 帶子路由的父路由:', parentRoutes.map(r => ({
-            path: r.path,
-            name: r.name,
-            childrenCount: r.children.length
-          })))
-          
-          // 檢查 system 路由結構
-          const systemRoute = allRoutes.find(r => r.path === '/system')
-          if (systemRoute) {
-            console.log('[Permission] ✅ System 路由已註冊:', {
-              path: systemRoute.path,
-              name: systemRoute.name,
-              component: systemRoute.components?.default?.name || '未知',
-              hasChildren: systemRoute.children?.length || 0
-            })
-          } else {
-            console.error('[Permission] ❌ System 路由未找到')
-          }
-          
-          // 檢查 router.getRoutes() 中是否有子路由的獨立記錄
-          console.log('[Permission] ========== 檢查 router.getRoutes() 中的 System 子路由 ==========')
-          const systemChildren = allRoutes.filter(r => r.name && ['User', 'Role', 'Dict', 'Config', 'Notice', 'Operlog', 'Logininfor'].includes(r.name))
-          console.log('[Permission] 找到的子路由記錄:')
-          systemChildren.forEach((r, i) => {
-            console.log(`  ${i+1}. name="${r.name}" path="${r.path}" hasComponent=${!!r.components?.default}`)
-          })
-          console.log('[Permission] 總共找到', systemChildren.length, '個子路由記錄')
-          
-          // 測試路由解析
-          console.log('[Permission] 測試路由解析:')
-          const testPaths = ['/system/user', '/system/config', '/system/dict']
-          testPaths.forEach(path => {
-            const resolved = router.resolve(path)
-            console.log(`  ${path} → matched:`, resolved.matched.length > 0 ? '✓' : '✗', 
-              resolved.matched.length > 0 ? resolved.matched.map(r => r.name).join(' > ') : 'NOT FOUND')
-          })
-          
-          // Vue Router 4: 通配符路由語法改變
-          rewriteRoutes.push({ path: '/:pathMatch(.*)*', redirect: '/404', hidden: true })
-          router.addRoute({ path: '/:pathMatch(.*)*', redirect: '/404', hidden: true })
-          
-          commit('SET_ROUTES', rewriteRoutes)
-          commit('SET_SIDEBAR_ROUTERS', constantRoutes.concat(sidebarRoutes))
-          commit('SET_DEFAULT_ROUTES', sidebarRoutes)
-          commit('SET_TOPBAR_ROUTES', sidebarRoutes)
-          resolve(rewriteRoutes)
         })
-      })
+      }
     }
-  }
-}
+  })
 
 // 遍歷後台傳來的路由字串，轉換為元件物件
 function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
@@ -174,17 +100,6 @@ function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
       }
     }
     if (route.children != null && route.children && route.children.length) {
-      // Vue Router 4: 確保子路由名稱唯一，添加父路由前綴
-      // 只為頂層路由的直接子路由添加前綴（避免過度嵌套）
-      if (!lastRouter && route.name) {
-        route.children.forEach(child => {
-          if (child.name) {
-            const originalName = child.name
-            child.name = `${route.name}${child.name}`
-            console.log(`[Permission] 重命名子路由: ${originalName} → ${child.name}`)
-          }
-        })
-      }
       route.children = filterAsyncRouter(route.children, route, type)
     } else {
       delete route['children']
@@ -196,20 +111,20 @@ function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
 
 function filterChildren(childrenMap, lastRouter = false) {
   var children = []
-  childrenMap.forEach(el => {
-    // Vue Router 4: 對於三層嵌套路由（ParentView），需要拼接父路由 path
-    if (el.children && el.children.length && el.component === 'ParentView') {
-      // 深拷貝子路由，避免修改原始對象導致其他父路由的同名子路由被覆蓋
-      const clonedChildren = el.children.map(child => {
-        const cloned = { ...child }
-        // 拼接路徑：log/operlog
-        cloned.path = el.path + '/' + child.path
-        return cloned
+  childrenMap.forEach((el, index) => {
+    if (el.children && el.children.length) {
+      el.children.forEach((c, i) => {
+        if (lastRouter) {
+          c.path = lastRouter.path + '/' + el.path + '/' + c.path
+        }
       })
-      children = children.concat(filterChildren(clonedChildren, el))
-    } else {
-      children.push(el)
+      children = children.concat(filterChildren(el.children, el))
+      return
     }
+    if (lastRouter) {
+      el.path = lastRouter.path + '/' + el.path
+    }
+    children.push(el)
   })
   return children
 }
@@ -226,32 +141,30 @@ export function filterDynamicRoutes(routes) {
       if (auth.hasRoleOr(route.roles)) {
         res.push(route)
       }
-    } else {
-      // 沒有權限限制的路由也允許訪問（例如 inventory 相關路由）
-      res.push(route)
     }
   })
   return res
 }
 
 export const loadView = (view) => {
-  // Vite 環境使用 import.meta.glob 預編譯路徑
-  // 後端返回的 view 格式如：'system/user/index' 或 'system/role/index'
-  let componentPath = view
-  if (!componentPath.endsWith('.vue')) {
-    componentPath = `${view}.vue`
+  let res
+  console.log('[loadView調試] 嘗試載入:', view)
+  console.log('[loadView調試] 可用的 modules 路徑:', Object.keys(modules).slice(0, 5))
+  
+  for (const path in modules) {
+    const dir = path.split('views/')[1].split('.vue')[0]
+    if (dir === view) {
+      console.log('[loadView調試] ✅ 找到匹配:', path, '→', view)
+      res = () => modules[path]()
+    }
   }
   
-  // Vite 要求使用絕對路徑
-  const fullPath = `/src/views/${componentPath}`
+  if (!res) {
+    console.error('[loadView調試] ❌ 找不到組件:', view)
+    console.log('[loadView調試] 所有 modules 路徑:', Object.keys(modules))
+  }
   
-  console.log('[loadView] 載入組件:', view, '→', fullPath)
-  
-  // 使用動態導入
-  return () => import(/* @vite-ignore */ fullPath).catch(err => {
-    console.error('[loadView] 組件載入失敗:', fullPath, err)
-    throw err
-  })
+  return res
 }
 
-export default permission
+export default usePermissionStore

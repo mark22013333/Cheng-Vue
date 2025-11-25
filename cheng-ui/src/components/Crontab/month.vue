@@ -1,8 +1,8 @@
 <template>
-	<el-form size='small'>
+	<el-form>
 		<el-form-item>
 			<el-radio v-model='radioValue' :label="1">
-        月，允許的通用符號[, - * /]
+        月，允許的共用符號[, - * /]
 			</el-radio>
 		</el-form-item>
 
@@ -27,7 +27,7 @@
 		<el-form-item>
 			<el-radio v-model='radioValue' :label="4">
 				指定
-        <el-select v-model="checkboxList" clearable multiple placeholder="可多選" style="width:100%">
+        <el-select v-model="checkboxList" clearable multiple placeholder="請選擇" style="width:100%; min-width: 200px;">
 					<el-option v-for="item in 12" :key="item" :value="item">{{item}}</el-option>
 				</el-select>
 			</el-radio>

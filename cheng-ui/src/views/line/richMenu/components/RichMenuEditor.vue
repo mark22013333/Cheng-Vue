@@ -319,18 +319,18 @@ export default {
       }
       const [width, height] = this.imageSize.split('x').map(Number)
       const ratio = height / width
-      
+
       const style = {
         width: this.canvasWidth + 'px',
         height: (this.canvasWidth * ratio) + 'px',
         position: 'relative',
         border: '1px solid #ddd'
       }
-      
+
       // 如果有上傳圖片，使用圖片作為背景（淡淡的效果）
       if (this.imageUrl) {
         const imageFullUrl = getImageUrl(this.imageUrl)
-        // 添加一個淺色遮罩效果，確保圖片完整顯示
+        // 新增一個淺色遮罩效果，確保圖片完整顯示
         style.background = `linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3)), url(${imageFullUrl})`
         style.backgroundSize = 'contain'  // 完整顯示圖片，保持比例
         style.backgroundPosition = 'center'
@@ -340,7 +340,7 @@ export default {
       } else {
         style.background = '#f5f5f5'
       }
-      
+
       return style
     }
   },
@@ -389,15 +389,15 @@ export default {
   mounted() {
     // 載入所有可用的 Rich Menu Alias
     this.loadAliases()
-    
+
     // 如果是新建（沒有 areas）且不是自訂版型，初始化預設版型
     // 必須確保 templateType 是有效值（不是 null 或 undefined）
-    if ((!this.value || this.value.length === 0) && 
-        this.templateType && 
+    if ((!this.value || this.value.length === 0) &&
+        this.templateType &&
         this.templateType !== 'CUSTOM') {
       this.initTemplateAreas(this.templateType)
     }
-    // 添加全域拖曳事件監聽
+    // 新增全域拖曳事件監聽
     document.addEventListener('mousemove', this.onDrag)
     document.addEventListener('mouseup', this.endDrag)
   },
@@ -517,30 +517,30 @@ export default {
     createAliasSwitchGridTemplate() {
       if (!this.imageSize) return []
       const [width, height] = this.imageSize.split('x').map(Number)
-      
+
       // 上方別名切換區域高度（佔總高度的 1/8）
       const topHeight = Math.floor(height / 8)
       const bottomHeight = height - topHeight
-      
+
       // 上方兩個別名切換按鈕
       const halfWidth = Math.floor(width / 2)
       const areas = [
         // 上方左：ALIAS-A
-        { 
-          bounds: { x: 0, y: 0, width: halfWidth, height: topHeight }, 
-          action: { type: 'richmenuswitch', richMenuAliasId: '', data: 'switch-alias-a' } 
+        {
+          bounds: { x: 0, y: 0, width: halfWidth, height: topHeight },
+          action: { type: 'richmenuswitch', richMenuAliasId: '', data: 'switch-alias-a' }
         },
         // 上方右：ALIAS-B
-        { 
-          bounds: { x: halfWidth, y: 0, width: halfWidth, height: topHeight }, 
-          action: { type: 'richmenuswitch', richMenuAliasId: '', data: 'switch-alias-b' } 
+        {
+          bounds: { x: halfWidth, y: 0, width: halfWidth, height: topHeight },
+          action: { type: 'richmenuswitch', richMenuAliasId: '', data: 'switch-alias-b' }
         }
       ]
-      
+
       // 下方 2 列 × 3 行網格（6 個功能按鈕）
       const colWidth = Math.floor(width / 3)
       const rowHeight = Math.floor(bottomHeight / 2)
-      
+
       for (let row = 0; row < 2; row++) {
         for (let col = 0; col < 3; col++) {
           areas.push({
@@ -554,7 +554,7 @@ export default {
           })
         }
       }
-      
+
       return areas
     },
     getAreaStyle(area, index) {
@@ -601,11 +601,11 @@ export default {
       const [imgWidth, imgHeight] = this.imageSize.split('x').map(Number)
       const defaultWidth = Math.floor(imgWidth / 4)
       const defaultHeight = Math.floor(imgHeight / 4)
-      
+
       // 計算新區塊的位置（避免重疊）
       const offsetX = (this.areas.length % 4) * defaultWidth
       const offsetY = Math.floor(this.areas.length / 4) * defaultHeight
-      
+
       const newArea = {
         bounds: {
           x: offsetX,
@@ -615,13 +615,13 @@ export default {
         },
         action: { type: 'uri', uri: '' }
       }
-      
+
       this.areas.push(newArea)
       this.selectedAreaIndex = this.areas.length - 1
-      
-      // 發出手動編輯事件，通知父組件將版型設為自訂
+
+      // 發出手動編輯事件，通知父元件將版型設為自訂
       this.$emit('manual-edit')
-      
+
       this.emitChange()
       this.$message.success('已新增區塊')
     },
@@ -637,7 +637,7 @@ export default {
       this.dragIndex = index
       this.dragStartX = event.clientX
       this.dragStartY = event.clientY
-      
+
       // 儲存初始邊界
       const area = this.areas[index]
       this.dragStartBounds = {
@@ -646,34 +646,34 @@ export default {
         width: area.bounds.width,
         height: area.bounds.height
       }
-      
+
       // 選中該區塊
       this.selectedAreaIndex = index
     },
     onDrag(event) {
       if (!this.isDragging || this.dragIndex === null) return
-      
+
       event.preventDefault()
-      
+
       // 計算滑鼠移動距離（畫布像素）
       const deltaX = event.clientX - this.dragStartX
       const deltaY = event.clientY - this.dragStartY
-      
+
       // 轉換為實際圖片座標
       if (!this.imageSize) return
       const [imgWidth, imgHeight] = this.imageSize.split('x').map(Number)
       const scaleX = imgWidth / this.canvasWidth
       const scaleY = imgHeight / (this.canvasWidth * imgHeight / imgWidth)
-      
+
       const actualDeltaX = Math.round(deltaX * scaleX)
       const actualDeltaY = Math.round(deltaY * scaleY)
-      
+
       const area = this.areas[this.dragIndex]
       const startBounds = this.dragStartBounds
-      
+
       // 根據拖曳模式調整區塊
       let newBounds = { ...area.bounds }
-      
+
       if (this.dragMode === 'move') {
         // 移動整個區塊
         newBounds.x = startBounds.x + actualDeltaX
@@ -699,10 +699,10 @@ export default {
           newBounds.width = startBounds.width + actualDeltaX
         }
       }
-      
+
       // 應用邊界限制
       newBounds = this.applyBoundaryConstraints(newBounds, imgWidth, imgHeight)
-      
+
       // 更新區塊
       area.bounds = newBounds
       this.$forceUpdate()
@@ -713,30 +713,30 @@ export default {
         this.isDragging = false
         this.dragMode = null
         this.dragIndex = null
-        
+
         // 檢查是否有重疊
         if (draggedIndex !== null && this.hasOverlap(draggedIndex)) {
           this.$message.warning('警告：區塊與其他區塊重疊，請調整位置')
         }
-        
-        // 發出手動編輯事件，通知父組件將版型設為自訂
+
+        // 發出手動編輯事件，通知父元件將版型設為自訂
         this.$emit('manual-edit')
-        
+
         this.emitChange()
       }
     },
     applyBoundaryConstraints(bounds, maxWidth, maxHeight) {
       const minSize = 50 // 最小尺寸
-      
+
       // 確保尺寸不小於最小值
       let { x, y, width, height } = bounds
       width = Math.max(minSize, width)
       height = Math.max(minSize, height)
-      
+
       // 確保不超出畫布
       x = Math.max(0, Math.min(x, maxWidth - width))
       y = Math.max(0, Math.min(y, maxHeight - height))
-      
+
       // 確保右下角不超出畫布
       if (x + width > maxWidth) {
         width = maxWidth - x
@@ -744,7 +744,7 @@ export default {
       if (y + height > maxHeight) {
         height = maxHeight - y
       }
-      
+
       return { x, y, width, height }
     },
     // 檢查兩個區塊是否重疊
@@ -759,7 +759,7 @@ export default {
     // 檢查當前區塊是否與其他區塊重疊（用於警告提示）
     hasOverlap(index) {
       if (this.templateType !== 'CUSTOM') return false
-      
+
       const currentBounds = this.areas[index].bounds
       for (let i = 0; i < this.areas.length; i++) {
         if (i !== index) {
@@ -773,10 +773,10 @@ export default {
     onActionTypeChange() {
       // 清除其他動作類型的資料
       const type = this.selectedArea.action.type
-      
+
       // 使用 $set 確保響應式，創建新的 action 物件
       const newAction = { type }
-      
+
       // 根據類型初始化預設值
       if (type === 'uri') {
         newAction.uri = ''
@@ -792,7 +792,7 @@ export default {
         newAction.data = ''
         newAction.mode = 'datetime'
       }
-      
+
       // 使用 $set 確保 Vue 能追蹤到變化
       this.$set(this.selectedArea, 'action', newAction)
       this.updateArea()

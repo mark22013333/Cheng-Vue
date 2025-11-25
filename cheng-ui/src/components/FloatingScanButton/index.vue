@@ -1,9 +1,9 @@
 <template>
   <div>
     <!-- 浮動掃描按鈕 -->
-    <div 
-      class="floating-scan-button" 
-      v-if="showButton" 
+    <div
+      class="floating-scan-button"
+      v-if="showButton"
       :style="buttonPosition"
       @touchstart="handleTouchStart"
       @touchmove="handleTouchMove"
@@ -200,7 +200,7 @@ export default {
       scanResult: null,
       html5QrCode: null,
       currentCamera: 'environment', // 'environment' 或 'user'
-      stockInLoading: false, // 入庫加載狀態
+      stockInLoading: false, // 入庫載入狀態
       detailDialogVisible: false, // 詳情對話框顯示
       itemDetail: null, // 物品詳細資訊
       // 拖動相關
@@ -252,7 +252,7 @@ export default {
       if (this.isDragging || this.hasMoved) {
         return;
       }
-      
+
       this.quickScanVisible = true;
       this.$nextTick(() => {
         this.initQuickScanner();
@@ -392,10 +392,10 @@ export default {
     handleQuickScanSuccess(decodedText) {
       // 停止掃描器
       this.stopQuickScan();
-      
+
       // 執行掃描
       this.performQuickScan(decodedText);
-      
+
       // 簡短提示
       this.$message({
         message: `掃描成功: ${decodedText}`,
@@ -433,7 +433,7 @@ export default {
       createCrawlTask(code).then(response => {
         if (response.code === 200) {
           const taskId = response.data;
-          
+
           // 立即提示加入佇列
           this.$notify({
             title: '已加入佇列',
@@ -441,17 +441,17 @@ export default {
             type: 'info',
             duration: 2000
           });
-          
+
           // 加入任務列表
           this.activeTasks.push({
             taskId: taskId,
             isbn: code,
             status: 'PENDING'
           });
-          
+
           // 使用 SSE 訂閱任務狀態
           this.subscribeTaskStatus(taskId);
-          
+
         } else {
           this.$message.error('建立任務失敗');
         }
@@ -573,7 +573,7 @@ export default {
         this.detailDialogVisible = true;
       }).catch(error => {
         loading.close();
-        this.$message.error('獲取詳情失敗：' + (error.msg || '請稍後再試'));
+        this.$message.error('取得詳情失敗：' + (error.msg || '請稍後再試'));
       });
     },
 
@@ -590,64 +590,64 @@ export default {
       this.scanResult = null;
       this.manualCode = '';
     },
-    
+
     // ==================== 拖動功能 ====================
-    
+
     /** 觸控開始 */
     handleTouchStart(e) {
       this.hasMoved = false;
       this.dragStartX = e.touches[0].clientX;
       this.dragStartY = e.touches[0].clientY;
-      
+
       // 顯示長按進度指示器
       // 直接進入拖動模式（移除長按等待）
       this.isDragging = true;
       this.hasMoved = false;
-      
+
       // 阻止事件冒泡
       e.stopPropagation();
     },
-    
+
     /** 觸控移動 */
     handleTouchMove(e) {
       if (!this.isDragging) {
         return;
       }
-      
+
       this.hasMoved = true;
       e.preventDefault();
       e.stopPropagation();
-      
+
       // 計算移動距離（修正 Y 軸反向問題）
       const deltaX = this.dragStartX - e.touches[0].clientX;
       const deltaY = this.dragStartY - e.touches[0].clientY;  // 修正！
-      
+
       // 更新按鈕位置
       let newX = this.buttonX + deltaX;
       let newY = this.buttonY + deltaY;
-      
+
       // 邊界限制（不超出螢幕）
       const screenWidth = window.innerWidth;
       const screenHeight = window.innerHeight;
       const buttonSize = 60;
-      
+
       newX = Math.max(10, Math.min(newX, screenWidth - buttonSize - 10));
       newY = Math.max(10, Math.min(newY, screenHeight - buttonSize - 10));
-      
+
       this.buttonX = newX;
       this.buttonY = newY;
-      
+
       // 更新拖動起始點
       this.dragStartX = e.touches[0].clientX;
       this.dragStartY = e.touches[0].clientY;
     },
-    
+
     /** 觸控結束 */
     handleTouchEnd(e) {
       if (this.isDragging && this.hasMoved) {
         // 儲存位置到 localStorage
         this.saveButtonPosition();
-        
+
         e.stopPropagation();
         e.preventDefault();
       } else if (this.isDragging && !this.hasMoved) {
@@ -655,12 +655,12 @@ export default {
         // 觸發掃描功能
         this.quickScanVisible = true;
       }
-      
+
       // 重置拖動狀態
       this.isDragging = false;
       this.hasMoved = false;
     },
-    
+
     /** 載入按鈕位置 */
     loadButtonPosition() {
       const savedPosition = localStorage.getItem('scan-button-position');
@@ -674,7 +674,7 @@ export default {
         this.buttonY = 80;
       }
     },
-    
+
     /** 儲存按鈕位置 */
     saveButtonPosition() {
       localStorage.setItem('scan-button-position', JSON.stringify({
@@ -682,7 +682,7 @@ export default {
         y: this.buttonY
       }));
     },
-    
+
     /** 儲存進行中的任務列表 */
     saveActiveTasks() {
       try {
@@ -698,7 +698,7 @@ export default {
         console.error('儲存任務列表失敗', error);
       }
     },
-    
+
     /** 載入進行中的任務列表 */
     loadActiveTasks() {
       try {
@@ -711,7 +711,7 @@ export default {
             const createTime = new Date(task.createTime);
             return createTime > tenMinutesAgo;
           });
-          
+
           if (validTasks.length > 0) {
             this.activeTasks = validTasks;
             // 重新訂閱這些任務
@@ -730,14 +730,14 @@ export default {
         localStorage.removeItem('active-crawl-tasks');
       }
     },
-    
+
     // ==================== SSE 訂閱 ====================
-    
+
     /** 訂閱任務狀態（SSE） */
     subscribeTaskStatus(taskId) {
       const baseURL = process.env.VUE_APP_BASE_API || '';
       const eventSource = new EventSource(`${baseURL}/inventory/crawlTask/subscribe/${taskId}`);
-      
+
       // 監聽任務更新事件
       eventSource.addEventListener('task-update', (event) => {
         try {
@@ -747,20 +747,20 @@ export default {
           console.error('解析 SSE 資料失敗', error);
         }
       });
-      
+
       // 監聽錯誤事件
       eventSource.addEventListener('error', (event) => {
         console.error('SSE 連線錯誤', event);
         eventSource.close();
       });
-      
+
       // 儲存連線，用於後續關閉
       if (!this.sseConnections) {
         this.sseConnections = new Map();
       }
       this.sseConnections.set(taskId, eventSource);
     },
-    
+
     /** 取消訂閱 */
     unsubscribeTaskStatus(taskId) {
       if (this.sseConnections && this.sseConnections.has(taskId)) {
@@ -769,23 +769,23 @@ export default {
         this.sseConnections.delete(taskId);
       }
     },
-    
+
     /** 處理任務更新 */
     handleTaskUpdate(task) {
       const index = this.activeTasks.findIndex(t => t.taskId === task.taskId);
       if (index === -1) return;
-      
+
       // 更新任務狀態
       this.activeTasks[index] = task;
       this.saveActiveTasks(); // 儲存任務列表
-      
+
       // 檢查是否完成
       if (task.status === 'COMPLETED') {
         console.log('任務完成，準備觸發 scan-success 事件:', task.bookInfo);
-        
+
         // 觸發全域事件，讓掃描結果按鈕接收（Vue 3 使用 eventBus）
         eventBus.emit('scan-success', task.bookInfo);
-        
+
         // 任務完成通知
         this.$notify({
           title: '書籍爬取完成',
@@ -793,10 +793,10 @@ export default {
           type: 'success',
           duration: 3000
         });
-        
+
         // 取消訂閱
         this.unsubscribeTaskStatus(task.taskId);
-        
+
         // 從列表移除（紅色徽章數量會減少）
         console.log(`任務完成，從 activeTasks 移除，剩餘任務數: ${this.activeTasks.length - 1}`);
         this.activeTasks.splice(index, 1);
@@ -809,21 +809,21 @@ export default {
           type: 'error',
           duration: 5000
         });
-        
+
         // 取消訂閱
         this.unsubscribeTaskStatus(task.taskId);
-        
+
         // 從列表移除（紅色徽章數量會減少）
         console.log(`任務失敗，從 activeTasks 移除，剩餘任務數: ${this.activeTasks.length - 1}`);
         this.activeTasks.splice(index, 1);
         this.saveActiveTasks(); // 儲存任務列表
       }
     },
-    
+
     /** 顯示書籍資訊 */
     showBookInfo(bookInfo) {
       if (!bookInfo) return;
-      
+
       this.$alert(`
         <div style="text-align: left;">
           <h3 style="margin-top: 0;">${bookInfo.title}</h3>
@@ -840,7 +840,7 @@ export default {
 
   beforeDestroy() {
     this.stopQuickScan();
-    
+
     // 關閉所有 SSE 連線
     if (this.sseConnections) {
       this.sseConnections.forEach((eventSource, taskId) => {
@@ -849,7 +849,7 @@ export default {
       this.sseConnections.clear();
     }
   },
-  
+
   computed: {
     /** 按鈕位置樣式 */
     buttonPosition() {

@@ -1,8 +1,8 @@
 <template>
-	<el-form size="small">
+	<el-form>
 		<el-form-item>
 			<el-radio v-model='radioValue' :label="1">
-        日，允許的通用符號[, - * ? / L W]
+        日，允許的共用符號[, - * ? / L W]
 			</el-radio>
 		</el-form-item>
 
@@ -47,7 +47,7 @@
 		<el-form-item>
 			<el-radio v-model='radioValue' :label="7">
 				指定
-        <el-select v-model="checkboxList" clearable multiple placeholder="可多選" style="width:100%">
+        <el-select v-model="checkboxList" clearable multiple placeholder="請選擇" style="width:100%; min-width: 200px;">
 					<el-option v-for="item in 31" :key="item" :value="item">{{item}}</el-option>
 				</el-select>
 			</el-radio>
@@ -65,8 +65,7 @@ export default {
 			cycle02: 2,
 			average01: 1,
 			average02: 1,
-			checkboxList: [],
-			checkNum: this.$options.propsData.check
+			checkboxList: []
 		}
 	},
 	name: 'crontab-day',
@@ -139,19 +138,19 @@ export default {
 	computed: {
     // 計算兩個週期值
 		cycleTotal: function () {
-			const cycle01 = this.checkNum(this.cycle01, 1, 30)
-			const cycle02 = this.checkNum(this.cycle02, cycle01 ? cycle01 + 1 : 2, 31, 31)
+			const cycle01 = this.check(this.cycle01, 1, 30)
+			const cycle02 = this.check(this.cycle02, cycle01 ? cycle01 + 1 : 2, 31, 31)
 			return cycle01 + '-' + cycle02
 		},
     // 計算平均用到的值
 		averageTotal: function () {
-			const average01 = this.checkNum(this.average01, 1, 30)
-			const average02 = this.checkNum(this.average02, 1, 31 - average01 || 0)
+			const average01 = this.check(this.average01, 1, 30)
+			const average02 = this.check(this.average02, 1, 31 - average01 || 0)
 			return average01 + '/' + average02
 		},
     // 計算工作日格式
 		workdayCheck: function () {
-			const workday = this.checkNum(this.workday, 1, 31)
+			const workday = this.check(this.workday, 1, 31)
 			return workday
 		},
     // 計算勾選的checkbox值合集

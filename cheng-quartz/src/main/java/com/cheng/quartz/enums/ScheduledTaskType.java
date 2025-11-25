@@ -62,7 +62,7 @@ public enum ScheduledTaskType {
                     new TaskParameter("crawlerType", "STRING", true, "爬蟲類型", "CA102"),
                     new TaskParameter("mode", "STRING", true, "執行模式", "full-sync"),
                     new TaskParameter("batchSize", "INTEGER", false, "批次大小", "1000"),
-                    new TaskParameter("timeout", "LONG", false, "超時時間(ms)", "120000")
+                    new TaskParameter("timeout", "LONG", false, "逾時時間(ms)", "120000")
             ),
             "0 0 2 * * ?",
             "爬蟲任務",
@@ -97,7 +97,7 @@ public enum ScheduledTaskType {
                     new TaskParameter("startDate", "STRING", true, "開始日期", "2025-03-01"),
                     new TaskParameter("endDate", "STRING", true, "結束日期", "2025-03-28"),
                     new TaskParameter("batchSize", "INTEGER", false, "批次大小", "1000"),
-                    new TaskParameter("timeout", "LONG", false, "超時時間(ms)", "120000")
+                    new TaskParameter("timeout", "LONG", false, "逾時時間(ms)", "120000")
             ),
             "0 0 2 * * ?",
             "爬蟲任務",

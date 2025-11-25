@@ -35,7 +35,7 @@ export function updateRole(data) {
   })
 }
 
-// 角色數據權限
+// 角色資料權限
 export function dataScope(data) {
   return request({
     url: '/system/role/dataScope',
@@ -92,7 +92,7 @@ export function authUserCancel(data) {
   })
 }
 
-// 批次取消使用者授權角色
+// 批量取消使用者授權角色
 export function authUserCancelAll(data) {
   return request({
     url: '/system/role/authUser/cancelAll',

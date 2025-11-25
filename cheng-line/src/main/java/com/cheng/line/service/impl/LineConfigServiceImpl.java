@@ -559,7 +559,7 @@ public class LineConfigServiceImpl implements ILineConfigService {
 
     /**
      * 解密敏感資料
-     * 對於明碼資料（解密失敗），會記錄警告但不拋出異常，允許系統繼續運行
+     * 對於明碼資料（解密失敗），會記錄警告但不拋出異常，允許系統繼續執行
      *
      * @param config LINE 頻道設定
      */
@@ -576,7 +576,7 @@ public class LineConfigServiceImpl implements ILineConfigService {
                 config.setChannelId(JasyptUtils.decryptVal(key, config.getChannelId()));
             } catch (Exception e) {
                 log.warn("Channel ID 解密失敗，可能是明碼資料（configId={}），建議重新儲存以加密", config.getConfigId());
-                // 不拋出異常，保留明碼資料，允許系統繼續運行
+                // 不拋出異常，保留明碼資料，允許系統繼續執行
             }
         }
         

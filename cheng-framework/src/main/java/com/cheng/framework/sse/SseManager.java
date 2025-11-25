@@ -24,12 +24,12 @@ public class SseManager {
     private SseConnectionRegistry registry;
     
     /**
-     * 預設超時時間（30 分鐘）
+     * 預設逾時時間（30 分鐘）
      */
     private static final long DEFAULT_TIMEOUT = 30 * 60 * 1000L;
     
     /**
-     * 心跳超時時間（60 秒）
+     * 心跳逾時時間（60 秒）
      */
     private static final long HEARTBEAT_TIMEOUT = 60 * 1000L;
     
@@ -38,7 +38,7 @@ public class SseManager {
      * 
      * @param channel 頻道名稱
      * @param taskId 任務 ID
-     * @param timeout 超時時間（毫秒），null 則使用預設值
+     * @param timeout 逾時時間（毫秒），null 則使用預設值
      * @return SseEmitter
      */
     public SseEmitter subscribe(String channel, String taskId, Long timeout) {
@@ -54,9 +54,9 @@ public class SseManager {
             registry.remove(channel, taskId);
         });
         
-        // 設定回調 - 超時
+        // 設定回調 - 逾時
         emitter.onTimeout(() -> {
-            log.warn("[SSE] 連線超時: {}", connection.getConnectionId());
+            log.warn("[SSE] 連線逾時: {}", connection.getConnectionId());
             registry.remove(channel, taskId);
         });
         

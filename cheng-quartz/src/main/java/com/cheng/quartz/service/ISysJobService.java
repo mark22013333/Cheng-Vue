@@ -38,7 +38,7 @@ public interface ISysJobService
     public int pauseJob(SysJob job) throws SchedulerException;
 
     /**
-     * 恢複任務
+     * 恢復任務
      *
      * @param job 呼叫訊息
      * @return 結果

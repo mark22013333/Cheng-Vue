@@ -1,15 +1,14 @@
- /**
-  * v-hasRole 角色權限處理
+/**
+ * v-hasRole 角色權限處理
  * Copyright (c) 2019 cheng
  */
+import useUserStore from '@/store/modules/user'
 
- import store from '@/store'
-
- export default {
-  inserted(el, binding, vnode) {
-    const { value } = binding
+export default {
+  mounted(el, binding, vnode) {
+    const {value} = binding
     const super_admin = "admin"
-    const roles = store.getters && store.getters.roles
+    const roles = useUserStore().roles
 
     if (value && value instanceof Array && value.length > 0) {
       const roleFlag = value
@@ -22,7 +21,7 @@
         el.parentNode && el.parentNode.removeChild(el)
       }
     } else {
-      throw new Error(`請設定角色權限標籤值"`)
+      throw new Error(`請設定角色權限標籤值`)
     }
   }
 }

@@ -1,11 +1,13 @@
 import router from './router'
-import store from './store'
 import { ElMessage } from 'element-plus'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import { getToken } from '@/utils/auth'
-import { isPathMatch } from '@/utils/validate'
+import { isHttp, isPathMatch } from '@/utils/validate'
 import { isRelogin } from '@/utils/request'
+import useUserStore from '@/store/modules/user'
+import useSettingsStore from '@/store/modules/settings'
+import usePermissionStore from '@/store/modules/permission'
 
 NProgress.configure({ showSpinner: false })
 
@@ -16,58 +18,47 @@ const isWhiteList = (path) => {
 }
 
 router.beforeEach((to, from, next) => {
-  console.log('[Permission] beforeEach - from:', from.path, 'to:', to.path);
   NProgress.start()
   if (getToken()) {
-    console.log('[Permission] Has token');
-    to.meta.title && store.dispatch('settings/setTitle', to.meta.title)
+    to.meta.title && useSettingsStore().setTitle(to.meta.title)
     /* has token*/
     if (to.path === '/login') {
-      console.log('[Permission] Already logged in, redirect to /');
       next({ path: '/' })
       NProgress.done()
     } else if (isWhiteList(to.path)) {
-      console.log('[Permission] In whitelist, allow');
       next()
     } else {
-      if (store.getters.roles.length === 0) {
-        console.log('[Permission] No roles, fetching user info...');
+      if (useUserStore().roles.length === 0) {
         isRelogin.show = true
-        // 判斷目前使用者是否已拉取完user_info訊息
-        store.dispatch('GetInfo').then(() => {
-          console.log('[Permission] GetInfo success, generating routes...');
+        // 判斷當前使用者是否已拉取完user_info訊息
+        useUserStore().getInfo().then(() => {
           isRelogin.show = false
-          store.dispatch('GenerateRoutes').then(accessRoutes => {
-            console.log('[Permission] GenerateRoutes success, routes:', accessRoutes.length);
-            // 路由已在 store 中添加完成，直接重新導航
-            next({...to, replace: true}) // hack方法 確認addRoute已完成
-          }).catch(err => {
-            console.error('[Permission] GenerateRoutes error:', err);
-            isRelogin.show = false
-            NProgress.done()
+          usePermissionStore().generateRoutes().then(accessRoutes => {
+            // 根據roles權限產生可訪問的路由表
+            accessRoutes.forEach(route => {
+              if (!isHttp(route.path)) {
+                router.addRoute(route) // 動態新增可訪問路由表
+              }
+            })
+            next({ ...to, replace: true }) // hack方法 確保addRoutes已完成
           })
         }).catch(err => {
-          console.error('[Permission] GetInfo error:', err);
-          isRelogin.show = false
-          store.dispatch('LogOut').then(() => {
+          useUserStore().logOut().then(() => {
             ElMessage.error(err)
             next({ path: '/' })
-            NProgress.done()
           })
         })
       } else {
-        console.log('[Permission] Has roles, allow');
         next()
       }
     }
   } else {
-    console.log('[Permission] No token');
     // 沒有token
     if (isWhiteList(to.path)) {
       // 在免登入白名單，直接進入
       next()
     } else {
-      next(`/login?redirect=${encodeURIComponent(to.fullPath)}`) // 否則全部重定向到登入頁
+      next(`/login?redirect=${to.fullPath}`) // 否則全部重定向到登入頁
       NProgress.done()
     }
   }

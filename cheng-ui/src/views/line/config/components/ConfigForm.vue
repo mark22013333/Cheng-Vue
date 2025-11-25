@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :title="title"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="900px"
     append-to-body
     :close-on-click-modal="false"
@@ -246,12 +246,12 @@ export default {
     /** 開啟對話框 */
     open(configId, channelType = 'SUB') {
       this.reset()
-      
+
       // 取得系統預設的 Webhook 基礎 URL
       getDefaultWebhookBaseUrl().then(response => {
         this.defaultWebhookBaseUrl = response.data || ''
         console.log('載入預設 Webhook 基礎 URL:', this.defaultWebhookBaseUrl)
-        
+
         // 如果是新增模式，設定預設值
         if (!configId) {
           this.form.webhookBaseUrl = this.defaultWebhookBaseUrl
@@ -262,7 +262,7 @@ export default {
           })
         }
       })
-      
+
       if (configId) {
         this.isAdd = false
         this.title = '修改頻道設定'
@@ -271,17 +271,17 @@ export default {
           console.log('原始回應:', response.data)
           console.log('status 欄位:', response.data.status)
           console.log('status 類型:', typeof response.data.status)
-          
+
           // 後端 Status 枚舉轉換為前端字串
           // 後端可能返回：
           // 1. 枚舉物件：{code: 1, description: "啟用"}
           // 2. 數字：1 或 0
           // 3. 字串：'ENABLE' 或 'DISABLE'
           let statusValue = '1' // 預設啟用
-          
+
           if (response.data.status) {
             const status = response.data.status
-            
+
             if (typeof status === 'object' && status.code !== undefined) {
               // 枚舉物件
               statusValue = String(status.code)
@@ -300,7 +300,7 @@ export default {
               console.log('解析為字串:', status, '-> 轉換為:', statusValue)
             }
           }
-          
+
           this.form = {
             ...response.data,
             // 將 YES/NO 枚舉轉換為 Boolean
@@ -357,12 +357,12 @@ export default {
           console.log('=== 提交表單 ===')
           console.log('表單 status 原始值:', this.form.status)
           console.log('表單 status 類型:', typeof this.form.status)
-          
+
           // 轉換資料格式
           // 前端和後端保持一致：'1'=啟用, '0'=停用
           const statusCode = parseInt(this.form.status)
           console.log('轉換後的 statusCode:', statusCode)
-          
+
           const submitData = {
             ...this.form,
             channelTypeCode: this.form.channelType,  // 使用 channelTypeCode 對應後端的 setChannelTypeCode() 方法
@@ -422,7 +422,7 @@ export default {
     generateWebhookUrl() {
       const botId = this.form.botBasicId || this.form.channelId
       console.log('產生 Webhook URL，botId:', botId)
-      
+
       if (!botId) {
         this.webhookUrl = ''
         return
@@ -431,7 +431,7 @@ export default {
       // 決定使用哪個 Base URL
       let baseUrl = this.form.webhookBaseUrl || this.defaultWebhookBaseUrl
       console.log('使用的 baseUrl:', baseUrl)
-      
+
       if (!baseUrl) {
         // 如果都沒有，使用瀏覽器的 origin
         baseUrl = window.location.origin
@@ -474,13 +474,13 @@ export default {
     async checkExistingChannel(channelType) {
       try {
         const response = await checkChannelType(channelType)
-        
+
         // 編輯模式下：直接清空表單（保留頻道類型）
         if (!this.isAdd) {
           this.clearFormExceptChannelType()
           return
         }
-        
+
         // 新增模式下：檢查是否已有該類型的資料
         if (response.data) {
           // 已存在該類型的頻道
@@ -502,7 +502,7 @@ export default {
             this.title = '修改頻道設定'
             this.generateWebhookUrl()
           }).catch(() => {
-            // 用戶選擇繼續新增，清空表單（保留頻道類型）
+            // 使用者選擇繼續新增，清空表單（保留頻道類型）
             this.clearFormExceptChannelType()
           })
         } else {
@@ -550,14 +550,14 @@ export default {
         }
       ).then(() => {
         this.settingWebhook = true
-        
+
         // 使用表單當前的值
         const params = {
           webhookUrl: this.webhookUrl,
           channelAccessToken: this.form.channelAccessToken,
           configId: this.form.configId || null
         }
-        
+
         setLineWebhookWithParams(params).then(response => {
           this.$modal.msgSuccess(response.msg || 'Webhook URL 設定成功')
           this.$emit('success')

@@ -196,7 +196,7 @@
     />
 
     <!-- 入庫對話框 -->
-    <el-dialog title="入庫操作" :visible.sync="stockInOpen" width="500px" append-to-body>
+    <el-dialog title="入庫操作" :model-value="stockInOpen" @update:model-value="val => stockInOpen = val" width="500px" append-to-body>
       <el-form ref="stockInForm" :model="stockInForm" :rules="stockInRules" label-width="80px">
         <el-form-item label="物品名稱">
           <el-input v-model="stockInForm.itemName" disabled />
@@ -218,7 +218,7 @@
     </el-dialog>
 
     <!-- 出庫對話框 -->
-    <el-dialog title="出庫操作" :visible.sync="stockOutOpen" width="500px" append-to-body>
+    <el-dialog title="出庫操作" :model-value="stockOutOpen" @update:model-value="val => stockOutOpen = val" width="500px" append-to-body>
       <el-form ref="stockOutForm" :model="stockOutForm" :rules="stockOutRules" label-width="80px">
         <el-form-item label="物品名稱">
           <el-input v-model="stockOutForm.itemName" disabled />
@@ -243,7 +243,7 @@
     </el-dialog>
 
     <!-- 盤點對話框 -->
-    <el-dialog title="庫存盤點" :visible.sync="stockCheckOpen" width="800px" append-to-body>
+    <el-dialog title="庫存盤點" :model-value="stockCheckOpen" @update:model-value="val => stockCheckOpen = val" width="800px" append-to-body>
       <el-form ref="stockCheckForm" :model="stockCheckForm" label-width="100px">
         <el-form-item label="盤點範圍">
           <el-radio-group v-model="stockCheckForm.checkType">
@@ -279,7 +279,7 @@
 
 <script>
 import { listStock, getStock, stockIn, stockOut, stockCheck, exportStock, getStockStats } from "@/api/inventory/stock";
-import { listCategory } from "@/api/inventory/item";
+import { listCategory } from "@/api/inventory/category";
 
 export default {
   name: "Stock",

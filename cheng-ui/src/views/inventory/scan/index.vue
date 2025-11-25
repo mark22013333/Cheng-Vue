@@ -176,7 +176,7 @@
     </el-card>
 
     <!-- 借出對話框 -->
-    <el-dialog title="借出物品" :visible.sync="borrowDialogVisible" width="500px">
+    <el-dialog title="借出物品" :model-value="borrowDialogVisible" @update:model-value="val => borrowDialogVisible = val" width="500px">
       <el-form :model="borrowForm" ref="borrowForm" :rules="borrowRules" label-width="80px">
         <el-form-item label="物品名稱">
           <el-input v-model="borrowForm.itemName" disabled/>
@@ -204,7 +204,7 @@
     </el-dialog>
 
     <!-- 入庫對話框 -->
-    <el-dialog title="入庫操作" :visible.sync="stockInDialogVisible" width="400px">
+    <el-dialog title="入庫操作" :model-value="stockInDialogVisible" @update:model-value="val => stockInDialogVisible = val" width="400px">
       <el-form :model="stockForm" ref="stockInForm" :rules="stockRules" label-width="80px">
         <el-form-item label="物品名稱">
           <el-input v-model="stockForm.itemName" disabled/>
@@ -223,7 +223,7 @@
     </el-dialog>
 
     <!-- 出庫對話框 -->
-    <el-dialog title="出庫操作" :visible.sync="stockOutDialogVisible" width="400px">
+    <el-dialog title="出庫操作" :model-value="stockOutDialogVisible" @update:model-value="val => stockOutDialogVisible = val" width="400px">
       <el-form :model="stockForm" ref="stockOutForm" :rules="stockRules" label-width="80px">
         <el-form-item label="物品名稱">
           <el-input v-model="stockForm.itemName" disabled/>

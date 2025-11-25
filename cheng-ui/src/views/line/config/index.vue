@@ -270,7 +270,7 @@ export default {
     },
     /** 刪除按鈕操作 */
     handleDelete(row) {
-      this.$modal.confirm('是否確認刪除頻道名稱為"' + row.channelName + '"的資料項？').then(() => {
+      this.$modal.confirm('是否確認刪除頻道名稱為"' + row.channelName + '"的資料選項？').then(() => {
         return delConfig(row.configId)
       }).then(() => {
         this.getList()

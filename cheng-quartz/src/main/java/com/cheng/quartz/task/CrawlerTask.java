@@ -161,10 +161,10 @@ public class CrawlerTask {
      * @param crawlerType 爬蟲類型代碼（如：CA102, CA103）
      * @param mode        模式參數（如：today-only, full-sync）
      * @param batchSize   批次大小（每批處理幾筆）
-     * @param timeout     超時時間（毫秒）
+     * @param timeout     逾時時間（毫秒）
      */
     public void runAdvanced(String crawlerType, String mode, Integer batchSize, Long timeout) {
-        log.info("開始執行爬蟲任務，類型: {}, 模式: {}, 批次大小: {}, 超時: {}ms",
+        log.info("開始執行爬蟲任務，類型: {}, 模式: {}, 批次大小: {}, 逾時: {}ms",
                 crawlerType, mode, batchSize, timeout);
 
         CrawlerType type = parseCrawlerType(crawlerType);
@@ -289,11 +289,11 @@ public class CrawlerTask {
      * @param startDate   開始日期（格式：yyyy-MM-dd）
      * @param endDate     結束日期（格式：yyyy-MM-dd）
      * @param batchSize   批次大小（每批處理幾筆）
-     * @param timeout     超時時間（毫秒）
+     * @param timeout     逾時時間（毫秒）
      */
     public void runFull(String crawlerType, String mode, String startDate, String endDate,
                         Integer batchSize, Long timeout) {
-        log.info("開始執行爬蟲任務，類型: {}, 模式: {}, 日期: {}-{}, 批次: {}, 超時: {}ms",
+        log.info("開始執行爬蟲任務，類型: {}, 模式: {}, 日期: {}-{}, 批次: {}, 逾時: {}ms",
                 crawlerType, mode, startDate, endDate, batchSize, timeout);
 
         CrawlerType type = parseCrawlerType(crawlerType);

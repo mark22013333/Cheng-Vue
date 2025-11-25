@@ -4,7 +4,7 @@
       <!-- 物品管理頁籤 -->
       <el-tab-pane label="物品管理" name="items">
     <!-- 搜尋表單 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="88px">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="88px">
       <el-form-item label="物品編碼" prop="itemCode">
         <el-input
           v-model="queryParams.itemCode"
@@ -37,8 +37,8 @@
                          style="width: 150px"/>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="small" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="Search" @click="handleQuery">搜尋</el-button>
+        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -48,8 +48,7 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
-          size="small"
+          icon="Plus"
           @click="handleAdd"
           v-hasPermi="['inventory:management:add']"
         >新增物品
@@ -59,8 +58,7 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="small"
+          icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['inventory:management:remove']"
@@ -71,8 +69,7 @@
         <el-button
           type="warning"
           plain
-          icon="el-icon-download"
-          size="small"
+          icon="Download"
           @click="handleExport"
           v-hasPermi="['inventory:management:export']"
         >匯出
@@ -82,8 +79,7 @@
         <el-button
           type="info"
           plain
-          icon="el-icon-warning"
-          size="small"
+          icon="Warning"
           @click="showLowStockOnly"
         >低庫存提醒
         </el-button>
@@ -116,12 +112,15 @@
             v-if="scope.row.imageUrl"
             :src="getImageUrl(scope.row.imageUrl)"
             :preview-src-list="[getImageUrl(scope.row.imageUrl)]"
+            :hide-on-click-modal="true"
             fit="cover"
             style="width: 50px; height: 50px; border-radius: 4px; cursor: pointer;"
           >
-            <div slot="error" class="image-slot">
-              <i class="el-icon-picture-outline" style="font-size: 30px; color: #ccc;"></i>
-            </div>
+            <template #error>
+              <div class="image-slot">
+                <i class="el-icon-picture-outline" style="font-size: 30px; color: #ccc;"></i>
+              </div>
+            </template>
           </el-image>
           <span v-else style="color: #ccc;">無圖</span>
         </template>
@@ -155,49 +154,13 @@
       <el-table-column label="存放位置" align="center" prop="location" width="140" sortable="custom"
                        :show-overflow-tooltip="true"/>
 
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column" min-width="120" fixed="right">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column" min-width="140" fixed="right">
         <template #default="scope">
-          <el-button
-            size="small"
-            type="text"
-            icon="el-icon-view"
-            @click="handleView(scope.row)"
-            v-hasPermi="['inventory:management:query']"
-          >詳情
-          </el-button>
-          <el-button
-            size="small"
-            type="text"
-            icon="el-icon-top"
-            @click="handleStockIn(scope.row)"
-            v-hasPermi="['inventory:management:stockIn']"
-          >入庫
-          </el-button>
-          <el-button
-            size="small"
-            type="text"
-            icon="el-icon-bottom"
-            @click="handleStockOut(scope.row)"
-            v-hasPermi="['inventory:management:stockOut']"
-          >出庫
-          </el-button>
-          <el-button
-            size="small"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['inventory:management:edit']"
-          >修改
-          </el-button>
-          <el-button
-            size="small"
-            type="text"
-            icon="el-icon-delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['inventory:management:remove']"
-            style="color: #F56C6C;"
-          >刪除
-          </el-button>
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)" v-hasPermi="['inventory:management:query']">詳情</el-button>
+          <el-button link type="primary" icon="Top" @click="handleStockIn(scope.row)" v-hasPermi="['inventory:management:stockIn']">入庫</el-button>
+          <el-button link type="primary" icon="Bottom" @click="handleStockOut(scope.row)" v-hasPermi="['inventory:management:stockOut']">出庫</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['inventory:management:edit']">修改</el-button>
+          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['inventory:management:remove']">刪除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -212,7 +175,7 @@
     />
 
     <!-- 入庫對話框 -->
-    <el-dialog :title="'入庫 - ' + currentItem.itemName" :visible.sync="stockInDialogVisible" width="500px"
+    <el-dialog :title="'入庫 - ' + currentItem.itemName" :model-value="stockInDialogVisible" @update:model-value="val => stockInDialogVisible = val" width="500px"
                append-to-body>
       <el-form ref="stockInForm" :model="stockInForm" :rules="stockInRules" label-width="100px">
         <el-form-item label="入庫數量" prop="quantity">
@@ -230,7 +193,7 @@
     </el-dialog>
 
     <!-- 出庫對話框 -->
-    <el-dialog :title="'出庫 - ' + currentItem.itemName" :visible.sync="stockOutDialogVisible" width="500px"
+    <el-dialog :title="'出庫 - ' + currentItem.itemName" :model-value="stockOutDialogVisible" @update:model-value="val => stockOutDialogVisible = val" width="500px"
                append-to-body>
       <el-form ref="stockOutForm" :model="stockOutForm" :rules="stockOutRules" label-width="100px">
         <el-form-item label="可用數量">
@@ -251,7 +214,7 @@
     </el-dialog>
 
     <!-- 詳情對話框 -->
-    <el-dialog title="物品與庫存詳情" :visible.sync="detailDialogVisible" width="900px" append-to-body>
+    <el-dialog title="物品與庫存詳情" :model-value="detailDialogVisible" @update:model-value="val => detailDialogVisible = val" width="900px" append-to-body>
       <el-descriptions :column="2" border v-if="detailData">
         <el-descriptions-item label="物品編碼">{{ detailData.itemCode }}</el-descriptions-item>
         <el-descriptions-item label="物品名稱">{{ detailData.itemName }}</el-descriptions-item>
@@ -268,8 +231,7 @@
           <el-button
             v-if="detailData.barcode && isValidIsbn(detailData.barcode)"
             type="primary"
-            size="small"
-            icon="el-icon-refresh"
+            icon="Refresh"
             @click="handleRefreshIsbn"
             style="margin-left: 10px;"
           >重新抓取
@@ -354,12 +316,15 @@
             v-if="detailData.imageUrl"
             :src="getImageUrl(detailData.imageUrl)"
             :preview-src-list="[getImageUrl(detailData.imageUrl)]"
+            :hide-on-click-modal="true"
             fit="contain"
             style="max-width: 200px; max-height: 200px; border-radius: 4px; cursor: pointer;"
           >
-            <div slot="error" class="image-slot">
-              <i class="el-icon-picture-outline" style="font-size: 50px; color: #ccc;"></i>
-            </div>
+            <template #error>
+              <div class="image-slot">
+                <i class="el-icon-picture-outline" style="font-size: 50px; color: #ccc;"></i>
+              </div>
+            </template>
           </el-image>
           <span v-else style="color: #999;">無圖片</span>
         </el-descriptions-item>
@@ -372,7 +337,7 @@
     <ProgressDialog ref="progressDialog" />
 
     <!-- 編輯對話框 -->
-    <el-dialog :title="editDialogTitle" :visible.sync="editDialogVisible" width="800px" append-to-body>
+    <el-dialog :title="editDialogTitle" :model-value="editDialogVisible" @update:model-value="val => editDialogVisible = val" width="800px" append-to-body>
       <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="100px">
         <el-row>
           <el-col :span="12">
@@ -613,6 +578,27 @@ export default {
     this.getList();
     this.getCategoryList();
   },
+  mounted() {
+    // 監聽圖片點擊事件，動態設定 z-index
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('el-image__inner')) {
+        setTimeout(() => {
+          const viewer = document.querySelector('.el-image-viewer__wrapper');
+          if (viewer) {
+            // 強制設定 z-index 為最大值（覆蓋 Element Plus 的 inline style）
+            viewer.style.zIndex = '2147483647';
+            viewer.style.position = 'fixed';
+            
+            // 也設定遮罩層的 z-index
+            const mask = document.querySelector('.el-image-viewer__mask');
+            if (mask) {
+              mask.style.zIndex = '2147483646';
+            }
+          }
+        }, 50);
+      }
+    });
+  },
   methods: {
     /** 查詢物品與庫存整合列表 */
     getList() {
@@ -662,7 +648,7 @@ export default {
       const itemNames = row.itemName ? [row.itemName] : this.managementList
         .filter(item => itemIds.includes(item.itemId))
         .map(item => item.itemName);
-      
+
       const confirmMessage = `
         <div style="text-align: left;">
           <p style="color: #E6A23C; font-weight: bold; margin-bottom: 10px;">
@@ -680,7 +666,7 @@ export default {
           </ul>
         </div>
       `;
-      
+
       this.$confirm(confirmMessage, '刪除確認', {
         dangerouslyUseHTMLString: true,
         confirmButtonText: '確定刪除',
@@ -884,8 +870,8 @@ export default {
         // 物品管理頁籤 - 重新整理物品列表
         this.getList();
       } else if (tab.name === 'categories') {
-        // 分類管理頁籤 - CategoryManagement 組件會自己載入資料
-        // 這裡不需要特別處理，因為子組件有自己的生命週期
+        // 分類管理頁籤 - CategoryManagement 元件會自己載入資料
+        // 這裡不需要特別處理，因為子元件有自己的生命週期
       }
     },
     /** 驗證是否為有效的 ISBN */
@@ -901,11 +887,11 @@ export default {
         this.$modal.msgWarning("條碼為空，無法抓取");
         return;
       }
-      
+
       const itemId = this.detailData.itemId;
       const isbn = this.detailData.barcode;
       const itemName = this.detailData.itemName;
-      
+
       this.$confirm(
         `<div style="margin-bottom: 10px;">確定要重新抓取 ISBN <strong>${isbn}</strong> 的書籍資料嗎？</div>` +
         `<div style="color: #909399; font-size: 12px;">
@@ -932,14 +918,14 @@ export default {
         createRefreshTask(itemId).then(response => {
           const taskId = response.data;
           let dialogMinimized = false; // 標記對話框是否被最小化
-          
+
           // 2. 開啟進度對話框
           this.$refs.progressDialog.show({
             title: `重新抓取書籍資料 - ${itemName}`,
             message: '準備中...',
             showLogs: true
           });
-          
+
           // 監聽對話框最小化事件
           const handleMinimize = () => {
             dialogMinimized = true;
@@ -950,16 +936,16 @@ export default {
             });
           };
           this.$refs.progressDialog.$once('minimize', handleMinimize);
-          
+
           // 3. 建立 SSE 連線
           const baseURL = process.env.VUE_APP_BASE_API || '';
           const eventSource = new EventSource(
             `${baseURL}/inventory/scan/refreshIsbn/subscribe/${taskId}?itemId=${itemId}`
           );
-          
+
           // 儲存連線（用於並行抓取）
           this.sseConnections.set(taskId, eventSource);
-          
+
           // 監聽進度事件
           eventSource.addEventListener('progress', (event) => {
             try {
@@ -972,12 +958,12 @@ export default {
               console.error('解析進度事件失敗', error);
             }
           });
-          
+
           // 監聽成功事件
           eventSource.addEventListener('success', (event) => {
             try {
               const result = JSON.parse(event.data);
-              
+
               // 如果對話框已最小化，使用通知提示
               if (dialogMinimized) {
                 this.$notify.success({
@@ -989,18 +975,18 @@ export default {
                 // 設定進度對話框為成功狀態
                 this.$refs.progressDialog.setSuccess(result.message || '書籍資訊更新成功');
               }
-              
+
               // 關閉 SSE 連線
               eventSource.close();
               this.sseConnections.delete(taskId);
-              
+
               // 顯示變更詳情
               if (result.updatedFields && result.updatedFields.length > 0) {
                 setTimeout(() => {
                   const changeDetails = Object.entries(result.changes)
                     .map(([key, value]) => `<li><strong>${key}</strong>: ${value}</li>`)
                     .join('');
-                  
+
                   this.$alert(
                     `<div style="text-align: left;">
                       <p style="margin-bottom: 10px; color: #67C23A; font-weight: bold;">${result.message}</p>
@@ -1018,25 +1004,25 @@ export default {
                   );
                 }, 500);
               }
-              
+
               // 重新載入詳情資料
               getManagement(itemId).then(response => {
                 this.detailData = response.data;
                 // 重新整理列表
                 this.getList();
               });
-              
+
             } catch (error) {
               console.error('解析成功事件失敗', error);
             }
           });
-          
+
           // 監聽警告事件（例如：資料相同無需更新）
           eventSource.addEventListener('warning', (event) => {
             try {
               const data = JSON.parse(event.data);
               const warningMsg = data.message || '無需更新';
-              
+
               if (dialogMinimized) {
                 this.$notify.warning({
                   title: '⚠️ 提示',
@@ -1046,7 +1032,7 @@ export default {
               } else {
                 this.$refs.progressDialog.setWarning(warningMsg);
               }
-              
+
               // 重新載入詳情資料
               getManagement(itemId).then(response => {
                 this.detailData = response.data;
@@ -1058,13 +1044,13 @@ export default {
               this.sseConnections.delete(taskId);
             }
           });
-          
+
           // 監聽錯誤事件
           eventSource.addEventListener('error', (event) => {
             try {
               const data = JSON.parse(event.data);
               const errorMsg = data.message || '處理失敗';
-              
+
               if (dialogMinimized) {
                 this.$notify.error({
                   title: '❌ 抓取失敗',
@@ -1081,22 +1067,22 @@ export default {
               this.sseConnections.delete(taskId);
             }
           });
-          
+
           // 監聽連線錯誤（僅處理真正的網路錯誤）
           eventSource.onerror = (event) => {
             console.error('SSE 連線錯誤', event);
-            
+
             // 如果連線已經正常關閉（任務完成），不做任何處理
             if (eventSource.readyState === EventSource.CLOSED) {
               return;
             }
-            
+
             // 只有在連線異常中斷時才顯示錯誤
             if (eventSource.readyState === EventSource.CONNECTING) {
               // 正在重連，暫時不顯示錯誤
               return;
             }
-            
+
             const errorMsg = '連線中斷，請重試';
             if (dialogMinimized) {
               this.$notify.error({
@@ -1107,16 +1093,16 @@ export default {
             } else {
               this.$refs.progressDialog.setError(errorMsg);
             }
-            
+
             eventSource.close();
             this.sseConnections.delete(taskId);
           };
-          
+
         }).catch(error => {
           const errorMsg = error.msg || error.message || "建立任務失敗";
           this.$modal.msgError(errorMsg);
         });
-        
+
       }).catch(() => {
         // 使用者取消
       });
@@ -1351,4 +1337,30 @@ export default {
   background-color: rgba(0, 0, 0, 0.05);
   border-radius: 3px;
 }
+
+/* 圖片預覽器 z-index - 確保在最上層 - 使用 CSS 最大值 */
+:deep(.el-image-viewer__wrapper) {
+  z-index: 2147483647 !important;
+  position: fixed !important;
+}
+
+/* 圖片預覽器遮罩層 */
+:deep(.el-image-viewer__mask) {
+  z-index: 2147483646 !important;
+  position: fixed !important;
+}
+
+/* 圖片預覽器的所有子元素 */
+:deep(.el-image-viewer__btn) {
+  z-index: 2147483647 !important;
+}
+
+:deep(.el-image-viewer__canvas) {
+  z-index: 2147483647 !important;
+}
+
+:deep(.el-image-viewer__actions) {
+  z-index: 2147483647 !important;
+}
+
 </style>

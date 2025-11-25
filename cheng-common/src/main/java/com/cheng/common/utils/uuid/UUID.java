@@ -68,7 +68,7 @@ public final class UUID implements Serializable, Comparable<UUID> {
     }
 
     /**
-     * 取得類型 4（偽隨機產生的）UUID 的靜態工廠。 使用加密的强偽隨機數產生器產生該 UUID。
+     * 取得類型 4（偽隨機產生的）UUID 的靜態工廠。 使用加密的強偽隨機數產生器產生該 UUID。
      *
      * @return 隨機產生的 {@code UUID}
      */
@@ -77,7 +77,7 @@ public final class UUID implements Serializable, Comparable<UUID> {
     }
 
     /**
-     * 取得類型 4（偽隨機產生的）UUID 的靜態工廠。 使用加密的强偽隨機數產生器產生該 UUID。
+     * 取得類型 4（偽隨機產生的）UUID 的靜態工廠。 使用加密的強偽隨機數產生器產生該 UUID。
      *
      * @param isSecure 是否使用{@link SecureRandom}如果是可以取得更安全的隨機碼，否則可以得到更好的效能
      * @return 隨機產生的 {@code UUID}
@@ -158,7 +158,7 @@ public final class UUID implements Serializable, Comparable<UUID> {
     }
 
     /**
-     * 取得{@link SecureRandom}，類提供加密的强隨機數產生器 (RNG)
+     * 取得{@link SecureRandom}，類提供加密的強隨機數產生器 (RNG)
      *
      * @return {@link SecureRandom}
      */

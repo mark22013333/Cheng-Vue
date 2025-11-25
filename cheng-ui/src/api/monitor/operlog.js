@@ -17,7 +17,7 @@ export function delOperlog(operId) {
   })
 }
 
-// 清除操作日誌
+// 清空操作日誌
 export function cleanOperlog() {
   return request({
     url: '/monitor/operlog/clean',

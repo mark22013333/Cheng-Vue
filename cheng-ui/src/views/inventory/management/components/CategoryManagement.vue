@@ -6,8 +6,7 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
-          size="small"
+          icon="Plus"
           @click="handleAdd"
           v-hasPermi="['inventory:category:add']"
         >新增分類
@@ -17,8 +16,7 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="small"
+          icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['inventory:category:remove']"
@@ -29,8 +27,7 @@
         <el-button
           type="warning"
           plain
-          icon="el-icon-download"
-          size="small"
+          icon="Download"
           @click="handleExport"
           v-hasPermi="['inventory:category:export']"
         >匯出Excel
@@ -76,24 +73,10 @@
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="180">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column" width="180">
         <template #default="scope">
-          <el-button
-            size="small"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['inventory:category:edit']"
-          >修改
-          </el-button>
-          <el-button
-            size="small"
-            type="text"
-            icon="el-icon-delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['inventory:category:remove']"
-          >刪除
-          </el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['inventory:category:edit']">修改</el-button>
+          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['inventory:category:remove']">刪除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -107,7 +90,7 @@
     />
 
     <!-- 新增或修改分類對話框 -->
-    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
+    <el-dialog :title="title" :model-value="open" @update:model-value="val => open = val" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="分類名稱" prop="categoryName">
           <el-input v-model="form.categoryName" placeholder="請輸入分類名稱" maxlength="50"/>
@@ -254,9 +237,16 @@ export default {
     },
     /** 新增按鈕操作 */
     handleAdd() {
+      console.log('[分類管理調試] 點擊新增分類按鈕');
       this.reset();
+      console.log('[分類管理調試] 重置表單完成');
       this.open = true;
+      console.log('[分類管理調試] 設定 open = true，當前值:', this.open);
       this.title = "新增分類";
+      console.log('[分類管理調試] 設定標題:', this.title);
+      this.$nextTick(() => {
+        console.log('[分類管理調試] DOM 更新後，dialog 是否可見:', this.open);
+      });
     },
     /** 修改按鈕操作 */
     handleUpdate(row) {
@@ -358,7 +348,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .category-management {
   padding: 20px;
 }
@@ -370,4 +360,5 @@ export default {
 .ml-2 {
   margin-left: 8px;
 }
+
 </style>

@@ -18,7 +18,7 @@ export function scanIsbn(data) {
   })
 }
 
-// 掃描條碼或QR碼（通用）
+// 掃描條碼或QR碼（共用）
 export function scanCode(data) {
   return request({
     url: '/inventory/item/scan',

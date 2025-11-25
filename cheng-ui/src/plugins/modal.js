@@ -1,4 +1,4 @@
-import { ElLoading, ElMessage, ElMessageBox, ElNotification } from 'element-plus'
+import { ElMessage, ElMessageBox, ElNotification, ElLoading } from 'element-plus'
 
 let loadingInstance
 
@@ -25,15 +25,15 @@ export default {
   },
   // 錯誤提示
   alertError(content) {
-    ElMessageBox.alert(content, "系統提示", {type: 'error'})
+    ElMessageBox.alert(content, "系統提示", { type: 'error' })
   },
   // 成功提示
   alertSuccess(content) {
-    ElMessageBox.alert(content, "系統提示", {type: 'success'})
+    ElMessageBox.alert(content, "系統提示", { type: 'success' })
   },
   // 警告提示
   alertWarning(content) {
-    ElMessageBox.alert(content, "系統提示", {type: 'warning'})
+    ElMessageBox.alert(content, "系統提示", { type: 'warning' })
   },
   // 通知提示
   notify(content) {
@@ -51,7 +51,7 @@ export default {
   notifyWarning(content) {
     ElNotification.warning(content)
   },
-  // 確認窗體
+  // 確認視窗
   confirm(content) {
     return ElMessageBox.confirm(content, "系統提示", {
       confirmButtonText: '確定',

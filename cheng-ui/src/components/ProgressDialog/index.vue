@@ -20,13 +20,13 @@
         :stroke-width="20"
         :show-text="true"
       ></el-progress>
-      
+
       <!-- 狀態訊息 -->
       <div class="status-message" :class="messageClass">
         <i :class="messageIcon"></i>
         <span>{{ currentMessage }}</span>
       </div>
-      
+
       <!-- 詳細日誌（可選） -->
       <div v-if="showLogs && logs.length > 0" class="logs-container">
         <div class="log-item" v-for="(log, index) in logs" :key="index">
@@ -35,7 +35,7 @@
         </div>
       </div>
     </div>
-    
+
     <div slot="footer" class="dialog-footer">
       <el-button v-if="canClose" @click="handleClose">關閉</el-button>
       <el-button v-if="canRetry" type="primary" @click="handleRetry">重試</el-button>
@@ -91,13 +91,13 @@ export default {
       this.canClose = false
       this.canRetry = false
       this.retryCallback = null
-      
+
       // 對話框渲染後啟用拖曳功能
       this.$nextTick(() => {
         this.enableDrag()
       })
     },
-    
+
     /**
      * 更新進度
      */
@@ -108,7 +108,7 @@ export default {
         this.addLog(message)
       }
     },
-    
+
     /**
      * 設定成功狀態
      */
@@ -118,7 +118,7 @@ export default {
       this.currentMessage = message || '處理完成！'
       this.canClose = true
       this.addLog(this.currentMessage)
-      
+
       // 3 秒後自動關閉
       setTimeout(() => {
         if (this.dialogVisible) {
@@ -126,7 +126,7 @@ export default {
         }
       }, 3000)
     },
-    
+
     /**
      * 設定錯誤狀態
      */
@@ -138,7 +138,7 @@ export default {
       this.retryCallback = retryCallback
       this.addLog(this.currentMessage)
     },
-    
+
     /**
      * 設定警告狀態
      */
@@ -148,23 +148,23 @@ export default {
       this.canClose = true
       this.addLog(this.currentMessage)
     },
-    
+
     /**
-     * 添加日誌
+     * 新增日誌
      */
     addLog(message) {
       if (this.showLogs) {
         const now = new Date()
         const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`
         this.logs.push({ time, message })
-        
+
         // 限制日誌數量
         if (this.logs.length > 50) {
           this.logs.shift()
         }
       }
     },
-    
+
     /**
      * 關閉對話框
      */
@@ -172,7 +172,7 @@ export default {
       this.dialogVisible = false
       this.$emit('closed')
     },
-    
+
     /**
      * 處理關閉
      */
@@ -189,32 +189,32 @@ export default {
           }
         ).then(() => {
           this.close()
-          this.$emit('minimize') // 通知父組件最小化
+          this.$emit('minimize') // 通知父元件最小化
         }).catch(() => {})
       } else {
         this.close()
       }
     },
-    
+
     /**
      * 啟用對話框拖曳功能
      */
     enableDrag() {
       // 避免重複綁定
       if (this.dragEnabled) return
-      
-      // 使用 $el 確保找到當前組件的對話框
+
+      // 使用 $el 確保找到當前元件的對話框
       const dialogWrapper = this.$el.querySelector('.el-dialog')
       if (!dialogWrapper) return
-      
+
       const dialogHeader = dialogWrapper.querySelector('.el-dialog__header')
       if (!dialogHeader) return
-      
+
       this.dragEnabled = true
-      
+
       dialogHeader.style.cursor = 'move'
       dialogHeader.style.userSelect = 'none'
-      
+
       let isDragging = false
       let currentX
       let currentY
@@ -222,13 +222,13 @@ export default {
       let initialY
       let xOffset = 0
       let yOffset = 0
-      
+
       dialogHeader.addEventListener('mousedown', (e) => {
         initialX = e.clientX - xOffset
         initialY = e.clientY - yOffset
         isDragging = true
       })
-      
+
       document.addEventListener('mousemove', (e) => {
         if (isDragging) {
           e.preventDefault()
@@ -236,16 +236,16 @@ export default {
           currentY = e.clientY - initialY
           xOffset = currentX
           yOffset = currentY
-          
+
           dialogWrapper.style.transform = `translate(${currentX}px, ${currentY}px)`
         }
       })
-      
+
       document.addEventListener('mouseup', () => {
         isDragging = false
       })
     },
-    
+
     /**
      * 處理重試
      */

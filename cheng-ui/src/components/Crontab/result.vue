@@ -29,7 +29,7 @@ export default {
       // 計算開始-隱藏結果
 			this.isShow = false
       // 取得規則陣列[0秒、1分、2時、3日、4月、5星期、6年]
-			let ruleArr = this.$options.propsData.ex.split(' ')
+			let ruleArr = this.ex.split(' ')
       // 用於記錄進入循環的次數
 			let nums = 0
       // 用於暫時存符號時間規則結果的陣列

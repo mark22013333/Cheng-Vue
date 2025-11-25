@@ -169,24 +169,12 @@
           <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="280" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="280" class-name="small-padding fixed-width operation-column">
         <template #default="scope">
-          <el-button
-            size="small"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['line:richMenu:edit']"
-          >編輯</el-button>
-          <el-button
-            size="small"
-            type="text"
-            icon="el-icon-upload2"
-            @click="handlePublish(scope.row)"
-            v-hasPermi="['line:richMenu:publish']"
-          >{{ scope.row.richMenuId ? '重新發布' : '發布' }}</el-button>
-          <el-dropdown size="small" @command="(command) => handleCommand(command, scope.row)" style="margin-left: 10px">
-            <el-button size="small" type="text" icon="el-icon-d-arrow-right">更多</el-button>
+          <el-button link type="primary" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['line:richMenu:edit']">編輯</el-button>
+          <el-button link type="primary" icon="el-icon-upload2" @click="handlePublish(scope.row)" v-hasPermi="['line:richMenu:publish']">{{ scope.row.richMenuId ? '重新發布' : '發布' }}</el-button>
+          <el-dropdown @command="(command) => handleCommand(command, scope.row)" style="margin-left: 10px">
+            <el-button link type="primary" icon="el-icon-d-arrow-right">更多</el-button>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item
                 v-if="scope.row.richMenuId && scope.row.isDefault !== 1"
@@ -309,8 +297,8 @@
             <el-form-item label="選單圖片" prop="imageUrl">
               <el-tabs v-model="imageInputType" type="card">
                 <el-tab-pane label="上傳圖片（推薦）" name="upload">
-                  <image-upload 
-                    v-model="form.imageUrl" 
+                  <image-upload
+                    v-model="form.imageUrl"
                     :limit="1"
                     :action="getUploadUrl()"
                     :data="{ targetSize: form.imageSize }"
@@ -334,9 +322,9 @@
                   </div>
                 </el-tab-pane>
                 <el-tab-pane label="輸入網址" name="url">
-                  <el-input 
-                    v-model="form.imageUrl" 
-                    placeholder="請輸入圖片網址 (例如: https://example.com/image.jpg)" 
+                  <el-input
+                    v-model="form.imageUrl"
+                    placeholder="請輸入圖片網址 (例如: https://example.com/image.jpg)"
                   />
                   <span style="color: #999; font-size: 12px; display: block; margin-top: 8px;">
                     註：請確保網址可公開訪問，且圖片尺寸符合規格
@@ -463,7 +451,7 @@ export default {
       currentUploadedFileName: null,
       // SSE 客戶端
       sseClient: null,
-      // SSE 連線超時計時器
+      // SSE 連線逾時計時器
       sseConnectTimer: null,
       // 表單校驗
       rules: {
@@ -509,7 +497,7 @@ export default {
       this.sseClient.close()
       this.sseClient = null
     }
-    // 清理連線超時計時器
+    // 清理連線逾時計時器
     if (this.sseConnectTimer) {
       clearTimeout(this.sseConnectTimer)
       this.sseConnectTimer = null
@@ -521,30 +509,30 @@ export default {
     }
   },
   methods: {
-    /** 取得上傳接口 URL（不含 base API，ImageUpload 組件會自動添加） */
+    /** 取得上傳API URL（不含 base API，ImageUpload 元件會自動新增） */
     getUploadUrl() {
       return '/line/richMenu/uploadImage'
     },
-    
+
     /** 處理圖片上傳響應 */
     handleImageUploadResponse(response) {
       console.log('📸 圖片上傳響應：', response)
-      
+
       if (!response) {
         console.error('❌ 響應為空')
         return
       }
-      
+
       if (response.code === 200 && response.data) {
         const data = response.data
         console.log('✅ 圖片資訊：', data)
-        
+
         // 記錄當前上傳的檔案名稱（用於下次重新上傳時刪除）
         if (data.fileName) {
           this.currentUploadedFileName = data.fileName
           console.log('📝 記錄檔案名稱：', this.currentUploadedFileName)
         }
-        
+
         // 更新圖片資訊
         this.imageInfo = {
           originalSize: data.originalSize || '',
@@ -552,9 +540,9 @@ export default {
           resized: data.resized === true,  // 確保是布林值
           fileSizeKB: data.fileSizeKB || 0
         }
-        
+
         console.log('📊 更新後的 imageInfo：', this.imageInfo)
-        
+
         // 顯示提示
         if (data.resized) {
           this.$message({
@@ -569,7 +557,7 @@ export default {
             duration: 2000
           })
         }
-        
+
         // 強制更新視圖
         this.$forceUpdate()
       } else {
@@ -579,7 +567,7 @@ export default {
         }
       }
     },
-    
+
     /** 上傳前處理：刪除舊圖片 */
     async handleBeforeUpload(file) {
       // 如果有舊圖片，先刪除
@@ -597,11 +585,11 @@ export default {
           // 即使刪除失敗也繼續上傳新圖片
         }
       }
-      
-      // 返回 true 繼續上傳（檔案類型和大小驗證由 ImageUpload 組件處理）
+
+      // 返回 true 繼續上傳（檔案類型和大小驗證由 ImageUpload 元件處理）
       return true
     },
-    
+
     /** 查詢 Rich Menu 列表 */
     getList() {
       this.loading = true
@@ -693,11 +681,11 @@ export default {
     handleAdd() {
       this.reset()
       this.dialogKey++ // 強制重新渲染對話框
-      
+
       // 為新增設定預設版型
       this.form.templateType = 'TWO_COLS'
       this.form.imageSize = '2500x1686'
-      
+
       // 自動選擇頻道：優先主頻道，否則第一個啟用頻道
       if (this.channelList && this.channelList.length > 0) {
         const primaryChannel = this.channelList.find(c => c.isPrimary === 1)
@@ -711,7 +699,7 @@ export default {
       } else {
         this.$message.warning('目前沒有可用的頻道，請先設定 LINE 頻道')
       }
-      
+
       this.open = true
       this.title = '新增 Rich Menu'
     },
@@ -721,10 +709,10 @@ export default {
       getRichMenu(id).then(response => {
         // 遞增 dialogKey 強制重新渲染
         this.dialogKey++
-        
-        // 直接設定從 API 獲取的資料（不要先 reset，避免清空 templateType）
+
+        // 直接設定從 API 取得的資料（不要先 reset，避免清空 templateType）
         this.form = response.data
-        
+
         // 將 areasJson 字串轉換為 areas 陣列供編輯器使用
         if (this.form.areasJson) {
           try {
@@ -736,12 +724,12 @@ export default {
         } else {
           this.form.areas = []
         }
-        
+
         // 確保必要欄位有預設值
         if (!this.form.areas) {
           this.form.areas = []
         }
-        
+
         // 使用 nextTick 確保資料完全設定後再打開對話框
         this.$nextTick(() => {
           this.open = true
@@ -762,7 +750,7 @@ export default {
                 invalidAreas.push(`區塊 ${index + 1}`)
                 return
               }
-              
+
               // 檢查各類 action 的必填欄位
               if (action.type === 'uri' && !action.uri) {
                 invalidAreas.push(`區塊 ${index + 1}（缺少 URI）`)
@@ -781,15 +769,15 @@ export default {
                 invalidAreas.push(`區塊 ${index + 1}（日期時間選擇器缺少回傳資料）`)
               }
             })
-            
+
             if (invalidAreas.length > 0) {
               this.$modal.msgWarning('以下區塊的 Action 設定不完整，請補充：<br>' + invalidAreas.join('<br>'))
               return
             }
-            
+
             this.form.areasJson = JSON.stringify(this.form.areas)
           }
-          
+
           if (this.form.id != null) {
             updateRichMenu(this.form).then(response => {
               this.$modal.msgSuccess('修改成功')
@@ -821,27 +809,27 @@ export default {
       this.$modal.confirm('確認要發布此 Rich Menu 到 LINE 平台嗎？').then(() => {
         // 產生任務 ID
         const taskId = 'richmenu-publish-' + Date.now()
-        
+
         // 顯示進度對話框
         this.$refs.progressDialog.show({
           title: '發布 Rich Menu',
           message: '正在準備發布...',
           showLogs: true
         })
-        
+
         // 建立 SSE 連線
         this.sseClient = new SseClient({
           channel: SSE_CHANNELS.RICHMENU_PUBLISH,
           taskId: taskId,
           timeout: 300000 // 5 分鐘
         })
-        
+
         // 監聽進度事件
         this.sseClient.on(SSE_EVENTS.PROGRESS, (data) => {
           console.log('📊 發布進度:', data)
           this.$refs.progressDialog.updateProgress(data.progress || 0, data.message)
         })
-        
+
         // 監聽成功事件
         this.sseClient.on(SSE_EVENTS.SUCCESS, (data) => {
           console.log('✅ 發布成功:', data)
@@ -858,7 +846,7 @@ export default {
             this.getList()
           }, 1000)
         })
-        
+
         // 監聽錯誤事件
         this.sseClient.on(SSE_EVENTS.ERROR, (data) => {
           console.error('❌ 發布失敗:', data)
@@ -875,11 +863,11 @@ export default {
             this.sseConnectTimer = null
           }
         })
-        
+
         // 監聽連線成功事件
         this.sseClient.on(SSE_EVENTS.CONNECTED, () => {
           console.log('✅ SSE 連線已建立，開始發布...')
-          // 清除連線超時計時器
+          // 清除連線逾時計時器
           if (this.sseConnectTimer) {
             clearTimeout(this.sseConnectTimer)
             this.sseConnectTimer = null
@@ -903,16 +891,16 @@ export default {
             }
           })
         })
-        
+
         // 建立連線
         this.sseClient.connect()
-        
-        // 設定連線超時（10 秒）
+
+        // 設定連線逾時（10 秒）
         this.sseConnectTimer = setTimeout(() => {
           if (this.sseClient && !this.sseClient.isConnected()) {
-            console.error('❌ SSE 連線超時')
+            console.error('❌ SSE 連線逾時')
             this.$refs.progressDialog.setError(
-              'SSE 連線超時，請檢查網路或重試',
+              'SSE 連線逾時，請檢查網路或重試',
               true,
               () => this.handlePublish(row)
             )
@@ -923,7 +911,7 @@ export default {
           }
         }, 10000)
       }).catch(error => {
-        // 如果用戶取消確認
+        // 如果使用者取消確認
         if (error === 'cancel') {
           return
         }
@@ -982,7 +970,7 @@ export default {
           spinner: 'el-icon-loading',
           background: 'rgba(0, 0, 0, 0.7)'
         })
-        
+
         return refreshPreviewImage(row.id).finally(() => {
           loading.close()
         })
@@ -1031,10 +1019,10 @@ export default {
       if (templateSizeMap[value]) {
         this.form.imageSize = templateSizeMap[value]
       }
-      
+
       // 清空 areas，觸發 RichMenuEditor 重新初始化
       this.form.areas = []
-      
+
       // 強制重新渲染對話框，修正圖片尺寸變化時的跑版問題
       this.dialogKey++
     },
@@ -1053,7 +1041,7 @@ export default {
     onDialogOpened() {
       // 對話框完全打開後，確保 RichMenuEditor 能正確接收資料
       this.$nextTick(() => {
-        // 強制更新，確保子組件正確渲染
+        // 強制更新，確保子元件正確渲染
         this.$forceUpdate()
       })
     },
@@ -1151,11 +1139,12 @@ export default {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .el-dropdown {
   vertical-align: top;
 }
 .el-dropdown + .el-dropdown {
   margin-left: 15px;
 }
+
 </style>

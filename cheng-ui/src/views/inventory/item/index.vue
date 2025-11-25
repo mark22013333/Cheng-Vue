@@ -167,7 +167,7 @@
     />
 
     <!-- 新增或修改物品資訊對話框 -->
-    <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body>
+    <el-dialog :title="title" :model-value="open" @update:model-value="val => open = val" width="800px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="12">
@@ -283,7 +283,7 @@
     </el-dialog>
 
     <!-- 物品匯入對話框 -->
-    <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
+    <el-dialog :title="upload.title" :model-value="upload.open" width="400px" append-to-body>
       <el-upload
         ref="upload"
         :limit="1"
@@ -378,7 +378,7 @@ export default {
         updateSupport: 0,
         // 設定上傳的請求標頭
         headers: { Authorization: "Bearer " + getToken() },
-        // 上傳的地址
+        // 上傳的位置
         url: process.env.VUE_APP_BASE_API + "/inventory/item/importData"
       }
     };
@@ -490,7 +490,7 @@ export default {
     /** 刪除按鈕操作 */
     handleDelete(row) {
       const itemIds = row.itemId || this.ids;
-      this.$modal.confirm('是否確認刪除物品資訊編號為"' + itemIds + '"的資料項？').then(function() {
+      this.$modal.confirm('是否確認刪除物品資訊編號為"' + itemIds + '"的資料選項？').then(function() {
         return delItem(itemIds);
       }).then(() => {
         this.getList();

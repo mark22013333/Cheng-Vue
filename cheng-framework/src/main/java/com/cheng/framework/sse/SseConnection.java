@@ -68,7 +68,7 @@ public class SseConnection {
     /**
      * 檢查是否過期
      * 
-     * @param timeoutMillis 超時時間（毫秒）
+     * @param timeoutMillis 逾時時間（毫秒）
      * @return true 如果已過期
      */
     public boolean isExpired(long timeoutMillis) {
@@ -87,7 +87,7 @@ public class SseConnection {
     }
     
     /**
-     * 添加元數據
+     * 新增元數據
      * 
      * @param key 鍵
      * @param value 值

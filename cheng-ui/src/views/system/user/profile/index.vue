@@ -6,22 +6,22 @@
         <el-tooltip content="左右分欄" placement="top">
           <el-button 
             :type="layoutMode === 'side' ? 'primary' : ''" 
-            icon="el-icon-menu" 
             @click="layoutMode = 'side'">
+            <el-icon><Menu /></el-icon>
           </el-button>
         </el-tooltip>
         <el-tooltip content="上下堆疊" placement="top">
           <el-button 
             :type="layoutMode === 'stack' ? 'primary' : ''" 
-            icon="el-icon-s-unfold" 
             @click="layoutMode = 'stack'">
+            <el-icon><Expand /></el-icon>
           </el-button>
         </el-tooltip>
         <el-tooltip content="全寬模式" placement="top">
           <el-button 
             :type="layoutMode === 'wide' ? 'primary' : ''" 
-            icon="el-icon-full-screen" 
             @click="layoutMode = 'wide'">
+            <el-icon><FullScreen /></el-icon>
           </el-button>
         </el-tooltip>
       </el-button-group>
@@ -144,24 +144,24 @@
         <el-card class="edit-card" shadow="hover" :class="'theme-' + cardTheme">
           <el-tabs v-model="selectedTab" class="profile-tabs">
             <el-tab-pane name="userinfo">
-              <span slot="label">
-                <i class="el-icon-edit"></i>
+              <template #label>
+                <el-icon style="margin-right: 6px;"><Edit /></el-icon>
                 編輯資料
-              </span>
+              </template>
               <userInfo :user="user" @refresh="getUser" />
             </el-tab-pane>
             <el-tab-pane name="resetPwd">
-              <span slot="label">
-                <i class="el-icon-lock"></i>
+              <template #label>
+                <el-icon style="margin-right: 6px;"><Lock /></el-icon>
                 修改密碼
-              </span>
+              </template>
               <resetPwd />
             </el-tab-pane>
             <el-tab-pane name="security">
-              <span slot="label">
-                <i class="el-icon-shield"></i>
+              <template #label>
+                <el-icon style="margin-right: 6px;"><Lock /></el-icon>
                 安全設定
-              </span>
+              </template>
               <div class="security-content">
                 <el-alert
                   title="安全提示"
@@ -216,10 +216,11 @@ import userAvatar from "./userAvatar"
 import userInfo from "./userInfo"
 import resetPwd from "./resetPwd"
 import {getUserProfile} from "@/api/system/user"
+import {Menu, Expand, FullScreen, Edit, Lock} from '@element-plus/icons-vue'
 
 export default {
   name: "Profile",
-  components: { userAvatar, userInfo, resetPwd },
+  components: { userAvatar, userInfo, resetPwd, Menu, Expand, FullScreen, Edit, Lock },
   data() {
     return {
       user: {},

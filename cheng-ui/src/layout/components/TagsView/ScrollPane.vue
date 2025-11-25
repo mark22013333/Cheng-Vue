@@ -1,101 +1,97 @@
 <template>
-  <el-scrollbar ref="scrollContainer" :vertical="false" class="scroll-container" @wheel.prevent="handleScroll">
+  <el-scrollbar
+    ref="scrollContainer"
+    :vertical="false"
+    class="scroll-container"
+    @wheel.prevent="handleScroll"
+  >
     <slot />
   </el-scrollbar>
 </template>
 
-<script>
-const tagAndTagSpacing = 4 // tagAndTagSpacing
+<script setup>
+import useTagsViewStore from '@/store/modules/tagsView'
 
-export default {
-  name: 'ScrollPane',
-  data() {
-    return {
-      left: 0
-    }
-  },
-  computed: {
-    scrollWrapper() {
-      // Element Plus Vue 3 版本的結構
-      return this.$refs.scrollContainer?.$refs?.wrap$ || this.$refs.scrollContainer?.$refs?.wrap
-    }
-  },
-  mounted() {
-    this.$nextTick(() => {
-      const wrapper = this.scrollWrapper
-      if (wrapper && wrapper.addEventListener) {
-        wrapper.addEventListener('scroll', this.emitScroll, true)
-      }
-    })
-  },
-  beforeUnmount() {
-    const wrapper = this.scrollWrapper
-    if (wrapper && wrapper.removeEventListener) {
-      wrapper.removeEventListener('scroll', this.emitScroll)
-    }
-  },
-  methods: {
-    handleScroll(e) {
-      const eventDelta = e.wheelDelta || -e.deltaY * 40
-      const $scrollWrapper = this.scrollWrapper
-      $scrollWrapper.scrollLeft = $scrollWrapper.scrollLeft + eventDelta / 4
-    },
-    emitScroll() {
-      this.$emit('scroll')
-    },
-    moveToTarget(currentTag) {
-      const $container = this.$refs.scrollContainer?.$el
-      const $scrollWrapper = this.scrollWrapper
-      const tagList = this.$parent.$refs.tag
+const tagAndTagSpacing = ref(4)
+const { proxy } = getCurrentInstance()
 
-      // 防禦性檢查：確保所有必要元素都存在
-      if (!$container || !$scrollWrapper || !tagList || tagList.length === 0) {
-        return
-      }
+const scrollWrapper = computed(() => proxy.$refs.scrollContainer.$refs.wrapRef)
 
-      const $containerWidth = $container.offsetWidth
-      let firstTag = null
-      let lastTag = null
+onMounted(() => {
+  scrollWrapper.value.addEventListener('scroll', emitScroll, true)
+})
 
-      // find first tag and last tag
-      if (tagList.length > 0) {
-        firstTag = tagList[0]
-        lastTag = tagList[tagList.length - 1]
-      }
+onBeforeUnmount(() => {
+  scrollWrapper.value.removeEventListener('scroll', emitScroll)
+})
 
-      if (firstTag === currentTag) {
-        $scrollWrapper.scrollLeft = 0
-      } else if (lastTag === currentTag) {
-        $scrollWrapper.scrollLeft = $scrollWrapper.scrollWidth - $containerWidth
-      } else {
-        // find preTag and nextTag
-        const currentIndex = tagList.findIndex(item => item === currentTag)
-        const prevTag = tagList[currentIndex - 1]
-        const nextTag = tagList[currentIndex + 1]
+function handleScroll(e) {
+  const eventDelta = e.wheelDelta || -e.deltaY * 40
+  const $scrollWrapper = scrollWrapper.value
+  $scrollWrapper.scrollLeft = $scrollWrapper.scrollLeft + eventDelta / 4
+}
 
-        // 防禦性檢查：確保前後標籤都存在
-        if (!prevTag || !nextTag) {
-          return
+const emits = defineEmits()
+const emitScroll = () => {
+  emits('scroll')
+}
+
+const tagsViewStore = useTagsViewStore()
+const visitedViews = computed(() => tagsViewStore.visitedViews)
+
+function moveToTarget(currentTag) {
+  const $container = proxy.$refs.scrollContainer.$el
+  const $containerWidth = $container.offsetWidth
+  const $scrollWrapper = scrollWrapper.value
+
+  let firstTag = null
+  let lastTag = null
+
+  // find first tag and last tag
+  if (visitedViews.value.length > 0) {
+    firstTag = visitedViews.value[0]
+    lastTag = visitedViews.value[visitedViews.value.length - 1]
+  }
+
+  if (firstTag === currentTag) {
+    $scrollWrapper.scrollLeft = 0
+  } else if (lastTag === currentTag) {
+    $scrollWrapper.scrollLeft = $scrollWrapper.scrollWidth - $containerWidth
+  } else {
+    const tagListDom = document.getElementsByClassName('tags-view-item')
+    const currentIndex = visitedViews.value.findIndex(item => item === currentTag)
+    let prevTag = null
+    let nextTag = null
+    for (const k in tagListDom) {
+      if (k !== 'length' && Object.hasOwnProperty.call(tagListDom, k)) {
+        if (tagListDom[k].dataset.path === visitedViews.value[currentIndex - 1].path) {
+          prevTag = tagListDom[k]
         }
-
-        // the tag's offsetLeft after of nextTag
-        const afterNextTagOffsetLeft = nextTag.$el.offsetLeft + nextTag.$el.offsetWidth + tagAndTagSpacing
-
-        // the tag's offsetLeft before of prevTag
-        const beforePrevTagOffsetLeft = prevTag.$el.offsetLeft - tagAndTagSpacing
-
-        if (afterNextTagOffsetLeft > $scrollWrapper.scrollLeft + $containerWidth) {
-          $scrollWrapper.scrollLeft = afterNextTagOffsetLeft - $containerWidth
-        } else if (beforePrevTagOffsetLeft < $scrollWrapper.scrollLeft) {
-          $scrollWrapper.scrollLeft = beforePrevTagOffsetLeft
+        if (tagListDom[k].dataset.path === visitedViews.value[currentIndex + 1].path) {
+          nextTag = tagListDom[k]
         }
       }
+    }
+
+    // the tag's offsetLeft after of nextTag
+    const afterNextTagOffsetLeft = nextTag.offsetLeft + nextTag.offsetWidth + tagAndTagSpacing.value
+
+    // the tag's offsetLeft before of prevTag
+    const beforePrevTagOffsetLeft = prevTag.offsetLeft - tagAndTagSpacing.value
+    if (afterNextTagOffsetLeft > $scrollWrapper.scrollLeft + $containerWidth) {
+      $scrollWrapper.scrollLeft = afterNextTagOffsetLeft - $containerWidth
+    } else if (beforePrevTagOffsetLeft < $scrollWrapper.scrollLeft) {
+      $scrollWrapper.scrollLeft = beforePrevTagOffsetLeft
     }
   }
 }
+
+defineExpose({
+  moveToTarget,
+})
 </script>
 
-<style lang="scss" scoped>
+<style lang='scss' scoped>
 .scroll-container {
   white-space: nowrap;
   position: relative;
@@ -105,7 +101,7 @@ export default {
     bottom: 0px;
   }
   :deep(.el-scrollbar__wrap) {
-    height: 49px;
+    height: 39px;
   }
 }
 </style>

@@ -1,9 +1,9 @@
-import axios from 'axios'
+﻿import axios from 'axios'
 import { ElLoading, ElMessage } from 'element-plus'
 import { saveAs } from 'file-saver'
 import { getToken } from '@/utils/auth'
 import errorCode from '@/utils/errorCode'
-import { blobValidate } from "@/utils/cheng"
+import { blobValidate } from '~/utils/cheng'
 
 const baseURL = import.meta.env.VITE_APP_BASE_API
 let downloadLoadingInstance
@@ -45,10 +45,7 @@ export default {
   },
   zip(url, name) {
     var url = baseURL + url
-    downloadLoadingInstance = ElLoading.service({
-      text: "正在下載數據，請稍候",
-      background: "rgba(0, 0, 0, 0.7)",
-    })
+    downloadLoadingInstance = ElLoading.service({ text: "正在下載資料，請稍候", background: "rgba(0, 0, 0, 0.7)", })
     axios({
       method: 'get',
       url: url,
@@ -65,7 +62,7 @@ export default {
       downloadLoadingInstance.close()
     }).catch((r) => {
       console.error(r)
-      ElMessage.error('下載檔案出現錯誤，請聯絡管理員！')
+      ElMessage.error('下載文件出現錯誤，請聯絡管理員！')
       downloadLoadingInstance.close()
     })
   },

@@ -30,7 +30,7 @@ public class CrawlerResult {
     /** 結束時間 */
     private long endTime;
     
-    /** 執行時長（毫秒） */
+    /** 執行時間（毫秒） */
     private long durationMs;
     
     /** 原始資料筆數 */
@@ -43,7 +43,7 @@ public class CrawlerResult {
     private int savedDataCount;
     
     /**
-     * 取得執行時長（秒）
+     * 取得執行時間（秒）
      */
     public double getDurationSeconds() {
         return durationMs / 1000.0;

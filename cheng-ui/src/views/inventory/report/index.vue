@@ -51,7 +51,7 @@
       <div class="report-content" v-if="currentReport">
         <el-divider content-position="left">{{ reportTitle }}</el-divider>
 
-        <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="100px">
+        <el-form :model="queryParams" ref="queryForm" :inline="true" label-width="100px">
           <template v-if="currentReport === 'stock'">
             <el-form-item label="最後進貨時間">
               <el-date-picker
@@ -76,9 +76,9 @@
               </el-select>
             </el-form-item>
             <el-form-item label-width="0px">
-              <el-button type="primary" icon="el-icon-search" @click="handleQuery">查詢</el-button>
-              <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
-              <el-button icon="el-icon-download" @click="exportReport">匯出Excel</el-button>
+              <el-button type="primary" icon="Search" @click="handleQuery">查詢</el-button>
+              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+              <el-button icon="Download" @click="exportReport">匯出Excel</el-button>
             </el-form-item>
           </template>
 
@@ -102,9 +102,9 @@
               ></el-date-picker>
             </el-form-item>
             <el-form-item label-width="0px">
-              <el-button type="primary" icon="el-icon-search" @click="handleQuery">查詢</el-button>
-              <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
-              <el-button icon="el-icon-download" @click="exportReport">匯出Excel</el-button>
+              <el-button type="primary" icon="Search" @click="handleQuery">查詢</el-button>
+              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+              <el-button icon="Download" @click="exportReport">匯出Excel</el-button>
             </el-form-item>
           </template>
 
@@ -122,9 +122,9 @@
               ></el-date-picker>
             </el-form-item>
             <el-form-item label-width="0px">
-              <el-button type="primary" icon="el-icon-search" @click="handleQuery">查詢</el-button>
-              <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
-              <el-button icon="el-icon-download" @click="exportReport">匯出Excel</el-button>
+              <el-button type="primary" icon="Search" @click="handleQuery">查詢</el-button>
+              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+              <el-button icon="Download" @click="exportReport">匯出Excel</el-button>
             </el-form-item>
           </template>
 
@@ -142,9 +142,9 @@
               ></el-date-picker>
             </el-form-item>
             <el-form-item label-width="0px">
-              <el-button type="primary" icon="el-icon-search" @click="handleQuery">查詢</el-button>
-              <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
-              <el-button icon="el-icon-download" @click="exportReport">匯出Excel</el-button>
+              <el-button type="primary" icon="Search" @click="handleQuery">查詢</el-button>
+              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+              <el-button icon="Download" @click="exportReport">匯出Excel</el-button>
             </el-form-item>
           </template>
         </el-form>

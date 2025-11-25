@@ -182,17 +182,11 @@
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="220" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="220" class-name="small-padding fixed-width operation-column">
         <template #default="scope">
-          <el-button
-            size="small"
-            type="text"
-            icon="el-icon-view"
-            @click="handleDetail(scope.row)"
-            v-hasPermi="['line:user:query']"
-          >詳情</el-button>
-          <el-dropdown size="small" @command="(command) => handleCommand(command, scope.row)">
-            <el-button size="small" type="text" icon="el-icon-d-arrow-right">更多</el-button>
+          <el-button link type="primary" icon="el-icon-view" @click="handleDetail(scope.row)" v-hasPermi="['line:user:query']">詳情</el-button>
+          <el-dropdown @command="(command) => handleCommand(command, scope.row)">
+            <el-button link type="primary" icon="el-icon-d-arrow-right">更多</el-button>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item command="bind" icon="el-icon-link" v-hasPermi="['line:user:bind']">
                 綁定
@@ -649,4 +643,5 @@ export default {
 .line-user-container {
   padding: 20px;
 }
+
 </style>

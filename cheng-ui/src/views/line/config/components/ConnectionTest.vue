@@ -214,8 +214,8 @@ export default {
           console.log('測試結果:', response.data)
           this.testResults = response.data
 
-          // 測試完成後，通知父組件重新整理列表（更新 webhook 狀態）
-          console.log('觸發 test-complete 事件，通知父組件重新載入列表')
+          // 測試完成後，通知父元件重新整理列表（更新 webhook 狀態）
+          console.log('觸發 test-complete 事件，通知父元件重新載入列表')
           this.$emit('test-complete')
         })
         .catch(error => {

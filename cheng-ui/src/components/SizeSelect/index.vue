@@ -1,51 +1,45 @@
 <template>
-  <el-dropdown trigger="click" @command="handleSetSize" popper-class="size-select-dropdown">
-    <div style="display: inline-flex; align-items: center; justify-content: center;">
-      <svg-icon class-name="size-icon" icon-class="size" />
-    </div>
-    <template #dropdown>
-      <el-dropdown-menu>
-        <el-dropdown-item v-for="item of sizeOptions" :key="item.value" :disabled="size===item.value" :command="item.value">
-          {{ item.label }}
-        </el-dropdown-item>
-      </el-dropdown-menu>
-    </template>
-  </el-dropdown>
+  <div>
+    <el-dropdown trigger="click" @command="handleSetSize">
+      <div class="size-icon--style">
+        <svg-icon class-name="size-icon" icon-class="size" />
+      </div>
+      <template #dropdown>
+        <el-dropdown-menu>
+          <el-dropdown-item v-for="item of sizeOptions" :key="item.value" :disabled="size === item.value" :command="item.value">
+            {{ item.label }}
+          </el-dropdown-item>
+        </el-dropdown-menu>
+      </template>
+    </el-dropdown>
+  </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      sizeOptions: [
-        { label: 'Default', value: 'default' },
-        { label: 'Medium', value: 'medium' },
-        { label: 'Small', value: 'small' },
-        { label: 'Mini', value: 'mini' }
-      ]
-    }
-  },
-  computed: {
-    size() {
-      return this.$store.getters.size
-    }
-  },
-  methods: {
-    handleSetSize(size) {
-      // 儲存到 Vuex 和 Cookie
-      this.$store.dispatch('app/setSize', size)
-      
-      // Vue 3 Element Plus 需要重新載入頁面才能應用大小變更
-      this.$message({
-        message: '介面大小將在重新整理後生效',
-        type: 'success'
-      })
-      
-      // 1秒後重新載入頁面
-      setTimeout(() => {
-        location.reload()
-      }, 1000)
-    }
-  }
+<script setup>
+import useAppStore from "@/store/modules/app"
+
+const appStore = useAppStore()
+const size = computed(() => appStore.size)
+const route = useRoute()
+const router = useRouter()
+const { proxy } = getCurrentInstance()
+const sizeOptions = ref([
+  { label: "較大", value: "large" },
+  { label: "預設", value: "default" },
+  { label: "稍小", value: "small" },
+])
+
+function handleSetSize(size) {
+  proxy.$modal.loading("正在設定版面大小，請稍候...")
+  appStore.setSize(size)
+  setTimeout("window.location.reload()", 1000)
 }
 </script>
+
+<style lang='scss' scoped>
+.size-icon--style {
+  font-size: 18px;
+  line-height: 50px;
+  padding-right: 7px;
+}
+</style>

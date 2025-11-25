@@ -240,7 +240,7 @@ public class ReflectUtils {
     }
 
     /**
-     * 改變private/protected的方法為public，尽量不呼叫實際改動的語句，避免JDK的SecurityManager抱怨。
+     * 改變private/protected的方法為public，盡量不呼叫實際改動的語句，避免JDK的SecurityManager抱怨。
      */
     @SuppressWarnings("deprecation")
     public static void makeAccessible(Method method) {
@@ -251,7 +251,7 @@ public class ReflectUtils {
     }
 
     /**
-     * 改變private/protected的成員變數為public，尽量不呼叫實際改動的語句，避免JDK的SecurityManager抱怨。
+     * 改變private/protected的成員變數為public，盡量不呼叫實際改動的語句，避免JDK的SecurityManager抱怨。
      */
     @SuppressWarnings("deprecation")
     public static void makeAccessible(Field field) {

@@ -101,7 +101,7 @@ public interface ISysLineRichMenuAliasService {
     List<SysLineRichMenu> findMenusUsingAlias(String aliasId);
 
     /**
-     * 從 LINE 平台獲取別名列表（用於驗證）
+     * 從 LINE 平台取得別名列表（用於驗證）
      * 
      * @param configId Config ID
      * @return LINE 平台上的別名 ID 列表
@@ -122,7 +122,7 @@ public interface ISysLineRichMenuAliasService {
      * 
      * @param aliasId        Alias ID
      * @param newRichMenuId  新的 Rich Menu ID
-     * @param configId       Config ID（用於獲取 access token）
+     * @param configId       Config ID（用於取得 access token）
      * @return 是否成功
      */
     boolean updateAliasRichMenuId(String aliasId, String newRichMenuId, Integer configId);

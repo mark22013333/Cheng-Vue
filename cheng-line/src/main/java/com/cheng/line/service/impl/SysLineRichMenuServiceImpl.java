@@ -1073,7 +1073,7 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
             var builder = OkHttpUtils.builder()
                     .addLineAuthHeader(accessToken);
 
-            // 添加所有參數
+            // 新增所有參數
             for (Map.Entry<String, Object> entry : params.entrySet()) {
                 builder.addParam(entry.getKey(), entry.getValue());
             }
