@@ -113,6 +113,7 @@
             :src="getImageUrl(scope.row.imageUrl)"
             :preview-src-list="[getImageUrl(scope.row.imageUrl)]"
             :hide-on-click-modal="true"
+            :preview-teleported="true"
             fit="cover"
             style="width: 50px; height: 50px; border-radius: 4px; cursor: pointer;"
           >
@@ -317,6 +318,7 @@
             :src="getImageUrl(detailData.imageUrl)"
             :preview-src-list="[getImageUrl(detailData.imageUrl)]"
             :hide-on-click-modal="true"
+            :preview-teleported="true"
             fit="contain"
             style="max-width: 200px; max-height: 200px; border-radius: 4px; cursor: pointer;"
           >
@@ -579,25 +581,6 @@ export default {
     this.getCategoryList();
   },
   mounted() {
-    // 監聽圖片點擊事件，動態設定 z-index
-    document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('el-image__inner')) {
-        setTimeout(() => {
-          const viewer = document.querySelector('.el-image-viewer__wrapper');
-          if (viewer) {
-            // 強制設定 z-index 為最大值（覆蓋 Element Plus 的 inline style）
-            viewer.style.zIndex = '2147483647';
-            viewer.style.position = 'fixed';
-            
-            // 也設定遮罩層的 z-index
-            const mask = document.querySelector('.el-image-viewer__mask');
-            if (mask) {
-              mask.style.zIndex = '2147483646';
-            }
-          }
-        }, 50);
-      }
-    });
   },
   methods: {
     /** 查詢物品與庫存整合列表 */

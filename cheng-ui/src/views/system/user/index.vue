@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <el-row :gutter="20">
-      <splitpanes :horizontal="this.$store.getters.device === 'mobile'" class="default-theme">
+      <splitpanes :horizontal="device === 'mobile'" class="default-theme">
         <pane size="16">
           <el-col>
             <div class="head-container">
@@ -147,15 +147,15 @@
                              @click="handleDelete(scope.row)">刪除
                   </el-button>
                   <el-dropdown @command="(command) => handleCommand(command, scope.row)"
-                               v-hasPermi="['system:user:resetPwd', 'system:user:edit']">
+                               v-if="checkPermi(['system:user:resetPwd', 'system:user:edit'])">
                     <el-button type="primary" link icon="DArrowRight">更多</el-button>
                     <template #dropdown>
                         <el-dropdown-menu>
-                          <el-dropdown-item v-hasPermi="['system:user:resetPwd']" command="handleResetPwd"
+                          <el-dropdown-item v-if="checkPermi(['system:user:resetPwd'])" command="handleResetPwd"
                                             icon="Key">重置密碼
                           </el-dropdown-item>
                           <el-dropdown-item command="handleAuthRole" icon="CircleCheck"
-                                            v-hasPermi="['system:user:edit']">分配角色
+                                            v-if="checkPermi(['system:user:edit'])">分配角色
                           </el-dropdown-item>
                         </el-dropdown-menu>
                     </template>
@@ -303,6 +303,11 @@ import {
   DArrowRight, Key, CircleCheck, UploadFilled
 } from '@element-plus/icons-vue'
 
+import { mapState } from 'pinia'
+import useAppStore from '@/store/modules/app'
+import { useDict } from '@/utils/dict'
+import { reactive } from 'vue'
+import { checkPermi } from "@/utils/permission"
 import {
   addUser,
   changeUserStatus,
@@ -321,13 +326,24 @@ import "splitpanes/dist/splitpanes.css"
 
 export default {
   name: "User",
-  dicts: ['sys_normal_disable', 'sys_user_sex'],
+  // dicts: ['sys_normal_disable', 'sys_user_sex'], // Removed as we use setup now
   // 2. 註冊 Icons
   components: {
     Treeselect,
     Splitpanes,
     Pane,
     Search, Plus, Edit, Delete, Refresh, Upload, Download, DArrowRight, Key, CircleCheck, UploadFilled
+  },
+  setup() {
+    const { sys_normal_disable, sys_user_sex } = useDict('sys_normal_disable', 'sys_user_sex')
+    return {
+      dict: {
+        type: reactive({
+          sys_normal_disable,
+          sys_user_sex
+        })
+      }
+    }
   },
   data() {
     return {
@@ -433,6 +449,9 @@ export default {
         ]
       }
     }
+  },
+  computed: {
+    ...mapState(useAppStore, ['device']),
   },
   watch: {
     // 根據名稱筛選部門樹
@@ -671,7 +690,8 @@ export default {
         return
       }
       this.$refs.upload.submit()
-    }
+    },
+    checkPermi
   }
 }
 </script>

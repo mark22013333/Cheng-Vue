@@ -2,290 +2,177 @@
   <div class="app-container">
     <el-card class="box-card">
       <div slot="header" class="clearfix">
-        <span>掃描功能</span>
-        <el-button style="float: right; padding: 3px 0" type="text" @click="handleBack">返回</el-button>
+        <span>行動掃碼</span>
       </div>
-
-      <!-- 掃描區域 -->
+      
       <div class="scan-container">
         <el-row :gutter="20">
-          <el-col :span="12">
-            <el-card shadow="hover">
-              <div slot="header">
-                <i class="el-icon-camera"></i>
-                <span>攝影機掃描</span>
+          <!-- 左側：掃描區 -->
+          <el-col :xs="24" :sm="12" :md="8" :lg="6">
+            <div class="camera-scan">
+              <div id="qr-reader" style="width: 100%; height: 300px;"></div>
+              <div class="scan-controls">
+                <el-button type="primary" icon="Camera" @click="startScan" :disabled="isScanning">開始掃描</el-button>
+                <el-button type="danger" icon="SwitchButton" @click="stopScan" :disabled="!isScanning">停止</el-button>
               </div>
-              <div class="camera-scan">
-                <div id="qr-reader" style="width: 100%; height: 300px;"></div>
-                <div class="scan-controls">
-                  <el-button type="primary" @click="startScan" :disabled="isScanning">
-                    <i class="el-icon-video-camera"></i>
-                    {{ isScanning ? '掃描中...' : '開始掃描' }}
-                  </el-button>
-                  <el-button @click="stopScan" :disabled="!isScanning">
-                    <i class="el-icon-video-pause"></i>
-                    停止掃描
-                  </el-button>
-                </div>
-              </div>
-            </el-card>
+            </div>
+            
+            <div class="manual-input">
+              <el-divider content-position="center">或手動輸入</el-divider>
+              <el-form :model="scanForm" :inline="true" @submit.native.prevent>
+                <el-form-item>
+                  <el-input v-model="scanForm.scanCode" placeholder="請輸入條碼/ISBN" clearable @keyup.enter.native="handleManualScan">
+                    <template #append>
+                      <el-button icon="Search" @click="handleManualScan"></el-button>
+                    </template>
+                  </el-input>
+                </el-form-item>
+              </el-form>
+            </div>
           </el-col>
-
-          <el-col :span="12">
-            <el-card shadow="hover">
-              <div slot="header">
-                <i class="el-icon-edit"></i>
-                <span>手動輸入</span>
+          
+          <!-- 右側：結果區 -->
+          <el-col :xs="24" :sm="12" :md="16" :lg="18">
+            <div v-if="scanResult" class="result-card">
+              <el-descriptions title="掃描結果" :column="1" border>
+                <template #extra>
+                  <el-tag :type="scanResult.stockStatus === '0' ? 'success' : 'danger'">
+                    {{ scanResult.stockStatusText || (scanResult.stockStatus === '0' ? '正常' : '缺貨') }}
+                  </el-tag>
+                </template>
+                
+                <el-descriptions-item label="圖片">
+                  <div class="item-image">
+                    <el-image 
+                      style="width: 150px; height: 150px"
+                      :src="getImageUrl(scanResult.imageUrl)" 
+                      :preview-src-list="[getImageUrl(scanResult.imageUrl)]"
+                      fit="contain">
+                      <template #error>
+                        <div class="image-slot">
+                          <el-icon><Picture /></el-icon>
+                        </div>
+                      </template>
+                    </el-image>
+                  </div>
+                </el-descriptions-item>
+                
+                <el-descriptions-item label="物品名稱">
+                  <span style="font-size: 18px; font-weight: bold;">{{ scanResult.itemName }}</span>
+                </el-descriptions-item>
+                
+                <el-descriptions-item label="物品編碼">{{ scanResult.itemCode }}</el-descriptions-item>
+                <el-descriptions-item label="條碼/ISBN">{{ scanResult.barcode }}</el-descriptions-item>
+                <el-descriptions-item label="作者" v-if="scanResult.author">{{ scanResult.author }}</el-descriptions-item>
+                <el-descriptions-item label="分類">{{ scanResult.categoryName }}</el-descriptions-item>
+                <el-descriptions-item label="存放位置">{{ scanResult.location }}</el-descriptions-item>
+                
+                <el-descriptions-item label="庫存數量">
+                  <span class="text-success" style="font-size: 16px;">{{ scanResult.totalQuantity }}</span>
+                  <span style="margin-left: 10px; color: #909399;">(可用: {{ scanResult.availableQty }})</span>
+                </el-descriptions-item>
+              </el-descriptions>
+              
+              <div class="action-buttons" style="margin-top: 20px; text-align: center;">
+                <el-button type="primary" size="large" icon="Top" @click="handleStockIn">入庫</el-button>
+                <el-button type="warning" size="large" icon="Bottom" @click="handleStockOut">出庫</el-button>
+                <el-button type="info" size="large" icon="View" @click="handleViewDetail">詳情</el-button>
               </div>
-              <div class="manual-input">
-                <el-form :model="scanForm" ref="scanForm" label-width="100px">
-                  <el-form-item label="掃描類型">
-                    <el-radio-group v-model="scanForm.scanType">
-                      <el-radio label="1">條碼</el-radio>
-                      <el-radio label="2">QR碼</el-radio>
-                    </el-radio-group>
-                  </el-form-item>
-                  <el-form-item label="掃描內容">
-                    <el-input
-                      v-model="scanForm.scanCode"
-                      placeholder="請輸入條碼或QR碼內容"
-                      @keyup.enter.native="handleManualScan"
-                    >
-                      <el-button slot="append" @click="handleManualScan">
-                        <i class="el-icon-search"></i>
-                        查詢
-                      </el-button>
-                    </el-input>
-                  </el-form-item>
-                </el-form>
-              </div>
-            </el-card>
+            </div>
+            
+            <el-empty v-else description="請掃描或輸入條碼查詢物品" :image-size="200"></el-empty>
+            
+            <!-- 爬蟲任務列表 -->
+            <div v-if="activeTasks.length > 0" style="margin-top: 20px;">
+              <el-divider content-position="left">正在抓取書籍資訊</el-divider>
+              <el-card v-for="task in activeTasks" :key="task.taskId" style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <span style="font-weight: bold;">ISBN: {{ task.isbn }}</span>
+                    <el-tag size="small" style="margin-left: 10px;">{{ getStatusText(task.status) }}</el-tag>
+                  </div>
+                  <el-progress type="circle" :percentage="task.progress" :width="40"></el-progress>
+                </div>
+                <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                  {{ task.message }}
+                </div>
+              </el-card>
+            </div>
           </el-col>
         </el-row>
       </div>
-
-      <!-- 掃描結果 -->
-      <div class="scan-result" v-if="scanResult">
-        <el-divider content-position="left">
-          <i class="el-icon-tickets"></i> 掃描結果
-        </el-divider>
-        <el-card shadow="hover" class="result-card">
-          <el-row :gutter="20">
-            <el-col :span="6">
-              <div class="item-image">
-                <el-image
-                  :src="getImageUrl(scanResult.imageUrl) || require('@/assets/images/profile.jpg')"
-                  fit="cover"
-                  style="width: 180px; height: 180px; border-radius: 8px;"
-                >
-                  <div slot="error" class="image-slot">
-                    <i class="el-icon-picture-outline"></i>
-                  </div>
-                </el-image>
-              </div>
-            </el-col>
-            <el-col :span="18">
-              <div class="item-info">
-                <h3>
-                  {{ scanResult.itemName }}
-                  <el-tag v-if="scanResult.barcode && isValidIsbn(scanResult.barcode)"
-                          type="warning" size="small" style="margin-left: 10px;">
-                    <i class="el-icon-reading"></i> 書籍
-                  </el-tag>
-                </h3>
-                <el-descriptions :column="2" border size="default">
-                  <el-descriptions-item label="物品編碼">
-                    <el-tag size="small">{{ scanResult.itemCode }}</el-tag>
-                  </el-descriptions-item>
-                  <el-descriptions-item label="分類">{{ scanResult.categoryName || '未分類' }}</el-descriptions-item>
-                  <el-descriptions-item label="條碼/ISBN">{{ scanResult.barcode || '-' }}</el-descriptions-item>
-                  <el-descriptions-item label="規格">{{ scanResult.specification || '-' }}</el-descriptions-item>
-                  <el-descriptions-item label="單位">{{ scanResult.unit || '個' }}</el-descriptions-item>
-                  <el-descriptions-item label="品牌">{{ scanResult.brand || '-' }}</el-descriptions-item>
-                  <el-descriptions-item label="型號">{{ scanResult.model || '-' }}</el-descriptions-item>
-                  <el-descriptions-item label="庫存數量">
-                    <span :class="{'text-danger': scanResult.stockQuantity <= scanResult.minStock}">
-                      <strong>{{ scanResult.stockQuantity || 0 }}</strong>
-                    </span>
-                  </el-descriptions-item>
-                  <el-descriptions-item label="可用數量">
-                    <span class="text-success">
-                      <strong>{{ scanResult.availableQuantity || 0 }}</strong>
-                    </span>
-                  </el-descriptions-item>
-                  <el-descriptions-item label="存放位置">
-                    <el-tag type="info" size="small">{{ scanResult.location || '未設定' }}</el-tag>
-                  </el-descriptions-item>
-                  <el-descriptions-item label="供應商">{{ scanResult.supplier || '-' }}</el-descriptions-item>
-                  <el-descriptions-item label="說明" :span="2">{{ scanResult.description || scanResult.remark || '無' }}</el-descriptions-item>
-                </el-descriptions>
-
-                <div class="action-buttons" style="margin-top: 20px;">
-                  <el-button type="primary" icon="el-icon-sold-out" @click="handleBorrow">借出物品</el-button>
-                  <el-button type="success" icon="el-icon-download" @click="handleStockIn">入庫</el-button>
-                  <el-button type="warning" icon="el-icon-upload2" @click="handleStockOut">出庫</el-button>
-                  <el-button type="info" icon="el-icon-view" @click="handleViewDetail">查看詳情</el-button>
-                </div>
-              </div>
-            </el-col>
-          </el-row>
-        </el-card>
-      </div>
-
-      <!-- 掃描歷史 -->
-      <div class="scan-history" v-if="scanHistory.length > 0">
-        <el-divider content-position="left">掃描歷史</el-divider>
-        <el-table :data="scanHistory" style="width: 100%" stripe>
-          <el-table-column prop="scanTime" label="掃描時間" width="180">
-            <template #default="scope">
-              {{ parseTime(scope.row.scanTime, '{y}-{m}-{d} {h}:{i}:{s}') }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="codeType" label="類型" width="80">
-            <template #default="scope">
-              <el-tag :type="scope.row.codeType === 'ISBN' ? 'warning' : 'info'" size="small">
-                {{ scope.row.codeType || '一般' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="scanType" label="掃描方式" width="100">
-            <template #default="scope">
-              <el-tag :type="scope.row.scanType === '1' ? 'primary' : 'success'" size="small">
-                {{ scope.row.scanType === '1' ? '條碼' : 'QR碼' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="scanCode" label="掃描內容" width="180"/>
-          <el-table-column prop="itemName" label="物品名稱" show-overflow-tooltip/>
-          <el-table-column prop="scanResult" label="結果" width="80">
-            <template #default="scope">
-              <el-tag :type="scope.row.scanResult === '0' ? 'success' : 'danger'" size="small">
-                {{ scope.row.scanResult === '0' ? '成功' : '失敗' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="150" fixed="right">
-            <template #default="scope">
-              <el-button size="small" type="primary" @click="handleRescan(scope.row)">
-                <i class="el-icon-refresh"></i> 重新掃描
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
     </el-card>
-
-    <!-- 借出對話框 -->
-    <el-dialog title="借出物品" :model-value="borrowDialogVisible" @update:model-value="val => borrowDialogVisible = val" width="500px">
-      <el-form :model="borrowForm" ref="borrowForm" :rules="borrowRules" label-width="80px">
-        <el-form-item label="物品名稱">
-          <el-input v-model="borrowForm.itemName" disabled/>
-        </el-form-item>
-        <el-form-item label="借出數量" prop="quantity">
-          <el-input-number v-model="borrowForm.quantity" :min="1" :max="scanResult && scanResult.availableQuantity"/>
-        </el-form-item>
-        <el-form-item label="借用目的" prop="purpose">
-          <el-input v-model="borrowForm.purpose" type="textarea" placeholder="請輸入借用目的"/>
-        </el-form-item>
-        <el-form-item label="預計歸還">
-          <el-date-picker
-            v-model="borrowForm.expectedReturn"
-            type="datetime"
-            placeholder="選擇預計歸還時間"
-            format="yyyy-MM-dd HH:mm:ss"
-            value-format="yyyy-MM-dd HH:mm:ss">
-          </el-date-picker>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="borrowDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="submitBorrow">確 定</el-button>
-      </div>
-    </el-dialog>
-
+    
     <!-- 入庫對話框 -->
-    <el-dialog title="入庫操作" :model-value="stockInDialogVisible" @update:model-value="val => stockInDialogVisible = val" width="400px">
-      <el-form :model="stockForm" ref="stockInForm" :rules="stockRules" label-width="80px">
-        <el-form-item label="物品名稱">
-          <el-input v-model="stockForm.itemName" disabled/>
+    <el-dialog title="快速入庫" v-model="stockInDialogVisible" width="90%" append-to-body>
+      <el-form ref="stockInForm" :model="stockForm" :rules="stockRules" label-width="80px">
+        <el-form-item label="物品">
+          <span>{{ stockForm.itemName }}</span>
         </el-form-item>
-        <el-form-item label="入庫數量" prop="quantity">
-          <el-input-number v-model="stockForm.quantity" :min="1"/>
+        <el-form-item label="數量" prop="quantity">
+          <el-input-number v-model="stockForm.quantity" :min="1" :max="10000" style="width: 100%"></el-input-number>
         </el-form-item>
-        <el-form-item label="入庫原因">
-          <el-input v-model="stockForm.reason" placeholder="請輸入入庫原因（選填）"/>
+        <el-form-item label="備註" prop="reason">
+          <el-input v-model="stockForm.reason" placeholder="入庫原因(選填)"></el-input>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="stockInDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="submitStockIn">確 定</el-button>
-      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="stockInDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitStockIn">確定</el-button>
+        </span>
+      </template>
     </el-dialog>
-
+    
     <!-- 出庫對話框 -->
-    <el-dialog title="出庫操作" :model-value="stockOutDialogVisible" @update:model-value="val => stockOutDialogVisible = val" width="400px">
-      <el-form :model="stockForm" ref="stockOutForm" :rules="stockRules" label-width="80px">
-        <el-form-item label="物品名稱">
-          <el-input v-model="stockForm.itemName" disabled/>
+    <el-dialog title="快速出庫" v-model="stockOutDialogVisible" width="90%" append-to-body>
+      <el-form ref="stockOutForm" :model="stockForm" :rules="stockRules" label-width="80px">
+        <el-form-item label="物品">
+          <span>{{ stockForm.itemName }}</span>
         </el-form-item>
-        <el-form-item label="出庫數量" prop="quantity">
-          <el-input-number v-model="stockForm.quantity" :min="1" :max="scanResult && scanResult.availableQuantity"/>
+        <el-form-item label="數量" prop="quantity">
+          <el-input-number v-model="stockForm.quantity" :min="1" :max="scanResult ? scanResult.availableQty : 10000" style="width: 100%"></el-input-number>
         </el-form-item>
-        <el-form-item label="出庫原因" prop="reason">
-          <el-input v-model="stockForm.reason" placeholder="請輸入出庫原因"/>
+        <el-form-item label="備註" prop="reason">
+          <el-input v-model="stockForm.reason" placeholder="出庫原因(選填)"></el-input>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="stockOutDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="submitStockOut">確 定</el-button>
-      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="stockOutDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitStockOut">確定</el-button>
+        </span>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import {Html5QrcodeScanner, Html5QrcodeScanType} from "html5-qrcode";
-import {scanIsbn, scanCode} from "@/api/inventory/scan";
-import {getItem} from "@/api/inventory/item";
-import {borrowItem} from "@/api/inventory/borrow";
-import {stockIn, stockOut} from "@/api/inventory/stock";
-import {createCrawlTask, getTaskStatus} from "@/api/inventory/crawlTask";
-import {parseTime} from "@/utils/cheng";
-import {getImageUrl} from "@/utils/image";
+import { Html5Qrcode } from "html5-qrcode";
+import { getManagement, stockIn, stockOut } from "@/api/inventory/management";
+import { getItem } from "@/api/inventory/item";
+import { crawlBookByIsbn } from "@/api/inventory/scan";
+import { getImageUrl } from "@/utils/image";
+import { mapState } from 'pinia';
+import useUserStore from '@/store/modules/user';
+import { Camera, SwitchButton, Search, Picture, Top, Bottom, View } from '@element-plus/icons-vue';
 
 export default {
-  name: "Scan",
+  name: "MobileScan",
+  components: {
+    Camera, SwitchButton, Search, Picture, Top, Bottom, View
+  },
   data() {
     return {
-      // 掃描狀態
+      html5QrCode: null,
       isScanning: false,
-      // 掃描表單
       scanForm: {
-        scanType: '1', // 1條碼 2QR碼
-        scanCode: ''
+        scanCode: '',
+        scanType: 'BARCODE' // BARCODE, QRCODE
       },
-      // 掃描結果
       scanResult: null,
-      // 掃描歷史
-      scanHistory: [],
-      // 借出對話框
-      borrowDialogVisible: false,
-      borrowForm: {
-        itemId: null,
-        itemName: '',
-        quantity: 1,
-        purpose: '',
-        expectedReturn: null
-      },
-      borrowRules: {
-        quantity: [
-          {required: true, message: "借出數量不能為空", trigger: "blur"}
-        ],
-        purpose: [
-          {required: true, message: "借用目的不能為空", trigger: "blur"}
-        ]
-      },
-      // 庫存操作對話框
+      
+      // 入庫/出庫表單
       stockInDialogVisible: false,
       stockOutDialogVisible: false,
       stockForm: {
@@ -296,265 +183,164 @@ export default {
       },
       stockRules: {
         quantity: [
-          {required: true, message: "數量不能為空", trigger: "blur"}
+          { required: true, message: '請輸入數量', trigger: 'blur' }
         ]
       },
-      // QR掃描器
-      html5QrCode: null,
-      // SSE 連線管理
-      sseConnections: new Map(),
-      // 進行中的任務列表
-      activeTasks: []
+      
+      // 爬蟲任務
+      activeTasks: [],
+      sseConnections: new Map()
     };
   },
-  mounted() {
-    this.initQrScanner();
-    this.loadScanHistory();
+  computed: {
+    ...mapState(useUserStore, ['id', 'name', 'nickName']),
   },
-  beforeDestroy() {
+  mounted() {
+    // 檢查相機權限
+    Html5Qrcode.getCameras().then(devices => {
+      if (devices && devices.length) {
+        console.log("Found cameras", devices);
+      }
+    }).catch(err => {
+      console.error("Error getting cameras", err);
+    });
+  },
+  beforeUnmount() {
     this.stopScan();
     // 關閉所有 SSE 連線
-    if (this.sseConnections) {
-      this.sseConnections.forEach(eventSource => eventSource.close());
-      this.sseConnections.clear();
-    }
+    this.sseConnections.forEach((source) => {
+      source.close();
+    });
+    this.sseConnections.clear();
   },
   methods: {
-    parseTime,
     getImageUrl,
-
-    /** 初始化QR掃描器 */
-    initQrScanner() {
-      try {
-        // 檢測是否為手機端
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-        const config = {
-          fps: 10,
-          qrbox: isMobile ? {width: 200, height: 200} : {width: 250, height: 250},
-          aspectRatio: 1.0,
-          // 手機端優化設定
-          ...(isMobile && {
-            // 支援近距離掃描
-            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-            // 優化手機端攝影機設定
-            videoConstraints: {
-              facingMode: "environment", // 使用後置攝影機
-              focusMode: "continuous", // 連續對焦
-              advanced: [
-                {focusMode: "continuous"},
-                {focusDistance: {min: 0.1, max: 10}}, // 支援近距離對焦
-                {zoom: {min: 1, max: 3}} // 支援縮放
-              ]
-            }
-          })
-        };
-
-        this.html5QrCode = new Html5QrcodeScanner("qr-reader", config, false);
-        console.log('QR掃描器初始化成功');
-      } catch (error) {
-        console.error('QR掃描器初始化失敗:', error);
-        this.$message.error('QR掃描器初始化失敗，請檢查攝影機權限');
-      }
-    },
-
+    
     /** 開始掃描 */
     startScan() {
-      if (!this.html5QrCode) {
-        this.initQrScanner();
-      }
-
-      this.isScanning = true;
-
-      try {
-        this.html5QrCode.render(
-          (decodedText, decodedResult) => {
-            // 掃描成功Callback
-            this.handleScanSuccess(decodedText);
-          },
-          (error) => {
-            // 掃描失敗Callback（可以忽略，因為會持續掃描）
-            console.warn('掃描中...', error);
-          }
-        );
-      } catch (error) {
-        console.error('啟動掃描失敗:', error);
-        this.$message.error('啟動掃描失敗，請檢查攝影機權限');
-        this.isScanning = false;
-      }
-      this.$message.success('掃描功能已啟動，請將條碼或QR碼對準攝影機');
+      if (this.isScanning) return;
+      
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      
+      this.html5QrCode = new Html5Qrcode("qr-reader");
+      
+      this.html5QrCode.start(
+        { facingMode: "environment" }, // 使用後置鏡頭
+        config,
+        this.onScanSuccess,
+        this.onScanFailure
+      ).then(() => {
+        this.isScanning = true;
+      }).catch(err => {
+        console.error("Error starting scanner", err);
+        this.$message.error("無法啟動相機，請檢查權限設定");
+      });
     },
-
+    
     /** 停止掃描 */
     stopScan() {
-      this.isScanning = false;
-      if (this.html5QrCode) {
-        try {
+      if (this.html5QrCode && this.isScanning) {
+        this.html5QrCode.stop().then(() => {
           this.html5QrCode.clear();
-          this.$message.info('掃描已停止');
-        } catch (error) {
-          console.error('停止掃描失敗:', error);
-        }
+          this.isScanning = false;
+        }).catch(err => {
+          console.error("Failed to stop scanner", err);
+        });
       }
     },
-
-    /** 掃描成功處理 */
-    handleScanSuccess(decodedText) {
-      this.scanForm.scanCode = decodedText;
+    
+    /** 掃描成功回調 */
+    onScanSuccess(decodedText, decodedResult) {
+      console.log(`Scan result: ${decodedText}`, decodedResult);
+      // 暫停掃描，避免重複觸發
       this.stopScan();
-      this.performScan(decodedText, this.scanForm.scanType);
-      this.$message.success(`掃描成功: ${decodedText}`);
+      
+      this.scanForm.scanCode = decodedText;
+      this.handleManualScan();
     },
-
-    /** 手動掃描 */
+    
+    /** 掃描失敗回調 */
+    onScanFailure(error) {
+      // console.warn(`Code scan error = ${error}`);
+    },
+    
+    /** 執行查詢 */
     handleManualScan() {
-      if (!this.scanForm.scanCode) {
-        this.$message.warning('請輸入掃描內容');
+      const code = this.scanForm.scanCode.trim();
+      if (!code) {
+        this.$message.warning("請輸入條碼或ISBN");
         return;
       }
-      this.performScan(this.scanForm.scanCode, this.scanForm.scanType);
-    },
-
-    /** 執行掃描 */
-    performScan(scanCode, scanType) {
-      // 檢查是否為 ISBN 格式（10位或13位數字）
-      const isIsbn = this.isValidIsbn(scanCode);
-
-      if (isIsbn) {
-        // 使用 ISBN 掃描 API（會自動爬取書籍資訊）
-        this.performIsbnScan(scanCode, scanType);
-      } else {
-        // 使用一般掃描 API
-        this.performNormalScan(scanCode, scanType);
-      }
-    },
-
-    /** 執行 ISBN 掃描（使用非同步爬取）*/
-    performIsbnScan(code, scanType) {
-      console.log('開始建立 ISBN 爬取任務:', code);
       
-      // 建立爬取任務（注意：createCrawlTask 接收 isbn 字串，不是物件）
-      createCrawlTask(code).then(response => {
-        if (response.code === 200 && response.data) {
-          const taskId = response.data;  // response.data 就是 taskId 字串
-          console.log('任務建立成功, taskId:', taskId);
-          
-          // 加入任務列表
-          this.activeTasks.push({
-            taskId: taskId,
-            isbn: code,
-            status: 'PENDING'
-          });
-          
-          // 顯示通知
-          this.$notify({
-            title: 'ISBN 爬取任務已建立',
-            message: `ISBN ${code} 正在佇列中處理，請稍候...`,
-            type: 'info',
-            duration: 3000
-          });
-          
-          // 使用 SSE 訂閱任務狀態
-          this.subscribeTaskStatus(taskId, code, scanType);
+      this.performScan(code);
+    },
+    
+    /** 執行掃描邏輯 */
+    performScan(code) {
+      const loading = this.$loading({
+        lock: true,
+        text: '查詢中...',
+        background: 'rgba(0, 0, 0, 0.7)'
+      });
+      
+      // 1. 先嘗試在系統中查詢
+      getManagement({ itemCode: code }).then(response => {
+        if (response.rows && response.rows.length > 0) {
+          // 找到了
+          this.scanResult = response.rows[0];
+          this.$message.success("查詢成功");
+          loading.close();
         } else {
-          this.$message.error('建立任務失敗');
+          // 2. 系統中沒有，嘗試用 ISBN 查詢 (如果是 ISBN 格式)
+          // 簡單判斷是否為 ISBN (10或13位數字)
+          const isIsbn = /^(97(8|9))?\d{9}(\d|X)$/.test(code);
+          
+          if (isIsbn) {
+            this.$confirm(`系統中找不到此物品，是否嘗試從網路抓取書籍資訊 (ISBN: ${code})?`, '提示', {
+              confirmButtonText: '抓取',
+              cancelButtonText: '取消',
+              type: 'info'
+            }).then(() => {
+              this.startCrawlTask(code);
+              loading.close();
+            }).catch(() => {
+              loading.close();
+            });
+          } else {
+            this.$message.warning("系統中找不到此物品");
+            this.scanResult = null;
+            loading.close();
+          }
         }
-      }).catch(error => {
-        console.error('建立任務失敗', error);
-        this.$message.error('建立任務失敗：' + (error.msg || '未知錯誤'));
+      }).catch(err => {
+        console.error(err);
+        this.$message.error("查詢失敗");
+        loading.close();
       });
     },
-
-    /** 執行一般掃描 */
-    performNormalScan(code, scanType) {
-      scanCode({ scanCode: code, scanType: scanType }).then(response => {
-        if (response.code === 200 && response.data) {
-          this.scanResult = response.data;
-          this.addToHistory(code, scanType, '0', response.data.itemName, '一般');
-          this.$message.success('掃描成功！');
-        } else {
-          this.addToHistory(code, scanType, '1', '', '一般');
-          this.$message.error('掃描失敗：未找到對應物品');
-        }
-      }).catch(error => {
-        this.addToHistory(code, scanType, '1', '', '一般');
-        this.$message.error('掃描失敗：' + (error.msg || '未找到對應物品'));
+    
+    /** 啟動爬蟲任務 */
+    startCrawlTask(isbn) {
+      crawlBookByIsbn(isbn).then(response => {
+        const taskId = response.data; // 假設返回 taskId
+        this.$message.success("已啟動書籍抓取任務");
+        
+        // 加入任務列表
+        this.activeTasks.push({
+          taskId: taskId,
+          isbn: isbn,
+          status: 'RUNNING',
+          progress: 0,
+          message: '正在啟動...'
+        });
+        
+        // 訂閱 SSE
+        this.subscribeTaskStatus(taskId, isbn, 'ISBN');
+      }).catch(err => {
+        this.$message.error("啟動抓取任務失敗: " + err.msg);
       });
     },
-
-    /** 驗證 ISBN 格式 */
-    isValidIsbn(code) {
-      if (!code) return false;
-      // 移除可能的連字號或空格
-      const cleanCode = code.replace(/[-\s]/g, '');
-      // 檢查是否為10位或13位數字
-      return /^\d{10}$/.test(cleanCode) || /^\d{13}$/.test(cleanCode);
-    },
-
-    /** 新增到掃描歷史 */
-    addToHistory(scanCode, scanType, result, itemName, codeType = '一般') {
-      const historyItem = {
-        scanTime: new Date(),
-        scanCode: scanCode,
-        scanType: scanType,
-        scanResult: result,
-        itemName: itemName,
-        codeType: codeType  // ISBN 或 一般
-      };
-      this.scanHistory.unshift(historyItem);
-
-      // 保存到本地存儲
-      localStorage.setItem('scanHistory', JSON.stringify(this.scanHistory.slice(0, 50))); // 只保留最近50條
-    },
-
-    /** 載入掃描歷史 */
-    loadScanHistory() {
-      const history = localStorage.getItem('scanHistory');
-      if (history) {
-        this.scanHistory = JSON.parse(history);
-      }
-    },
-
-    /** 重新掃描 */
-    handleRescan(row) {
-      this.scanForm.scanCode = row.scanCode;
-      this.scanForm.scanType = row.scanType;
-      this.performScan(row.scanCode, row.scanType);
-    },
-
-    /** 借出物品 */
-    handleBorrow() {
-      if (!this.scanResult) return;
-
-      this.borrowForm.itemId = this.scanResult.itemId;
-      this.borrowForm.itemName = this.scanResult.itemName;
-      this.borrowForm.quantity = 1;
-      this.borrowDialogVisible = true;
-    },
-
-    /** 提交借出 */
-    submitBorrow() {
-      this.$refs.borrowForm.validate(valid => {
-        if (valid) {
-          const borrowData = {
-            itemId: this.borrowForm.itemId,
-            quantity: this.borrowForm.quantity,
-            purpose: this.borrowForm.purpose,
-            expectedReturn: this.borrowForm.expectedReturn,
-            borrowerId: this.$store.state.user.id,
-            borrowerName: this.$store.state.user.name
-          };
-
-          borrowItem(borrowData).then(response => {
-            this.$message.success('借出成功！');
-            this.borrowDialogVisible = false;
-            // 重新查詢物品資訊以更新庫存
-            this.performScan(this.scanForm.scanCode, this.scanForm.scanType);
-          });
-        }
-      });
-    },
-
+    
     /** 入庫操作 */
     handleStockIn() {
       if (!this.scanResult) return;
@@ -580,7 +366,7 @@ export default {
             this.$message.success('入庫成功！');
             this.stockInDialogVisible = false;
             // 重新查詢物品資訊以更新庫存
-            this.performScan(this.scanForm.scanCode, this.scanForm.scanType);
+            this.performScan(this.scanForm.scanCode);
           });
         }
       });
@@ -611,7 +397,7 @@ export default {
             this.$message.success('出庫成功！');
             this.stockOutDialogVisible = false;
             // 重新查詢物品資訊以更新庫存
-            this.performScan(this.scanForm.scanCode, this.scanForm.scanType);
+            this.performScan(this.scanForm.scanCode);
           });
         }
       });
@@ -620,20 +406,21 @@ export default {
     /** 查看詳情 */
     handleViewDetail() {
       if (this.scanResult) {
-        this.$router.push('/inventory/item/detail/' + this.scanResult.itemId);
+        // 導航到詳情頁，這裡假設有一個詳情路由，或者彈出詳情對話框
+        // 由於是行動端，彈出對話框可能更好，或者跳轉
+        // 這裡暫時跳轉到管理頁面並帶上查詢參數
+        this.$router.push({
+          path: '/inventory/management',
+          query: { itemCode: this.scanResult.itemCode }
+        });
       }
-    },
-
-    /** 返回 */
-    handleBack() {
-      this.$router.go(-1);
     },
     
     // ==================== SSE 訂閱 ====================
     
     /** 訂閱任務狀態（SSE） */
     subscribeTaskStatus(taskId, isbn, scanType) {
-      const baseURL = process.env.VUE_APP_BASE_API || '';
+      const baseURL = import.meta.env.VITE_APP_BASE_API || '';
       const eventSource = new EventSource(`${baseURL}/inventory/crawlTask/subscribe/${taskId}`);
       
       console.log('開始訂閱任務狀態, taskId:', taskId);
@@ -675,7 +462,8 @@ export default {
       if (index === -1) return;
       
       // 更新任務狀態
-      this.$set(this.activeTasks, index, task);
+      // Vue 3 不需要 $set
+      this.activeTasks[index] = task;
       
       // 檢查是否完成
       if (task.status === 'COMPLETED') {
@@ -687,7 +475,6 @@ export default {
           getItem(task.bookInfo.itemId).then(response => {
             if (response.code === 200 && response.data) {
               this.scanResult = response.data;
-              this.addToHistory(isbn, scanType, '0', response.data.itemName, 'ISBN');
               
               this.$notify({
                 title: '書籍爬取完成',
@@ -716,14 +503,22 @@ export default {
           duration: 5000
         });
         
-        this.addToHistory(isbn, scanType, '1', '', 'ISBN');
-        
         // 取消訂閱
         this.unsubscribeTaskStatus(task.taskId);
         
         // 從列表移除
         this.activeTasks.splice(index, 1);
       }
+    },
+    
+    getStatusText(status) {
+      const map = {
+        'PENDING': '等待中',
+        'RUNNING': '進行中',
+        'COMPLETED': '完成',
+        'FAILED': '失敗'
+      };
+      return map[status] || status;
     }
   }
 };
@@ -752,24 +547,19 @@ export default {
 
 .result-card {
   margin-top: 20px;
+  border: 2px solid #409eff;
+  box-shadow: 0 2px 12px 0 rgba(64, 158, 255, 0.2);
+  padding: 15px;
+  border-radius: 8px;
 }
 
 .item-image {
   text-align: center;
 }
 
-.item-info h3 {
-  margin-bottom: 15px;
-  color: #303133;
-}
-
 .action-buttons .el-button {
   margin-right: 10px;
-}
-
-.text-danger {
-  color: #f56c6c;
-  font-weight: bold;
+  margin-bottom: 10px;
 }
 
 .text-success {
@@ -786,11 +576,6 @@ export default {
   background: #f5f7fa;
   color: #909399;
   font-size: 30px;
-}
-
-.result-card {
-  border: 2px solid #409eff;
-  box-shadow: 0 2px 12px 0 rgba(64, 158, 255, 0.2);
 }
 
 #qr-reader {
@@ -813,10 +598,6 @@ export default {
     flex-direction: column;
   }
 
-  .scan-container .el-col:first-child {
-    margin-bottom: 20px;
-  }
-
   #qr-reader {
     height: 250px !important;
   }
@@ -834,65 +615,9 @@ export default {
     margin-bottom: 15px;
   }
 
-  .item-info .el-descriptions {
-    font-size: 12px;
-  }
-
   .action-buttons .el-button {
     margin: 5px 2px;
     font-size: 12px;
-  }
-
-  .scan-history .el-table {
-    font-size: 12px;
-  }
-
-  .result-card {
-    margin: 10px 0;
-  }
-
-  .item-image .el-image {
-    width: 120px !important;
-    height: 120px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .app-container {
-    padding: 10px;
-  }
-
-  .box-card {
-    margin: 0;
-  }
-
-  .scan-container .el-col {
-    width: 100%;
-  }
-
-  #qr-reader {
-    height: 200px !important;
-  }
-
-  .scan-controls .el-button {
-    display: block;
-    width: 100%;
-    margin: 5px 0;
-  }
-
-  .action-buttons .el-button {
-    display: block;
-    width: 100%;
-    margin: 5px 0;
-  }
-
-  .item-image .el-image {
-    width: 100px !important;
-    height: 100px !important;
-  }
-
-  .el-descriptions {
-    font-size: 11px;
   }
 }
 </style>

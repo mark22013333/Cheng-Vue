@@ -57,6 +57,9 @@
                 <el-input
                   v-model="loginForm.code"
                   placeholder="驗證碼"
+                  inputmode="numeric"
+                  :formatter="(value) => value.replace(/\D/g, '')"
+                  :parser="(value) => value.replace(/\D/g, '')"
                   @focus="focusedInput = 'code'"
                   @blur="focusedInput = ''"
                   @keyup.enter="handleLogin"

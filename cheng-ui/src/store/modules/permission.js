@@ -37,8 +37,8 @@ const usePermissionStore = defineStore(
         return new Promise(resolve => {
           // 向後端請求路由資料
           getRouters().then(res => {
-            console.log('[路由調試] 後端返回的原始路由數據:', JSON.stringify(res.data, null, 2))
-            
+            // console.log('[路由調試] 後端返回的原始路由數據:', JSON.stringify(res.data, null, 2))
+
             const sdata = JSON.parse(JSON.stringify(res.data))
             const rdata = JSON.parse(JSON.stringify(res.data))
             const defaultData = JSON.parse(JSON.stringify(res.data))
@@ -47,28 +47,28 @@ const usePermissionStore = defineStore(
             const defaultRoutes = filterAsyncRouter(defaultData)
             const asyncRoutes = filterDynamicRoutes(dynamicRoutes)
 
-            console.log('[路由調試] 處理後的 rewriteRoutes:', JSON.stringify(rewriteRoutes, null, 2))
-            console.log('[路由調試] 處理後的 sidebarRoutes:', JSON.stringify(sidebarRoutes, null, 2))
+            // console.log('[路由調試] 處理後的 rewriteRoutes:', JSON.stringify(rewriteRoutes, null, 2))
+            // console.log('[路由調試] 處理後的 sidebarRoutes:', JSON.stringify(sidebarRoutes, null, 2))
 
             // 新增動態路由
-            asyncRoutes.forEach(route => { 
-              console.log('[路由調試] 添加動態路由:', route.path)
-              router.addRoute(route) 
-            })
-            
-            // 新增後端返回的路由
-            rewriteRoutes.forEach(route => { 
-              console.log('[路由調試] 添加後端路由:', route.path, '組件:', route.component)
-              console.log('[路由調試] 子路由數量:', route.children?.length || 0)
-              if (route.children && route.children.length > 0) {
-                route.children.forEach(child => {
-                  console.log('[路由調試]   - 子路由:', child.path, '有組件:', !!child.component)
-                })
-              }
-              router.addRoute(route) 
+            asyncRoutes.forEach(route => {
+              // console.log('[路由調試] 添加動態路由:', route.path)
+              router.addRoute(route)
             })
 
-            console.log('[路由調試] 所有已註冊的路由:', router.getRoutes().map(r => r.path))
+            // 新增後端返回的路由
+            rewriteRoutes.forEach(route => {
+              // console.log('[路由調試] 添加後端路由:', route.path, '組件:', route.component)
+              // console.log('[路由調試] 子路由數量:', route.children?.length || 0)
+              if (route.children && route.children.length > 0) {
+                route.children.forEach(child => {
+                  // console.log('[路由調試]   - 子路由:', child.path, '有組件:', !!child.component)
+                })
+              }
+              router.addRoute(route)
+            })
+
+            // console.log('[路由調試] 所有已註冊的路由:', router.getRoutes().map(r => r.path))
 
             this.setRoutes(rewriteRoutes)
             this.setSidebarRouters(constantRoutes.concat(sidebarRoutes))
@@ -84,6 +84,12 @@ const usePermissionStore = defineStore(
 // 遍歷後台傳來的路由字串，轉換為元件物件
 function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
   return asyncRouterMap.filter(route => {
+    // 修正路由名稱重複問題：Marketing -> User 與 System -> User 名稱衝突
+    // 同時配合組件名稱 LineUser 以確保 keep-alive 生效
+    if (route.path === 'line/user' && route.name === 'User') {
+      route.name = 'LineUser'
+    }
+
     if (type && route.children) {
       route.children = filterChildren(route.children)
     }
@@ -148,22 +154,34 @@ export function filterDynamicRoutes(routes) {
 
 export const loadView = (view) => {
   let res
-  console.log('[loadView調試] 嘗試載入:', view)
-  console.log('[loadView調試] 可用的 modules 路徑:', Object.keys(modules).slice(0, 5))
-  
+  // console.log('[loadView] Loading view:', view)
+
   for (const path in modules) {
     const dir = path.split('views/')[1].split('.vue')[0]
+
+    // 精確匹配
     if (dir === view) {
-      console.log('[loadView調試] ✅ 找到匹配:', path, '→', view)
       res = () => modules[path]()
+      break
+    }
+
+    // 容錯匹配：後端返回 system/user，前端檔案 system/user/index.vue
+    if (dir === view + '/index') {
+      res = () => modules[path]()
+      break
+    }
+
+    // 容錯匹配：後端返回 system/user/index，前端檔案 system/user.vue (較少見但可能)
+    if (dir + '/index' === view) {
+      res = () => modules[path]()
+      break
     }
   }
-  
+
   if (!res) {
-    console.error('[loadView調試] ❌ 找不到組件:', view)
-    console.log('[loadView調試] 所有 modules 路徑:', Object.keys(modules))
+    console.warn(`[loadView] FAILED to find component for view: "${view}"`)
   }
-  
+
   return res
 }
 

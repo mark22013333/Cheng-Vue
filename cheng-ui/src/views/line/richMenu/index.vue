@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <!-- 查詢區域 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="85px">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="85px">
       <el-form-item label="選單名稱" prop="name">
         <el-input
           v-model="queryParams.name"
@@ -42,8 +42,8 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="small" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="el-icon-search" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -54,7 +54,6 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="small"
           @click="handleAdd"
           v-hasPermi="['line:richMenu:add']"
         >
@@ -66,7 +65,6 @@
           type="success"
           plain
           icon="el-icon-edit"
-          size="small"
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['line:richMenu:edit']"
@@ -79,7 +77,6 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['line:richMenu:remove']"
@@ -92,7 +89,6 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="small"
           @click="handleExport"
           v-hasPermi="['line:richMenu:export']"
         >
@@ -154,7 +150,6 @@
             <el-button
               type="text"
               icon="el-icon-document-copy"
-              size="small"
               @click="handleCopyRichMenuId(scope.row.richMenuId)"
               style="padding: 0;"
               title="複製 Rich Menu ID"
