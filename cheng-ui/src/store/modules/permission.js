@@ -37,7 +37,7 @@ const usePermissionStore = defineStore(
         return new Promise(resolve => {
           // 向後端請求路由資料
           getRouters().then(res => {
-            // console.log('[路由調試] 後端返回的原始路由數據:', JSON.stringify(res.data, null, 2))
+            console.log('[generateRoutes] 📥 Backend routes:', JSON.stringify(res.data, null, 2))
 
             const sdata = JSON.parse(JSON.stringify(res.data))
             const rdata = JSON.parse(JSON.stringify(res.data))
@@ -88,6 +88,12 @@ function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
     // 同時配合組件名稱 LineUser 以確保 keep-alive 生效
     if (route.path === 'line/user' && route.name === 'User') {
       route.name = 'LineUser'
+    }
+
+    // 修正路由名稱重複問題：LINE Config 與 System Config 名稱衝突
+    if (route.path === 'line/config' && route.name === 'Config') {
+      route.name = 'LineConfig'
+      console.log('[filterAsyncRouter] 🔧 Renamed line/config route from "Config" to "LineConfig"')
     }
 
     if (type && route.children) {
@@ -154,32 +160,36 @@ export function filterDynamicRoutes(routes) {
 
 export const loadView = (view) => {
   let res
-  // console.log('[loadView] Loading view:', view)
+  console.log('[loadView] 🔍 Loading view:', view)
 
   for (const path in modules) {
     const dir = path.split('views/')[1].split('.vue')[0]
 
     // 精確匹配
     if (dir === view) {
+      console.log('[loadView] ✅ Exact match:', view, '->', path)
       res = () => modules[path]()
       break
     }
 
     // 容錯匹配：後端返回 system/user，前端檔案 system/user/index.vue
     if (dir === view + '/index') {
+      console.log('[loadView] ✅ Index fallback:', view, '->', path)
       res = () => modules[path]()
       break
     }
 
     // 容錯匹配：後端返回 system/user/index，前端檔案 system/user.vue (較少見但可能)
     if (dir + '/index' === view) {
+      console.log('[loadView] ✅ Reverse fallback:', view, '->', path)
       res = () => modules[path]()
       break
     }
   }
 
   if (!res) {
-    console.warn(`[loadView] FAILED to find component for view: "${view}"`)
+    console.error(`[loadView] ❌ FAILED to find component for view: "${view}"`)
+    console.error('[loadView] Available modules (first 15):', Object.keys(modules).slice(0, 15).map(k => k.split('views/')[1]))
   }
 
   return res

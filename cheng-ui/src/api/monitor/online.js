@@ -9,7 +9,7 @@ export function list(query) {
   })
 }
 
-// 強退使用者
+// 強制退出使用者
 export function forceLogout(tokenId) {
   return request({
     url: '/monitor/online/' + tokenId,
