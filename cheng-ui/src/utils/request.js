@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { ElNotification , ElMessageBox, ElMessage, ElLoading } from 'element-plus'
+import { ElNotification, ElMessageBox, ElMessage, ElLoading } from 'element-plus'
 import { getToken } from '@/utils/auth'
 import errorCode from '@/utils/errorCode'
 import { tansParams, blobValidate } from '~/utils/cheng'
@@ -67,46 +67,54 @@ service.interceptors.request.use(config => {
   }
   return config
 }, error => {
-    console.log(error)
-    Promise.reject(error)
+  console.log(error)
+  Promise.reject(error)
 })
 
 // 響應攔截器
 service.interceptors.response.use(res => {
-    // 未設定狀態碼則預設成功狀態
-    const code = res.data.code || 200
-    // 取得錯誤訊息
-    const msg = errorCode[code] || res.data.msg || errorCode['default']
-    // 二進制資料則直接返回
-    if (res.request.responseType ===  'blob' || res.request.responseType ===  'arraybuffer') {
-      return res.data
-    }
-    if (code === 401) {
-      if (!isRelogin.show) {
-        isRelogin.show = true
-        ElMessageBox.confirm('登入狀態已過期，您可以繼續留在該頁面，或者重新登入', '系統提示', { confirmButtonText: '重新登入', cancelButtonText: '取消', type: 'warning' }).then(() => {
-          isRelogin.show = false
-          useUserStore().logOut().then(() => {
-            location.href = '/index'
-          })
+  // 未設定狀態碼則預設成功狀態
+  const code = res.data.code || 200
+  // 取得錯誤訊息
+  const msg = errorCode[code] || res.data.msg || errorCode['default']
+  // 二進制資料則直接返回
+  if (res.request.responseType === 'blob' || res.request.responseType === 'arraybuffer') {
+    return res.data
+  }
+  if (code === 401) {
+    if (!isRelogin.show) {
+      isRelogin.show = true
+      ElMessageBox.confirm('登入狀態已過期，您可以繼續留在該頁面，或者重新登入', '系統提示', { confirmButtonText: '重新登入', cancelButtonText: '取消', type: 'warning' }).then(() => {
+        isRelogin.show = false
+        useUserStore().logOut().then(() => {
+          location.href = '/index'
+        })
       }).catch(() => {
         isRelogin.show = false
       })
     }
-      return Promise.reject('無效的Session，或者Session已過期，請重新登入。')
-    } else if (code === 500) {
-      ElMessage({ message: msg, type: 'error' })
-      return Promise.reject(new Error(msg))
-    } else if (code === 601) {
-      ElMessage({ message: msg, type: 'warning' })
-      return Promise.reject(new Error(msg))
-    } else if (code !== 200) {
-      ElNotification.error({ title: msg })
-      return Promise.reject('error')
+    return Promise.reject('無效的Session，或者Session已過期，請重新登入。')
+  } else if (code === 500) {
+    if (typeof msg === 'string' && msg.includes('<div')) {
+      ElMessageBox.alert(msg, '系統提示', {
+        dangerouslyUseHTMLString: true,
+        type: 'error',
+        confirmButtonText: '確定'
+      })
     } else {
-      return  Promise.resolve(res.data)
+      ElMessage({ message: msg, type: 'error' })
     }
-  },
+    return Promise.reject(new Error(msg))
+  } else if (code === 601) {
+    ElMessage({ message: msg, type: 'warning' })
+    return Promise.reject(new Error(msg))
+  } else if (code !== 200) {
+    ElNotification.error({ title: msg })
+    return Promise.reject('error')
+  } else {
+    return Promise.resolve(res.data)
+  }
+},
   error => {
     console.log('err' + error)
     let { message } = error

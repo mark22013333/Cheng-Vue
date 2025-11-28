@@ -99,7 +99,7 @@
       <el-table-column label="實體" align="center" prop="className" :show-overflow-tooltip="true" />
       <el-table-column label="建立時間" align="center" prop="createTime" width="160" sortable="custom" :sort-orders="['descending', 'ascending']" />
       <el-table-column label="更新時間" align="center" prop="updateTime" width="160" sortable="custom" :sort-orders="['descending', 'ascending']" />
-      <el-table-column label="操作" align="center" width="330" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="330" class-name="small-padding fixed-width" fixed="right">
         <template #default="scope">
           <el-tooltip content="預覽" placement="top">
             <el-button link type="primary" icon="View" @click="handlePreview(scope.row)" v-hasPermi="['tool:gen:preview']"></el-button>

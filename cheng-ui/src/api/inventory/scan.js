@@ -45,3 +45,12 @@ export function refreshIsbn(itemId) {
     data: { itemId }
   })
 }
+
+// 根據 ISBN 抓取書籍資訊（爬蟲任務）
+export function crawlBookByIsbn(isbn) {
+  return request({
+    url: '/inventory/crawlTask/create',
+    method: 'post',
+    params: { isbn }
+  })
+}

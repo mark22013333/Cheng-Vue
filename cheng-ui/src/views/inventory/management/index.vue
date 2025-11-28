@@ -1321,29 +1321,6 @@ export default {
   border-radius: 3px;
 }
 
-/* 圖片預覽器 z-index - 確保在最上層 - 使用 CSS 最大值 */
-:deep(.el-image-viewer__wrapper) {
-  z-index: 2147483647 !important;
-  position: fixed !important;
-}
 
-/* 圖片預覽器遮罩層 */
-:deep(.el-image-viewer__mask) {
-  z-index: 2147483646 !important;
-  position: fixed !important;
-}
-
-/* 圖片預覽器的所有子元素 */
-:deep(.el-image-viewer__btn) {
-  z-index: 2147483647 !important;
-}
-
-:deep(.el-image-viewer__canvas) {
-  z-index: 2147483647 !important;
-}
-
-:deep(.el-image-viewer__actions) {
-  z-index: 2147483647 !important;
-}
 
 </style>

@@ -176,7 +176,7 @@
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="220" class-name="small-padding fixed-width operation-column">
+      <el-table-column label="操作" align="center" width="220" class-name="small-padding fixed-width operation-column" fixed="right">
         <template #default="scope">
           <el-button link type="primary" icon="el-icon-view" @click="handleDetail(scope.row)" v-hasPermi="['line:user:query']">詳情</el-button>
           <el-dropdown @command="(command) => handleCommand(command, scope.row)">

@@ -46,6 +46,7 @@
               width="60"
               align="center"
               class-name="small-padding fixed-width"
+              fixed="right"
             >
               <template #default="scope">
                 <el-button
@@ -97,6 +98,7 @@
               width="60"
               align="center"
               class-name="small-padding fixed-width"
+              fixed="right"
             >
               <template #default="scope">
                 <el-button

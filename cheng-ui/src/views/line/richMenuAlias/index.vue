@@ -91,7 +91,7 @@
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column" width="100">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column" width="100" fixed="right">
         <template #default="scope">
           <el-button link type="primary" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['line:richMenuAlias:remove']">刪除</el-button>
         </template>

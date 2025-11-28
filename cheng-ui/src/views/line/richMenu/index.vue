@@ -164,7 +164,7 @@
           <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="280" class-name="small-padding fixed-width operation-column">
+      <el-table-column label="操作" align="center" width="280" class-name="small-padding fixed-width operation-column" fixed="right">
         <template #default="scope">
           <el-button link type="primary" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['line:richMenu:edit']">編輯</el-button>
           <el-button link type="primary" icon="el-icon-upload2" @click="handlePublish(scope.row)" v-hasPermi="['line:richMenu:publish']">{{ scope.row.richMenuId ? '重新發布' : '發布' }}</el-button>

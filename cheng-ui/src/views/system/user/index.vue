@@ -137,7 +137,7 @@
                   <span>{{ parseTime(scope.row.createTime) }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" align="center" width="180" class-name="small-padding fixed-width">
+              <el-table-column label="操作" align="center" width="180" class-name="small-padding fixed-width" fixed="right">
                 <template #default="scope">
                   <span v-if="scope.row.userId !== 1">
                   <el-button type="primary" link icon="Edit" @click="handleUpdate(scope.row)"

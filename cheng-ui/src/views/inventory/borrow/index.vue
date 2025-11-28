@@ -31,7 +31,7 @@
         <el-date-picker
           v-model="daterangeBorrow"
           style="width: 240px"
-          value-format="yyyy-MM-dd"
+          value-format="YYYY-MM-DD"
           type="daterange"
           range-separator="-"
           start-placeholder="開始日期"
@@ -152,7 +152,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width" fixed="right">
         <template #default="scope">
           <!-- 只有待審核狀態可以修改 -->
           <el-button
@@ -255,9 +255,9 @@
             v-model="form.expectedReturn"
             type="datetime"
             placeholder="選擇預計歸還時間"
-            format="yyyy-MM-dd HH:mm:ss"
-            value-format="yyyy-MM-dd HH:mm:ss"
-            :picker-options="pickerOptions">
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            :disabled-date="disabledDate">
           </el-date-picker>
         </el-form-item>
         <el-form-item label="備註">
@@ -437,10 +437,8 @@ export default {
         ]
       },
       // 時間選擇器配置：只能選擇未來時間
-      pickerOptions: {
-        disabledDate(time) {
-          return time.getTime() < Date.now() - 8.64e7; // 禁用今天之前的日期
-        }
+      disabledDate(time) {
+        return time.getTime() < Date.now() - 8.64e7; // 禁用今天之前的日期
       }
     };
   },

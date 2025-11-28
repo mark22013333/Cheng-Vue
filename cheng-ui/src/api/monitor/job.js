@@ -57,7 +57,7 @@ export function changeJobStatus(jobId, status) {
 }
 
 
-// 定時任務立即执行一次
+// 定時任務立即執行一次
 export function runJob(jobId, jobGroup) {
   const data = {
     jobId,

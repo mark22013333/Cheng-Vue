@@ -46,7 +46,7 @@
                <span>{{ parseTime(scope.row.loginTime) }}</span>
             </template>
          </el-table-column>
-         <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+         <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width" fixed="right">
             <template #default="scope">
                <el-button link type="primary" icon="Delete" @click="handleForceLogout(scope.row)" v-hasPermi="['monitor:online:forceLogout']">強制退出</el-button>
             </template>

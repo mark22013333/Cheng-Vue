@@ -304,15 +304,15 @@ function buildexport(
       // 彈窗確認回調
       const emit = defineEmits(['confirm'])
       /**
-       * @name: 彈窗打開後执行
-       * @description: 彈窗打開後执行方法
+       * @name: 彈窗打開後執行
+       * @description: 彈窗打開後執行方法
        * @return {*}
        */
       function onOpen(){
 
       }
       /**
-       * @name: 彈窗關閉時执行
+       * @name: 彈窗關閉時執行
        * @description: 彈窗關閉方法，重置表單
        * @return {*}
        */

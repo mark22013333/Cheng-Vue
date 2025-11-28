@@ -10,7 +10,6 @@
       </el-col>
       <el-col :span="12" class="text-right">
         <el-button
-          type="success"
           icon="el-icon-refresh"
           size="small"
           @click="getList"
@@ -105,7 +104,7 @@
             <!-- 快速操作 -->
             <div class="quick-actions">
               <el-button
-                type="primary"
+                type="info"
                 size="small"
                 icon="el-icon-connection"
                 plain
@@ -114,7 +113,7 @@
                 測試連線
               </el-button>
               <el-button
-                :type="channel.type === 'MAIN' ? 'warning' : 'success'"
+                type="primary"
                 size="small"
                 icon="el-icon-setting"
                 @click="handleEdit(channel.config)"
@@ -149,7 +148,7 @@
             <p class="empty-text">尚未設定此頻道</p>
             <p class="empty-desc">{{ channel.description }}</p>
             <el-button
-              :type="channel.type === 'MAIN' ? 'warning' : 'primary'"
+              type="primary"
               size="default"
               icon="el-icon-plus"
               @click="handleAdd(channel.type)"
@@ -571,9 +570,12 @@ export default {
         .quick-actions {
           display: flex;
           gap: 10px;
+          flex-wrap: wrap;
 
           .el-button {
             flex: 1;
+            min-width: 100px;
+            margin-left: 0 !important;
           }
         }
       }

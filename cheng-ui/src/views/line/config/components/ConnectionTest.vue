@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     title="測試 LINE 連線"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="600px"
     append-to-body
     :close-on-click-modal="false"

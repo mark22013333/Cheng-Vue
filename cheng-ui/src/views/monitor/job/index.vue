@@ -123,7 +123,7 @@
           ></el-switch>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="180" class-name="small-padding fixed-width" fixed="right">
         <template #default="scope">
           <el-button
             type="primary"
@@ -144,7 +144,7 @@
             刪除
           </el-button>
           <el-dropdown @command="(command) => handleCommand(command, scope.row)"
-                       v-hasPermi="['monitor:job:changeStatus', 'monitor:job:query']">
+                       v-if="checkPermi(['monitor:job:changeStatus', 'monitor:job:query'])">
             <el-button type="primary" link>
               <el-icon><DArrowRight /></el-icon>
               更多
@@ -152,21 +152,21 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="handleRun"
-                                  v-hasPermi="['monitor:job:changeStatus']">
+                                  v-if="checkPermi(['monitor:job:changeStatus'])">
                   <span>
                     <el-icon><CaretRight /></el-icon>
                     執行一次
                   </span>
                 </el-dropdown-item>
                 <el-dropdown-item command="handleView"
-                                  v-hasPermi="['monitor:job:query']">
+                                  v-if="checkPermi(['monitor:job:query'])">
                   <span>
                     <el-icon><View /></el-icon>
                     任務詳細
                   </span>
                 </el-dropdown-item>
                 <el-dropdown-item command="handleJobLog"
-                                  v-hasPermi="['monitor:job:query']">
+                                  v-if="checkPermi(['monitor:job:query'])">
                   <span>
                     <el-icon><Document /></el-icon>
                     呼叫日誌
@@ -473,6 +473,8 @@
 import { Search, Refresh, Plus, Edit, Delete, Download, Document, DArrowRight, CaretRight, View } from '@element-plus/icons-vue'
 import {addJob, changeJobStatus, delJob, getJob, listJob, runJob, updateJob} from "@/api/monitor/job"
 import {listJobTypes, getJobTypeByCode} from "@/api/monitor/jobType"
+import { reactive } from 'vue'
+import { checkPermi } from '@/utils/permission'
 import Crontab from '@/components/Crontab'
 
 export default {
@@ -609,21 +611,47 @@ export default {
   created() {
     // 載入字典數據
     const { sys_job_group, sys_job_status } = this.useDict('sys_job_group', 'sys_job_status')
-    this.dict.type.sys_job_group = sys_job_group
-    this.dict.type.sys_job_status = sys_job_status
+    // 使用 reactive 確保響應性
+    this.dict.type = reactive({
+      sys_job_group,
+      sys_job_status
+    })
 
     this.getList()
     this.loadJobTypes()
   },
   methods: {
+    checkPermi,
     /** 載入任務類型列表 */
     async loadJobTypes() {
       try {
+        console.log('[loadJobTypes] 開始載入任務類型列表...')
         const response = await listJobTypes()
-        this.jobTypes = response.data || []
+        console.log('[loadJobTypes] ✅ 成功載入任務類型:', response)
+
+        // 後端返回格式：{ categories: [], tasks: { category1: [...], category2: [...] } }
+        // 需要將 tasks 物件轉換為扁平化的任務列表
+        if (response.data && response.data.tasks) {
+          const allTasks = []
+          Object.values(response.data.tasks).forEach(taskList => {
+            allTasks.push(...taskList)
+          })
+          this.jobTypes = allTasks
+          console.log('[loadJobTypes] 📋 已載入任務類型數量:', this.jobTypes.length)
+        } else {
+          this.jobTypes = []
+          console.log('[loadJobTypes] ⚠️ 後端未返回任務類型數據')
+        }
       } catch (error) {
-        console.error('載入任務類型失敗:', error)
+        console.warn('[loadJobTypes] ⚠️ 載入任務類型失敗 (這不影響基本功能):', error)
+        console.warn('[loadJobTypes] 錯誤詳情:', {
+          message: error.message,
+          response: error.response,
+          config: error.config
+        })
+        // 如果後端沒有實現 jobType API，使用空陣列（手動模式仍可用）
         this.jobTypes = []
+        // 不要顯示錯誤訊息給使用者，因為這是可選功能
       }
     },
     /** 處理設定模式切換 */

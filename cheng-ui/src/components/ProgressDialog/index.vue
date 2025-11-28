@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :title="title"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="500px"
     :modal="false"
     :close-on-click-modal="false"
@@ -203,12 +203,19 @@ export default {
       // 避免重複綁定
       if (this.dragEnabled) return
 
-      // 使用 $el 確保找到當前元件的對話框
-      const dialogWrapper = this.$el.querySelector('.el-dialog')
-      if (!dialogWrapper) return
+      // 因為使用 append-to-body，對話框會掛載到 body，所以要用 document.querySelector
+      // 使用 custom-class 來找到對應的對話框
+      const dialogWrapper = document.querySelector('.progress-dialog-custom')
+      if (!dialogWrapper) {
+        console.warn('找不到對話框元素')
+        return
+      }
 
       const dialogHeader = dialogWrapper.querySelector('.el-dialog__header')
-      if (!dialogHeader) return
+      if (!dialogHeader) {
+        console.warn('找不到對話框標題')
+        return
+      }
 
       this.dragEnabled = true
 
