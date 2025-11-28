@@ -447,6 +447,11 @@ export default {
     this.getItemList();
     this.getBorrowStatistics();
   },
+  activated() {
+    this.getList();
+    this.getItemList();
+    this.getBorrowStatistics();
+  },
   methods: {
     /** 查詢借出記錄列表 */
     getList() {

@@ -10,17 +10,18 @@
       @touchend="handleTouchEnd"
       @click="handleScanClick"
     >
-    <el-tooltip content="掃描功能" placement="left">
-      <el-button
-        type="primary"
-        icon="el-icon-camera"
-        circle
-        size="large"
-        :loading="scanning"
-        class="scan-btn"
-      >
-      </el-button>
-    </el-tooltip>
+      <el-tooltip content="掃描功能" placement="left">
+        <el-button
+          type="primary"
+          circle
+          size="large"
+          :loading="scanning"
+          class="scan-btn"
+          style="border-radius: 50% !important; width: 60px; height: 60px;"
+        >
+          <el-icon><Camera /></el-icon>
+        </el-button>
+      </el-tooltip>
 
       <!-- 任務數量標記 -->
       <span v-if="activeTasks.length > 0" class="task-badge">{{ activeTasks.length }}</span>
@@ -30,7 +31,7 @@
     <!-- 快速掃描對話框 -->
     <el-dialog
       title="快速掃描"
-      :visible.sync="quickScanVisible"
+      v-model="quickScanVisible"
       width="90%"
       :close-on-click-modal="false"
       :modal="false"
@@ -45,8 +46,8 @@
         <div class="camera-area">
           <div id="floating-qr-reader" style="width: 100%; min-height: 300px;"></div>
           <div class="scan-tips">
-            <p><i class="el-icon-info"></i> 自動使用後置鏡頭掃描</p>
-            <p><i class="el-icon-success"></i> 將條碼或QR碼放在掃描框內</p>
+            <p><el-icon><InfoFilled /></el-icon> 自動使用後置鏡頭掃描</p>
+            <p><el-icon><SuccessFilled /></el-icon> 將條碼或QR碼放在掃描框內</p>
           </div>
         </div>
 
@@ -56,19 +57,17 @@
             type="primary"
             @click="startQuickScan"
             :disabled="isScanning"
-            icon="el-icon-video-camera"
           >
-            {{ isScanning ? '掃描中...' : '開始掃描' }}
+            <el-icon><VideoCamera /></el-icon> {{ isScanning ? '掃描中...' : '開始掃描' }}
           </el-button>
           <el-button
             @click="stopQuickScan"
             :disabled="!isScanning"
-            icon="el-icon-video-pause"
           >
-            停止掃描
+            <el-icon><VideoPause /></el-icon> 停止掃描
           </el-button>
-          <el-button @click="switchCamera" icon="el-icon-refresh">
-            切換攝影機
+          <el-button @click="switchCamera">
+            <el-icon><Refresh /></el-icon> 切換攝影機
           </el-button>
         </div>
 
@@ -83,7 +82,7 @@
                 {{ scanResult.itemName }}
                 <el-tag v-if="scanResult.barcode && isValidIsbn(scanResult.barcode)"
                         type="warning" size="small" style="margin-left: 8px;">
-                  <i class="el-icon-reading"></i> 書籍
+                  <el-icon><Reading /></el-icon> 書籍
                 </el-tag>
               </h4>
               <p><strong>編碼：</strong>{{ scanResult.itemCode }}</p>
@@ -92,8 +91,13 @@
               <p><strong>可用：</strong><span class="available-num">{{ scanResult.availableQty || 0 }}</span></p>
             </div>
             <div class="result-actions">
-              <el-button size="small" type="success" icon="el-icon-download" @click="handleQuickStockIn" :loading="stockInLoading">快速入庫 +1</el-button>
-              <el-button size="small" type="info" icon="el-icon-view" @click="showDetailDialog">查看詳情</el-button>
+              <el-button size="small" type="success" @click="handleQuickStockIn"
+                         :loading="stockInLoading">
+                <el-icon><Download /></el-icon> 快速入庫 +1
+              </el-button>
+              <el-button size="small" type="info" @click="showDetailDialog">
+                <el-icon><View /></el-icon> 查看詳情
+              </el-button>
             </div>
           </el-card>
         </div>
@@ -106,9 +110,11 @@
             placeholder="請輸入條碼或QR碼"
             @keyup.enter.native="handleManualInput"
           >
-            <el-button slot="append" @click="handleManualInput" icon="el-icon-search">
-              查詢
-            </el-button>
+            <template #append>
+              <el-button @click="handleManualInput">
+                <el-icon><Search /></el-icon> 查詢
+              </el-button>
+            </template>
           </el-input>
         </div>
       </div>
@@ -122,7 +128,7 @@
     <!-- 物品詳情對話框 -->
     <el-dialog
       title="物品詳情"
-      :visible.sync="detailDialogVisible"
+      v-model="detailDialogVisible"
       width="90%"
       :modal="false"
       custom-class="mobile-detail-dialog"
@@ -143,7 +149,8 @@
             {{ itemDetail.categoryName || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="庫存狀態">
-            <el-tag :type="itemDetail.stockStatus === '0' ? 'success' : itemDetail.stockStatus === '1' ? 'warning' : 'danger'">
+            <el-tag
+              :type="itemDetail.stockStatus === '0' ? 'success' : itemDetail.stockStatus === '1' ? 'warning' : 'danger'">
               {{ itemDetail.stockStatusText }}
             </el-tag>
           </el-descriptions-item>
@@ -187,9 +194,13 @@ import {scanIsbn, scanCode} from "@/api/inventory/scan";
 import {quickStockIn, getManagement} from "@/api/inventory/management";
 import eventBus from '@/utils/eventBus';
 import {createCrawlTask, getTaskStatus} from "@/api/inventory/crawlTask";
+import { Camera, VideoCamera, VideoPause, Refresh, Search, InfoFilled, SuccessFilled, Reading, Download, View } from '@element-plus/icons-vue';
 
 export default {
   name: "FloatingScanButton",
+  components: {
+    Camera, VideoCamera, VideoPause, Refresh, Search, InfoFilled, SuccessFilled, Reading, Download, View
+  },
   data() {
     return {
       showButton: false,
@@ -217,7 +228,13 @@ export default {
       lastScannedCode: null, // 最後掃描的條碼
       lastScanTime: 0, // 最後掃描時間
       scanCooldown: 3000, // 冷卻時間 3 秒
-      recentScannedCodes: new Set() // 最近掃描過的條碼
+      recentScannedCodes: new Set(), // 最近掃描過的條碼
+      // 變焦控制
+      hasZoom: false,
+      zoomValue: 1,
+      zoomMin: 1,
+      zoomMax: 5,
+      videoTrack: null
     };
   },
   mounted() {
@@ -252,6 +269,8 @@ export default {
       if (this.isDragging || this.hasMoved) {
         return;
       }
+      
+      console.log('FloatingScanButton: handleScanClick triggered');
 
       this.quickScanVisible = true;
       this.$nextTick(() => {
@@ -274,7 +293,7 @@ export default {
             aspectRatio: 1.0,
             // 手機端優化設定：預設使用後置鏡頭
             videoConstraints: {
-              facingMode: { exact: this.currentCamera },
+              facingMode: this.currentCamera,
               focusMode: "continuous",
               // 手機端zoom設定（提高掃描距離和清晰度）
               zoom: 1.5
@@ -297,7 +316,8 @@ export default {
           }
 
           this.html5QrCode = new Html5QrcodeScanner("floating-qr-reader", config, false);
-          console.log('快速掃描器初始化成功');
+          console.log('FloatingScanButton: 快速掃描器初始化成功');
+          this.$message.success('掃描器初始化成功');
         }, 300); // 延遲300ms確保DOM完全載入
       } catch (error) {
         console.error('快速掃描器初始化失敗:', error);
@@ -328,13 +348,18 @@ export default {
         // 請求攝影機權限（優先使用後置鏡頭）
         navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: { ideal: this.currentCamera },
+            facingMode: {ideal: this.currentCamera},
             focusMode: "continuous",
             zoom: 1.5,
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
+            width: {ideal: 1920},
+            height: {ideal: 1080}
           }
-        }).then(() => {
+        }).then((stream) => {
+          console.log('FloatingScanButton: Camera permission granted', stream);
+          
+          // 初始化變焦
+          this.initZoom(stream);
+
           // 權限取得成功後啟動掃描
           if (this.html5QrCode) {
             this.html5QrCode.render(
@@ -429,10 +454,19 @@ export default {
 
     /** 執行 ISBN 快速掃描（非同步版本） */
     performIsbnQuickScan(code) {
+      console.log('=== performIsbnQuickScan 開始 ===');
+      console.log('ISBN code:', code);
+      
       // 建立爬取任務
       createCrawlTask(code).then(response => {
+        console.log('=== createCrawlTask API 回應 ===');
+        console.log('response:', JSON.stringify(response, null, 2));
+        console.log('response.code:', response.code);
+        console.log('response.data:', response.data);
+        
         if (response.code === 200) {
           const taskId = response.data;
+          console.log('任務建立成功，taskId:', taskId);
 
           // 立即提示加入佇列
           this.$notify({
@@ -448,16 +482,63 @@ export default {
             isbn: code,
             status: 'PENDING'
           });
+          console.log('已加入 activeTasks，當前任務數:', this.activeTasks.length);
 
           // 使用 SSE 訂閱任務狀態
           this.subscribeTaskStatus(taskId);
 
         } else {
+          console.error('建立任務失敗，response.code 不是 200:', response.code);
           this.$message.error('建立任務失敗');
         }
       }).catch(error => {
-        this.$message.error('建立任務失敗：' + (error.msg || '未知錯誤'));
+        console.error('=== createCrawlTask API 錯誤 ===');
+        console.error('error:', error);
+        console.error('error.msg:', error.msg);
+        console.error('error.message:', error.message);
+        console.error('error.code:', error.code);
+        this.$message.error('建立任務失敗：' + (error.msg || error.message || '未知錯誤'));
       });
+    },
+
+    /** 初始化變焦功能 */
+    initZoom(stream) {
+      // 等待一點時間確保 video 元素已準備好
+      setTimeout(() => {
+        const videoTrack = stream.getVideoTracks()[0];
+        if (!videoTrack) return;
+
+        const capabilities = videoTrack.getCapabilities();
+        console.log('Camera capabilities:', capabilities);
+
+        if (capabilities.zoom) {
+          this.hasZoom = true;
+          this.zoomMin = capabilities.zoom.min;
+          this.zoomMax = capabilities.zoom.max;
+          this.videoTrack = videoTrack;
+          
+          // 設定預設縮放為 3.5 (如果支援)
+          let targetZoom = 3.5;
+          if (targetZoom > this.zoomMax) targetZoom = this.zoomMax;
+          if (targetZoom < this.zoomMin) targetZoom = this.zoomMin;
+          
+          this.zoomValue = targetZoom;
+          this.setZoom(targetZoom);
+          console.log(`Zoom initialized to ${targetZoom}`);
+        } else {
+          this.hasZoom = false;
+          console.log('Zoom not supported');
+        }
+      }, 500);
+    },
+
+    /** 設定變焦 */
+    setZoom(val) {
+      if (this.videoTrack) {
+        this.videoTrack.applyConstraints({
+          advanced: [{ zoom: val }]
+        }).catch(err => console.error("變焦失敗", err));
+      }
     },
 
     /** 執行一般快速掃描 */
@@ -532,7 +613,7 @@ export default {
 
           // 檢查是否為權限錯誤
           if (error.code === 403 || error.code === 401 ||
-              (error.msg && (error.msg.includes('權限') || error.msg.includes('Access Denied')))) {
+            (error.msg && (error.msg.includes('權限') || error.msg.includes('Access Denied')))) {
             this.$alert(
               '您沒有掃碼入庫的權限，請聯絡系統管理員開通「掃描功能」權限（inventory:scan:use）。',
               '權限不足',
@@ -735,7 +816,7 @@ export default {
 
     /** 訂閱任務狀態（SSE） */
     subscribeTaskStatus(taskId) {
-      const baseURL = process.env.VUE_APP_BASE_API || '';
+      const baseURL = import.meta.env.VITE_APP_BASE_API || '';
       const eventSource = new EventSource(`${baseURL}/inventory/crawlTask/subscribe/${taskId}`);
 
       // 監聽任務更新事件
@@ -781,10 +862,12 @@ export default {
 
       // 檢查是否完成
       if (task.status === 'COMPLETED') {
-        console.log('任務完成，準備觸發 scan-success 事件:', task.bookInfo);
+        console.log('=== 任務完成，準備觸發 scan-success 事件 ===');
+        console.log('bookInfo:', JSON.stringify(task.bookInfo, null, 2));
 
         // 觸發全域事件，讓掃描結果按鈕接收（Vue 3 使用 eventBus）
         eventBus.emit('scan-success', task.bookInfo);
+        console.log('scan-success 事件已發送');
 
         // 任務完成通知
         this.$notify({

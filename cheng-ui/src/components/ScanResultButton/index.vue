@@ -11,10 +11,12 @@
     >
       <el-button
         type="success"
-        icon="el-icon-document"
         circle
         class="result-btn"
-      ></el-button>
+        @click="handleClick"
+      >
+        <el-icon><Document /></el-icon>
+      </el-button>
       <!-- 自訂徽章 -->
       <span v-if="scanResults.length > 0" class="result-badge">
         {{ scanResults.length > 99 ? '99+' : scanResults.length }}
@@ -24,7 +26,7 @@
     <!-- 掃描結果清單對話框 -->
     <el-dialog
       title="掃描結果"
-      :visible.sync="dialogVisible"
+      v-model="dialogVisible"
       width="90%"
       :close-on-click-modal="false"
     >
@@ -55,20 +57,20 @@
             <div class="card-actions">
               <el-button
                 type="primary"
-                icon="el-icon-plus"
                 size="small"
                 @click="addToInventory(result, index)"
                 :loading="result.adding"
               >
-                +1 入庫
+                <el-icon><Plus /></el-icon> +1 入庫
               </el-button>
               <el-button
                 type="danger"
-                icon="el-icon-delete"
                 circle
                 class="delete-btn"
                 @click="removeResult(index)"
-              ></el-button>
+              >
+                <el-icon><Delete /></el-icon>
+              </el-button>
             </div>
           </div>
           
@@ -94,9 +96,13 @@
 import DraggableMixin from '@/mixins/draggable'
 import { quickStockIn } from '@/api/inventory/management'
 import eventBus from '@/utils/eventBus'
+import { Document, Plus, Delete } from '@element-plus/icons-vue'
+
+
 
 export default {
   name: 'ScanResultButton',
+  components: { Document, Plus, Delete },
   mixins: [DraggableMixin],
   
   data() {
@@ -109,11 +115,18 @@ export default {
   
   mounted() {
     this.checkMobileDevice()
+    this.checkCurrentRoute()
     this.loadButtonPosition()
     this.loadScanResults()
     
     // 監聽掃描成功事件（Vue 3 使用 eventBus）
     eventBus.on('scan-success', this.handleScanSuccess)
+  },
+  
+  watch: {
+    '$route'() {
+      this.checkCurrentRoute()
+    }
   },
   
   beforeUnmount() {
@@ -127,6 +140,14 @@ export default {
       this.showButton = isMobile
     },
     
+    /** 檢查當前路由是否需要顯示按鈕 */
+    checkCurrentRoute() {
+      // 在掃描頁面本身不顯示浮動按鈕
+      const currentPath = this.$route.path
+      const hiddenPaths = ['/inventory/scan', '/login']
+      this.showButton = this.showButton && !hiddenPaths.some(path => currentPath.includes(path))
+    },
+    
     /** 處理點擊 */
     handleClick() {
       this.dialogVisible = true
@@ -134,7 +155,8 @@ export default {
     
     /** 處理掃描成功事件 */
     handleScanSuccess(bookInfo) {
-      console.log('ScanResultButton 收到 scan-success 事件:', bookInfo);
+      console.log('=== ScanResultButton 收到 scan-success 事件 ===');
+      console.log('bookInfo:', JSON.stringify(bookInfo, null, 2));
       
       // 確認必要欄位
       if (!bookInfo || !bookInfo.isbn || !bookInfo.itemId) {
@@ -155,6 +177,8 @@ export default {
         ...bookInfo,
         adding: false
       })
+      
+      console.log('已加入 scanResults，當前列表長度:', this.scanResults.length);
       
       // 儲存到 localStorage
       this.saveScanResults()
@@ -277,6 +301,7 @@ export default {
   font-size: 24px;
   box-shadow: 0 4px 12px rgba(103, 194, 58, 0.4);
   transition: all 0.3s ease;
+  border-radius: 50% !important;
 }
 
 .result-btn:hover {

@@ -160,6 +160,44 @@
         </span>
       </template>
     </el-dialog>
+    <!-- 手機端懸浮按鈕 -->
+    <div 
+      class="floating-action-buttons"
+      :style="floatingPosition"
+      @touchstart="handleDragStart"
+      @touchmove.prevent="handleDragMove"
+      @touchend="handleDragEnd"
+    >
+      <div class="fab-btn green-btn" @click.stop="openCrawledItems">
+        <el-badge :value="crawledItems.length" :hidden="crawledItems.length === 0" class="fab-badge">
+          <el-icon><List /></el-icon>
+        </el-badge>
+      </div>
+      <div class="fab-btn blue-btn" @click.stop="handleScanClick">
+        <el-icon><Camera /></el-icon>
+      </div>
+    </div>
+
+    <!-- 爬蟲結果列表對話框 -->
+    <el-dialog title="已抓取書籍" v-model="showCrawledItemsDialog" width="90%" append-to-body>
+      <div v-if="crawledItems.length === 0" style="text-align: center; padding: 20px; color: #909399;">
+        尚無抓取記錄
+      </div>
+      <div v-else class="crawled-list">
+        <div v-for="item in crawledItems" :key="item.itemId" class="crawled-item">
+          <div class="item-info">
+            <div class="item-title">{{ item.itemName }}</div>
+            <div class="item-code">{{ item.itemCode }}</div>
+          </div>
+          <el-button type="primary" size="small" @click="handleQuickStockIn(item)">入庫</el-button>
+        </div>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showCrawledItemsDialog = false">關閉</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -171,12 +209,12 @@ import { crawlBookByIsbn } from "@/api/inventory/scan";
 import { getImageUrl } from "@/utils/image";
 import { mapState } from 'pinia';
 import useUserStore from '@/store/modules/user';
-import { Camera, SwitchButton, Search, Picture, Top, Bottom, View, ZoomIn, Setting } from '@element-plus/icons-vue';
+import { Camera, SwitchButton, Search, Picture, Top, Bottom, View, ZoomIn, Setting, List } from '@element-plus/icons-vue';
 
 export default {
   name: "MobileScan",
   components: {
-    Camera, SwitchButton, Search, Picture, Top, Bottom, View, ZoomIn, Setting
+    Camera, SwitchButton, Search, Picture, Top, Bottom, View, ZoomIn, Setting, List
   },
   data() {
     return {
@@ -214,7 +252,19 @@ export default {
       zoomMin: 1,
       zoomMax: 5,
       zoomStep: 0.1,
-      videoTrack: null
+      videoTrack: null,
+      
+      // 懸浮按鈕拖曳相關
+      floatingPosition: { right: '20px', bottom: '20px' },
+      isDragging: false,
+      dragStartTime: 0,
+      dragOffset: { x: 0, y: 0 },
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
+      
+      // 爬蟲結果列表
+      crawledItems: [],
+      showCrawledItemsDialog: false,
     };
   },
   computed: {
@@ -265,12 +315,11 @@ export default {
       const config = {
         fps: 10,
         qrbox: (viewfinderWidth, viewfinderHeight) => {
-          let minEdgePercentage = 0.7; // 掃描框佔視圖的70%
-          let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-          let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
+          // 使用固定尺寸 300x300，適合條碼和 QR code
+          let size = Math.min(300, Math.min(viewfinderWidth, viewfinderHeight) * 0.9);
           return {
-            width: qrboxSize,
-            height: qrboxSize
+            width: size,
+            height: size
           };
         },
         aspectRatio: 1.0
@@ -393,12 +442,11 @@ export default {
         this.$message.warning("請輸入條碼或ISBN");
         return;
       }
-
       this.performScan(code);
     },
 
     /** 執行掃描邏輯 */
-    performScan(code) {
+    performScan(code, silent = false) {
       const loading = this.$loading({
         lock: true,
         text: '查詢中...',
@@ -411,14 +459,16 @@ export default {
         if (response.rows && response.rows.length > 0) {
           // 找到了
           this.scanResult = response.rows[0];
-          this.$message.success("查詢成功");
+          if (!silent) {
+            this.$message.success("查詢成功");
+          }
           loading.close();
         } else {
           // 2. 系統中沒有，嘗試用 ISBN 查詢 (如果是 ISBN 格式)
           // 簡單判斷是否為 ISBN (10或13位數字)
           const isIsbn = /^(97(8|9))?\d{9}(\d|X)$/.test(code);
 
-          if (isIsbn) {
+          if (isIsbn && !silent) {
             this.$confirm(`系統中找不到此物品，是否嘗試從網路抓取書籍資訊 (ISBN: ${code})?`, '提示', {
               confirmButtonText: '抓取',
               cancelButtonText: '取消',
@@ -430,14 +480,21 @@ export default {
               loading.close();
             });
           } else {
-            this.$message.warning("系統中找不到此物品");
-            this.scanResult = null;
+            if (!silent) {
+              this.$message.warning("系統中找不到此物品");
+            }
+            // 如果是靜默模式且找不到，不清除 scanResult，以免畫面閃爍或消失
+            if (!silent) {
+              this.scanResult = null;
+            }
             loading.close();
           }
         }
       }).catch(err => {
         console.error("查詢失敗", err);
-        this.$message.error("查詢失敗");
+        if (!silent) {
+          this.$message.error("查詢失敗");
+        }
         loading.close();
       });
     },
@@ -488,12 +545,8 @@ export default {
           stockIn(stockData).then(response => {
             this.$message.success('入庫成功！');
             this.stockInDialogVisible = false;
-            // 重新查詢物品資訊以更新庫存（使用 getItem 避免觸發 ISBN 抓取對話框）
-            getItem(this.stockForm.itemId).then(res => {
-              if (res.code === 200 && res.data) {
-                this.scanResult = res.data;
-              }
-            });
+            // 重新查詢物品資訊以更新庫存 (靜默模式)
+            this.performScan(this.scanForm.scanCode, true);
           });
         }
       });
@@ -507,7 +560,6 @@ export default {
       this.stockForm.itemName = this.scanResult.itemName;
       this.stockForm.quantity = 1;
       this.stockForm.reason = '';
-      this.stockForm.maxQuantity = this.scanResult.availableQty || 10000;
       this.stockOutDialogVisible = true;
     },
 
@@ -524,12 +576,8 @@ export default {
           stockOut(stockData).then(response => {
             this.$message.success('出庫成功！');
             this.stockOutDialogVisible = false;
-            // 重新查詢物品資訊以更新庫存（使用 getItem 避免觸發 ISBN 抓取對話框）
-            getItem(this.stockForm.itemId).then(res => {
-              if (res.code === 200 && res.data) {
-                this.scanResult = res.data;
-              }
-            });
+            // 重新查詢物品資訊以更新庫存 (靜默模式)
+            this.performScan(this.scanForm.scanCode, true);
           });
         }
       });
@@ -607,6 +655,12 @@ export default {
           getItem(task.bookInfo.itemId).then(response => {
             if (response.code === 200 && response.data) {
               this.scanResult = response.data;
+              
+              // 加入已爬取列表 (避免重複)
+              const exists = this.crawledItems.some(item => item.itemId === response.data.itemId);
+              if (!exists) {
+                this.crawledItems.unshift(response.data);
+              }
 
               this.$notify({
                 title: '書籍爬取完成',
@@ -615,10 +669,11 @@ export default {
                 duration: 3000
               });
             }
-          }).catch(error => {
             console.error('取得物品資訊失敗', error);
           });
         }
+        
+
 
         // 取消訂閱
         this.unsubscribeTaskStatus(task.taskId);
@@ -678,6 +733,88 @@ export default {
         .catch(err => {
           this.$alert(`無法取得裝置列表: ${err.name} - ${err.message}`, '除錯錯誤');
         });
+    },
+
+    // ==================== 懸浮按鈕拖曳邏輯 ====================
+    
+    handleDragStart(e) {
+      this.dragStartTime = Date.now();
+      // 不要在這裡重置 isDragging，因為 click 事件需要知道是否發生過拖曳
+      const touch = e.touches[0];
+      const rect = e.currentTarget.getBoundingClientRect();
+      
+      this.dragOffset = {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+    },
+    
+    handleDragMove(e) {
+      // 標記正在拖曳
+      this.isDragging = true;
+      
+      const touch = e.touches[0];
+      const maxX = window.innerWidth - 160; // 預留寬度
+      const maxY = window.innerHeight - 80; // 預留高度
+      
+      let newLeft = touch.clientX - this.dragOffset.x;
+      let newTop = touch.clientY - this.dragOffset.y;
+      
+      // 邊界檢查
+      if (newLeft < 10) newLeft = 10;
+      if (newLeft > maxX) newLeft = maxX;
+      if (newTop < 10) newTop = 10;
+      if (newTop > maxY) newTop = maxY;
+      
+      // 更新位置 (使用 fixed positioning，這裡轉換為 right/bottom 以保持一致性，或者直接改用 left/top)
+      // 為了簡單，我們改用 left/top 控制
+      this.floatingPosition = {
+        left: newLeft + 'px',
+        top: newTop + 'px',
+        right: 'auto',
+        bottom: 'auto'
+      };
+    },
+    
+    handleDragEnd(e) {
+      // 拖曳結束，不立即重置 isDragging，讓 click handler 判斷
+      // 使用 setTimeout 在 click 事件觸發後重置
+      setTimeout(() => {
+        this.isDragging = false;
+      }, 100);
+    },
+    
+    /** 開啟已爬取列表 */
+    openCrawledItems() {
+      if (this.isDragging) return; // 如果是拖曳結束，不觸發點擊
+      this.showCrawledItemsDialog = true;
+    },
+
+    /** 處理藍色按鈕點擊 (開始掃描) */
+    handleScanClick() {
+      if (this.isDragging) return;
+      
+      // 確保 DOM 更新後再啟動掃描
+      this.$nextTick(() => {
+        // 檢查元素是否存在
+        const qrElement = document.getElementById("qr-reader");
+        if (!qrElement) {
+          this.$message.error("掃描器容器未找到，請重新整理頁面");
+          return;
+        }
+        
+        // 滾動到掃描區
+        qrElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        
+        this.startScan();
+      });
+    },
+    
+    /** 從列表快速入庫 */
+    handleQuickStockIn(item) {
+      this.scanResult = item;
+      this.handleStockIn();
+      this.showCrawledItemsDialog = false;
     }
   }
 };
@@ -778,5 +915,81 @@ export default {
     margin: 5px 2px;
     font-size: 12px;
   }
+}
+
+/* 懸浮按鈕樣式 */
+.floating-action-buttons {
+  position: fixed;
+  z-index: 2000;
+  display: flex;
+  gap: 15px;
+  touch-action: none; /* 防止拖曳時滾動頁面 */
+  padding: 10px;
+  /* 預設位置，會被 inline style 覆蓋 */
+  right: 20px;
+  bottom: 20px;
+}
+
+.fab-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50% !important; /* 強制圓形 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.1s;
+  overflow: hidden; /* 確保內容不溢出 */
+}
+
+.fab-btn:active {
+  transform: scale(0.95);
+}
+
+.green-btn {
+  background-color: #67c23a;
+}
+
+.blue-btn {
+  background-color: #409eff;
+}
+
+/* 確保 Badge 在按鈕上方 */
+.fab-badge :deep(.el-badge__content) {
+  top: 5px;
+  right: 5px;
+}
+
+/* 桌面端隱藏懸浮按鈕 */
+@media (min-width: 769px) {
+  .floating-action-buttons {
+    display: none;
+  }
+}
+
+.crawled-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.crawled-item:last-child {
+  border-bottom: none;
+}
+
+.item-title {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.item-code {
+  font-size: 12px;
+  color: #909399;
 }
 </style>

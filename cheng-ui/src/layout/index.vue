@@ -10,11 +10,17 @@
       <app-main />
       <settings ref="settingRef" />
     </div>
+    <!-- 浮動掃描按鈕（手機端） -->
+    <floating-scan-button />
+    <!-- 掃描結果按鈕（手機端） -->
+    <scan-result-button />
   </div>
 </template>
 
 <script setup>
 import { useWindowSize } from '@vueuse/core'
+import FloatingScanButton from '@/components/FloatingScanButton'
+import ScanResultButton from '@/components/ScanResultButton'
 import Sidebar from './components/Sidebar/index.vue'
 import { AppMain, Navbar, Settings, TagsView } from './components'
 import useAppStore from '@/store/modules/app'

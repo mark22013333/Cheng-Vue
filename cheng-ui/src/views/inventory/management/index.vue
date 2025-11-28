@@ -906,22 +906,20 @@ export default {
           this.$refs.progressDialog.show({
             title: `重新抓取書籍資料 - ${itemName}`,
             message: '準備中...',
-            showLogs: true
+            showLogs: true,
+            onMinimize: () => {
+              dialogMinimized = true;
+              this.$notify.info({
+                title: '背景執行中',
+                message: `《${itemName}》仍在背景抓取資料...`,
+                duration: 3000
+              });
+            }
           });
 
-          // 監聽對話框最小化事件
-          const handleMinimize = () => {
-            dialogMinimized = true;
-            this.$notify.info({
-              title: '背景執行中',
-              message: `《${itemName}》仍在背景抓取資料...`,
-              duration: 3000
-            });
-          };
-          this.$refs.progressDialog.$once('minimize', handleMinimize);
-
           // 3. 建立 SSE 連線
-          const baseURL = process.env.VUE_APP_BASE_API || '';
+          const baseURL = import.meta.env.VITE_APP_BASE_API || '';
+          console.log('Starting SSE connection. BaseURL:', baseURL, 'TaskId:', taskId);
           const eventSource = new EventSource(
             `${baseURL}/inventory/scan/refreshIsbn/subscribe/${taskId}?itemId=${itemId}`
           );

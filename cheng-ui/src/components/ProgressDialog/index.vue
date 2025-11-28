@@ -9,8 +9,7 @@
     :show-close="true"
     :before-close="handleClose"
     append-to-body
-    class="progress-dialog-draggable"
-    custom-class="progress-dialog-custom"
+    class="progress-dialog-draggable progress-dialog-custom"
   >
     <div class="progress-container">
       <!-- 進度條 -->
@@ -36,10 +35,12 @@
       </div>
     </div>
 
-    <div slot="footer" class="dialog-footer">
-      <el-button v-if="canClose" @click="handleClose">關閉</el-button>
-      <el-button v-if="canRetry" type="primary" @click="handleRetry">重試</el-button>
-    </div>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button v-if="canClose" @click="handleClose">關閉</el-button>
+        <el-button v-if="canRetry" type="primary" @click="handleRetry">重試</el-button>
+      </div>
+    </template>
   </el-dialog>
 </template>
 
@@ -91,6 +92,7 @@ export default {
       this.canClose = false
       this.canRetry = false
       this.retryCallback = null
+      this.onMinimize = options.onMinimize || null
 
       // 對話框渲染後啟用拖曳功能
       this.$nextTick(() => {
@@ -190,6 +192,9 @@ export default {
         ).then(() => {
           this.close()
           this.$emit('minimize') // 通知父元件最小化
+          if (this.onMinimize) {
+            this.onMinimize()
+          }
         }).catch(() => {})
       } else {
         this.close()
@@ -203,19 +208,18 @@ export default {
       // 避免重複綁定
       if (this.dragEnabled) return
 
-      // 因為使用 append-to-body，對話框會掛載到 body，所以要用 document.querySelector
-      // 使用 custom-class 來找到對應的對話框
-      const dialogWrapper = document.querySelector('.progress-dialog-custom')
-      if (!dialogWrapper) {
-        console.warn('找不到對話框元素')
-        return
-      }
+      // 由於 el-dialog 使用 append-to-body，它會被移動到 body 下
+      // 我們需要透過 class 來尋找，建議給 dialog 加個唯一 ID 或特定 class
+      // 這裡嘗試尋找最後一個打開的 progress-dialog-custom
+      const dialogs = document.querySelectorAll('.progress-dialog-custom')
+      if (!dialogs || dialogs.length === 0) return
+      
+      // 取最後一個（通常是最新打開的）
+      const dialogWrapper = dialogs[dialogs.length - 1].closest('.el-dialog__wrapper') || dialogs[dialogs.length - 1].parentElement
+      if (!dialogWrapper) return
 
       const dialogHeader = dialogWrapper.querySelector('.el-dialog__header')
-      if (!dialogHeader) {
-        console.warn('找不到對話框標題')
-        return
-      }
+      if (!dialogHeader) return
 
       this.dragEnabled = true
 
