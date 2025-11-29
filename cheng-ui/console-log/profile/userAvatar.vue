@@ -3,21 +3,21 @@
     <!-- 頭像顯示區 -->
     <div class="avatar-container" @click="editCropper()">
       <div class="avatar-wrapper">
-        <img class="avatar-image" :src="options.img" alt="使用者頭像"/>
+        <img class="avatar-image" :src="options.img" alt="用戶頭像"/>
         <div class="avatar-overlay">
-          <el-icon style="font-size: 32px; margin-bottom: 8px;"><Camera /></el-icon>
+          <i class="el-icon-camera"></i>
           <span>更換頭像</span>
         </div>
       </div>
       <div class="avatar-badge">
-        <el-icon><Check /></el-icon>
+        <i class="el-icon-check"></i>
       </div>
     </div>
 
     <!-- 頭像編輯對話框 -->
     <el-dialog
       :title="title"
-      v-model="open"
+      :visible.sync="open"
       width="900px"
       append-to-body
       @opened="modalOpened"
@@ -44,60 +44,47 @@
               :canMove="options.canMove"
               :canMoveBox="options.canMoveBox"
               :centerBox="options.centerBox"
-              :canScale="options.canScale"
-              :mode="options.mode"
               :outputType="options.outputType"
               @realTime="realTime"
               v-if="visible"
             />
             <div class="drag-tip" v-if="isDragging">
-              <el-icon style="font-size: 64px; margin-bottom: 16px;"><Upload /></el-icon>
+              <i class="el-icon-upload"></i>
               <p>放開以上傳圖片</p>
             </div>
           </div>
 
-            <div class="cropper-controls">
-              <div class="control-row">
-                <el-upload
-                  action="#"
-                  :http-request="requestUpload"
-                  :show-file-list="false"
-                  :before-upload="beforeUpload">
-                  <el-button type="primary" size="default">
-                    <el-icon style="margin-right: 6px;"><FolderOpened /></el-icon>
-                    選擇圖片
-                  </el-button>
-                </el-upload>
-                <div class="zoom-slider">
-                  <el-icon class="zoom-icon"><ZoomOut /></el-icon>
-                  <el-slider 
-                    v-model="zoomValue" 
-                    :min="0.1" 
-                    :max="3" 
-                    :step="0.1" 
-                    :show-tooltip="false"
-                    @input="handleZoomSlider" 
-                  />
-                  <el-icon class="zoom-icon"><ZoomIn /></el-icon>
-                </div>
-              </div>
-              <div class="control-row buttons">
-                <el-button-group>
-                  <el-button size="default" @click="changeScale(1)" title="放大圖片">
-                    <el-icon><ZoomIn /></el-icon>
-                  </el-button>
-                  <el-button size="default" @click="changeScale(-1)" title="縮小圖片">
-                    <el-icon><ZoomOut /></el-icon>
-                  </el-button>
-                  <el-button size="default" @click="rotateLeft()" title="逆時針旋轉">
-                    <el-icon><RefreshLeft /></el-icon>
-                  </el-button>
-                  <el-button size="default" @click="rotateRight()" title="順時針旋轉">
-                    <el-icon><RefreshRight /></el-icon>
-                  </el-button>
-                </el-button-group>
-              </div>
+          <!-- 操作按鈕 -->
+          <div class="cropper-controls">
+            <div class="control-group">
+              <el-upload
+                action="#"
+                :http-request="requestUpload"
+                :show-file-list="false"
+                :before-upload="beforeUpload">
+                <el-button type="primary" icon="el-icon-folder-opened" size="default">
+                  選擇圖片
+                </el-button>
+              </el-upload>
+              <span class="control-tip">拖曳裁剪框四角可調整大小</span>
             </div>
+            <div class="control-group">
+              <el-button-group>
+                <el-button icon="el-icon-zoom-in" size="default" @click="changeScale(1)" title="放大圖片">
+                  <span style="font-size: 12px; margin-left: 4px;">放大</span>
+                </el-button>
+                <el-button icon="el-icon-zoom-out" size="default" @click="changeScale(-1)" title="縮小圖片">
+                  <span style="font-size: 12px; margin-left: 4px;">縮小</span>
+                </el-button>
+                <el-button icon="el-icon-refresh-left" size="default" @click="rotateLeft()" title="逆時針旋轉">
+                  <span style="font-size: 12px; margin-left: 4px;">↶</span>
+                </el-button>
+                <el-button icon="el-icon-refresh-right" size="default" @click="rotateRight()" title="順時針旋轉">
+                  <span style="font-size: 12px; margin-left: 4px;">↷</span>
+                </el-button>
+              </el-button-group>
+            </div>
+          </div>
         </div>
 
         <!-- 右側預覽區 -->
@@ -142,42 +129,27 @@
       </div>
 
       <!-- 底部按鈕 -->
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="open = false" size="default">取消</el-button>
-          <el-button type="primary" @click="uploadImg()" size="default" :loading="uploading">
-            <el-icon v-if="!uploading" style="margin-right: 6px;"><Upload /></el-icon>
-            {{ uploading ? '上傳中...' : '確定上傳' }}
-          </el-button>
-        </div>
-      </template>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="open = false" size="default">取消</el-button>
+        <el-button type="primary" @click="uploadImg()" size="default" :loading="uploading">
+          <i class="el-icon-upload2" v-if="!uploading"></i>
+          {{ uploading ? '上傳中...' : '確定上傳' }}
+        </el-button>
+      </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
+import store from "@/store"
 import {VueCropper} from "vue-cropper"
 import {uploadAvatar} from "@/api/system/user"
 import {debounce} from '@/utils'
-import useUserStore from '@/store/modules/user'
-import {Camera, Check, FolderOpened, ZoomIn, ZoomOut, RefreshLeft, RefreshRight, Upload} from '@element-plus/icons-vue'
 
 export default {
-  components: { 
-    VueCropper,
-    Camera,
-    Check,
-    FolderOpened,
-    ZoomIn,
-    ZoomOut,
-    RefreshLeft,
-    RefreshRight,
-    Upload
-  },
+  components: { VueCropper },
   data() {
-    const userStore = useUserStore()
     return {
-      userStore,
       // 是否顯示彈出層
       open: false,
       // 是否顯示cropper
@@ -189,7 +161,7 @@ export default {
       // 彈出層標題
       title: "編輯頭像",
       options: {
-        img: userStore.avatar,  // 裁剪圖片的地址
+        img: store.getters.avatar,  // 裁剪圖片的地址
         autoCrop: true,             // 是否預設產生截圖框
         autoCropWidth: 200,         // 預設產生截圖框寬度
         autoCropHeight: 200,        // 預設產生截圖框高度
@@ -198,16 +170,12 @@ export default {
         fixedNumber: [1, 1],        // 固定比例 1:1
         canMove: true,              // 可以移動圖片
         canMoveBox: true,           // 可以移動截圖框
-        canScale: true,             // 可以縮放圖片（滑鼠滾輪）
         centerBox: true,            // 截圖框居中
-        mode: 'contain',            // 圖片自動縮放以完整顯示
         outputType: "png",          // 預設產生截圖為PNG格式
         filename: 'avatar'          // 檔案名稱
       },
       previews: {},
-      resizeHandler: null,
-      zoomValue: 1,
-      lastZoomValue: 1
+      resizeHandler: null
     }
   },
   methods: {
@@ -217,7 +185,6 @@ export default {
     },
     // 打開彈出層結束時的呼叫
     modalOpened() {
-      console.log('=== modalOpened ===')
       this.visible = true
       if (!this.resizeHandler) {
         this.resizeHandler = debounce(() => {
@@ -225,15 +192,6 @@ export default {
         }, 100)
       }
       window.addEventListener("resize", this.resizeHandler)
-      
-      // Check cropper ref
-      this.$nextTick(() => {
-        console.log('cropper ref:', this.$refs.cropper)
-        if (this.$refs.cropper) {
-           console.log('startCrop invoked')
-           this.$refs.cropper.startCrop()
-        }
-      })
     },
     // 重新整理元件
     refresh() {
@@ -252,20 +210,8 @@ export default {
     },
     // 圖片縮放
     changeScale(num) {
-      console.log('changeScale:', num)
       num = num || 1
       this.$refs.cropper.changeScale(num)
-      // 更新 slider 值
-      this.zoomValue += num
-      this.lastZoomValue = this.zoomValue
-    },
-    // 滑桿縮放
-    handleZoomSlider(val) {
-      console.log('handleZoomSlider:', val)
-      const diff = val - this.lastZoomValue
-      console.log('diff:', diff)
-      this.$refs.cropper.changeScale(diff)
-      this.lastZoomValue = val
     },
     // 上傳預處理
     beforeUpload(file) {
@@ -296,20 +242,25 @@ export default {
         formData.append("avatarfile", data, this.options.filename)
         uploadAvatar(formData).then(response => {
           this.open = false
-          // 處理頭像 URL
+          // 處理頭像 URL：無論開發或正式環境，都需要加上 API 前綴
           let avatarUrl = response.imgUrl
-          const baseApi = import.meta.env.VITE_APP_BASE_API || ''
-          
-          // 只有當 avatarUrl 不是 http/https 開頭時，才加上 baseApi
-          if (avatarUrl && !avatarUrl.startsWith('http')) {
-            // 如果已經包含 baseApi，不要重複添加
-            if (!avatarUrl.startsWith(baseApi)) {
+          if (avatarUrl && avatarUrl.startsWith('/profile')) {
+            // /profile 開頭的路徑需要加上 API 前綴
+            // 開發環境：/dev-api/profile/xxx -> proxy 轉發
+            // 正式環境：/prod-api/profile/xxx -> Nginx 代理
+            const baseApi = process.env.VUE_APP_BASE_API || ''
+            if (baseApi) {
+              avatarUrl = baseApi + avatarUrl
+            }
+          } else if (!avatarUrl.startsWith('http')) {
+            // 其他相對路徑也加上 API 前綴
+            const baseApi = process.env.VUE_APP_BASE_API || ''
+            if (baseApi) {
               avatarUrl = baseApi + avatarUrl
             }
           }
-          
           this.options.img = avatarUrl
-          this.userStore.avatar = avatarUrl
+          store.commit('SET_AVATAR', avatarUrl)
           this.$modal.msgSuccess("頭像更新成功")
           this.visible = false
           this.uploading = false
@@ -320,12 +271,11 @@ export default {
     },
     // 即時預覽
     realTime(data) {
-      console.log('realTime:', data)
       this.previews = data
     },
     // 關閉視窗
     closeDialog() {
-      this.options.img = this.userStore.avatar
+      this.options.img = store.getters.avatar
       this.visible = false
       window.removeEventListener("resize", this.resizeHandler)
     }
@@ -379,6 +329,11 @@ export default {
       color: white;
       opacity: 0;
       transition: opacity 0.3s;
+
+      i {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
 
       span {
         font-size: 13px;
@@ -474,6 +429,11 @@ export default {
       justify-content: center;
       z-index: 10;
 
+      i {
+        font-size: 64px;
+        margin-bottom: 16px;
+      }
+
       p {
         font-size: 18px;
         margin: 0;
@@ -484,35 +444,19 @@ export default {
   .cropper-controls {
     margin-top: 20px;
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
     gap: 16px;
+    flex-wrap: wrap;
 
-    .control-row {
+    .control-group {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      width: 100%;
-      
-      &.buttons {
-        justify-content: center;
-      }
+      gap: 12px;
 
-      .zoom-slider {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 0 10px;
-        
-        .el-slider {
-          flex: 1;
-        }
-        
-        .zoom-icon {
-          font-size: 18px;
-          color: #909399;
-        }
+      .control-tip {
+        color: #909399;
+        font-size: 13px;
       }
     }
   }

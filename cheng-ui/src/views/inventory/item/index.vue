@@ -106,7 +106,7 @@
           v-hasPermi="['inventory:item:scan']"
         >掃描</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="itemList" @selection-change="handleSelectionChange">

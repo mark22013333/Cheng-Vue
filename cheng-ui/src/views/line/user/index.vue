@@ -43,18 +43,19 @@
         <el-date-picker
           v-model="dateRange"
           style="width: 240px"
-          value-format="yyyy-MM-dd"
+          value-format="YYYY-MM-DD"
           type="daterange"
           range-separator="-"
           start-placeholder="開始日期"
           end-placeholder="結束日期"
-          :picker-options="pickerOptions"
+          :disabled-date="disabledDate"
+          :shortcuts="dateShortcuts"
           @change="handleDateChange"
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+        <el-button type="primary" :icon="Search" @click="handleQuery">搜尋</el-button>
+        <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -64,7 +65,7 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-upload"
+          :icon="Upload"
           @click="handleImport"
           v-hasPermi="['line:user:import']"
         >
@@ -75,7 +76,7 @@
         <el-button
           type="warning"
           plain
-          icon="el-icon-download"
+          :icon="Download"
           @click="handleExport"
           v-hasPermi="['line:user:export']"
         >
@@ -86,7 +87,7 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
+          :icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['line:user:remove']"
@@ -98,7 +99,7 @@
         <el-button
           type="warning"
           plain
-          icon="el-icon-remove-outline"
+          :icon="Remove"
           :disabled="multiple"
           @click="handleBatchAddBlacklist"
           v-hasPermi="['line:user:edit']"
@@ -110,7 +111,7 @@
         <el-button
           type="success"
           plain
-          icon="el-icon-circle-check"
+          :icon="CircleCheck"
           :disabled="multiple"
           @click="handleBatchRemoveBlacklist"
           v-hasPermi="['line:user:edit']"
@@ -118,7 +119,7 @@
           批次移除黑名單
         </el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <!-- 資料表格 -->
@@ -127,7 +128,7 @@
       <el-table-column label="頭像" align="center" width="80">
         <template #default="scope">
           <el-avatar :src="scope.row.linePictureUrl" size="default">
-            <i class="el-icon-user-solid"></i>
+            <el-icon><UserFilled /></el-icon>
           </el-avatar>
         </template>
       </el-table-column>
@@ -137,7 +138,7 @@
           <span>{{ scope.row.lineUserId }}</span>
           <el-button
             type="text"
-            icon="el-icon-document-copy"
+            :icon="DocumentCopy"
             @click="handleCopy(scope.row.lineUserId)"
             style="margin-left: 5px"
           ></el-button>
@@ -159,12 +160,14 @@
       <el-table-column label="互動統計" align="center" width="120">
         <template #default="scope">
           <el-tooltip placement="top">
-            <div slot="content">
-              發送：{{ scope.row.totalMessagesSent || 0 }}<br/>
-              接收：{{ scope.row.totalMessagesReceived || 0 }}
-            </div>
+            <template #content>
+              <div>
+                發送：{{ scope.row.totalMessagesSent || 0 }}<br/>
+                接收：{{ scope.row.totalMessagesReceived || 0 }}
+              </div>
+            </template>
             <el-tag size="small">
-              <i class="el-icon-s-comment"></i>
+              <el-icon><Comment /></el-icon>
               {{ (scope.row.totalMessagesSent || 0) + (scope.row.totalMessagesReceived || 0) }}
             </el-tag>
           </el-tooltip>
@@ -178,40 +181,40 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="220" class-name="small-padding fixed-width operation-column" fixed="right">
         <template #default="scope">
-          <el-button link type="primary" icon="el-icon-view" @click="handleDetail(scope.row)" v-hasPermi="['line:user:query']">詳情</el-button>
+          <el-button v-if="checkPermi(['line:user:query'])" link type="primary" :icon="View" @click="handleDetail(scope.row)">詳情</el-button>
           <el-dropdown @command="(command) => handleCommand(command, scope.row)">
-            <el-button link type="primary" icon="el-icon-d-arrow-right">更多</el-button>
-            <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="bind" icon="el-icon-link" v-hasPermi="['line:user:bind']">
+            <el-button link type="primary" :icon="DArrowRight">更多</el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+              <el-dropdown-item v-if="checkPermi(['line:user:bind'])" command="bind" :icon="Link">
                 綁定
               </el-dropdown-item>
-              <el-dropdown-item command="unbind" icon="el-icon-unlock" v-hasPermi="['line:user:bind']" v-if="scope.row.bindStatus === 'BOUND'">
+              <el-dropdown-item v-if="checkPermi(['line:user:bind']) && scope.row.bindStatus === 'BOUND'" command="unbind" :icon="Unlock">
                 解綁
               </el-dropdown-item>
-              <el-dropdown-item command="sync" icon="el-icon-refresh" v-hasPermi="['line:user:edit']">
+              <el-dropdown-item v-if="checkPermi(['line:user:edit'])" command="sync" :icon="Refresh">
                 同步資料
               </el-dropdown-item>
               <el-dropdown-item
+                v-if="checkPermi(['line:user:edit']) && scope.row.followStatus !== 'BLACKLISTED'"
                 command="addBlacklist"
-                icon="el-icon-remove-outline"
+                :icon="Remove"
                 divided
-                v-hasPermi="['line:user:edit']"
-                v-if="scope.row.followStatus !== 'BLACKLISTED'"
               >
                 加入黑名單
               </el-dropdown-item>
               <el-dropdown-item
+                v-if="checkPermi(['line:user:edit']) && scope.row.followStatus === 'BLACKLISTED'"
                 command="removeBlacklist"
-                icon="el-icon-circle-check"
-                v-hasPermi="['line:user:edit']"
-                v-if="scope.row.followStatus === 'BLACKLISTED'"
+                :icon="CircleCheck"
               >
                 移除黑名單
               </el-dropdown-item>
-              <el-dropdown-item command="delete" icon="el-icon-delete" divided v-hasPermi="['line:user:remove']">
+              <el-dropdown-item v-if="checkPermi(['line:user:remove'])" command="delete" :icon="Delete" divided>
                 刪除
               </el-dropdown-item>
-            </el-dropdown-menu>
+              </el-dropdown-menu>
+            </template>
           </el-dropdown>
         </template>
       </el-table-column>
@@ -228,42 +231,55 @@
 
     <!-- 使用者詳情抽屜 -->
     <user-detail
-      :visible.sync="detailVisible"
+      v-model:visible="detailVisible"
       :user-id="currentUserId"
       @close="detailVisible = false"
     />
 
     <!-- 綁定對話框 -->
     <bind-dialog
-      :visible.sync="bindVisible"
+      v-model:visible="bindVisible"
       :line-user-id="currentLineUserId"
       @success="handleBindSuccess"
     />
 
     <!-- 匯入對話框 -->
     <import-dialog
-      :visible.sync="importVisible"
+      v-model:visible="importVisible"
       @success="handleImportSuccess"
     />
   </div>
 </template>
 
 <script>
+import { h } from 'vue'
 import { listUser, delUser, getUserStats, unbindUser, syncUserProfile, exportUser, addToBlacklist, removeFromBlacklist, batchAddToBlacklist, batchRemoveFromBlacklist } from '@/api/line/user'
+import {
+  Search, Refresh, Upload, Download, Delete, Remove, CircleCheck,
+  UserFilled, DocumentCopy, Comment, View, DArrowRight, Link, Unlock, RemoveFilled
+} from '@element-plus/icons-vue'
 import StatsCard from './components/StatsCard'
 import UserDetail from './components/UserDetail'
 import BindDialog from './components/BindDialog'
 import ImportDialog from './components/ImportDialog'
 import MonthlyJoinChart from './components/MonthlyJoinChart'
+import { checkPermi } from '@/utils/permission'
 
 export default {
   name: 'LineUser',
   components: {
+    Comment,
     StatsCard,
     UserDetail,
     BindDialog,
     ImportDialog,
     MonthlyJoinChart
+  },
+  setup() {
+    return {
+      Search, Refresh, Upload, Download, Delete, Remove, CircleCheck,
+      UserFilled, DocumentCopy, Comment, View, DArrowRight, Link, Unlock, RemoveFilled
+    }
   },
   data() {
     return {
@@ -288,51 +304,63 @@ export default {
       stats: {},
       // 日期範圍
       dateRange: [],
-      // 日期選擇器選項
-      pickerOptions: {
-        disabledDate(time) {
-          // 限制只能選擇今天及之前的日期
-          return time.getTime() > Date.now()
-        },
-        shortcuts: [
-          {
-            text: '最近一週',
-            onClick(picker) {
-              const end = new Date()
-              const start = new Date()
-              start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
-              picker.$emit('pick', [start, end])
-            }
-          },
-          {
-            text: '最近一個月',
-            onClick(picker) {
-              const end = new Date()
-              const start = new Date()
-              start.setTime(start.getTime() - 3600 * 1000 * 24 * 30)
-              picker.$emit('pick', [start, end])
-            }
-          },
-          {
-            text: '最近三個月',
-            onClick(picker) {
-              const end = new Date()
-              const start = new Date()
-              start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
-              picker.$emit('pick', [start, end])
-            }
-          },
-          {
-            text: '最近一年',
-            onClick(picker) {
-              const end = new Date()
-              const start = new Date()
-              start.setTime(start.getTime() - 3600 * 1000 * 24 * 365)
-              picker.$emit('pick', [start, end])
-            }
+      // 日期快捷選項
+      dateShortcuts: [
+        {
+          text: '最近一週',
+          value: () => {
+            const end = new Date()
+            const start = new Date()
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
+            return [start, end]
           }
-        ]
-      },
+        },
+        {
+          text: '最近一個月',
+          value: () => {
+            const end = new Date()
+            const start = new Date()
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30)
+            return [start, end]
+          }
+        },
+        {
+          text: '最近三個月',
+          value: () => {
+            const end = new Date()
+            const start = new Date()
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
+            return [start, end]
+          }
+        },
+        {
+          text: '最近一年',
+          value: () => {
+            const end = new Date()
+            const start = new Date()
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 365)
+            return [start, end]
+          }
+        },
+        {
+          text: '最近三年',
+          value: () => {
+            const end = new Date()
+            const start = new Date()
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 365 * 3)
+            return [start, end]
+          }
+        },
+        {
+          text: '最近五年',
+          value: () => {
+            const end = new Date()
+            const start = new Date()
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 365 * 5)
+            return [start, end]
+          }
+        }
+      ],
       // 查詢參數
       queryParams: {
         pageNum: 1,
@@ -357,6 +385,12 @@ export default {
     this.getStats()
   },
   methods: {
+    /** 權限檢查 */
+    checkPermi,
+    /** 禁用未來日期 */
+    disabledDate(time) {
+      return time.getTime() > Date.now()
+    },
     /** 查詢使用者列表 */
     getList() {
       this.loading = true
@@ -503,12 +537,14 @@ export default {
       this.getStats()
     },
     /** 複製 LINE ID */
-    handleCopy(text) {
-      this.$copyText(text).then(() => {
+    async handleCopy(text) {
+      try {
+        await navigator.clipboard.writeText(text)
         this.$message.success('已複製到剪貼簿')
-      }).catch(() => {
+      } catch (error) {
+        console.error('複製失敗:', error)
         this.$message.error('複製失敗')
-      })
+      }
     },
     /** 下拉選單操作 */
     handleCommand(command, row) {
@@ -556,18 +592,20 @@ export default {
     /** 加入黑名單 */
     handleAddToBlacklist(row) {
       const displayName = row.lineDisplayName || row.lineUserId
-      const h = this.$createElement
-      this.$confirm('', '警告', {
-        message: h('div', null, [
+      this.$confirm(
+        h('div', null, [
           h('p', null, `是否將使用者「${displayName}」加入黑名單？`),
           h('p', { style: 'color: #F56C6C; margin-top: 10px; font-weight: bold;' },
             '⚠️ 加入後該使用者將無法參與活動，也不會收到任何訊息。')
         ]),
-        confirmButtonText: '確認加入',
-        cancelButtonText: '取消',
-        type: 'warning',
-        dangerouslyUseHTMLString: false
-      }).then(() => {
+        '警告',
+        {
+          confirmButtonText: '確認加入',
+          cancelButtonText: '取消',
+          type: 'warning',
+          dangerouslyUseHTMLString: false
+        }
+      ).then(() => {
         return addToBlacklist(row.lineUserId)
       }).then(() => {
         this.getList()

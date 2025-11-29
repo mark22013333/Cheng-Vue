@@ -48,7 +48,7 @@
           maxlength="100"
         />
         <div class="form-tip">
-          <i class="el-icon-info"></i>
+          <el-icon><InfoFilled /></el-icon>
           用於 Messaging API（發送訊息）
         </div>
       </el-form-item>
@@ -77,8 +77,8 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <div class="form-tip" style="margin-top: -10px; margin-bottom: 15px;">
-        <i class="el-icon-info"></i>
+      <div class="form-tip" style="margin-top: 10px; margin-bottom: 15px;">
+        <el-icon><InfoFilled /></el-icon>
         LINE 區分 Messaging API 頻道和 LINE Login 頻道，兩者的 Channel ID 和 Secret 不同。如需使用 LINE Login 功能，請填寫 Login 頻道資訊。
       </div>
 
@@ -93,14 +93,14 @@
           maxlength="500"
         />
         <div class="form-tip">
-          <i class="el-icon-info"></i>
+          <el-icon><InfoFilled /></el-icon>
           請使用長期有效的 Channel Access Token
         </div>
       </el-form-item>
 
       <el-divider content-position="left">Webhook 設定</el-divider>
 
-      <el-form-item label="Webhook 基礎 URL" prop="webhookBaseUrl">
+      <el-form-item label="Webhook 網域" prop="webhookBaseUrl">
         <el-input
           v-model="form.webhookBaseUrl"
           placeholder="選填，留空則使用系統預設值"
@@ -109,28 +109,29 @@
           <template slot="prepend">https://</template>
         </el-input>
         <div class="form-tip" v-if="defaultWebhookBaseUrl">
-          <i class="el-icon-info"></i>
+          <el-icon><InfoFilled /></el-icon>
           系統預設值：{{ defaultWebhookBaseUrl }}
         </div>
         <div class="form-tip">
-          <i class="el-icon-info"></i>
+          <el-icon><InfoFilled /></el-icon>
           LINE 平台回呼使用的網域，必須是公開可存取的 URL（僅需填入網域名稱，例如：domain.com）。留空則使用系統預設值。
         </div>
       </el-form-item>
 
       <el-form-item label="Webhook URL" v-if="webhookUrl">
         <el-input v-model="webhookUrl" readonly>
-          <el-button slot="append" icon="el-icon-document-copy" @click="copyWebhookUrl">複製</el-button>
+          <template #append>
+            <el-button :icon="DocumentCopy" @click="copyWebhookUrl">複製</el-button>
+          </template>
         </el-input>
         <div class="form-tip">
-          <i class="el-icon-info"></i>
+          <el-icon><InfoFilled /></el-icon>
           自動產生的 Webhook URL，請將此 URL 設定至 LINE Developer Console
         </div>
         <el-button
           v-if="webhookUrl"
           type="success"
-          size="small"
-          icon="el-icon-link"
+          :icon="Link"
           :loading="settingWebhook"
           @click="handleSetLineWebhook"
           style="margin-top: 10px;"
@@ -138,7 +139,7 @@
           設定 LINE Webhook URL
         </el-button>
         <div class="form-tip">
-          <i class="el-icon-warning"></i>
+          <el-icon><WarningFilled /></el-icon>
           點擊按鈕將自動呼叫 LINE API 設定 Webhook URL，無需手動至 LINE Developer Console 設定
         </div>
       </el-form-item>
@@ -177,17 +178,26 @@
     </el-form>
 
     <div slot="footer" class="dialog-footer">
-      <el-button @click="cancel">取 消</el-button>
-      <el-button type="primary" @click="submitForm" :loading="submitting">確 定</el-button>
+      <el-button @click="cancel" :icon="Close">取 消</el-button>
+      <el-button type="primary" @click="submitForm" :loading="submitting" :icon="Check">確 定</el-button>
     </div>
   </el-dialog>
 </template>
 
 <script>
 import { getConfig, addConfig, updateConfig, checkChannelType, setLineWebhook, setLineWebhookWithParams, getDefaultWebhookBaseUrl } from '@/api/line/config'
+import { InfoFilled, DocumentCopy, Link, WarningFilled, Close, Check } from '@element-plus/icons-vue'
 
 export default {
   name: 'ConfigForm',
+  components: {
+    InfoFilled, DocumentCopy, Link, WarningFilled, Close, Check
+  },
+  setup() {
+    return {
+      Link, Close, Check, DocumentCopy
+    }
+  },
   dicts: ['line_channel_type'],
   data() {
     return {
@@ -584,15 +594,18 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.form-tip {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 5px;
+  .form-tip {
+    font-size: 12px;
+    color: #909399;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
 
-  i {
-    margin-right: 4px;
+    .el-icon {
+      margin-right: 4px;
+      font-size: 14px;
+    }
   }
-}
 
 :deep(.el-divider__text) {
   font-weight: 600;

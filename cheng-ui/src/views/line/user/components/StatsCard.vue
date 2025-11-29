@@ -4,7 +4,7 @@
       <el-col :xs="12" :sm="8" :md="6" :lg="4" :xl="4">
         <div class="stat-card total">
           <div class="stat-icon">
-            <i class="el-icon-user"></i>
+            <el-icon><User /></el-icon>
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ stats.totalUsers || 0 }}</div>
@@ -15,7 +15,7 @@
       <el-col :xs="12" :sm="8" :md="6" :lg="4" :xl="4">
         <div class="stat-card following">
           <div class="stat-icon">
-            <i class="el-icon-star-on"></i>
+            <el-icon><StarFilled /></el-icon>
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ stats.followingCount || 0 }}</div>
@@ -26,7 +26,7 @@
       <el-col :xs="12" :sm="8" :md="6" :lg="4" :xl="4">
         <div class="stat-card bound">
           <div class="stat-icon">
-            <i class="el-icon-link"></i>
+            <el-icon><Link /></el-icon>
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ stats.boundCount || 0 }}</div>
@@ -37,7 +37,7 @@
       <el-col :xs="12" :sm="8" :md="6" :lg="4" :xl="4">
         <div class="stat-card unfollowed">
           <div class="stat-icon">
-            <i class="el-icon-circle-close"></i>
+            <el-icon><CircleClose /></el-icon>
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ stats.unfollowedCount || 0 }}</div>
@@ -48,7 +48,7 @@
       <el-col :xs="12" :sm="8" :md="6" :lg="4" :xl="4">
         <div class="stat-card blacklist">
           <div class="stat-icon">
-            <i class="el-icon-remove-outline"></i>
+            <el-icon><Remove /></el-icon>
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ stats.blacklistedCount || 0 }}</div>
@@ -59,7 +59,7 @@
       <el-col :xs="12" :sm="8" :md="6" :lg="4" :xl="4">
         <div class="stat-card new-week">
           <div class="stat-icon">
-            <i class="el-icon-plus"></i>
+            <el-icon><Plus /></el-icon>
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ stats.weekNewCount || 0 }}</div>
@@ -72,8 +72,13 @@
 </template>
 
 <script>
+import { User, StarFilled, Link, CircleClose, Remove, Plus } from '@element-plus/icons-vue'
+
 export default {
   name: 'StatsCard',
+  components: {
+    User, StarFilled, Link, CircleClose, Remove, Plus
+  },
   props: {
     stats: {
       type: Object,

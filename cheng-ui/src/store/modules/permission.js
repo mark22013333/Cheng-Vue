@@ -168,21 +168,21 @@ export const loadView = (view) => {
     // 精確匹配
     if (dir === view) {
       console.log('[loadView] ✅ Exact match:', view, '->', path)
-      res = () => modules[path]()
+      res = modules[path]  // 直接返回 modules[path]，它本身就是返回 Promise 的函數
       break
     }
 
     // 容錯匹配：後端返回 system/user，前端檔案 system/user/index.vue
     if (dir === view + '/index') {
       console.log('[loadView] ✅ Index fallback:', view, '->', path)
-      res = () => modules[path]()
+      res = modules[path]
       break
     }
 
     // 容錯匹配：後端返回 system/user/index，前端檔案 system/user.vue (較少見但可能)
     if (dir + '/index' === view) {
       console.log('[loadView] ✅ Reverse fallback:', view, '->', path)
-      res = () => modules[path]()
+      res = modules[path]
       break
     }
   }

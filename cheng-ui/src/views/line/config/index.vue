@@ -4,14 +4,13 @@
     <el-row :gutter="20" class="header-section">
       <el-col :span="12">
         <div class="page-title">
-          <i class="el-icon-message"></i>
+          <el-icon class="mr-2"><Message /></el-icon>
           <span>LINE 頻道設定</span>
         </div>
       </el-col>
       <el-col :span="12" class="text-right">
         <el-button
-          icon="el-icon-refresh"
-          size="small"
+          :icon="Refresh"
           @click="getList"
         >
           重新整理
@@ -33,7 +32,9 @@
           <!-- 卡片標題 -->
           <div slot="header" class="card-header">
             <div class="card-title">
-              <i :class="channel.icon" :style="{ color: channel.color }"></i>
+              <el-icon :style="{ color: channel.color, fontSize: '20px' }">
+                <component :is="channel.icon" />
+              </el-icon>
               <span class="type-label">{{ channel.label }}</span>
               <el-tag v-if="isEnabled(channel.config.status)" type="success" size="small" effect="plain">
                 執行中
@@ -45,18 +46,18 @@
             <div class="card-actions">
               <el-dropdown @command="(command) => handleCommand(command, channel.config)">
                 <span class="more-btn">
-                  <i class="el-icon-more"></i>
+                  <el-icon><More /></el-icon>
                 </span>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item command="edit" icon="el-icon-edit">
+                  <el-dropdown-item command="edit" :icon="Edit">
                     編輯
                   </el-dropdown-item>
-                  <el-dropdown-item command="test" icon="el-icon-connection">
+                  <el-dropdown-item command="test" :icon="Connection">
                     測試連線
                   </el-dropdown-item>
                   <el-dropdown-item
                     command="delete"
-                    icon="el-icon-delete"
+                    :icon="Delete"
                     divided
                   >
                     刪除
@@ -76,12 +77,12 @@
             <!-- Bot 資訊 -->
             <div class="info-section">
               <div class="info-item">
-                <i class="el-icon-user"></i>
+                <el-icon><User /></el-icon>
                 <span class="label">Bot ID:</span>
                 <span class="value">{{ channel.config.botBasicId || '-' }}</span>
               </div>
               <div class="info-item">
-                <i class="el-icon-key"></i>
+                <el-icon><Key /></el-icon>
                 <span class="label">Channel ID:</span>
                 <span class="value">{{ maskSecret(channel.config.channelId, 4) }}</span>
               </div>
@@ -89,7 +90,7 @@
 
             <!-- Webhook 狀態 -->
             <div class="webhook-status">
-              <i class="el-icon-link"></i>
+              <el-icon><Link /></el-icon>
               <span>Webhook:</span>
               <el-tag
                 v-if="isEnabled(channel.config.webhookStatus)"
@@ -105,8 +106,7 @@
             <div class="quick-actions">
               <el-button
                 type="info"
-                size="small"
-                icon="el-icon-connection"
+                :icon="Connection"
                 plain
                 @click="handleTestConnection(channel.config)"
               >
@@ -114,8 +114,7 @@
               </el-button>
               <el-button
                 type="primary"
-                size="small"
-                icon="el-icon-setting"
+                :icon="Setting"
                 @click="handleEdit(channel.config)"
               >
                 設定
@@ -133,7 +132,9 @@
         >
           <div slot="header" class="card-header">
             <div class="card-title">
-              <i :class="channel.icon" :style="{ color: channel.color }"></i>
+              <el-icon :style="{ color: channel.color, fontSize: '20px' }">
+                <component :is="channel.icon" />
+              </el-icon>
               <span class="type-label">{{ channel.label }}</span>
               <el-tag type="info" size="small" effect="plain">
                 未設定
@@ -143,14 +144,14 @@
 
           <div class="card-content empty-content">
             <div class="empty-icon">
-              <i class="el-icon-warning-outline"></i>
+              <el-icon><Warning /></el-icon>
             </div>
             <p class="empty-text">尚未設定此頻道</p>
             <p class="empty-desc">{{ channel.description }}</p>
             <el-button
               type="primary"
               size="default"
-              icon="el-icon-plus"
+              :icon="Plus"
               @click="handleAdd(channel.type)"
               v-hasPermi="['line:config:add']"
             >
@@ -179,12 +180,20 @@
 import { listConfig, delConfig, setDefaultChannel, testConnection } from '@/api/line/config'
 import ConfigForm from './components/ConfigForm'
 import ConnectionTest from './components/ConnectionTest'
+import { 
+  Message, Refresh, StarFilled, Comment, DataAnalysis, 
+  More, Edit, Connection, Delete, User, Key, Link, 
+  Setting, Warning, Plus 
+} from '@element-plus/icons-vue'
 
 export default {
   name: 'LineConfig',
   components: {
     ConfigForm,
-    ConnectionTest
+    ConnectionTest,
+    Message, Refresh, StarFilled, Comment, DataAnalysis,
+    More, Edit, Connection, Delete, User, Key, Link,
+    Setting, Warning, Plus
   },
   data() {
     return {
@@ -195,7 +204,7 @@ export default {
         {
           type: 'MAIN',
           label: '主頻道',
-          icon: 'el-icon-star-on',
+          icon: 'StarFilled',
           color: '#E6A23C',
           description: '系統預設使用的主要 LINE 頻道',
           config: null
@@ -203,7 +212,7 @@ export default {
         {
           type: 'SUB',
           label: '副頻道',
-          icon: 'el-icon-chat-line-square',
+          icon: 'Comment',
           color: '#409EFF',
           description: '備用頻道，可用於分流或測試',
           config: null
@@ -211,12 +220,17 @@ export default {
         {
           type: 'TEST',
           label: '測試頻道',
-          icon: 'el-icon-data-analysis',
+          icon: 'DataAnalysis',
           color: '#909399',
           description: '開發測試專用頻道，不影響正式環境',
           config: null
         }
       ]
+    }
+  },
+  setup() {
+    return {
+      Refresh, Edit, Connection, Delete, Setting, Plus
     }
   },
   created() {

@@ -82,7 +82,7 @@
           v-hasPermi="['inventory:stock:check']"
         >盤點</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <!-- 庫存統計卡片 -->

@@ -5,7 +5,7 @@
   .main-container {
     min-height: 100%;
     transition: margin-left .28s;
-    margin-left: vars.$base-sidebar-width;
+    /* margin-left 已由內聯樣式動態設定 */
     position: relative;
   }
 
@@ -15,7 +15,7 @@
 
   .sidebar-container {
     transition: width 0.28s;
-    width: vars.$base-sidebar-width !important;
+    width: vars.$base-sidebar-width; /* 移除 !important 讓動態寬度生效 */
     height: 100%;
     position: fixed;
     font-size: 0px;

@@ -242,7 +242,7 @@
                   <el-form-item>
                      <template #label>
                         <span>
-                           <el-tooltip content="選擇隐藏則路由將不會出現在側邊欄，但仍然可以訪問" placement="top">
+                           <el-tooltip content="選擇隱藏則路由將不會出現在側邊欄，但仍然可以訪問" placement="top">
                               <el-icon><question-filled /></el-icon>
                            </el-tooltip>
                            顯示狀態

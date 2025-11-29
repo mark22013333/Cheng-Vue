@@ -1,5 +1,11 @@
 <template>
-    <div :class="{'has-logo':showLogo}" :style="{ backgroundColor: settingsStore.sideTheme === 'theme-dark' ? variables.menuBackground : variables.menuLightBackground }">
+    <div 
+        :class="{'has-logo':showLogo}" 
+        :style="{ 
+            backgroundColor: settingsStore.sideTheme === 'theme-dark' ? variables.menuBackground : variables.menuLightBackground,
+            width: appStore.sidebar.width + 'px'
+        }"
+    >
         <logo v-if="showLogo" :collapse="isCollapse" />
         <el-scrollbar :class="settingsStore.sideTheme" wrap-class="scrollbar-wrapper">
             <el-menu
@@ -25,13 +31,17 @@
             v-if="!isCollapse"
             class="sidebar-resizer"
             @mousedown="startResize"
+            @mouseenter="handleResizerHover"
             :title="'拖曳調整選單寬度 (目前: ' + appStore.sidebar.width + 'px)'"
-        ></div>
+        >
+            <!-- 視覺指示器 -->
+            <div class="resizer-indicator"></div>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Logo from "./Logo"
 import SidebarItem from "./SidebarItem"
@@ -45,6 +55,10 @@ const settingsStore = useSettingsStore()
 const permissionStore = usePermissionStore()
 
 const isResizing = ref(false)
+
+onMounted(() => {
+    // 組件已掛載
+})
 
 const activeMenu = computed(() => {
     const { meta, path } = route
@@ -72,6 +86,10 @@ const variables = computed(() => {
 const isCollapse = computed(() => {
     return !appStore.sidebar.opened
 })
+
+function handleResizerHover() {
+    // 滑鼠懸停在拖曳條上
+}
 
 function startResize(e) {
     isResizing.value = true
@@ -111,19 +129,36 @@ function startResize(e) {
     position: absolute;
     top: 0;
     right: 0;
-    width: 4px;
+    width: 8px; /* 增加寬度到 8px，更容易點擊 */
     height: 100%;
     cursor: ew-resize;
-    background-color: transparent;
+    background-color: rgba(64, 158, 255, 0.1); /* 添加淡淡的背景色便於識別 */
     z-index: 1002;
     transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     &:hover {
         background-color: rgba(64, 158, 255, 0.5);
+        
+        .resizer-indicator {
+            opacity: 1;
+        }
     }
 
     &:active {
         background-color: rgba(64, 158, 255, 0.8);
     }
+}
+
+.resizer-indicator {
+    width: 3px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 2px;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+    pointer-events: none;
 }
 </style>

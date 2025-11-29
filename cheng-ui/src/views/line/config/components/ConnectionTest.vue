@@ -138,12 +138,12 @@
     </div>
 
     <div slot="footer" class="dialog-footer">
-      <el-button @click="dialogVisible = false">關 閉</el-button>
+      <el-button @click="dialogVisible = false" :icon="Close">關 閉</el-button>
       <el-button
         type="primary"
         @click="runTest"
         :loading="testing"
-        icon="el-icon-refresh-right"
+        :icon="RefreshRight"
       >
         {{ testing ? '測試中...' : '重新測試' }}
       </el-button>
@@ -153,9 +153,18 @@
 
 <script>
 import { testConnection } from '@/api/line/config'
+import { Loading, CircleCheck, CircleClose, RefreshRight, Close } from '@element-plus/icons-vue'
 
 export default {
   name: 'ConnectionTest',
+  components: {
+    Loading, CircleCheck, CircleClose, RefreshRight, Close
+  },
+  setup() {
+    return {
+      Loading, CircleCheck, CircleClose, RefreshRight, Close
+    }
+  },
   data() {
     return {
       // 是否顯示對話框
@@ -234,8 +243,8 @@ export default {
     },
     /** 取得步驟圖示 */
     getStepIcon(result) {
-      if (!result) return 'el-icon-loading'
-      return result.success ? 'el-icon-circle-check' : 'el-icon-circle-close'
+      if (!result) return Loading
+      return result.success ? CircleCheck : CircleClose
     },
     /** 取得結果類型 */
     getResultType(success) {

@@ -3,7 +3,7 @@
     <router-view v-slot="{ Component, route }">
       <transition name="fade-transform" mode="out-in">
         <keep-alive :include="tagsViewStore.cachedViews">
-          <component v-if="!route.meta.link" :is="Component" :key="route.path"/>
+          <component v-if="!route.meta.link" :is="Component" :key="route.path" />
         </keep-alive>
       </transition>
     </router-view>
@@ -13,6 +13,8 @@
 </template>
 
 <script setup>
+import { watchEffect } from 'vue'
+import { useRoute } from 'vue-router'
 import copyright from "./Copyright/index"
 import iframeToggle from "./IframeToggle/index"
 import useTagsViewStore from '@/store/modules/tagsView'
@@ -20,19 +22,11 @@ import useTagsViewStore from '@/store/modules/tagsView'
 const route = useRoute()
 const tagsViewStore = useTagsViewStore()
 
-onMounted(() => {
-  addIframe()
-})
-
 watchEffect(() => {
-  addIframe()
-})
-
-function addIframe() {
   if (route.meta.link) {
     useTagsViewStore().addIframeView(route)
   }
-}
+})
 </script>
 
 <style lang="scss" scoped>
@@ -44,32 +38,8 @@ function addIframe() {
   overflow: hidden;
 }
 
-.fixed-header + .app-main {
-  overflow-y: auto;
-  scrollbar-gutter: auto;
-  height: calc(100vh - 50px);
-  min-height: 0px;
-}
-
 .app-main:has(.copyright) {
   padding-bottom: 36px;
-}
-
-.fixed-header + .app-main {
-  margin-top: 50px;
-}
-
-.hasTagsView {
-  .app-main {
-    /* 84 = navbar + tags-view = 50 + 34 */
-    min-height: calc(100vh - 84px);
-  }
-
-  .fixed-header + .app-main {
-    margin-top: 84px;
-    height: calc(100vh - 84px);
-    min-height: 0px;
-  }
 }
 </style>
 

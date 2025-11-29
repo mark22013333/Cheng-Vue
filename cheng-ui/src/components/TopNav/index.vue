@@ -43,7 +43,7 @@ import usePermissionStore from '@/store/modules/permission'
 const visibleNumber = ref(null)
 // 當前激活選單的 index
 const currentIndex = ref(null)
-// 隐藏側邊欄路由
+// 隱藏側邊欄路由
 const hideList = ['/index', '/user/profile']
 
 const appStore = useAppStore()
@@ -195,7 +195,7 @@ onMounted(() => {
   margin: 0 10px !important;
 }
 
-/* 背景色隐藏 */
+/* 背景色隱藏 */
 .topmenu-container.el-menu--horizontal>.el-menu-item:not(.is-disabled):focus, .topmenu-container.el-menu--horizontal>.el-menu-item:not(.is-disabled):hover, .topmenu-container.el-menu--horizontal>.el-submenu .el-submenu__title:hover {
   background-color: #ffffff;
 }

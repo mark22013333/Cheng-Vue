@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     title="綁定系統使用者"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="500px"
     @close="handleClose"
   >
@@ -29,10 +29,12 @@
         </el-select>
       </el-form-item>
     </el-form>
-    <div slot="footer" class="dialog-footer">
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" @click="handleConfirm" :loading="submitting">確定</el-button>
-    </div>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="handleClose">取消</el-button>
+        <el-button type="primary" @click="handleConfirm" :loading="submitting">確定</el-button>
+      </div>
+    </template>
   </el-dialog>
 </template>
 

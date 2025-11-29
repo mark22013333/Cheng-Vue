@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     title="匯入 LINE 使用者"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="600px"
     @close="handleClose"
   >
@@ -41,11 +41,12 @@
           :on-change="handleFileChange"
           drag
         >
-          <i class="el-icon-upload"></i>
+          <el-icon class="el-icon--upload"><Upload /></el-icon>
           <div class="el-upload__text">將檔案拖曳至此，或<em>點擊上傳</em></div>
-          <div class="el-upload__tip" slot="tip">
+          <template #tip>
+            <div class="el-upload__tip">
             <div style="color: #E6A23C; margin-bottom: 10px;">
-              <i class="el-icon-warning"></i>
+              <el-icon><Warning /></el-icon>
               支援 .xlsx、.xls、.csv 或 .txt 格式
             </div>
             <div style="color: #909399; font-size: 12px;">
@@ -53,7 +54,8 @@
               <div>• TXT：每行一個 LINE User ID</div>
               <div>• 系統會自動去除空白和重複項目</div>
             </div>
-          </div>
+            </div>
+          </template>
         </el-upload>
       </el-form-item>
 
@@ -63,29 +65,37 @@
         :closable="false"
         style="margin-bottom: 15px"
       >
-        <div slot="default">
+        <template #default>
+          <div>
           <p style="margin: 5px 0;">1. 上傳包含 LINE User ID 的檔案</p>
           <p style="margin: 5px 0;">2. 系統會呼叫 LINE API 取得使用者資料</p>
           <p style="margin: 5px 0;">3. 成功的會新增或更新，失敗的會顯示詳細錯誤</p>
-        </div>
+          </div>
+        </template>
       </el-alert>
     </el-form>
 
-    <div slot="footer" class="dialog-footer">
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" @click="handleConfirm" :loading="upload.isUploading">
-        {{ upload.isUploading ? '匯入中...' : '開始匯入' }}
-      </el-button>
-    </div>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="handleClose">取消</el-button>
+        <el-button type="primary" @click="handleConfirm" :loading="upload.isUploading">
+          {{ upload.isUploading ? '匯入中...' : '開始匯入' }}
+        </el-button>
+      </div>
+    </template>
   </el-dialog>
 </template>
 
 <script>
 import { getEnabledConfigs } from '@/api/line/config'
 import { getToken } from '@/utils/auth'
+import { Upload, Warning } from '@element-plus/icons-vue'
 
 export default {
   name: 'ImportDialog',
+  components: {
+    Upload, Warning
+  },
   props: {
     visible: {
       type: Boolean,

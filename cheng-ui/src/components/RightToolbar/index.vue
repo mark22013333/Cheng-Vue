@@ -1,13 +1,13 @@
 <template>
   <div class="top-right-btn" :style="style">
     <el-row>
-      <el-tooltip class="item" effect="dark" :content="showSearch ? '隐藏搜尋' : '顯示搜尋'" placement="top" v-if="search">
+      <el-tooltip class="item" effect="dark" :content="showSearch ? '隱藏搜尋' : '顯示搜尋'" placement="top" v-if="search">
         <el-button circle icon="Search" @click="toggleSearch()" />
       </el-tooltip>
       <el-tooltip class="item" effect="dark" content="重新整理" placement="top">
         <el-button circle icon="Refresh" @click="refresh()" />
       </el-tooltip>
-      <el-tooltip class="item" effect="dark" content="顯隐列" placement="top" v-if="Object.keys(columns).length > 0">
+      <el-tooltip class="item" effect="dark" content="顯隱列" placement="top" v-if="Object.keys(columns).length > 0">
         <el-button circle icon="Menu" @click="showColumn()" v-if="showColumnsType == 'transfer'"/>
         <el-dropdown trigger="click" :hide-on-click="false" style="padding-left: 12px" v-if="showColumnsType == 'checkbox'">
           <el-button circle icon="Menu" />
@@ -30,7 +30,7 @@
     </el-row>
     <el-dialog :title="title" v-model="open" append-to-body>
       <el-transfer
-        :titles="['顯示', '隐藏']"
+        :titles="['顯示', '隱藏']"
         v-model="value"
         :data="transferData"
         @change="dataChange"
@@ -40,13 +40,15 @@
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
+
 const props = defineProps({
   /* 是否顯示檢索条件 */
   showSearch: {
     type: Boolean,
     default: true
   },
-  /* 顯隐列訊息（陣列格式、對象格式） */
+  /* 顯隱列訊息（陣列格式、對象格式） */
   columns: {
     type: [Array, Object],
     default: () => ({})
@@ -56,7 +58,7 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  /* 顯隐列類型（transfer穿梭框、checkbox複選框） */
+  /* 顯隱列類型（transfer穿梭框、checkbox複選框） */
   showColumnsType: {
     type: String,
     default: "checkbox"
@@ -70,10 +72,10 @@ const props = defineProps({
 
 const emits = defineEmits(['update:showSearch', 'queryTable'])
 
-// 顯隐資料
+// 顯隱資料
 const value = ref([])
 // 彈出層標題
-const title = ref("顯示/隐藏")
+const title = ref("顯示/隱藏")
 // 是否顯示彈出層
 const open = ref(false)
 
@@ -117,13 +119,13 @@ function dataChange(data) {
   }
 }
 
-// 打開顯隐列dialog
+// 打開顯隱列dialog
 function showColumn() {
   open.value = true
 }
 
 if (props.showColumnsType == "transfer") {
-  // transfer穿梭顯隐列初始預設隐藏列
+  // transfer穿梭顯隱列初始預設隱藏列
   if (Array.isArray(props.columns)) {
     for (let item in props.columns) {
       if (props.columns[item].visible === false) {
