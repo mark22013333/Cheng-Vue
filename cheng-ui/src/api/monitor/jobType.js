@@ -2,7 +2,6 @@ import request from '@/utils/request'
 
 // 查詢任務類型列表（取得所有任務類型選項）
 export function listJobTypes(query) {
-  console.log('code', query)
   return request({
     url: '/monitor/job/types',
     method: 'get',
@@ -20,7 +19,6 @@ export function getTaskTypesByCategory(category) {
 
 // 根據代號取得任務類型（注意：後端沒有此 API，保留以防未來使用）
 export function getJobTypeByCode(code) {
-  console.log('code', code)
   return request({
     url: `/monitor/job/types/${code}`,
     method: 'get'
