@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="物品名稱" prop="itemName">
         <el-input
           v-model="queryParams.itemName"
@@ -18,7 +18,7 @@
         />
       </el-form-item>
       <el-form-item label="借出狀態" prop="status">
-        <el-select v-model="queryParams.status" placeholder="請選擇借出狀態" clearable>
+        <el-select v-model="queryParams.status" placeholder="請選擇借出狀態" clearable style="width: 200px">
           <el-option label="待審核" value="0"/>
           <el-option label="已借出" value="1"/>
           <el-option label="審核拒絕" value="2"/>
@@ -31,7 +31,7 @@
         <el-date-picker
           v-model="daterangeBorrow"
           style="width: 240px"
-          value-format="yyyy-MM-dd"
+          value-format="YYYY-MM-DD"
           type="daterange"
           range-separator="-"
           start-placeholder="開始日期"
@@ -39,8 +39,8 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="Search" @click="handleQuery">搜尋</el-button>
+        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -49,8 +49,7 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
-          size="mini"
+          icon="Plus"
           @click="handleAdd"
           v-hasPermi="['inventory:borrow:add']"
         >新增借出
@@ -61,14 +60,13 @@
         <el-button
           type="warning"
           plain
-          icon="el-icon-download"
-          size="mini"
+          icon="Download"
           @click="handleExport"
           v-hasPermi="['inventory:borrow:export']"
         >匯出
         </el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <!-- 借出統計卡片 -->
@@ -132,35 +130,35 @@
       <el-table-column label="借用人" align="center" prop="borrowerName"/>
       <el-table-column label="借用目的" align="center" prop="purpose" show-overflow-tooltip/>
       <el-table-column label="借出時間" align="center" prop="borrowTime" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.borrowTime, '{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="預計歸還" align="center" prop="expectedReturn" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span>{{ parseTime(scope.row.expectedReturn, '{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="實際歸還" align="center" prop="actualReturn" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span v-if="scope.row.actualReturn">{{ parseTime(scope.row.actualReturn, '{y}-{m}-{d} {h}:{i}') }}</span>
           <span v-else>-</span>
         </template>
       </el-table-column>
       <el-table-column label="狀態" align="center" prop="status">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag :type="getStatusType(scope.row.status)">
             {{ getStatusText(scope.row.status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+      <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width" fixed="right">
+        <template #default="scope">
           <!-- 只有待審核狀態可以修改 -->
           <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-edit"
+            link
+            type="primary"
+            icon="Edit"
             @click="handleUpdate(scope.row)"
             v-if="scope.row.status === '0'"
             v-hasPermi="['inventory:borrow:edit']"
@@ -168,9 +166,9 @@
           </el-button>
           <!-- 只有待審核狀態顯示審核按鈕 -->
           <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-check"
+            link
+            type="primary"
+            icon="Check"
             @click="handleApprove(scope.row)"
             v-if="scope.row.status === '0'"
             v-hasPermi="['inventory:borrow:approve']"
@@ -178,9 +176,9 @@
           </el-button>
           <!-- 已借出、部分歸還、逾期狀態可以歸還 -->
           <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-refresh-left"
+            link
+            type="primary"
+            icon="RefreshLeft"
             @click="handleReturn(scope.row)"
             v-if="scope.row.status === '1' || scope.row.status === '4' || scope.row.status === '5'"
             v-hasPermi="['inventory:borrow:return']"
@@ -188,9 +186,9 @@
           </el-button>
           <!-- 已歸還或部分歸還狀態顯示查看歸還記錄按鈕 -->
           <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-document"
+            link
+            type="primary"
+            icon="Document"
             @click="handleViewReturnRecords(scope.row)"
             v-if="scope.row.status === '3' || scope.row.status === '4'"
             v-hasPermi="['inventory:borrow:query']"
@@ -210,7 +208,7 @@
     />
 
     <!-- 新增或修改借出記錄對話框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog :title="title" :model-value="open" @update:model-value="val => open = val" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="物品" prop="itemId">
           <el-select
@@ -257,9 +255,9 @@
             v-model="form.expectedReturn"
             type="datetime"
             placeholder="選擇預計歸還時間"
-            format="yyyy-MM-dd HH:mm:ss"
-            value-format="yyyy-MM-dd HH:mm:ss"
-            :picker-options="pickerOptions">
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            :disabled-date="disabledDate">
           </el-date-picker>
         </el-form-item>
         <el-form-item label="備註">
@@ -273,7 +271,7 @@
     </el-dialog>
 
     <!-- 審核對話框 -->
-    <el-dialog title="審核借出申請" :visible.sync="approveOpen" width="400px" append-to-body>
+    <el-dialog title="審核借出申請" :model-value="approveOpen" @update:model-value="val => approveOpen = val" width="400px" append-to-body>
       <el-form ref="approveForm" :model="approveForm" label-width="80px">
         <el-form-item label="審核結果">
           <el-radio-group v-model="approveForm.approved">
@@ -292,7 +290,7 @@
     </el-dialog>
 
     <!-- 歸還對話框 -->
-    <el-dialog title="物品歸還" :visible.sync="returnOpen" width="400px" append-to-body>
+    <el-dialog title="物品歸還" :model-value="returnOpen" @update:model-value="val => returnOpen = val" width="400px" append-to-body>
       <el-form ref="returnForm" :model="returnForm" label-width="80px">
         <el-form-item label="歸還數量">
           <el-input-number v-model="returnForm.quantity" :min="1" :max="returnForm.maxQuantity" style="width: 100%"/>
@@ -315,25 +313,25 @@
     </el-dialog>
 
     <!-- 歸還記錄對話框 -->
-    <el-dialog title="歸還記錄" :visible.sync="returnRecordsOpen" width="800px" append-to-body>
+    <el-dialog title="歸還記錄" :model-value="returnRecordsOpen" @update:model-value="val => returnRecordsOpen = val" width="800px" append-to-body>
       <el-table :data="returnRecords" style="width: 100%">
         <el-table-column label="歸還時間" align="center" prop="returnTime" width="160"/>
         <el-table-column label="歸還數量" align="center" prop="returnQuantity" width="100"/>
         <el-table-column label="物品狀態" align="center" width="100">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag v-if="scope.row.itemCondition === 'good'" type="success">完好</el-tag>
             <el-tag v-else-if="scope.row.itemCondition === 'damaged'" type="warning">損壞</el-tag>
             <el-tag v-else-if="scope.row.itemCondition === 'lost'" type="danger">遺失</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="是否逾期" align="center" width="120">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag v-if="scope.row.isOverdue === '1'" type="danger">逾期 {{ scope.row.overdueDays }} 天</el-tag>
             <el-tag v-else type="success">準時</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="說明" align="center" min-width="150" :show-overflow-tooltip="true">
-          <template slot-scope="scope">
+          <template #default="scope">
             {{ scope.row.damageDescription || scope.row.remark || '-' }}
           </template>
         </el-table-column>
@@ -439,14 +437,17 @@ export default {
         ]
       },
       // 時間選擇器配置：只能選擇未來時間
-      pickerOptions: {
-        disabledDate(time) {
-          return time.getTime() < Date.now() - 8.64e7; // 禁用今天之前的日期
-        }
+      disabledDate(time) {
+        return time.getTime() < Date.now() - 8.64e7; // 禁用今天之前的日期
       }
     };
   },
   created() {
+    this.getList();
+    this.getItemList();
+    this.getBorrowStatistics();
+  },
+  activated() {
     this.getList();
     this.getItemList();
     this.getBorrowStatistics();
@@ -548,18 +549,24 @@ export default {
     },
     /** 新增按鈕操作 */
     handleAdd() {
+      console.log('[借出管理調試] 點擊新增按鈕');
       this.reset();
       this.open = true;
       this.title = "新增借出記錄";
+      console.log('[借出管理調試] dialog 開啟:', this.open);
     },
     /** 修改按鈕操作 */
     handleUpdate(row) {
+      console.log('[借出管理調試] 點擊修改按鈕', row);
       this.reset();
       const borrowId = row.borrowId || this.ids
+      console.log('[借出管理調試] borrowId:', borrowId);
       getBorrow(borrowId).then(response => {
+        console.log('[借出管理調試] 取得借出資料:', response.data);
         this.form = response.data;
         this.open = true;
         this.title = "修改借出記錄";
+        console.log('[借出管理調試] dialog 開啟:', this.open);
       });
     },
     /** 物品選擇變化 */
@@ -590,7 +597,7 @@ export default {
     /** 刪除按鈕操作 */
     handleDelete(row) {
       const borrowIds = row.borrowId || this.ids;
-      this.$modal.confirm('是否確認刪除借出記錄編號為"' + borrowIds + '"的資料項？').then(function () {
+      this.$modal.confirm('是否確認刪除借出記錄編號為"' + borrowIds + '"的資料選項？').then(function () {
         return delBorrow(borrowIds);
       }).then(() => {
         this.getList();
@@ -645,7 +652,7 @@ export default {
         damageDesc: this.returnForm.condition === 'damaged' ? this.returnForm.remark : null,
         remark: this.returnForm.remark // 所有狀態都傳遞說明
       };
-      
+
       returnBorrow(requestData).then(response => {
         this.$modal.msgSuccess("歸還成功");
         this.returnOpen = false;

@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 查詢產生表數據
+// 查詢產生表資料
 export function listTable(query) {
   return request({
     url: '/tool/gen/list',
@@ -8,7 +8,6 @@ export function listTable(query) {
     params: query
   })
 }
-
 // 查詢db資料庫列表
 export function listDbTable(query) {
   return request({
@@ -26,7 +25,7 @@ export function getGenTable(tableId) {
   })
 }
 
-// 修改程式碼產生訊息
+// 修改代碼產生訊息
 export function updateGenTable(data) {
   return request({
     url: '/tool/gen',
@@ -53,7 +52,7 @@ export function createTable(data) {
   })
 }
 
-// 預覽產生程式碼
+// 預覽產生代碼
 export function previewTable(tableId) {
   return request({
     url: '/tool/gen/preview/' + tableId,
@@ -61,7 +60,7 @@ export function previewTable(tableId) {
   })
 }
 
-// 刪除表數據
+// 刪除表資料
 export function delTable(tableId) {
   return request({
     url: '/tool/gen/' + tableId,
@@ -69,7 +68,7 @@ export function delTable(tableId) {
   })
 }
 
-// 產生程式碼（自定義路徑）
+// 產生代碼（自定義路徑）
 export function genCode(tableName) {
   return request({
     url: '/tool/gen/genCode/' + tableName,

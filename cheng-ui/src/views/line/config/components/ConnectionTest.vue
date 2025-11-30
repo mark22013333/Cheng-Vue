@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     title="測試 LINE 連線"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="600px"
     append-to-body
     :close-on-click-modal="false"
@@ -138,12 +138,12 @@
     </div>
 
     <div slot="footer" class="dialog-footer">
-      <el-button @click="dialogVisible = false">關 閉</el-button>
+      <el-button @click="dialogVisible = false" :icon="Close">關 閉</el-button>
       <el-button
         type="primary"
         @click="runTest"
         :loading="testing"
-        icon="el-icon-refresh-right"
+        :icon="RefreshRight"
       >
         {{ testing ? '測試中...' : '重新測試' }}
       </el-button>
@@ -153,9 +153,18 @@
 
 <script>
 import { testConnection } from '@/api/line/config'
+import { Loading, CircleCheck, CircleClose, RefreshRight, Close } from '@element-plus/icons-vue'
 
 export default {
   name: 'ConnectionTest',
+  components: {
+    Loading, CircleCheck, CircleClose, RefreshRight, Close
+  },
+  setup() {
+    return {
+      Loading, CircleCheck, CircleClose, RefreshRight, Close
+    }
+  },
   data() {
     return {
       // 是否顯示對話框
@@ -214,8 +223,8 @@ export default {
           console.log('測試結果:', response.data)
           this.testResults = response.data
 
-          // 測試完成後，通知父組件重新整理列表（更新 webhook 狀態）
-          console.log('觸發 test-complete 事件，通知父組件重新載入列表')
+          // 測試完成後，通知父元件重新整理列表（更新 webhook 狀態）
+          console.log('觸發 test-complete 事件，通知父元件重新載入列表')
           this.$emit('test-complete')
         })
         .catch(error => {
@@ -234,8 +243,8 @@ export default {
     },
     /** 取得步驟圖示 */
     getStepIcon(result) {
-      if (!result) return 'el-icon-loading'
-      return result.success ? 'el-icon-circle-check' : 'el-icon-circle-close'
+      if (!result) return Loading
+      return result.success ? CircleCheck : CircleClose
     },
     /** 取得結果類型 */
     getResultType(success) {
@@ -289,7 +298,7 @@ export default {
 
 // 綠光呼吸燈效果
 .breathing-success {
-  ::v-deep .el-timeline-item__node {
+  :deep(.el-timeline-item__node) {
     animation: breathing 2s ease-in-out infinite;
   }
 }

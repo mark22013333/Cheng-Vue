@@ -17,7 +17,7 @@ export function delJobLog(jobLogId) {
   })
 }
 
-// 清除呼叫日誌
+// 清空呼叫日誌
 export function cleanJobLog() {
   return request({
     url: '/monitor/jobLog/clean',

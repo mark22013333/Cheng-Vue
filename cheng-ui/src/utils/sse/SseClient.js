@@ -1,11 +1,12 @@
 /**
  * SSE (Server-Sent Events) 客戶端工具
  * 提供統一的 SSE 連線、重連、事件處理功能
+ * 適配 Vue 3 + Vite 環境
  *
  * @author cheng
  */
 
-import { getToken } from '@/utils/auth'
+import {getToken} from '@/utils/auth'
 
 export default class SseClient {
   /**
@@ -49,8 +50,14 @@ export default class SseClient {
 
     try {
       // 建構 SSE URL
-      const baseUrl = process.env.VUE_APP_BASE_API || ''
-      const url = `${baseUrl}/sse/subscribe/${this.channel}/${this.taskId}?timeout=${this.timeout}`
+      // 注意：Vite 環境通常使用 import.meta.env.VITE_APP_BASE_API
+      // 如果您的專案環境變數名稱不同，請在此修改
+      const baseUrl = import.meta.env.VITE_APP_BASE_API || ''
+
+      // SSE 標準不支援 Header 傳遞 Token，通常透過 Query String 傳遞
+      const token = getToken()
+      // 這裡假設後端接收 Authorization 參數，如果後端不需要 token 可移除
+      const url = `${baseUrl}/sse/subscribe/${this.channel}/${this.taskId}?timeout=${this.timeout}&Authorization=${token}`
 
       console.log(`[SSE] 建立連線: ${url}`)
 
@@ -84,7 +91,8 @@ export default class SseClient {
           this.emit('message', data)
 
         } catch (e) {
-          console.error('[SSE] 解析訊息失敗:', e, event.data)
+          // SSE 有時候會收到純文字或是非 JSON 格式的 ping，視情況忽略錯誤
+          // console.error('[SSE] 解析訊息失敗:', e, event.data)
         }
       }
 
@@ -108,7 +116,8 @@ export default class SseClient {
 
       // 連線錯誤
       this.eventSource.onerror = (event) => {
-        console.error('[SSE] 連線錯誤:', event)
+        // EventSource 錯誤時通常無法取得詳細狀態碼，只會觸發錯誤
+        console.error('[SSE] 連線錯誤 (readyState):', this.eventSource.readyState)
 
         if (this.onError) {
           this.onError(event)
@@ -118,6 +127,7 @@ export default class SseClient {
 
         // 自動重連
         if (!this.isManualClose && this.autoReconnect) {
+          this.eventSource.close() // 確保舊的關閉
           this.reconnect()
         }
       }
@@ -163,7 +173,11 @@ export default class SseClient {
         this.onClosed()
       }
 
-      this.emit('closed', data)
+      if (eventName) {
+        this.emit(eventName, data)
+      } else {
+        this.emit('closed', data)
+      }
     }
   }
 

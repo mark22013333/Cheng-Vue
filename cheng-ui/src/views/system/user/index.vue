@@ -1,13 +1,17 @@
 <template>
   <div class="app-container">
     <el-row :gutter="20">
-      <splitpanes :horizontal="this.$store.getters.device === 'mobile'" class="default-theme">
-        <!--部門數據-->
+      <splitpanes :horizontal="device === 'mobile'" class="default-theme">
         <pane size="16">
           <el-col>
             <div class="head-container">
-              <el-input v-model="deptName" clearable placeholder="請輸入部門名稱" prefix-icon="el-icon-search"
-                        size="small" style="margin-bottom: 20px"/>
+              <el-input v-model="deptName" clearable placeholder="請輸入部門名稱" style="margin-bottom: 20px">
+                <template #prefix>
+                  <el-icon>
+                    <Search/>
+                  </el-icon>
+                </template>
+              </el-input>
             </div>
             <div class="head-container">
               <el-tree :data="deptOptions" :props="defaultProps" :expand-on-click-node="false"
@@ -16,18 +20,17 @@
             </div>
           </el-col>
         </pane>
-        <!--使用者數據-->
         <pane size="84">
           <el-col>
-            <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
+            <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch"
                      label-width="85px">
               <el-form-item label="使用者名稱" prop="userName">
                 <el-input v-model="queryParams.userName" clearable placeholder="請輸入使用者名稱" style="width: 240px"
-                          @keyup.enter.native="handleQuery"/>
+                          @keyup.enter="handleQuery"/>
               </el-form-item>
               <el-form-item label="手機號碼" prop="phonenumber">
                 <el-input v-model="queryParams.phonenumber" clearable placeholder="請輸入手機號碼" style="width: 240px"
-                          @keyup.enter.native="handleQuery"/>
+                          @keyup.enter="handleQuery"/>
               </el-form-item>
               <el-form-item label="狀態" prop="status">
                 <el-select v-model="queryParams.status" clearable placeholder="使用者狀態" style="width: 140px">
@@ -39,45 +42,75 @@
                 <el-date-picker v-model="dateRange" end-placeholder="結束日期" range-separator="-"
                                 start-placeholder="開始日期"
                                 style="width: 240px" type="daterange"
-                                value-format="yyyy-MM-dd"></el-date-picker>
+                                value-format="YYYY-MM-DD"></el-date-picker>
               </el-form-item>
               <el-form-item>
-                <el-button icon="el-icon-search" size="mini" type="primary" @click="handleQuery">搜尋</el-button>
-                <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+                <el-button type="primary" @click="handleQuery">
+                  <el-icon class="el-icon--left">
+                    <Search/>
+                  </el-icon>
+                  搜尋
+                </el-button>
+                <el-button @click="resetQuery">
+                  <el-icon class="el-icon--left">
+                    <Refresh/>
+                  </el-icon>
+                  重置
+                </el-button>
               </el-form-item>
             </el-form>
 
             <el-row :gutter="10" class="mb8">
               <el-col :span="1.5">
-                <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-                           v-hasPermi="['system:user:add']">新增
+                <el-button type="primary" plain @click="handleAdd"
+                           v-hasPermi="['system:user:add']">
+                  <el-icon class="el-icon--left">
+                    <Plus/>
+                  </el-icon>
+                  新增
                 </el-button>
               </el-col>
               <el-col :span="1.5">
-                <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-                           v-hasPermi="['system:user:edit']">修改
+                <el-button type="success" plain :disabled="single" @click="handleUpdate"
+                           v-hasPermi="['system:user:edit']">
+                  <el-icon class="el-icon--left">
+                    <Edit/>
+                  </el-icon>
+                  修改
                 </el-button>
               </el-col>
               <el-col :span="1.5">
-                <el-button v-hasPermi="['system:user:remove']" :disabled="multiple" icon="el-icon-delete" plain
-                           size="mini"
-                           type="danger" @click="handleDelete">刪除
+                <el-button v-hasPermi="['system:user:remove']" :disabled="multiple" plain
+                           type="danger" @click="handleDelete">
+                  <el-icon class="el-icon--left">
+                    <Delete/>
+                  </el-icon>
+                  刪除
                 </el-button>
               </el-col>
               <el-col :span="1.5">
-                <el-button v-hasPermi="['system:user:import']" icon="el-icon-upload2" plain size="mini" type="info"
-                           @click="handleImport">匯入
+                <el-button v-hasPermi="['system:user:import']" plain type="info"
+                           @click="handleImport">
+                  <el-icon class="el-icon--left">
+                    <Upload/>
+                  </el-icon>
+                  匯入
                 </el-button>
               </el-col>
               <el-col :span="1.5">
-                <el-button v-hasPermi="['system:user:export']" icon="el-icon-download" plain size="mini" type="warning"
-                           @click="handleExport">匯出
+                <el-button v-hasPermi="['system:user:export']" plain type="warning"
+                           @click="handleExport">
+                  <el-icon class="el-icon--left">
+                    <Download/>
+                  </el-icon>
+                  匯出
                 </el-button>
               </el-col>
-              <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
+              <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
             </el-row>
 
-            <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
+            <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange"
+                      class="custom-table">
               <el-table-column type="selection" width="50" align="center"/>
               <el-table-column v-if="columns.userId.visible" key="userId" align="center" label="使用者編號"
                                prop="userId"/>
@@ -92,51 +125,54 @@
                                label="部門" prop="dept.deptName"/>
               <el-table-column v-if="columns.phonenumber.visible" key="phonenumber" align="center" label="手機號碼"
                                prop="phonenumber" width="120"/>
-              <el-table-column v-if="columns.status.visible" key="status" align="center" label="狀態">
-                <template slot-scope="scope">
+              <el-table-column v-if="columns.status.visible" key="status" align="center" label="狀態" width="80">
+                <template #default="scope">
                   <el-switch v-model="scope.row.status" active-value="0" inactive-value="1"
                              @change="handleStatusChange(scope.row)"></el-switch>
                 </template>
               </el-table-column>
               <el-table-column v-if="columns.createTime.visible" align="center" label="建立時間" prop="createTime"
                                width="160">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <span>{{ parseTime(scope.row.createTime) }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
-                <template slot-scope="scope" v-if="scope.row.userId !== 1">
-                  <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+              <el-table-column label="操作" align="center" width="180" class-name="small-padding fixed-width" fixed="right">
+                <template #default="scope">
+                  <span v-if="scope.row.userId !== 1">
+                  <el-button type="primary" link icon="Edit" @click="handleUpdate(scope.row)"
                              v-hasPermi="['system:user:edit']">修改
                   </el-button>
-                  <el-button v-hasPermi="['system:user:remove']" icon="el-icon-delete" size="mini" type="text"
+                  <el-button v-hasPermi="['system:user:remove']" icon="Delete" type="primary" link
                              @click="handleDelete(scope.row)">刪除
                   </el-button>
-                  <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)"
-                               v-hasPermi="['system:user:resetPwd', 'system:user:edit']">
-                    <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
-                    <el-dropdown-menu slot="dropdown">
-                      <el-dropdown-item v-hasPermi="['system:user:resetPwd']" command="handleResetPwd"
-                                        icon="el-icon-key">重置密碼
-                      </el-dropdown-item>
-                      <el-dropdown-item command="handleAuthRole" icon="el-icon-circle-check"
-                                        v-hasPermi="['system:user:edit']">分配角色
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
+                  <el-dropdown @command="(command) => handleCommand(command, scope.row)"
+                               v-if="checkPermi(['system:user:resetPwd', 'system:user:edit'])">
+                    <el-button type="primary" link icon="DArrowRight">更多</el-button>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item v-if="checkPermi(['system:user:resetPwd'])" command="handleResetPwd"
+                                            icon="Key">重置密碼
+                          </el-dropdown-item>
+                          <el-dropdown-item command="handleAuthRole" icon="CircleCheck"
+                                            v-if="checkPermi(['system:user:edit'])">分配角色
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
                   </el-dropdown>
+                  </span>
                 </template>
               </el-table-column>
             </el-table>
 
-            <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum"
-                        :limit.sync="queryParams.pageSize" @pagination="getList"/>
+            <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
+                        v-model:limit="queryParams.pageSize" @pagination="getList"/>
           </el-col>
         </pane>
       </splitpanes>
     </el-row>
 
-    <!-- 新增或修改使用者設定對話框 -->
-    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="12">
@@ -221,39 +257,57 @@
           </el-col>
         </el-row>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">確 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitForm">確 定</el-button>
+          <el-button @click="cancel">取 消</el-button>
+        </div>
+      </template>
     </el-dialog>
 
-    <!-- 使用者匯入對話框 -->
-    <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
+    <el-dialog :title="upload.title" v-model="upload.open" width="400px" append-to-body>
       <el-upload ref="upload" :limit="1" accept=".xlsx, .xls" :headers="upload.headers"
                  :action="upload.url + '?updateSupport=' + upload.updateSupport" :disabled="upload.isUploading"
                  :on-progress="handleFileUploadProgress" :on-success="handleFileSuccess" :auto-upload="false" drag>
-        <i class="el-icon-upload"></i>
+        <el-icon class="el-icon--upload">
+          <upload-filled/>
+        </el-icon>
         <div class="el-upload__text">將檔案拖到此處，或<em>點擊上傳</em></div>
-        <div class="el-upload__tip text-center" slot="tip">
-          <div class="el-upload__tip" slot="tip">
-            <el-checkbox v-model="upload.updateSupport"/>
-            是否更新已經存在的使用者數據
+        <template #tip>
+          <div class="el-upload__tip text-center">
+            <div class="el-upload__tip">
+              <el-checkbox v-model="upload.updateSupport"/>
+              是否更新已經存在的使用者數據
+            </div>
+            <span>僅允許匯入xls、xlsx格式檔案。</span>
+            <el-link :underline="false" style="font-size: 12px; vertical-align: baseline" type="primary"
+                     @click="importTemplate">下載模板
+            </el-link>
           </div>
-          <span>僅允許匯入xls、xlsx格式檔案。</span>
-          <el-link :underline="false" style="font-size: 12px; vertical-align: baseline" type="primary"
-                   @click="importTemplate">下載模板
-          </el-link>
-        </div>
+        </template>
       </el-upload>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitFileForm">確 定</el-button>
-        <el-button @click="upload.open = false">取 消</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitFileForm">確 定</el-button>
+          <el-button @click="upload.open = false">取 消</el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script>
+// 1. 引入需要的 Icons
+import {
+  Search, Plus, Edit, Delete, Refresh, Upload, Download,
+  DArrowRight, Key, CircleCheck, UploadFilled
+} from '@element-plus/icons-vue'
+
+import { mapState } from 'pinia'
+import useAppStore from '@/store/modules/app'
+import { useDict } from '@/utils/dict'
+import { reactive } from 'vue'
+import { checkPermi } from "@/utils/permission"
 import {
   addUser,
   changeUserStatus,
@@ -265,15 +319,32 @@ import {
   updateUser
 } from "@/api/system/user"
 import {getToken} from "@/utils/auth"
-import Treeselect from "@riophae/vue-treeselect"
-import "@riophae/vue-treeselect/dist/vue-treeselect.css"
+import Treeselect from "vue3-treeselect"
+import "vue3-treeselect/dist/vue3-treeselect.css"
 import {Pane, Splitpanes} from "splitpanes"
 import "splitpanes/dist/splitpanes.css"
 
 export default {
   name: "User",
-  dicts: ['sys_normal_disable', 'sys_user_sex'],
-  components: {Treeselect, Splitpanes, Pane},
+  // dicts: ['sys_normal_disable', 'sys_user_sex'], // Removed as we use setup now
+  // 2. 註冊 Icons
+  components: {
+    Treeselect,
+    Splitpanes,
+    Pane,
+    Search, Plus, Edit, Delete, Refresh, Upload, Download, DArrowRight, Key, CircleCheck, UploadFilled
+  },
+  setup() {
+    const { sys_normal_disable, sys_user_sex } = useDict('sys_normal_disable', 'sys_user_sex')
+    return {
+      dict: {
+        type: reactive({
+          sys_normal_disable,
+          sys_user_sex
+        })
+      }
+    }
+  },
   data() {
     return {
       // 遮罩層
@@ -289,13 +360,13 @@ export default {
       // 總則數
       total: 0,
       // 使用者表格數據
-      userList: null,
+      userList: [],
       // 彈出層標題
       title: "",
       // 所有部門樹選項
-      deptOptions: undefined,
+      deptOptions: [], // 預設為空陣列較好
       // 過濾掉已禁用部門樹選項
-      enabledDeptOptions: undefined,
+      enabledDeptOptions: [],
       // 是否顯示彈出層
       open: false,
       // 部門名稱
@@ -327,7 +398,7 @@ export default {
         // 設定上傳的請求標頭
         headers: {Authorization: "Bearer " + getToken()},
         // 上傳的地址
-        url: process.env.VUE_APP_BASE_API + "/system/user/importData"
+        url: import.meta.env.VITE_APP_BASE_API + "/system/user/importData"
       },
       // 查詢參數
       queryParams: {
@@ -378,6 +449,9 @@ export default {
         ]
       }
     }
+  },
+  computed: {
+    ...mapState(useAppStore, ['device']),
   },
   watch: {
     // 根據名稱筛選部門樹
@@ -517,8 +591,9 @@ export default {
         this.form = response.data
         this.postOptions = response.posts
         this.roleOptions = response.roles
-        this.$set(this.form, "postIds", response.postIds)
-        this.$set(this.form, "roleIds", response.roleIds)
+        // Vue 3: 直接賦值，不需要 $set
+        this.form.postIds = response.postIds
+        this.form.roleIds = response.roleIds
         this.open = true
         this.title = "修改使用者"
         this.form.password = ""
@@ -615,7 +690,8 @@ export default {
         return
       }
       this.$refs.upload.submit()
-    }
+    },
+    checkPermi
   }
 }
 </script>

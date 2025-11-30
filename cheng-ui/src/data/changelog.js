@@ -37,7 +37,7 @@ const rawLogs = [
       "優化庫存掃描記錄與報表顯示邏輯。",
       "更新報表頁面 (report/index.vue)，調整表格欄位順序與寬度，新增顯示「錯誤訊息」欄位，並優化掃描類型與結果的標籤顯示。",
       "修正報表切換時的資料重置邏輯 (resetQueryParams)，避免切換不同報表時殘留舊的查詢參數或資料。",
-      "新增通用的 Tab 與 Card 切換自動更新機制，並應用於庫存管理頁面"
+      "新增共用的 Tab 與 Card 切換自動更新機制，並應用於庫存管理頁面"
     ]
   },
   {
@@ -61,13 +61,13 @@ const rawLogs = [
   {
     version: "v1.5.4",
     date: "2025-11-02",
-    items: ["導入全系統日誌追蹤功能 (TraceId)。",
-      "導入開發工具 (Git Hooks, Mapper 驗證) 並擴充 LINE 模組功能。"]
+    items: ["匯入全系統日誌追蹤功能 (TraceId)。",
+      "匯入開發工具 (Git Hooks, Mapper 驗證) 並擴充 LINE 模組功能。"]
   },
   {
     version: "v1.5.3",
     date: "2025-10-26",
-    items: ["導入排程任務範本 (TaskTypeProvider) 動態註冊機制。"]
+    items: ["匯入排程任務範本 (TaskTypeProvider) 動態註冊機制。"]
   },
   {
     version: "v1.5.2",
@@ -86,7 +86,7 @@ const rawLogs = [
   {
     version: "v1.4.0",
     date: "2025-10-22",
-    items: ["導入 Flyway 實作資料庫版本控制與自動化遷移。",
+    items: ["匯入 Flyway 實作資料庫版本控制與自動化遷移。",
       "優化報表篩選，僅顯示已使用的物品分類。"]
   },
   {

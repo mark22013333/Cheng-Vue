@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 查詢線上使用者列表
+// 查詢在線使用者列表
 export function list(query) {
   return request({
     url: '/monitor/online/list',
@@ -9,7 +9,7 @@ export function list(query) {
   })
 }
 
-// 強制登出使用者
+// 強制退出使用者
 export function forceLogout(tokenId) {
   return request({
     url: '/monitor/online/' + tokenId,

@@ -4,17 +4,13 @@
   </footer>
 </template>
 
-<script>
-export default {
-  computed: {
-    visible() {
-      return this.$store.state.settings.footerVisible
-    },
-    content() {
-      return this.$store.state.settings.footerContent
-    }
-  }
-}
+<script setup>
+import useSettingsStore from '@/store/modules/settings'
+
+const settingsStore = useSettingsStore()
+
+const visible = computed(() => settingsStore.footerVisible)
+const content = computed(() => settingsStore.footerContent)
 </script>
 
 <style scoped>

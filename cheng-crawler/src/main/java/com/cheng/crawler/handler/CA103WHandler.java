@@ -547,7 +547,7 @@ public class CA103WHandler extends CrawlerHandler<String[], String[]> {
                 wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div.table#table8")));
                 log.info("成功等待到 table8 元素出現");
             } catch (Exception e) {
-                log.warn("等待 table8 元素超時，將嘗試繼續處理", e);
+                log.warn("等待 table8 元素逾時，將嘗試繼續處理", e);
             }
         }
     }

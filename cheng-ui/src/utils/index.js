@@ -1,4 +1,4 @@
-import {parseTime} from './cheng'
+import { parseTime } from './cheng'
 
 /**
  * 表格時間格式化
@@ -32,10 +32,10 @@ export function formatTime(time, option) {
   const diff = (now - d) / 1000
 
   if (diff < 30) {
-    return '剛剛'
+    return '刚刚'
   } else if (diff < 3600) {
-    // less than 1 hour
-    return Math.ceil(diff / 60) + '分鐘前'
+    // less 1 hour
+    return Math.ceil(diff / 60) + '分钟前'
   } else if (diff < 3600 * 24) {
     return Math.ceil(diff / 3600) + '小時前'
   } else if (diff < 3600 * 24 * 2) {
@@ -222,12 +222,12 @@ export function debounce(func, wait, immediate) {
     // 據上一次觸發時間間隔
     const last = +new Date() - timestamp
 
-    // 上次被包裝函數被呼叫時間間隔 last 小於設定時間間隔 wait
+    // 上次被包裝函數被調用時間間隔 last 小於設定時間間隔 wait
     if (last < wait && last > 0) {
       timeout = setTimeout(later, wait - last)
     } else {
       timeout = null
-      // 如果設定為immediate===true，因為開始邊界已經呼叫過了此處無需呼叫
+      // 如果設定為immediate===true，因為開始邊界已经調用過了此處無需調用
       if (!immediate) {
         result = func.apply(context, args)
         if (!timeout) context = args = null
@@ -379,7 +379,7 @@ export function titleCase(str) {
   return str.replace(/( |^)[a-z]/g, L => L.toUpperCase())
 }
 
-// 下畫轉駝峰
+// 下底轉驼峰
 export function camelCase(str) {
   return str.replace(/_[a-z]/g, str1 => str1.substr(-1).toUpperCase())
 }

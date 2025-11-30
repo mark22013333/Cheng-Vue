@@ -1,6 +1,6 @@
 <template>
   <el-drawer
-    :visible.sync="drawerVisible"
+    v-model="drawerVisible"
     :with-header="false"
     size="600px"
     @close="handleClose"
@@ -9,25 +9,27 @@
       <!-- 標題列 -->
       <div class="drawer-header">
         <h3>使用者詳情</h3>
-        <el-button type="text" icon="el-icon-close" @click="handleClose"></el-button>
+        <el-button type="text" @click="handleClose">
+          <el-icon><Close /></el-icon>
+        </el-button>
       </div>
 
       <div class="drawer-content" v-if="userInfo">
         <!-- 基本資料區 -->
         <div class="section">
           <div class="section-title">
-            <i class="el-icon-user"></i>
+            <el-icon><User /></el-icon>
             基本資料
           </div>
           <div class="user-header">
             <el-avatar :src="userInfo.linePictureUrl" :size="80">
-              <i class="el-icon-user-solid"></i>
+              <el-icon><UserFilled /></el-icon>
             </el-avatar>
             <div class="user-info">
               <h2>{{ userInfo.lineDisplayName }}</h2>
               <p class="user-id">{{ userInfo.lineUserId }}</p>
               <p class="status-message" v-if="userInfo.lineStatusMessage">
-                <i class="el-icon-chat-line-round"></i>
+                <el-icon><ChatLineRound /></el-icon>
                 {{ userInfo.lineStatusMessage }}
               </p>
             </div>
@@ -59,7 +61,7 @@
         <!-- 關注歷程 -->
         <div class="section">
           <div class="section-title">
-            <i class="el-icon-time"></i>
+            <el-icon><Timer /></el-icon>
             關注歷程
           </div>
           <el-timeline>
@@ -113,7 +115,7 @@
         <!-- 綁定歷程 -->
         <div class="section" v-if="userInfo.bindCount > 0">
           <div class="section-title">
-            <i class="el-icon-link"></i>
+            <el-icon><Link /></el-icon>
             綁定歷程
           </div>
           <el-timeline>
@@ -156,13 +158,13 @@
         <!-- 互動統計 -->
         <div class="section">
           <div class="section-title">
-            <i class="el-icon-data-line"></i>
+            <el-icon><DataLine /></el-icon>
             互動統計
           </div>
           <div class="stats-grid">
             <div class="stats-item">
               <div class="stats-icon send">
-                <i class="el-icon-s-promotion"></i>
+                <el-icon><Promotion /></el-icon>
               </div>
               <div class="stats-info">
                 <div class="stats-value">{{ userInfo.totalMessagesSent || 0 }}</div>
@@ -171,7 +173,7 @@
             </div>
             <div class="stats-item">
               <div class="stats-icon receive">
-                <i class="el-icon-s-comment"></i>
+                <el-icon><Comment /></el-icon>
               </div>
               <div class="stats-info">
                 <div class="stats-value">{{ userInfo.totalMessagesReceived || 0 }}</div>
@@ -180,7 +182,7 @@
             </div>
             <div class="stats-item full-width">
               <div class="stats-icon interaction">
-                <i class="el-icon-time"></i>
+                <el-icon><Timer /></el-icon>
               </div>
               <div class="stats-info">
                 <div class="stats-value" v-if="userInfo.lastInteractionTime">
@@ -196,7 +198,7 @@
         <!-- 備註 -->
         <div class="section" v-if="userInfo.remark">
           <div class="section-title">
-            <i class="el-icon-document"></i>
+            <el-icon><Document /></el-icon>
             備註
           </div>
           <p class="remark-text">{{ userInfo.remark }}</p>
@@ -208,9 +210,17 @@
 
 <script>
 import { getUser } from '@/api/line/user'
+import { 
+  Close, User, UserFilled, ChatLineRound, Timer, Link, 
+  DataLine, Promotion, Comment, Document 
+} from '@element-plus/icons-vue'
 
 export default {
   name: 'UserDetail',
+  components: {
+    Close, User, UserFilled, ChatLineRound, Timer, Link, 
+    DataLine, Promotion, Comment, Document
+  },
   props: {
     visible: {
       type: Boolean,
@@ -245,6 +255,14 @@ export default {
         }
       },
       immediate: true
+    },
+    visible: {
+      handler(val) {
+        // 每次打開詳情時重新載入數據，確保顯示最新狀態
+        if (val && this.userId) {
+          this.getUserDetail()
+        }
+      }
     }
   },
   methods: {
@@ -258,6 +276,10 @@ export default {
       }).catch(() => {
         this.loading = false
       })
+    },
+    // 提供給父組件調用的重新整理方法
+    refresh() {
+      this.getUserDetail()
     },
     handleClose() {
       this.$emit('close')

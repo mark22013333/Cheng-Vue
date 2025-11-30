@@ -190,9 +190,10 @@ export default {
     async loadJobTypes() {
       try {
         const response = await listJobTypes()
-        this.jobTypes = response.data
+        this.jobTypes = response.data || []
       } catch (error) {
-        this.$message.error('載入任務類型失敗: ' + error.message)
+        console.error('載入任務類型失敗:', error)
+        this.jobTypes = []
       }
     },
     

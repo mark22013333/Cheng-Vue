@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import {parseStrEmpty} from "@/utils/cheng";
+import { parseStrEmpty } from "~/utils/cheng";
 
 // 查詢使用者列表
 export function listUser(query) {
@@ -118,7 +118,7 @@ export function getAuthRole(userId) {
   })
 }
 
-// 儲存授權角色
+// 保存授權角色
 export function updateAuthRole(data) {
   return request({
     url: '/system/user/authRole',

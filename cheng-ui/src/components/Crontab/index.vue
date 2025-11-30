@@ -70,43 +70,47 @@
         <p class="title">時間表達式</p>
         <table>
           <thead>
-            <th v-for="item of tabTitles" width="40" :key="item">{{item}}</th>
-            <th>Cron 表達式</th>
+            <tr>
+              <th v-for="item of tabTitles" width="40" :key="item">{{item}}</th>
+              <th>Cron 表達式</th>
+            </tr>
           </thead>
           <tbody>
-            <td>
-              <span>{{crontabValueObj.second}}</span>
-            </td>
-            <td>
-              <span>{{crontabValueObj.min}}</span>
-            </td>
-            <td>
-              <span>{{crontabValueObj.hour}}</span>
-            </td>
-            <td>
-              <span>{{crontabValueObj.day}}</span>
-            </td>
-            <td>
-              <span>{{crontabValueObj.month}}</span>
-            </td>
-            <td>
-              <span>{{crontabValueObj.week}}</span>
-            </td>
-            <td>
-              <span>{{crontabValueObj.year}}</span>
-            </td>
-            <td>
-              <span>{{crontabValueString}}</span>
-            </td>
+            <tr>
+              <td>
+                <span>{{crontabValueObj.second}}</span>
+              </td>
+              <td>
+                <span>{{crontabValueObj.min}}</span>
+              </td>
+              <td>
+                <span>{{crontabValueObj.hour}}</span>
+              </td>
+              <td>
+                <span>{{crontabValueObj.day}}</span>
+              </td>
+              <td>
+                <span>{{crontabValueObj.month}}</span>
+              </td>
+              <td>
+                <span>{{crontabValueObj.week}}</span>
+              </td>
+              <td>
+                <span>{{crontabValueObj.year}}</span>
+              </td>
+              <td>
+                <span>{{crontabValueString}}</span>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
       <CrontabResult :ex="crontabValueString"></CrontabResult>
 
       <div class="pop_btn">
-        <el-button size="small" type="primary" @click="submitFill">確定</el-button>
-        <el-button size="small" type="warning" @click="clearCron">重置</el-button>
-        <el-button size="small" @click="hidePopup">取消</el-button>
+        <el-button type="primary" @click="submitFill">確定</el-button>
+        <el-button type="warning" @click="clearCron">重置</el-button>
+        <el-button @click="hidePopup">取消</el-button>
       </div>
     </div>
   </div>

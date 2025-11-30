@@ -1,19 +1,25 @@
 <template>
-    <div :class="{'has-logo':showLogo}" :style="{ backgroundColor: settings.sideTheme === 'theme-dark' ? variables.menuBackground : variables.menuLightBackground }">
+    <div 
+        :class="{'has-logo':showLogo}" 
+        :style="{ 
+            backgroundColor: settingsStore.sideTheme === 'theme-dark' ? variables.menuBackground : variables.menuLightBackground,
+            width: appStore.sidebar.width + 'px'
+        }"
+    >
         <logo v-if="showLogo" :collapse="isCollapse" />
-        <el-scrollbar :class="settings.sideTheme" wrap-class="scrollbar-wrapper">
+        <el-scrollbar :class="settingsStore.sideTheme" wrap-class="scrollbar-wrapper">
             <el-menu
                 :default-active="activeMenu"
                 :collapse="isCollapse"
-                :background-color="settings.sideTheme === 'theme-dark' ? variables.menuBackground : variables.menuLightBackground"
-                :text-color="settings.sideTheme === 'theme-dark' ? variables.menuColor : variables.menuLightColor"
+                :background-color="settingsStore.sideTheme === 'theme-dark' ? variables.menuBackground : variables.menuLightBackground"
+                :text-color="settingsStore.sideTheme === 'theme-dark' ? variables.menuColor : variables.menuLightColor"
                 :unique-opened="true"
-                :active-text-color="settings.theme"
+                :active-text-color="settingsStore.theme"
                 :collapse-transition="false"
                 mode="vertical"
             >
                 <sidebar-item
-                    v-for="(route, index) in sidebarRouters"
+                    v-for="(route, index) in permissionStore.sidebarRouters"
                     :key="route.path  + index"
                     :item="route"
                     :base-path="route.path"
@@ -25,79 +31,96 @@
             v-if="!isCollapse"
             class="sidebar-resizer"
             @mousedown="startResize"
-            :title="'拖曳調整選單寬度 (目前: ' + sidebar.width + 'px)'"
-        ></div>
+            @mouseenter="handleResizerHover"
+            :title="'拖曳調整選單寬度 (目前: ' + appStore.sidebar.width + 'px)'"
+        >
+            <!-- 視覺指示器 -->
+            <div class="resizer-indicator"></div>
+        </div>
     </div>
 </template>
 
-<script>
-import {mapGetters, mapState} from "vuex"
+<script setup>
+import { computed, ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import Logo from "./Logo"
 import SidebarItem from "./SidebarItem"
-import variables from "@/assets/styles/variables.scss"
+import useAppStore from '@/store/modules/app'
+import useSettingsStore from '@/store/modules/settings'
+import usePermissionStore from '@/store/modules/permission'
 
-export default {
-    components: { SidebarItem, Logo },
-    data() {
-        return {
-            isResizing: false
-        }
-    },
-    computed: {
-        ...mapState(["settings"]),
-        ...mapGetters(["sidebarRouters", "sidebar"]),
-        activeMenu() {
-            const route = this.$route
-            const { meta, path } = route
-            // if set path, the sidebar will highlight the path you set
-            if (meta.activeMenu) {
-                return meta.activeMenu
-            }
-            return path
-        },
-        showLogo() {
-            return this.$store.state.settings.sidebarLogo
-        },
-        variables() {
-            return variables
-        },
-        isCollapse() {
-            return !this.sidebar.opened
-        }
-    },
-    methods: {
-        startResize(e) {
-            this.isResizing = true
-            const startX = e.clientX
-            const startWidth = this.sidebar.width
+const route = useRoute()
+const appStore = useAppStore()
+const settingsStore = useSettingsStore()
+const permissionStore = usePermissionStore()
 
-            const handleMouseMove = (e) => {
-                if (!this.isResizing) return
+const isResizing = ref(false)
 
-                const deltaX = e.clientX - startX
-                let newWidth = startWidth + deltaX
+onMounted(() => {
+    // 組件已掛載
+})
 
-                // 限制最小和最大寬度
-                newWidth = Math.max(180, Math.min(400, newWidth))
-
-                // 更新 Vuex 狀態
-                this.$store.dispatch('app/setSidebarWidth', newWidth)
-            }
-
-            const handleMouseUp = () => {
-                this.isResizing = false
-                document.removeEventListener('mousemove', handleMouseMove)
-                document.removeEventListener('mouseup', handleMouseUp)
-                document.body.style.cursor = ''
-                document.body.style.userSelect = ''
-            }
-
-            document.addEventListener('mousemove', handleMouseMove)
-            document.addEventListener('mouseup', handleMouseUp)
-            document.body.style.cursor = 'ew-resize'
-            document.body.style.userSelect = 'none'
-        }
+const activeMenu = computed(() => {
+    const { meta, path } = route
+    // if set a path, the sidebar will highlight the path you set
+    if (meta.activeMenu) {
+        return meta.activeMenu
     }
+    return path
+})
+
+const showLogo = computed(() => {
+    return settingsStore.sidebarLogo
+})
+
+const variables = computed(() => {
+    // Vite 不支援 import SCSS 文件，直接定義顏色變數
+    return {
+        menuBackground: '#304156',
+        menuLightBackground: '#ffffff',
+        menuColor: '#bfcbd9',
+        menuLightColor: 'rgba(0,0,0,.70)'  // 修正淺色主題文字顏色
+    }
+})
+
+const isCollapse = computed(() => {
+    return !appStore.sidebar.opened
+})
+
+function handleResizerHover() {
+    // 滑鼠懸停在拖曳條上
+}
+
+function startResize(e) {
+    isResizing.value = true
+    const startX = e.clientX
+    const startWidth = appStore.sidebar.width
+
+    const handleMouseMove = (e) => {
+        if (!isResizing.value) return
+
+        const deltaX = e.clientX - startX
+        let newWidth = startWidth + deltaX
+
+        // 限制最小和最大寬度
+        newWidth = Math.max(180, Math.min(400, newWidth))
+
+        // 更新 Pinia 狀態
+        appStore.setSidebarWidth(newWidth)
+    }
+
+    const handleMouseUp = () => {
+        isResizing.value = false
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    document.body.style.cursor = 'ew-resize'
+    document.body.style.userSelect = 'none'
 }
 </script>
 
@@ -106,19 +129,36 @@ export default {
     position: absolute;
     top: 0;
     right: 0;
-    width: 4px;
+    width: 8px; /* 增加寬度到 8px，更容易點擊 */
     height: 100%;
     cursor: ew-resize;
-    background-color: transparent;
+    background-color: rgba(64, 158, 255, 0.1); /* 添加淡淡的背景色便於識別 */
     z-index: 1002;
     transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     &:hover {
         background-color: rgba(64, 158, 255, 0.5);
+        
+        .resizer-indicator {
+            opacity: 1;
+        }
     }
 
     &:active {
         background-color: rgba(64, 158, 255, 0.8);
     }
+}
+
+.resizer-indicator {
+    width: 3px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 2px;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+    pointer-events: none;
 }
 </style>

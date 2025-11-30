@@ -35,8 +35,8 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="el-icon-search" size="small" @click="handleQuery">搜尋</el-button>
+        <el-button icon="el-icon-refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -46,7 +46,7 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
+          size="small"
           @click="handleStockIn"
           v-hasPermi="['inventory:stock:add']"
         >入庫</el-button>
@@ -56,7 +56,7 @@
           type="success"
           plain
           icon="el-icon-edit"
-          size="mini"
+          size="small"
           :disabled="single"
           @click="handleStockOut"
           v-hasPermi="['inventory:stock:edit']"
@@ -67,7 +67,7 @@
           type="warning"
           plain
           icon="el-icon-download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['inventory:stock:export']"
         >匯出</el-button>
@@ -77,12 +77,12 @@
           type="info"
           plain
           icon="el-icon-view"
-          size="mini"
+          size="small"
           @click="handleStockCheck"
           v-hasPermi="['inventory:stock:check']"
         >盤點</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <!-- 庫存統計卡片 -->
@@ -145,7 +145,7 @@
       <el-table-column label="規格" align="center" prop="specification" />
       <el-table-column label="單位" align="center" prop="unit" />
       <el-table-column label="庫存數量" align="center" prop="stockQuantity">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span :class="getStockClass(scope.row)">{{ scope.row.stockQuantity }}</span>
         </template>
       </el-table-column>
@@ -155,30 +155,30 @@
       <el-table-column label="最大庫存" align="center" prop="maxStock" />
       <el-table-column label="存放位置" align="center" prop="location" />
       <el-table-column label="庫存狀態" align="center" prop="stockStatus">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag :type="getStatusType(scope.row)">
             {{ getStatusText(scope.row) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+      <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width" fixed="right">
+        <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-plus"
             @click="handleStockInItem(scope.row)"
             v-hasPermi="['inventory:stock:add']"
           >入庫</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-minus"
             @click="handleStockOutItem(scope.row)"
             v-hasPermi="['inventory:stock:edit']"
           >出庫</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
             icon="el-icon-view"
             @click="handleDetail(scope.row)"
@@ -196,7 +196,7 @@
     />
 
     <!-- 入庫對話框 -->
-    <el-dialog title="入庫操作" :visible.sync="stockInOpen" width="500px" append-to-body>
+    <el-dialog title="入庫操作" :model-value="stockInOpen" @update:model-value="val => stockInOpen = val" width="500px" append-to-body>
       <el-form ref="stockInForm" :model="stockInForm" :rules="stockInRules" label-width="80px">
         <el-form-item label="物品名稱">
           <el-input v-model="stockInForm.itemName" disabled />
@@ -218,7 +218,7 @@
     </el-dialog>
 
     <!-- 出庫對話框 -->
-    <el-dialog title="出庫操作" :visible.sync="stockOutOpen" width="500px" append-to-body>
+    <el-dialog title="出庫操作" :model-value="stockOutOpen" @update:model-value="val => stockOutOpen = val" width="500px" append-to-body>
       <el-form ref="stockOutForm" :model="stockOutForm" :rules="stockOutRules" label-width="80px">
         <el-form-item label="物品名稱">
           <el-input v-model="stockOutForm.itemName" disabled />
@@ -243,7 +243,7 @@
     </el-dialog>
 
     <!-- 盤點對話框 -->
-    <el-dialog title="庫存盤點" :visible.sync="stockCheckOpen" width="800px" append-to-body>
+    <el-dialog title="庫存盤點" :model-value="stockCheckOpen" @update:model-value="val => stockCheckOpen = val" width="800px" append-to-body>
       <el-form ref="stockCheckForm" :model="stockCheckForm" label-width="100px">
         <el-form-item label="盤點範圍">
           <el-radio-group v-model="stockCheckForm.checkType">
@@ -279,7 +279,7 @@
 
 <script>
 import { listStock, getStock, stockIn, stockOut, stockCheck, exportStock, getStockStats } from "@/api/inventory/stock";
-import { listCategory } from "@/api/inventory/item";
+import { listCategory } from "@/api/inventory/category";
 
 export default {
   name: "Stock",

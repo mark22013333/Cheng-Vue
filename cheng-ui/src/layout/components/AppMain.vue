@@ -1,47 +1,32 @@
 <template>
   <section class="app-main">
-    <transition name="fade-transform" mode="out-in">
-      <keep-alive :include="cachedViews">
-        <router-view v-if="!$route.meta.link" :key="key" />
-      </keep-alive>
-    </transition>
+    <router-view v-slot="{ Component, route }">
+      <transition name="fade-transform" mode="out-in">
+        <keep-alive :include="tagsViewStore.cachedViews">
+          <component v-if="!route.meta.link" :is="Component" :key="route.path" />
+        </keep-alive>
+      </transition>
+    </router-view>
     <iframe-toggle />
     <copyright />
   </section>
 </template>
 
-<script>
+<script setup>
+import { watchEffect } from 'vue'
+import { useRoute } from 'vue-router'
 import copyright from "./Copyright/index"
 import iframeToggle from "./IframeToggle/index"
+import useTagsViewStore from '@/store/modules/tagsView'
 
-export default {
-  name: 'AppMain',
-  components: { iframeToggle, copyright },
-  computed: {
-    cachedViews() {
-      return this.$store.state.tagsView.cachedViews
-    },
-    key() {
-      return this.$route.path
-    }
-  },
-  watch: {
-    $route() {
-      this.addIframe()
-    }
-  },
-  mounted() {
-    this.addIframe()
-  },
-  methods: {
-    addIframe() {
-      const { name } = this.$route
-      if (name && this.$route.meta.link) {
-        this.$store.dispatch('tagsView/addIframeView', this.$route)
-      }
-    }
+const route = useRoute()
+const tagsViewStore = useTagsViewStore()
+
+watchEffect(() => {
+  if (route.meta.link) {
+    useTagsViewStore().addIframeView(route)
   }
-}
+})
 </script>
 
 <style lang="scss" scoped>
@@ -53,32 +38,8 @@ export default {
   overflow: hidden;
 }
 
-.fixed-header + .app-main {
-  overflow-y: auto;
-  scrollbar-gutter: auto;
-  height: calc(100vh - 50px);
-  min-height: 0px;
-}
-
 .app-main:has(.copyright) {
   padding-bottom: 36px;
-}
-
-.fixed-header + .app-main {
-  margin-top: 50px;
-}
-
-.hasTagsView {
-  .app-main {
-    /* 84 = navbar + tags-view = 50 + 34 */
-    min-height: calc(100vh - 84px);
-  }
-
-  .fixed-header + .app-main {
-    margin-top: 84px;
-    height: calc(100vh - 84px);
-    min-height: 0px;
-  }
 }
 </style>
 

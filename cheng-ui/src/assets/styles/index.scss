@@ -1,12 +1,13 @@
-@import './variables.scss';
-@import './mixin.scss';
-@import './transition.scss';
-@import './element-ui.scss';
-@import './sidebar.scss';
-@import './btn.scss';
+@use './mixin.scss';
+@use './transition.scss';
+@use './element-ui.scss';
+@use './sidebar.scss';
+@use './btn.scss';
+@use './cheng.scss';
 
 body {
   height: 100%;
+  margin: 0;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -119,7 +120,7 @@ aside {
   }
 }
 
-// main-container全域樣式
+//main-container全域樣式
 .app-container {
   padding: 20px;
 }

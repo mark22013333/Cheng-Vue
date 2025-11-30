@@ -1,47 +1,35 @@
 <template>
-  <div v-loading="loading" :style="'height:' + height" element-loading-text="正在載入頁面，請稍候！">
+  <div :style="'height:' + height" v-loading="loading" element-loading-text="正在載入頁面，請稍候！">
     <iframe
       :id="iframeId"
       style="width: 100%; height: 100%"
       :src="src"
+      ref="iframeRef"
       frameborder="no"
     ></iframe>
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    src: {
-      type: String,
-      default: "/"
-    },
-    iframeId: {
-      type: String
-    }
+<script setup>
+const props = defineProps({
+  src: {
+    type: String,
+    default: "/"
   },
-  data() {
-    return {
-      loading: false,
-      height: document.documentElement.clientHeight - 94.5 + "px;"
-    }
-  },
-  mounted() {
-    var _this = this
-    const iframeId = ("#" + this.iframeId).replace(/\//g, "\\/")
-    const iframe = document.querySelector(iframeId)
-    // iframe頁面loading控制
-    if (iframe.attachEvent) {
-      this.loading = true
-      iframe.attachEvent("onload", function () {
-        _this.loading = false
-      })
-    } else {
-      this.loading = true
-      iframe.onload = function () {
-        _this.loading = false
-      }
+  iframeId: {
+    type: String
+  }
+})
+
+const loading = ref(true)
+const height = ref(document.documentElement.clientHeight - 94.5 + 'px')
+const iframeRef = ref(null)
+
+onMounted(() => {
+  if (iframeRef.value) {
+    iframeRef.value.onload = () => {
+      loading.value = false
     }
   }
-}
+})
 </script>

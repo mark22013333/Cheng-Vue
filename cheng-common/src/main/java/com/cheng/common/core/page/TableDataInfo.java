@@ -65,7 +65,7 @@ public class TableDataInfo implements Serializable {
     }
 
     /**
-     * 添加額外資料
+     * 新增額外資料
      *
      * @param key   鍵
      * @param value 值

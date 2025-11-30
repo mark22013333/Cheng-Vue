@@ -4,7 +4,7 @@
       <!-- 物品管理頁籤 -->
       <el-tab-pane label="物品管理" name="items">
     <!-- 搜尋表單 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="88px">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="88px">
       <el-form-item label="物品編碼" prop="itemCode">
         <el-input
           v-model="queryParams.itemCode"
@@ -37,8 +37,8 @@
                          style="width: 150px"/>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜尋</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="Search" @click="handleQuery">搜尋</el-button>
+        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -48,8 +48,7 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
-          size="mini"
+          icon="Plus"
           @click="handleAdd"
           v-hasPermi="['inventory:management:add']"
         >新增物品
@@ -59,8 +58,7 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="mini"
+          icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['inventory:management:remove']"
@@ -71,8 +69,7 @@
         <el-button
           type="warning"
           plain
-          icon="el-icon-download"
-          size="mini"
+          icon="Download"
           @click="handleExport"
           v-hasPermi="['inventory:management:export']"
         >匯出
@@ -82,8 +79,7 @@
         <el-button
           type="info"
           plain
-          icon="el-icon-warning"
-          size="mini"
+          icon="Warning"
           @click="showLowStockOnly"
         >低庫存提醒
         </el-button>
@@ -94,14 +90,14 @@
             v-model="globalLowStockThreshold"
             :min="0"
             :max="1000"
-            size="mini"
+            size="small"
             placeholder="低庫存閾值"
             style="width: 130px"
             @change="handleThresholdChange"
           />
         </el-tooltip>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <!-- 資料表格 -->
@@ -111,17 +107,21 @@
       <el-table-column label="物品編碼" align="center" prop="itemCode" min-width="180" sortable="custom"
                        :show-overflow-tooltip="true"/>
       <el-table-column label="圖片" align="center" width="80">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-image
             v-if="scope.row.imageUrl"
             :src="getImageUrl(scope.row.imageUrl)"
             :preview-src-list="[getImageUrl(scope.row.imageUrl)]"
+            :hide-on-click-modal="true"
+            :preview-teleported="true"
             fit="cover"
             style="width: 50px; height: 50px; border-radius: 4px; cursor: pointer;"
           >
-            <div slot="error" class="image-slot">
-              <i class="el-icon-picture-outline" style="font-size: 30px; color: #ccc;"></i>
-            </div>
+            <template #error>
+              <div class="image-slot">
+                <i class="el-icon-picture-outline" style="font-size: 30px; color: #ccc;"></i>
+              </div>
+            </template>
           </el-image>
           <span v-else style="color: #ccc;">無圖</span>
         </template>
@@ -131,14 +131,14 @@
       <el-table-column label="作者" align="center" prop="author" width="120" :show-overflow-tooltip="true" v-if="hasAuthorColumn"/>
       <el-table-column label="規格" align="center" prop="specification" width="120"/>
       <el-table-column label="品牌/型號" align="center" width="150">
-        <template slot-scope="scope">
+        <template #default="scope">
           {{ scope.row.brand }} {{ scope.row.model }}
         </template>
       </el-table-column>
 
       <!-- 庫存資訊 -->
       <el-table-column label="總數量" align="center" prop="totalQuantity" width="80">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag v-if="scope.row.totalQuantity > 0" type="success">{{ scope.row.totalQuantity }}</el-tag>
           <el-tag v-else type="danger">0</el-tag>
         </template>
@@ -146,7 +146,7 @@
       <el-table-column label="可用" align="center" prop="availableQty" width="70"/>
       <el-table-column label="借出" align="center" prop="borrowedQty" width="70"/>
       <el-table-column label="庫存狀態" align="center" prop="stockStatusText" width="90">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag v-if="scope.row.stockStatus === '0'" type="success">{{ scope.row.stockStatusText }}</el-tag>
           <el-tag v-else-if="scope.row.stockStatus === '1'" type="warning">{{ scope.row.stockStatusText }}</el-tag>
           <el-tag v-else type="danger">{{ scope.row.stockStatusText }}</el-tag>
@@ -155,49 +155,13 @@
       <el-table-column label="存放位置" align="center" prop="location" width="140" sortable="custom"
                        :show-overflow-tooltip="true"/>
 
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column" min-width="120" fixed="right">
-        <template slot-scope="scope">
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-view"
-            @click="handleView(scope.row)"
-            v-hasPermi="['inventory:management:query']"
-          >詳情
-          </el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-top"
-            @click="handleStockIn(scope.row)"
-            v-hasPermi="['inventory:management:stockIn']"
-          >入庫
-          </el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-bottom"
-            @click="handleStockOut(scope.row)"
-            v-hasPermi="['inventory:management:stockOut']"
-          >出庫
-          </el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['inventory:management:edit']"
-          >修改
-          </el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['inventory:management:remove']"
-            style="color: #F56C6C;"
-          >刪除
-          </el-button>
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column" min-width="140" fixed="right">
+        <template #default="scope">
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)" v-hasPermi="['inventory:management:query']">詳情</el-button>
+          <el-button link type="primary" icon="Top" @click="handleStockIn(scope.row)" v-hasPermi="['inventory:management:stockIn']">入庫</el-button>
+          <el-button link type="primary" icon="Bottom" @click="handleStockOut(scope.row)" v-hasPermi="['inventory:management:stockOut']">出庫</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['inventory:management:edit']">修改</el-button>
+          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['inventory:management:remove']">刪除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -212,7 +176,7 @@
     />
 
     <!-- 入庫對話框 -->
-    <el-dialog :title="'入庫 - ' + currentItem.itemName" :visible.sync="stockInDialogVisible" width="500px"
+    <el-dialog :title="'入庫 - ' + currentItem.itemName" :model-value="stockInDialogVisible" @update:model-value="val => stockInDialogVisible = val" width="500px"
                append-to-body>
       <el-form ref="stockInForm" :model="stockInForm" :rules="stockInRules" label-width="100px">
         <el-form-item label="入庫數量" prop="quantity">
@@ -230,7 +194,7 @@
     </el-dialog>
 
     <!-- 出庫對話框 -->
-    <el-dialog :title="'出庫 - ' + currentItem.itemName" :visible.sync="stockOutDialogVisible" width="500px"
+    <el-dialog :title="'出庫 - ' + currentItem.itemName" :model-value="stockOutDialogVisible" @update:model-value="val => stockOutDialogVisible = val" width="500px"
                append-to-body>
       <el-form ref="stockOutForm" :model="stockOutForm" :rules="stockOutRules" label-width="100px">
         <el-form-item label="可用數量">
@@ -251,7 +215,7 @@
     </el-dialog>
 
     <!-- 詳情對話框 -->
-    <el-dialog title="物品與庫存詳情" :visible.sync="detailDialogVisible" width="900px" append-to-body>
+    <el-dialog title="物品與庫存詳情" :model-value="detailDialogVisible" @update:model-value="val => detailDialogVisible = val" width="900px" append-to-body>
       <el-descriptions :column="2" border v-if="detailData">
         <el-descriptions-item label="物品編碼">{{ detailData.itemCode }}</el-descriptions-item>
         <el-descriptions-item label="物品名稱">{{ detailData.itemName }}</el-descriptions-item>
@@ -268,8 +232,7 @@
           <el-button
             v-if="detailData.barcode && isValidIsbn(detailData.barcode)"
             type="primary"
-            size="mini"
-            icon="el-icon-refresh"
+            icon="Refresh"
             @click="handleRefreshIsbn"
             style="margin-left: 10px;"
           >重新抓取
@@ -295,7 +258,7 @@
         <!-- 歷史成本 -->
         <el-descriptions-item label="歷史採購成本" :span="2">
           <span style="color: #909399; font-weight: bold;">{{ formatMoney(detailData.historicalCost) }}</span>
-          <el-tag type="info" size="mini" style="margin-left: 8px;">已支付總成本</el-tag>
+          <el-tag type="info" size="small" style="margin-left: 8px;">已支付總成本</el-tag>
         </el-descriptions-item>
 
         <!-- 當前庫存資產 -->
@@ -330,15 +293,15 @@
         <!-- 損失明細 -->
         <el-descriptions-item label="損壞損失" :span="2" v-if="detailData.damagedQty > 0">
           <span style="color: #E6A23C; font-weight: bold;">-{{ formatMoney(detailData.damagedValue) }}</span>
-          <el-tag type="warning" size="mini" style="margin-left: 8px;">{{ detailData.damagedQty }} 件損壞</el-tag>
+          <el-tag type="warning" size="small" style="margin-left: 8px;">{{ detailData.damagedQty }} 件損壞</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="遺失損失" :span="2" v-if="detailData.lostQty > 0">
           <span style="color: #F56C6C; font-weight: bold;">-{{ formatMoney(detailData.lostValue) }}</span>
-          <el-tag type="danger" size="mini" style="margin-left: 8px;">{{ detailData.lostQty }} 件遺失</el-tag>
+          <el-tag type="danger" size="small" style="margin-left: 8px;">{{ detailData.lostQty }} 件遺失</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="累計損失" :span="2" v-if="detailData.totalLoss > 0">
           <span style="color: #F56C6C; font-weight: bold; font-size: 16px;">-{{ formatMoney(detailData.totalLoss) }}</span>
-          <el-tag type="danger" size="mini" style="margin-left: 8px;">⚠️ 總損失</el-tag>
+          <el-tag type="danger" size="small" style="margin-left: 8px;">⚠️ 總損失</el-tag>
         </el-descriptions-item>
 
         <el-descriptions-item label="最後入庫時間" :span="2">{{
@@ -354,12 +317,16 @@
             v-if="detailData.imageUrl"
             :src="getImageUrl(detailData.imageUrl)"
             :preview-src-list="[getImageUrl(detailData.imageUrl)]"
+            :hide-on-click-modal="true"
+            :preview-teleported="true"
             fit="contain"
             style="max-width: 200px; max-height: 200px; border-radius: 4px; cursor: pointer;"
           >
-            <div slot="error" class="image-slot">
-              <i class="el-icon-picture-outline" style="font-size: 50px; color: #ccc;"></i>
-            </div>
+            <template #error>
+              <div class="image-slot">
+                <i class="el-icon-picture-outline" style="font-size: 50px; color: #ccc;"></i>
+              </div>
+            </template>
           </el-image>
           <span v-else style="color: #999;">無圖片</span>
         </el-descriptions-item>
@@ -372,7 +339,7 @@
     <ProgressDialog ref="progressDialog" />
 
     <!-- 編輯對話框 -->
-    <el-dialog :title="editDialogTitle" :visible.sync="editDialogVisible" width="800px" append-to-body>
+    <el-dialog :title="editDialogTitle" :model-value="editDialogVisible" @update:model-value="val => editDialogVisible = val" width="800px" append-to-body>
       <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="100px">
         <el-row>
           <el-col :span="12">
@@ -613,6 +580,8 @@ export default {
     this.getList();
     this.getCategoryList();
   },
+  mounted() {
+  },
   methods: {
     /** 查詢物品與庫存整合列表 */
     getList() {
@@ -662,7 +631,7 @@ export default {
       const itemNames = row.itemName ? [row.itemName] : this.managementList
         .filter(item => itemIds.includes(item.itemId))
         .map(item => item.itemName);
-      
+
       const confirmMessage = `
         <div style="text-align: left;">
           <p style="color: #E6A23C; font-weight: bold; margin-bottom: 10px;">
@@ -680,7 +649,7 @@ export default {
           </ul>
         </div>
       `;
-      
+
       this.$confirm(confirmMessage, '刪除確認', {
         dangerouslyUseHTMLString: true,
         confirmButtonText: '確定刪除',
@@ -884,8 +853,8 @@ export default {
         // 物品管理頁籤 - 重新整理物品列表
         this.getList();
       } else if (tab.name === 'categories') {
-        // 分類管理頁籤 - CategoryManagement 組件會自己載入資料
-        // 這裡不需要特別處理，因為子組件有自己的生命週期
+        // 分類管理頁籤 - CategoryManagement 元件會自己載入資料
+        // 這裡不需要特別處理，因為子元件有自己的生命週期
       }
     },
     /** 驗證是否為有效的 ISBN */
@@ -901,11 +870,11 @@ export default {
         this.$modal.msgWarning("條碼為空，無法抓取");
         return;
       }
-      
+
       const itemId = this.detailData.itemId;
       const isbn = this.detailData.barcode;
       const itemName = this.detailData.itemName;
-      
+
       this.$confirm(
         `<div style="margin-bottom: 10px;">確定要重新抓取 ISBN <strong>${isbn}</strong> 的書籍資料嗎？</div>` +
         `<div style="color: #909399; font-size: 12px;">
@@ -932,34 +901,32 @@ export default {
         createRefreshTask(itemId).then(response => {
           const taskId = response.data;
           let dialogMinimized = false; // 標記對話框是否被最小化
-          
+
           // 2. 開啟進度對話框
           this.$refs.progressDialog.show({
             title: `重新抓取書籍資料 - ${itemName}`,
             message: '準備中...',
-            showLogs: true
+            showLogs: true,
+            onMinimize: () => {
+              dialogMinimized = true;
+              this.$notify.info({
+                title: '背景執行中',
+                message: `《${itemName}》仍在背景抓取資料...`,
+                duration: 3000
+              });
+            }
           });
-          
-          // 監聽對話框最小化事件
-          const handleMinimize = () => {
-            dialogMinimized = true;
-            this.$notify.info({
-              title: '背景執行中',
-              message: `《${itemName}》仍在背景抓取資料...`,
-              duration: 3000
-            });
-          };
-          this.$refs.progressDialog.$once('minimize', handleMinimize);
-          
+
           // 3. 建立 SSE 連線
-          const baseURL = process.env.VUE_APP_BASE_API || '';
+          const baseURL = import.meta.env.VITE_APP_BASE_API || '';
+          console.log('Starting SSE connection. BaseURL:', baseURL, 'TaskId:', taskId);
           const eventSource = new EventSource(
             `${baseURL}/inventory/scan/refreshIsbn/subscribe/${taskId}?itemId=${itemId}`
           );
-          
+
           // 儲存連線（用於並行抓取）
           this.sseConnections.set(taskId, eventSource);
-          
+
           // 監聽進度事件
           eventSource.addEventListener('progress', (event) => {
             try {
@@ -972,12 +939,12 @@ export default {
               console.error('解析進度事件失敗', error);
             }
           });
-          
+
           // 監聽成功事件
           eventSource.addEventListener('success', (event) => {
             try {
               const result = JSON.parse(event.data);
-              
+
               // 如果對話框已最小化，使用通知提示
               if (dialogMinimized) {
                 this.$notify.success({
@@ -989,18 +956,18 @@ export default {
                 // 設定進度對話框為成功狀態
                 this.$refs.progressDialog.setSuccess(result.message || '書籍資訊更新成功');
               }
-              
+
               // 關閉 SSE 連線
               eventSource.close();
               this.sseConnections.delete(taskId);
-              
+
               // 顯示變更詳情
               if (result.updatedFields && result.updatedFields.length > 0) {
                 setTimeout(() => {
                   const changeDetails = Object.entries(result.changes)
                     .map(([key, value]) => `<li><strong>${key}</strong>: ${value}</li>`)
                     .join('');
-                  
+
                   this.$alert(
                     `<div style="text-align: left;">
                       <p style="margin-bottom: 10px; color: #67C23A; font-weight: bold;">${result.message}</p>
@@ -1018,25 +985,25 @@ export default {
                   );
                 }, 500);
               }
-              
+
               // 重新載入詳情資料
               getManagement(itemId).then(response => {
                 this.detailData = response.data;
                 // 重新整理列表
                 this.getList();
               });
-              
+
             } catch (error) {
               console.error('解析成功事件失敗', error);
             }
           });
-          
+
           // 監聽警告事件（例如：資料相同無需更新）
           eventSource.addEventListener('warning', (event) => {
             try {
               const data = JSON.parse(event.data);
               const warningMsg = data.message || '無需更新';
-              
+
               if (dialogMinimized) {
                 this.$notify.warning({
                   title: '⚠️ 提示',
@@ -1046,7 +1013,7 @@ export default {
               } else {
                 this.$refs.progressDialog.setWarning(warningMsg);
               }
-              
+
               // 重新載入詳情資料
               getManagement(itemId).then(response => {
                 this.detailData = response.data;
@@ -1058,13 +1025,13 @@ export default {
               this.sseConnections.delete(taskId);
             }
           });
-          
+
           // 監聽錯誤事件
           eventSource.addEventListener('error', (event) => {
             try {
               const data = JSON.parse(event.data);
               const errorMsg = data.message || '處理失敗';
-              
+
               if (dialogMinimized) {
                 this.$notify.error({
                   title: '❌ 抓取失敗',
@@ -1081,22 +1048,22 @@ export default {
               this.sseConnections.delete(taskId);
             }
           });
-          
+
           // 監聽連線錯誤（僅處理真正的網路錯誤）
           eventSource.onerror = (event) => {
             console.error('SSE 連線錯誤', event);
-            
+
             // 如果連線已經正常關閉（任務完成），不做任何處理
             if (eventSource.readyState === EventSource.CLOSED) {
               return;
             }
-            
+
             // 只有在連線異常中斷時才顯示錯誤
             if (eventSource.readyState === EventSource.CONNECTING) {
               // 正在重連，暫時不顯示錯誤
               return;
             }
-            
+
             const errorMsg = '連線中斷，請重試';
             if (dialogMinimized) {
               this.$notify.error({
@@ -1107,16 +1074,16 @@ export default {
             } else {
               this.$refs.progressDialog.setError(errorMsg);
             }
-            
+
             eventSource.close();
             this.sseConnections.delete(taskId);
           };
-          
+
         }).catch(error => {
           const errorMsg = error.msg || error.message || "建立任務失敗";
           this.$modal.msgError(errorMsg);
         });
-        
+
       }).catch(() => {
         // 使用者取消
       });
@@ -1351,4 +1318,7 @@ export default {
   background-color: rgba(0, 0, 0, 0.05);
   border-radius: 3px;
 }
+
+
+
 </style>

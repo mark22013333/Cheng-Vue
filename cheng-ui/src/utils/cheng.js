@@ -66,7 +66,7 @@ export function addDateRange(params, dateRange, propName) {
   return search
 }
 
-// 顯示數據字典
+// 回顯資料字典
 export function selectDictLabel(datas, value) {
   if (value === undefined) {
     return ""
@@ -84,7 +84,7 @@ export function selectDictLabel(datas, value) {
   return actions.join('')
 }
 
-// 顯示數據字典（字串、陣列）
+// 回顯資料字典（字串、陣列）
 export function selectDictLabels(datas, value, separator) {
   if (value === undefined || value.length ===0) {
     return ""
@@ -132,7 +132,7 @@ export function parseStrEmpty(str) {
   return str
 }
 
-// 數據合併
+// 資料合並
 export function mergeRecursive(source, target) {
   for (var p in target) {
     try {
@@ -149,8 +149,8 @@ export function mergeRecursive(source, target) {
 }
 
 /**
- * 建構樹型結構數據
- * @param {*} data 資料來源
+ * 構造樹型結構資料
+ * @param {*} data 資料源
  * @param {*} id id欄位 預設 'id'
  * @param {*} parentId 父節點欄位 預設 'parentId'
  * @param {*} children 孩子節點欄位 預設 'children'
@@ -185,8 +185,8 @@ export function handleTree(data, id, parentId, children) {
 }
 
 /**
- * 參數處理
- * @param {*} params  參數
+* 參數處理
+* @param {*} params  參數
 */
 export function tansParams(params) {
   let result = ''
@@ -210,7 +210,7 @@ export function tansParams(params) {
   return result
 }
 
-// 返回專案路徑
+// 返回項目路徑
 export function getNormalPath(p) {
   if (p.length === 0 || !p || p == 'undefined') {
     return p

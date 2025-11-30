@@ -18,7 +18,7 @@ export function scanIsbn(data) {
   })
 }
 
-// 掃描條碼或QR碼（通用）
+// 掃描條碼或QR碼（共用）
 export function scanCode(data) {
   return request({
     url: '/inventory/item/scan',
@@ -43,5 +43,14 @@ export function refreshIsbn(itemId) {
     url: '/inventory/scan/refreshIsbn',
     method: 'post',
     data: { itemId }
+  })
+}
+
+// 根據 ISBN 抓取書籍資訊（爬蟲任務）
+export function crawlBookByIsbn(isbn) {
+  return request({
+    url: '/inventory/crawlTask/create',
+    method: 'post',
+    params: { isbn }
   })
 }

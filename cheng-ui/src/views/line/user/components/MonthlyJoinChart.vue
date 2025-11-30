@@ -1,18 +1,21 @@
 <template>
   <div class="monthly-join-chart">
     <el-card shadow="hover">
-      <div slot="header" class="chart-header">
-        <span><i class="el-icon-data-line"></i> 每月加入好友趨勢</span>
-        <el-button
-          type="text"
-          icon="el-icon-refresh"
-          :loading="loading"
-          @click="loadData"
-        >重新整理</el-button>
-      </div>
+      <template #header>
+        <div class="chart-header">
+          <span><el-icon><DataLine /></el-icon> 每月加入好友趨勢</span>
+          <el-button
+            type="text"
+            :loading="loading"
+            @click="loadData"
+          >
+            <el-icon><Refresh /></el-icon> 重新整理
+          </el-button>
+        </div>
+      </template>
       <div v-loading="loading" class="chart-container">
         <div v-if="!hasData" class="no-data">
-          <i class="el-icon-warning-outline"></i>
+          <el-icon><Warning /></el-icon>
           <p>暫無資料</p>
         </div>
         <div v-else ref="chart" class="chart" style="width: 100%; height: 400px;"></div>
@@ -24,9 +27,13 @@
 <script>
 import * as echarts from 'echarts'
 import { getMonthlyStats } from '@/api/line/user'
+import { DataLine, Refresh, Warning } from '@element-plus/icons-vue'
 
 export default {
   name: 'MonthlyJoinChart',
+  components: {
+    DataLine, Refresh, Warning
+  },
   props: {
     dateRange: {
       type: Array,

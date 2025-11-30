@@ -15,9 +15,9 @@
           {{ message }}
         </div>
         <div class="bullshit__info">
-          對不起，您正在尋找的頁面不存在。嘗試檢查URL的錯誤，然後按瀏覽器上的重新整理按鈕或嘗試在我們的應用程式中找到其他内容。
+          對不起，您正在尋找的頁面不存在。嘗試檢查URL的錯誤，然後按瀏覽器上的重新整理按鈕或嘗試在我们的應用程序中找到其他内容。
         </div>
-        <router-link to="/" class="bullshit__return-home">
+        <router-link to="/index" class="bullshit__return-home">
           返回首頁
         </router-link>
       </div>
@@ -25,16 +25,10 @@
   </div>
 </template>
 
-<script>
-
-export default {
-  name: 'Page404',
-  computed: {
-    message() {
-      return '找不到網頁！'
-    }
-  }
-}
+<script setup>
+let message = computed(() => {
+  return '找不到網頁！'
+})
 </script>
 
 <style lang="scss" scoped>

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :title="title"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="900px"
     append-to-body
     :close-on-click-modal="false"
@@ -48,7 +48,7 @@
           maxlength="100"
         />
         <div class="form-tip">
-          <i class="el-icon-info"></i>
+          <el-icon><InfoFilled /></el-icon>
           用於 Messaging API（發送訊息）
         </div>
       </el-form-item>
@@ -77,8 +77,8 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <div class="form-tip" style="margin-top: -10px; margin-bottom: 15px;">
-        <i class="el-icon-info"></i>
+      <div class="form-tip" style="margin-top: 10px; margin-bottom: 15px;">
+        <el-icon><InfoFilled /></el-icon>
         LINE 區分 Messaging API 頻道和 LINE Login 頻道，兩者的 Channel ID 和 Secret 不同。如需使用 LINE Login 功能，請填寫 Login 頻道資訊。
       </div>
 
@@ -93,14 +93,14 @@
           maxlength="500"
         />
         <div class="form-tip">
-          <i class="el-icon-info"></i>
+          <el-icon><InfoFilled /></el-icon>
           請使用長期有效的 Channel Access Token
         </div>
       </el-form-item>
 
       <el-divider content-position="left">Webhook 設定</el-divider>
 
-      <el-form-item label="Webhook 基礎 URL" prop="webhookBaseUrl">
+      <el-form-item label="Webhook 網域" prop="webhookBaseUrl">
         <el-input
           v-model="form.webhookBaseUrl"
           placeholder="選填，留空則使用系統預設值"
@@ -109,28 +109,29 @@
           <template slot="prepend">https://</template>
         </el-input>
         <div class="form-tip" v-if="defaultWebhookBaseUrl">
-          <i class="el-icon-info"></i>
+          <el-icon><InfoFilled /></el-icon>
           系統預設值：{{ defaultWebhookBaseUrl }}
         </div>
         <div class="form-tip">
-          <i class="el-icon-info"></i>
+          <el-icon><InfoFilled /></el-icon>
           LINE 平台回呼使用的網域，必須是公開可存取的 URL（僅需填入網域名稱，例如：domain.com）。留空則使用系統預設值。
         </div>
       </el-form-item>
 
       <el-form-item label="Webhook URL" v-if="webhookUrl">
         <el-input v-model="webhookUrl" readonly>
-          <el-button slot="append" icon="el-icon-document-copy" @click="copyWebhookUrl">複製</el-button>
+          <template #append>
+            <el-button :icon="DocumentCopy" @click="copyWebhookUrl">複製</el-button>
+          </template>
         </el-input>
         <div class="form-tip">
-          <i class="el-icon-info"></i>
+          <el-icon><InfoFilled /></el-icon>
           自動產生的 Webhook URL，請將此 URL 設定至 LINE Developer Console
         </div>
         <el-button
           v-if="webhookUrl"
           type="success"
-          size="small"
-          icon="el-icon-link"
+          :icon="Link"
           :loading="settingWebhook"
           @click="handleSetLineWebhook"
           style="margin-top: 10px;"
@@ -138,7 +139,7 @@
           設定 LINE Webhook URL
         </el-button>
         <div class="form-tip">
-          <i class="el-icon-warning"></i>
+          <el-icon><WarningFilled /></el-icon>
           點擊按鈕將自動呼叫 LINE API 設定 Webhook URL，無需手動至 LINE Developer Console 設定
         </div>
       </el-form-item>
@@ -177,17 +178,26 @@
     </el-form>
 
     <div slot="footer" class="dialog-footer">
-      <el-button @click="cancel">取 消</el-button>
-      <el-button type="primary" @click="submitForm" :loading="submitting">確 定</el-button>
+      <el-button @click="cancel" :icon="Close">取 消</el-button>
+      <el-button type="primary" @click="submitForm" :loading="submitting" :icon="Check">確 定</el-button>
     </div>
   </el-dialog>
 </template>
 
 <script>
 import { getConfig, addConfig, updateConfig, checkChannelType, setLineWebhook, setLineWebhookWithParams, getDefaultWebhookBaseUrl } from '@/api/line/config'
+import { InfoFilled, DocumentCopy, Link, WarningFilled, Close, Check } from '@element-plus/icons-vue'
 
 export default {
   name: 'ConfigForm',
+  components: {
+    InfoFilled, DocumentCopy, Link, WarningFilled, Close, Check
+  },
+  setup() {
+    return {
+      Link, Close, Check, DocumentCopy
+    }
+  },
   dicts: ['line_channel_type'],
   data() {
     return {
@@ -246,12 +256,12 @@ export default {
     /** 開啟對話框 */
     open(configId, channelType = 'SUB') {
       this.reset()
-      
+
       // 取得系統預設的 Webhook 基礎 URL
       getDefaultWebhookBaseUrl().then(response => {
         this.defaultWebhookBaseUrl = response.data || ''
         console.log('載入預設 Webhook 基礎 URL:', this.defaultWebhookBaseUrl)
-        
+
         // 如果是新增模式，設定預設值
         if (!configId) {
           this.form.webhookBaseUrl = this.defaultWebhookBaseUrl
@@ -262,7 +272,7 @@ export default {
           })
         }
       })
-      
+
       if (configId) {
         this.isAdd = false
         this.title = '修改頻道設定'
@@ -271,17 +281,17 @@ export default {
           console.log('原始回應:', response.data)
           console.log('status 欄位:', response.data.status)
           console.log('status 類型:', typeof response.data.status)
-          
+
           // 後端 Status 枚舉轉換為前端字串
           // 後端可能返回：
           // 1. 枚舉物件：{code: 1, description: "啟用"}
           // 2. 數字：1 或 0
           // 3. 字串：'ENABLE' 或 'DISABLE'
           let statusValue = '1' // 預設啟用
-          
+
           if (response.data.status) {
             const status = response.data.status
-            
+
             if (typeof status === 'object' && status.code !== undefined) {
               // 枚舉物件
               statusValue = String(status.code)
@@ -300,7 +310,7 @@ export default {
               console.log('解析為字串:', status, '-> 轉換為:', statusValue)
             }
           }
-          
+
           this.form = {
             ...response.data,
             // 將 YES/NO 枚舉轉換為 Boolean
@@ -357,12 +367,12 @@ export default {
           console.log('=== 提交表單 ===')
           console.log('表單 status 原始值:', this.form.status)
           console.log('表單 status 類型:', typeof this.form.status)
-          
+
           // 轉換資料格式
           // 前端和後端保持一致：'1'=啟用, '0'=停用
           const statusCode = parseInt(this.form.status)
           console.log('轉換後的 statusCode:', statusCode)
-          
+
           const submitData = {
             ...this.form,
             channelTypeCode: this.form.channelType,  // 使用 channelTypeCode 對應後端的 setChannelTypeCode() 方法
@@ -422,7 +432,7 @@ export default {
     generateWebhookUrl() {
       const botId = this.form.botBasicId || this.form.channelId
       console.log('產生 Webhook URL，botId:', botId)
-      
+
       if (!botId) {
         this.webhookUrl = ''
         return
@@ -431,7 +441,7 @@ export default {
       // 決定使用哪個 Base URL
       let baseUrl = this.form.webhookBaseUrl || this.defaultWebhookBaseUrl
       console.log('使用的 baseUrl:', baseUrl)
-      
+
       if (!baseUrl) {
         // 如果都沒有，使用瀏覽器的 origin
         baseUrl = window.location.origin
@@ -474,13 +484,13 @@ export default {
     async checkExistingChannel(channelType) {
       try {
         const response = await checkChannelType(channelType)
-        
+
         // 編輯模式下：直接清空表單（保留頻道類型）
         if (!this.isAdd) {
           this.clearFormExceptChannelType()
           return
         }
-        
+
         // 新增模式下：檢查是否已有該類型的資料
         if (response.data) {
           // 已存在該類型的頻道
@@ -502,7 +512,7 @@ export default {
             this.title = '修改頻道設定'
             this.generateWebhookUrl()
           }).catch(() => {
-            // 用戶選擇繼續新增，清空表單（保留頻道類型）
+            // 使用者選擇繼續新增，清空表單（保留頻道類型）
             this.clearFormExceptChannelType()
           })
         } else {
@@ -550,14 +560,14 @@ export default {
         }
       ).then(() => {
         this.settingWebhook = true
-        
+
         // 使用表單當前的值
         const params = {
           webhookUrl: this.webhookUrl,
           channelAccessToken: this.form.channelAccessToken,
           configId: this.form.configId || null
         }
-        
+
         setLineWebhookWithParams(params).then(response => {
           this.$modal.msgSuccess(response.msg || 'Webhook URL 設定成功')
           this.$emit('success')
@@ -584,29 +594,32 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.form-tip {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 5px;
+  .form-tip {
+    font-size: 12px;
+    color: #909399;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
 
-  i {
-    margin-right: 4px;
+    .el-icon {
+      margin-right: 4px;
+      font-size: 14px;
+    }
   }
-}
 
-::v-deep .el-divider__text {
+:deep(.el-divider__text) {
   font-weight: 600;
   color: #606266;
 }
 
 // Webhook URL 唯讀欄位游標樣式
-::v-deep .el-input__inner[readonly] {
+:deep(.el-input__inner[readonly]) {
   cursor: not-allowed;
   background-color: #f5f7fa;
 }
 
 // 頻道類型下拉選單顯示正常指針游標
-::v-deep .el-select:not(.is-disabled) .el-input__inner {
+:deep(.el-select:not(.is-disabled) .el-input__inner ) {
   cursor: pointer;
 }
 </style>

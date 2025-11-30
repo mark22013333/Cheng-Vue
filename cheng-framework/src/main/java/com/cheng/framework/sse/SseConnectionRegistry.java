@@ -145,7 +145,7 @@ public class SseConnectionRegistry {
     /**
      * 清理過期連線
      * 
-     * @param timeoutMillis 超時時間（毫秒）
+     * @param timeoutMillis 逾時時間（毫秒）
      * @return 清理的連線數量
      */
     public int cleanExpiredConnections(long timeoutMillis) {

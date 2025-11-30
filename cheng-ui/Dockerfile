@@ -1,4 +1,4 @@
-# ---- Frontend (Vue2) build then serve with Nginx ----
+# ---- Frontend (Vue3 + Vite) build then serve with Nginx ----
 # Build stage
 FROM node:18-alpine AS build
 WORKDIR /app

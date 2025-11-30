@@ -6,31 +6,28 @@
         <el-tooltip content="左右分欄" placement="top">
           <el-button 
             :type="layoutMode === 'side' ? 'primary' : ''" 
-            icon="el-icon-menu" 
-            size="small"
             @click="layoutMode = 'side'">
+            <el-icon><Menu /></el-icon>
           </el-button>
         </el-tooltip>
         <el-tooltip content="上下堆疊" placement="top">
           <el-button 
             :type="layoutMode === 'stack' ? 'primary' : ''" 
-            icon="el-icon-s-unfold" 
-            size="small"
             @click="layoutMode = 'stack'">
+            <el-icon><Expand /></el-icon>
           </el-button>
         </el-tooltip>
         <el-tooltip content="全寬模式" placement="top">
           <el-button 
             :type="layoutMode === 'wide' ? 'primary' : ''" 
-            icon="el-icon-full-screen" 
-            size="small"
             @click="layoutMode = 'wide'">
+            <el-icon><FullScreen /></el-icon>
           </el-button>
         </el-tooltip>
       </el-button-group>
 
       <div class="theme-selector">
-        <el-select v-model="cardTheme" size="small" style="width: 140px;">
+        <el-select v-model="cardTheme" style="width: 140px;">
           <el-option label="🎨 預設主題" value="default"></el-option>
           <el-option label="💙 藍色主題" value="blue"></el-option>
           <el-option label="💚 綠色主題" value="green"></el-option>
@@ -48,7 +45,7 @@
           <div class="user-title">
             <h2>{{ user.nickName || user.userName }}</h2>
             <p class="user-subtitle">
-              <el-tag size="small" type="success" effect="plain">{{ roleGroup }}</el-tag>
+              <el-tag type="success" effect="plain">{{ roleGroup }}</el-tag>
               <span class="dept-info" v-if="user.dept">
                 <i class="el-icon-office-building"></i>
                 {{ user.dept.deptName }}
@@ -109,7 +106,7 @@
                 性別
               </div>
               <div class="info-value">
-                <el-tag size="mini" :type="user.sex === '0' ? 'primary' : 'danger'">
+                <el-tag :type="user.sex === '0' ? 'primary' : 'danger'">
                   {{ user.sex === '0' ? '男' : user.sex === '1' ? '女' : '未設定' }}
                 </el-tag>
               </div>
@@ -147,24 +144,24 @@
         <el-card class="edit-card" shadow="hover" :class="'theme-' + cardTheme">
           <el-tabs v-model="selectedTab" class="profile-tabs">
             <el-tab-pane name="userinfo">
-              <span slot="label">
-                <i class="el-icon-edit"></i>
+              <template #label>
+                <el-icon style="margin-right: 6px;"><Edit /></el-icon>
                 編輯資料
-              </span>
+              </template>
               <userInfo :user="user" @refresh="getUser" />
             </el-tab-pane>
             <el-tab-pane name="resetPwd">
-              <span slot="label">
-                <i class="el-icon-lock"></i>
+              <template #label>
+                <el-icon style="margin-right: 6px;"><Lock /></el-icon>
                 修改密碼
-              </span>
+              </template>
               <resetPwd />
             </el-tab-pane>
             <el-tab-pane name="security">
-              <span slot="label">
-                <i class="el-icon-shield"></i>
+              <template #label>
+                <el-icon style="margin-right: 6px;"><Lock /></el-icon>
                 安全設定
-              </span>
+              </template>
               <div class="security-content">
                 <el-alert
                   title="安全提示"
@@ -182,7 +179,7 @@
                         <div class="security-item-desc">定期修改密碼可以提高帳號安全性</div>
                       </div>
                     </div>
-                    <el-button size="small" @click="selectedTab = 'resetPwd'">修改密碼</el-button>
+                    <el-button @click="selectedTab = 'resetPwd'">修改密碼</el-button>
                   </div>
                   <div class="security-item">
                     <div class="security-item-info">
@@ -192,7 +189,7 @@
                         <div class="security-item-desc">{{ user.phonenumber ? '已綁定: ' + user.phonenumber : '未綁定' }}</div>
                       </div>
                     </div>
-                    <el-button size="small" @click="selectedTab = 'userinfo'">{{ user.phonenumber ? '修改' : '綁定' }}</el-button>
+                    <el-button @click="selectedTab = 'userinfo'">{{ user.phonenumber ? '修改' : '綁定' }}</el-button>
                   </div>
                   <div class="security-item">
                     <div class="security-item-info">
@@ -202,7 +199,7 @@
                         <div class="security-item-desc">{{ user.email ? '已綁定: ' + user.email : '未綁定' }}</div>
                       </div>
                     </div>
-                    <el-button size="small" @click="selectedTab = 'userinfo'">{{ user.email ? '修改' : '綁定' }}</el-button>
+                    <el-button @click="selectedTab = 'userinfo'">{{ user.email ? '修改' : '綁定' }}</el-button>
                   </div>
                 </div>
               </div>
@@ -219,10 +216,11 @@ import userAvatar from "./userAvatar"
 import userInfo from "./userInfo"
 import resetPwd from "./resetPwd"
 import {getUserProfile} from "@/api/system/user"
+import {Menu, Expand, FullScreen, Edit, Lock} from '@element-plus/icons-vue'
 
 export default {
   name: "Profile",
-  components: { userAvatar, userInfo, resetPwd },
+  components: { userAvatar, userInfo, resetPwd, Menu, Expand, FullScreen, Edit, Lock },
   data() {
     return {
       user: {},
@@ -457,12 +455,12 @@ export default {
   margin-bottom: 20px;
   transition: all 0.3s ease;
   
-  ::v-deep .el-card__header {
+  :deep(.el-card__header) {
     border-bottom: 2px solid #f0f2f5;
     padding: 20px;
   }
 
-  ::v-deep .el-card__body {
+  :deep(.el-card__body) {
     padding: 24px;
   }
 
@@ -486,7 +484,7 @@ export default {
       color: #4facfe;
     }
 
-    ::v-deep .el-card__header {
+    :deep(.el-card__header) {
       border-bottom-color: rgba(79, 172, 254, 0.2);
     }
   }
@@ -496,7 +494,7 @@ export default {
       color: #43e97b;
     }
 
-    ::v-deep .el-card__header {
+    :deep(.el-card__header) {
       border-bottom-color: rgba(67, 233, 123, 0.2);
     }
   }
@@ -506,7 +504,7 @@ export default {
       color: #fa709a;
     }
 
-    ::v-deep .el-card__header {
+    :deep(.el-card__header) {
       border-bottom-color: rgba(250, 112, 154, 0.2);
     }
   }
@@ -560,11 +558,11 @@ export default {
 }
 
 .profile-tabs {
-  ::v-deep .el-tabs__header {
+  :deep(.el-tabs__header) {
     margin-bottom: 24px;
   }
 
-  ::v-deep .el-tabs__item {
+  :deep(.el-tabs__item) {
     font-size: 15px;
     padding: 0 24px;
     height: 44px;
@@ -575,29 +573,29 @@ export default {
     }
   }
 
-  ::v-deep .el-tabs__active-bar {
+  :deep(.el-tabs__active-bar) {
     height: 3px;
     background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
   }
 
   // 主題色標籤列
-  .edit-card.theme-blue & ::v-deep .el-tabs__active-bar {
+  .edit-card.theme-blue & :deep(.el-tabs__active-bar) {
     background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
   }
 
-  .edit-card.theme-green & ::v-deep .el-tabs__active-bar {
+  .edit-card.theme-green & :deep(.el-tabs__active-bar) {
     background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
   }
 
-  .edit-card.theme-orange & ::v-deep .el-tabs__active-bar {
+  .edit-card.theme-orange & :deep(.el-tabs__active-bar) {
     background: linear-gradient(90deg, #fa709a 0%, #fee140 100%);
   }
 
-  .edit-card.theme-purple & ::v-deep .el-tabs__active-bar {
+  .edit-card.theme-purple & :deep(.el-tabs__active-bar) {
     background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
   }
 
-  ::v-deep .el-tabs__nav-wrap::after {
+  :deep(.el-tabs__nav-wrap::after) {
     background: #e4e7ed;
   }
 }

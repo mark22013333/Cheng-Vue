@@ -51,7 +51,7 @@ public class FlareSolverUtil {
     private static final int MAX_RETRIES = 2;
 
     /**
-     * OkHttpClient 實例（專用於 FlareSolver，配置長超時）
+     * OkHttpClient 實例（專用於 FlareSolver，配置長逾時）
      */
     private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)

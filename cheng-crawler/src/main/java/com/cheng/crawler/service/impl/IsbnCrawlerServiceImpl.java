@@ -46,7 +46,7 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
     private static final String ISBN_NCL_URL = "https://isbn.ncl.edu.tw/NEW_ISBNNet/main_DisplayResults.php?&Pact=DisplayAll4Simple";
     private static final String ISBN_US_URL = "https://us.nicebooks.com/search/isbn?isbn=";
     private static final String GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes?q=isbn:";
-    private static final int HTTP_TIMEOUT = 10000; // HTTP 請求超時（毫秒）
+    private static final int HTTP_TIMEOUT = 10000; // HTTP 請求逾時（毫秒）
 
     @Value("${cheng.profile:/tmp/uploadPath}")
     private String uploadPath;
@@ -1021,12 +1021,12 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
         try {
             log.info("使用 FlareSolver 處理圖片下載（支援重定向和 Cloudflare）: {}", imageUrl);
 
-            // 使用 FlareSolver 訪問圖片 URL，獲取重定向後的 cookies
+            // 使用 FlareSolver 訪問圖片 URL，取得重定向後的 cookies
             // 圖片 URL 可能重定向到 books.com.tw，需要新的 cookies
             FlareSolverUtil.FlareSolverResponse imageResponse = FlareSolverUtil.getPage(
                     imageUrl,
                     null,  // 不重用 session，因為圖片可能在不同域名
-                    30000  // 圖片下載超時 30 秒（配合重試機制）
+                    30000  // 圖片下載逾時 30 秒（配合重試機制）
             );
 
             if (!imageResponse.isSuccess()) {
@@ -1035,7 +1035,7 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
                 return searchAndDownloadFromBooksComTw(bookTitle, isbn);
             }
 
-            // 獲取 FlareSolver 處理後的資訊
+            // 取得 FlareSolver 處理後的資訊
             String finalCookies = imageResponse.getCookies();
             String finalUserAgent = imageResponse.getUserAgent();
             String finalUrl = imageResponse.getUrl();  // 重定向後的最終 URL
@@ -1165,7 +1165,7 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
             }
 
             // 從圖片元素中提取真實圖片 URL
-            // 優先檢查 src，如果是懶加載占位符，則檢查 data-src 或 srcset
+            // 優先檢查 src，如果是懶加載佔位符，則檢查 data-src 或 srcset
             String src = targetImage.attr("src");
             String dataSrc = targetImage.attr("data-src");
             String srcset = targetImage.attr("srcset");
@@ -1174,9 +1174,9 @@ public class IsbnCrawlerServiceImpl implements IIsbnCrawlerService {
             
             String realImageUrl = null;
             
-            // 如果 src 是 base64 占位符（懶加載），使用 srcset 或 data-src
+            // 如果 src 是 base64 佔位符（懶加載），使用 srcset 或 data-src
             if (src != null && src.startsWith("data:image")) {
-                log.info("偵測到懶加載圖片（base64 占位符），嘗試從 srcset 或 data-src 取得真實 URL");
+                log.info("偵測到懶加載圖片（base64 佔位符），嘗試從 srcset 或 data-src 取得真實 URL");
                 
                 // 優先使用 srcset（通常包含高解析度圖片）
                 if (srcset != null && !srcset.isEmpty()) {

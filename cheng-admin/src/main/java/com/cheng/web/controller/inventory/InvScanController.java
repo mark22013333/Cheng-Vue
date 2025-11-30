@@ -208,20 +208,20 @@ public class InvScanController extends BaseController {
 
         log.info("收到 SSE 訂閱請求: taskId={}, itemId={}", taskId, itemId);
 
-        // 建立 SseEmitter（超時 10 分鐘）
+        // 建立 SseEmitter（逾時 10 分鐘）
         SseEmitter emitter = new SseEmitter(10 * 60 * 1000L);
 
         // 儲存連線
         sseEmitters.put(taskId, emitter);
 
-        // 設定完成/超時/錯誤回調
+        // 設定完成/逾時/錯誤回調
         emitter.onCompletion(() -> {
             log.info("SSE 連線正常完成: taskId={}", taskId);
             sseEmitters.remove(taskId);
         });
 
         emitter.onTimeout(() -> {
-            log.warn("SSE 連線超時: taskId={}", taskId);
+            log.warn("SSE 連線逾時: taskId={}", taskId);
             sseEmitters.remove(taskId);
         });
 

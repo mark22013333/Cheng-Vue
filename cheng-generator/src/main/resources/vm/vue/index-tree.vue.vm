@@ -86,7 +86,7 @@
             icon="el-icon-sort"
             size="mini"
             @click="toggleExpandAll"
-        >展開/折叠
+        >展開/折疊
         </el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
@@ -452,7 +452,7 @@
         this.open = true
         this.title = "新增${functionName}"
       },
-      /** 展開/折叠操作 */
+      /** 展開/折疊操作 */
       toggleExpandAll() {
         this.refreshTable = false
         this.isExpandAll = !this.isExpandAll

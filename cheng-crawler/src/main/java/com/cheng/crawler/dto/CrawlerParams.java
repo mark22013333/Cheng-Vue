@@ -55,7 +55,7 @@ public class CrawlerParams implements Serializable {
     private Integer batchSize;
 
     /**
-     * 超時時間（毫秒）
+     * 逾時時間（毫秒）
      */
     private Long timeout;
 

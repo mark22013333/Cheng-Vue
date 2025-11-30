@@ -1,240 +1,238 @@
 <template>
   <div>
-    <!-- 頭像顯示區 -->
     <div class="avatar-container" @click="editCropper()">
       <div class="avatar-wrapper">
-        <img class="avatar-image" :src="options.img" alt="用戶頭像"/>
+        <img class="avatar-image" :src="options.img" alt="使用者頭像"/>
         <div class="avatar-overlay">
-          <i class="el-icon-camera"></i>
+          <el-icon style="font-size: 32px; margin-bottom: 8px;">
+            <Camera/>
+          </el-icon>
           <span>更換頭像</span>
         </div>
       </div>
       <div class="avatar-badge">
-        <i class="el-icon-check"></i>
+        <el-icon>
+          <Check/>
+        </el-icon>
       </div>
     </div>
 
-    <!-- 頭像編輯對話框 -->
     <el-dialog
       :title="title"
-      :visible.sync="open"
-      width="900px"
+      v-model="open"
+      width="800px"
       append-to-body
-      @opened="modalOpened"
       @close="closeDialog"
-      custom-class="avatar-dialog">
+      class="avatar-dialog"
+      :close-on-click-modal="false">
+
       <div class="dialog-content">
-        <!-- 左側裁剪區 -->
-        <div class="cropper-section">
-          <div class="cropper-wrapper"
-               @drop.prevent="handleDrop"
-               @dragover.prevent="isDragging = true"
-               @dragleave="isDragging = false"
-               :class="{ 'is-dragging': isDragging }">
+        <div class="left-section">
+          <div class="cropper-wrapper">
             <vue-cropper
+              v-if="visible"
+              :key="cropKey"
               ref="cropper"
               :img="options.img"
               :info="true"
-              :autoCrop="options.autoCrop"
-              :autoCropWidth="options.autoCropWidth"
-              :autoCropHeight="options.autoCropHeight"
-              :fixedBox="options.fixedBox"
-              :fixed="options.fixed"
-              :fixedNumber="options.fixedNumber"
-              :canMove="options.canMove"
-              :canMoveBox="options.canMoveBox"
-              :centerBox="options.centerBox"
+              :autoCrop="true"
+              :autoCropWidth="200"
+              :autoCropHeight="200"
+              :fixedBox="false"
+              :fixed="true"
+              :fixedNumber="[1, 1]"
+              :centerBox="true"
               :outputType="options.outputType"
               @realTime="realTime"
-              v-if="visible"
             />
-            <div class="drag-tip" v-if="isDragging">
-              <i class="el-icon-upload"></i>
+
+            <div class="drag-tip" v-if="isDragging"
+                 @drop.prevent="handleDrop"
+                 @dragover.prevent="isDragging = true"
+                 @dragleave="isDragging = false">
+              <el-icon style="font-size: 64px; margin-bottom: 16px;">
+                <Upload/>
+              </el-icon>
               <p>放開以上傳圖片</p>
             </div>
           </div>
 
-          <!-- 操作按鈕 -->
           <div class="cropper-controls">
-            <div class="control-group">
+            <div class="control-row upload-row">
               <el-upload
                 action="#"
                 :http-request="requestUpload"
                 :show-file-list="false"
                 :before-upload="beforeUpload">
-                <el-button type="primary" icon="el-icon-folder-opened" size="medium">
+                <el-button type="primary" icon="FolderOpened">
                   選擇圖片
                 </el-button>
               </el-upload>
-              <span class="control-tip">拖曳裁剪框四角可調整大小</span>
+              <span class="tip-text">拖曳藍色框調整範圍</span>
             </div>
-            <div class="control-group">
+
+            <div class="control-row tools-row">
               <el-button-group>
-                <el-button icon="el-icon-zoom-in" size="medium" @click="changeScale(1)" title="放大圖片">
-                  <span style="font-size: 12px; margin-left: 4px;">放大</span>
-                </el-button>
-                <el-button icon="el-icon-zoom-out" size="medium" @click="changeScale(-1)" title="縮小圖片">
-                  <span style="font-size: 12px; margin-left: 4px;">縮小</span>
-                </el-button>
-                <el-button icon="el-icon-refresh-left" size="medium" @click="rotateLeft()" title="逆時針旋轉">
-                  <span style="font-size: 12px; margin-left: 4px;">↶</span>
-                </el-button>
-                <el-button icon="el-icon-refresh-right" size="medium" @click="rotateRight()" title="順時針旋轉">
-                  <span style="font-size: 12px; margin-left: 4px;">↷</span>
-                </el-button>
+                <el-tooltip content="放大" placement="top">
+                  <el-button @click="changeScale(1)" icon="ZoomIn"></el-button>
+                </el-tooltip>
+                <el-tooltip content="縮小" placement="top">
+                  <el-button @click="changeScale(-1)" icon="ZoomOut"></el-button>
+                </el-tooltip>
+                <el-tooltip content="向左旋轉" placement="top">
+                  <el-button @click="rotateLeft()" icon="RefreshLeft"></el-button>
+                </el-tooltip>
+                <el-tooltip content="向右旋轉" placement="top">
+                  <el-button @click="rotateRight()" icon="RefreshRight"></el-button>
+                </el-tooltip>
+                <el-tooltip content="重置" placement="top">
+                  <el-button @click="resetCrop" icon="Refresh"></el-button>
+                </el-tooltip>
               </el-button-group>
             </div>
           </div>
         </div>
 
-        <!-- 右側預覽區 -->
-        <div class="preview-section">
-          <h4>預覽效果</h4>
-          <div class="preview-container">
-            <div class="preview-item">
-              <div class="preview-box large">
-                <img :src="previews.url" :style="previews.img" />
+        <div class="right-section">
+          <div class="preview-group">
+            <h4>預覽效果</h4>
+            <div class="preview-list">
+              <div class="preview-item">
+                <div class="preview-circle large">
+                  <img v-if="previews.url" :src="previews.url" :style="previews.img">
+                </div>
+                <span>大頭像 (200x200)</span>
               </div>
-              <span>大頭像 (200x200)</span>
-            </div>
-            <div class="preview-item">
-              <div class="preview-box medium">
-                <img :src="previews.url" :style="previews.img" />
+              <div class="preview-item">
+                <div class="preview-circle medium">
+                  <img v-if="previews.url" :src="previews.url" :style="previews.img">
+                </div>
+                <span>中頭像 (100x100)</span>
               </div>
-              <span>中頭像 (100x100)</span>
-            </div>
-            <div class="preview-item">
-              <div class="preview-box small">
-                <img :src="previews.url" :style="previews.img" />
+              <div class="preview-item">
+                <div class="preview-circle small">
+                  <img v-if="previews.url" :src="previews.url" :style="previews.img">
+                </div>
+                <span>小頭像 (50x50)</span>
               </div>
-              <span>小頭像 (50x50)</span>
             </div>
           </div>
 
-          <div class="upload-tips">
-            <el-alert
-              title="操作說明"
-              type="info"
-              :closable="false">
-              <ul>
-                <li><strong>調整大小：</strong>拖曳裁剪框四角</li>
-                <li><strong>移動位置：</strong>拖曳裁剪框內部</li>
-                <li><strong>縮放圖片：</strong>使用放大/縮小按鈕</li>
-                <li><strong>建議尺寸：</strong>200x200 像素以上</li>
-                <li><strong>檔案限制：</strong>JPG、PNG、GIF，≤2MB</li>
-              </ul>
-            </el-alert>
+          <div class="instruction-box">
+            <h4>操作指南</h4>
+            <ul>
+              <li><strong>縮放/移動：</strong>可滾動滑鼠縮放圖片，或拖曳圖片移動位置</li>
+              <li><strong>調整範圍：</strong>拖曳藍色框四角可調整大小</li>
+              <li><strong>格式限制：</strong>支援 JPG、PNG、GIF</li>
+            </ul>
           </div>
         </div>
       </div>
 
-      <!-- 底部按鈕 -->
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="open = false" size="medium">取消</el-button>
-        <el-button type="primary" @click="uploadImg()" size="medium" :loading="uploading">
-          <i class="el-icon-upload2" v-if="!uploading"></i>
-          {{ uploading ? '上傳中...' : '確定上傳' }}
-        </el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="open = false">取消</el-button>
+          <el-button type="primary" @click="uploadImg()" :loading="uploading">
+            確定上傳
+          </el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import store from "@/store"
 import {VueCropper} from "vue-cropper"
 import {uploadAvatar} from "@/api/system/user"
-import {debounce} from '@/utils'
+import useUserStore from '@/store/modules/user'
+import {
+  Camera, Check, FolderOpened, ZoomIn, ZoomOut,
+  RefreshLeft, RefreshRight, Upload, Refresh
+} from '@element-plus/icons-vue'
 
 export default {
-  components: { VueCropper },
+  components: {
+    VueCropper, Camera, Check, FolderOpened, ZoomIn, ZoomOut,
+    RefreshLeft, RefreshRight, Upload, Refresh
+  },
   data() {
+    const userStore = useUserStore()
     return {
-      // 是否顯示彈出層
+      userStore,
       open: false,
-      // 是否顯示cropper
       visible: false,
-      // 是否正在上傳
+      cropKey: 0,
       uploading: false,
-      // 是否正在拖曳
       isDragging: false,
-      // 彈出層標題
       title: "編輯頭像",
       options: {
-        img: store.getters.avatar,  // 裁剪圖片的地址
-        autoCrop: true,             // 是否預設產生截圖框
-        autoCropWidth: 200,         // 預設產生截圖框寬度
-        autoCropHeight: 200,        // 預設產生截圖框高度
-        fixedBox: false,            // 允許調整截圖框大小
-        fixed: true,                // 固定比例
-        fixedNumber: [1, 1],        // 固定比例 1:1
-        canMove: true,              // 可以移動圖片
-        canMoveBox: true,           // 可以移動截圖框
-        centerBox: true,            // 截圖框居中
-        outputType: "png",          // 預設產生截圖為PNG格式
-        filename: 'avatar'          // 檔案名稱
+        img: userStore.avatar,
+        outputType: "png",
+        filename: 'avatar'
       },
       previews: {},
-      resizeHandler: null
+    }
+  },
+  watch: {
+    open(val) {
+      if (val) {
+        this.visible = true;
+        this.cropKey++;
+
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.resetCrop();
+          }, 100);
+        });
+      } else {
+        setTimeout(() => {
+          this.visible = false;
+        }, 300);
+      }
     }
   },
   methods: {
-    // 編輯頭像
     editCropper() {
       this.open = true
     },
-    // 打開彈出層結束時的呼叫
-    modalOpened() {
-      this.visible = true
-      if (!this.resizeHandler) {
-        this.resizeHandler = debounce(() => {
-          this.refresh()
-        }, 100)
+    // [修正] 移除錯誤的屬性修改，只呼叫方法
+    resetCrop() {
+      if (this.$refs.cropper) {
+        this.$refs.cropper.goAutoCrop()
       }
-      window.addEventListener("resize", this.resizeHandler)
     },
-    // 重新整理元件
-    refresh() {
-      this.$refs.cropper.refresh()
+    realTime(data) {
+      this.previews = data
     },
-    // 覆蓋預設的上傳行為
     requestUpload() {
     },
-    // 向左旋轉
     rotateLeft() {
       this.$refs.cropper.rotateLeft()
     },
-    // 向右旋轉
     rotateRight() {
       this.$refs.cropper.rotateRight()
     },
-    // 圖片縮放
     changeScale(num) {
       num = num || 1
       this.$refs.cropper.changeScale(num)
     },
-    // 上傳預處理
     beforeUpload(file) {
       if (file.type.indexOf("image/") == -1) {
-        this.$modal.msgError("檔案格式錯誤，請上傳圖片類型,如：JPG，PNG後綴的檔案。")
+        this.$modal.msgError("檔案格式錯誤，請上傳圖片類型。")
       } else {
         const reader = new FileReader()
         reader.readAsDataURL(file)
         reader.onload = () => {
           this.options.img = reader.result
           this.options.filename = file.name
+          this.cropKey++;
         }
       }
     },
-    // 拖曳上傳
     handleDrop(e) {
       this.isDragging = false
-      const files = e.dataTransfer.files
-      if (files.length > 0) {
-        this.beforeUpload(files[0])
-      }
+      if (e.dataTransfer.files.length > 0) this.beforeUpload(e.dataTransfer.files[0])
     },
-    // 上傳圖片
     uploadImg() {
       this.uploading = true
       this.$refs.cropper.getCropBlob(data => {
@@ -242,25 +240,13 @@ export default {
         formData.append("avatarfile", data, this.options.filename)
         uploadAvatar(formData).then(response => {
           this.open = false
-          // 處理頭像 URL：無論開發或正式環境，都需要加上 API 前綴
           let avatarUrl = response.imgUrl
-          if (avatarUrl && avatarUrl.startsWith('/profile')) {
-            // /profile 開頭的路徑需要加上 API 前綴
-            // 開發環境：/dev-api/profile/xxx -> proxy 轉發
-            // 正式環境：/prod-api/profile/xxx -> Nginx 代理
-            const baseApi = process.env.VUE_APP_BASE_API || ''
-            if (baseApi) {
-              avatarUrl = baseApi + avatarUrl
-            }
-          } else if (!avatarUrl.startsWith('http')) {
-            // 其他相對路徑也加上 API 前綴
-            const baseApi = process.env.VUE_APP_BASE_API || ''
-            if (baseApi) {
-              avatarUrl = baseApi + avatarUrl
-            }
+          const baseApi = import.meta.env.VITE_APP_BASE_API || ''
+          if (avatarUrl && !avatarUrl.startsWith('http') && !avatarUrl.startsWith(baseApi)) {
+            avatarUrl = baseApi + avatarUrl
           }
           this.options.img = avatarUrl
-          store.commit('SET_AVATAR', avatarUrl)
+          this.userStore.avatar = avatarUrl
           this.$modal.msgSuccess("頭像更新成功")
           this.visible = false
           this.uploading = false
@@ -269,22 +255,14 @@ export default {
         })
       })
     },
-    // 即時預覽
-    realTime(data) {
-      this.previews = data
-    },
-    // 關閉視窗
     closeDialog() {
-      this.options.img = store.getters.avatar
-      this.visible = false
-      window.removeEventListener("resize", this.resizeHandler)
+      this.open = false
     }
   }
 }
 </script>
 
 <style scoped lang="scss">
-// 頭像容器
 .avatar-container {
   position: relative;
   display: inline-block;
@@ -330,11 +308,6 @@ export default {
       opacity: 0;
       transition: opacity 0.3s;
 
-      i {
-        font-size: 32px;
-        margin-bottom: 8px;
-      }
-
       span {
         font-size: 13px;
       }
@@ -359,191 +332,191 @@ export default {
   }
 }
 
-// 對話框樣式
-::v-deep .avatar-dialog {
-  border-radius: 12px;
-
+:deep(.avatar-dialog) {
   .el-dialog__header {
-    border-bottom: 2px solid #f0f2f5;
-    padding: 24px;
-
-    .el-dialog__title {
-      font-size: 20px;
-      font-weight: 600;
-      color: #303133;
-    }
+    margin-right: 0;
+    border-bottom: 1px solid #f0f2f5;
   }
 
   .el-dialog__body {
-    padding: 24px;
-  }
-
-  .el-dialog__footer {
-    border-top: 1px solid #f0f2f5;
-    padding: 20px 24px;
+    padding: 24px !important;
   }
 }
 
 .dialog-content {
   display: flex;
   gap: 24px;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
+  height: 500px;
+  overflow: hidden;
 }
 
-// 裁剪區
-.cropper-section {
+.left-section {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   min-width: 0;
+}
 
-  .cropper-wrapper {
-    height: 400px;
-    border: 2px dashed #dcdfe6;
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
-    transition: all 0.3s;
+.cropper-wrapper {
+  width: 100%;
+  height: 380px;
+  position: relative;
 
-    &.is-dragging {
-      border-color: #409eff;
-      background: rgba(64, 158, 255, 0.05);
+  // 方格背景
+  background-color: #f8f9fa;
+  background-image: linear-gradient(45deg, #e5e5e5 25%, transparent 25%, transparent 75%, #e5e5e5 75%, #e5e5e5),
+  linear-gradient(45deg, #e5e5e5 25%, transparent 25%, transparent 75%, #e5e5e5 75%, #e5e5e5);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
 
-      .drag-tip {
-        display: flex;
-      }
-    }
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  overflow: hidden;
 
-    .drag-tip {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(64, 158, 255, 0.9);
-      color: white;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-
-      i {
-        font-size: 64px;
-        margin-bottom: 16px;
-      }
-
-      p {
-        font-size: 18px;
-        margin: 0;
-      }
-    }
+  // 裁切框樣式
+  :deep(.cropper-view-box) {
+    outline: 2px solid #fff;
+    outline-offset: -1px;
+    box-shadow: 0 0 0 1px #409eff;
   }
 
-  .cropper-controls {
-    margin-top: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
+  :deep(.cropper-point) {
+    width: 6px !important;
+    height: 6px !important;
+    background: #fff !important;
+    border: 1px solid #409eff !important;
+    opacity: 1 !important;
+  }
 
-    .control-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-
-      .control-tip {
-        color: #909399;
-        font-size: 13px;
-      }
-    }
+  // 隱藏中間點
+  :deep(.point-n), :deep(.point-s), :deep(.point-e), :deep(.point-w) {
+    display: none !important;
   }
 }
 
-// 預覽區
-.preview-section {
-  width: 280px;
+.drag-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.cropper-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   flex-shrink: 0;
 
-  @media (max-width: 768px) {
-    width: 100%;
+  .control-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .tip-text {
+      color: #909399;
+      font-size: 13px;
+    }
   }
+}
+
+.right-section {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border-left: 1px solid #f0f2f5;
+  padding-left: 24px;
 
   h4 {
     margin: 0 0 16px 0;
-    font-size: 16px;
-    font-weight: 600;
     color: #303133;
+    font-size: 15px;
+    font-weight: 600;
   }
+}
 
-  .preview-container {
+.preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  .preview-item {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
-    margin-bottom: 20px;
+    align-items: center;
+    gap: 16px;
 
-    .preview-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
+    span {
+      font-size: 13px;
+      color: #606266;
+    }
 
-      span {
-        font-size: 13px;
-        color: #606266;
+    .preview-circle {
+      border-radius: 50%;
+      overflow: hidden;
+      background: #f5f7fa;
+      border: 1px solid #e4e7ed;
+      flex-shrink: 0;
+      position: relative;
+
+      // 確保圖片在圓框內
+      img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        max-width: none !important;
+        max-height: none !important;
       }
 
-      .preview-box {
-        border-radius: 50%;
-        overflow: hidden;
-        border: 2px solid #e4e7ed;
-        background: #f5f7fa;
-        flex-shrink: 0;
+      &.large {
+        width: 90px;
+        height: 90px;
+      }
 
-        &.large {
-          width: 80px;
-          height: 80px;
-        }
+      &.medium {
+        width: 64px;
+        height: 64px;
+      }
 
-        &.medium {
-          width: 60px;
-          height: 60px;
-        }
-
-        &.small {
-          width: 40px;
-          height: 40px;
-        }
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
+      &.small {
+        width: 40px;
+        height: 40px;
       }
     }
   }
+}
 
-  .upload-tips {
-    ::v-deep .el-alert {
-      padding: 12px;
+.instruction-box {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: auto;
+  border: 1px solid #ebeef5;
 
-      .el-alert__title {
-        font-size: 14px;
-        margin-bottom: 8px;
-      }
+  h4 {
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #606266;
+  }
 
-      ul {
-        margin: 0;
-        padding-left: 20px;
+  ul {
+    margin: 0;
+    padding-left: 18px;
 
-        li {
-          font-size: 12px;
-          line-height: 1.8;
-          color: #909399;
-        }
-      }
+    li {
+      font-size: 12px;
+      color: #909399;
+      line-height: 1.8;
+      margin-bottom: 2px;
     }
   }
 }
@@ -552,5 +525,6 @@ export default {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  padding-top: 10px;
 }
 </style>

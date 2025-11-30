@@ -81,7 +81,7 @@ public class SysLineRichMenuAliasServiceImpl implements ISysLineRichMenuAliasSer
             throw new ServiceException("Rich Menu 尚未發布到 LINE 平台，請先發布");
         }
 
-        // 從 LINE 平台獲取別名列表，檢查是否已存在
+        // 從 LINE 平台取得別名列表，檢查是否已存在
         try {
             List<String> lineAliases = listAliasesFromLine(richMenu.getConfigId());
             if (lineAliases.contains(richMenuAlias.getAliasId())) {
@@ -297,7 +297,7 @@ public class SysLineRichMenuAliasServiceImpl implements ISysLineRichMenuAliasSer
 
         if (response.getHttpStatusCode() != HttpStatus.OK.value()) {
             String errorMsg = response.getResultData() != null ? response.getResultData() : "未知錯誤";
-            throw new ServiceException("從 LINE 平台獲取別名列表失敗：" + response.getHttpStatusCode() + " - " + errorMsg);
+            throw new ServiceException("從 LINE 平台取得別名列表失敗：" + response.getHttpStatusCode() + " - " + errorMsg);
         }
 
         try {

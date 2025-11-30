@@ -1,8 +1,8 @@
-module.exports = {
+export default {
   /**
    * 網頁標題
    */
-  title: process.env.VUE_APP_TITLE,
+  title: import.meta.env.VITE_APP_TITLE,
 
   /**
    * 側邊欄主題 深色主題theme-dark，淺色主題theme-light
@@ -10,7 +10,7 @@ module.exports = {
   sideTheme: 'theme-dark',
 
   /**
-   * 系統介面設定
+   * 是否系統版面配置
    */
   showSettings: true,
 
@@ -52,5 +52,6 @@ module.exports = {
   /**
    * 底部版權文字内容
    */
-  footerContent: 'Copyright © 2025–present CoolApps. All Rights Reserved.'
+  footerContent: 'Copyright © 2025 Cool-Apps Technology. All Rights Reserved.'
 }
+

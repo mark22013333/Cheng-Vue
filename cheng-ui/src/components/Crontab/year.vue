@@ -1,8 +1,8 @@
 <template>
-	<el-form size="small">
+	<el-form>
 		<el-form-item>
 			<el-radio :label="1" v-model='radioValue'>
-        不填，允許的通用符號[, - * /]
+        不填，允許的共用符號[, - * /]
 			</el-radio>
 		</el-form-item>
 
@@ -34,7 +34,7 @@
 		<el-form-item>
 			<el-radio :label="5" v-model='radioValue'>
 				指定
-        <el-select v-model="checkboxList" clearable multiple placeholder="可多選">
+        <el-select v-model="checkboxList" clearable multiple placeholder="請選擇" style="width:100%; min-width: 200px;">
 					<el-option v-for="item in 9" :key="item" :value="item - 1 + fullYear" :label="item -1 + fullYear" />
 				</el-select>
 			</el-radio>
@@ -52,8 +52,7 @@ export default {
 			cycle02: 0,
 			average01: 0,
 			average02: 1,
-			checkboxList: [],
-			checkNum: this.$options.propsData.check
+			checkboxList: []
 		}
 	},
 	name: 'crontab-year',
@@ -107,14 +106,14 @@ export default {
 	computed: {
     // 計算兩個週期值
 		cycleTotal: function () {
-			const cycle01 = this.checkNum(this.cycle01, this.fullYear, 2098)
-			const cycle02 = this.checkNum(this.cycle02, cycle01 ? cycle01 + 1 : this.fullYear + 1, 2099)
+			const cycle01 = this.check(this.cycle01, this.fullYear, 2098)
+			const cycle02 = this.check(this.cycle02, cycle01 ? cycle01 + 1 : this.fullYear + 1, 2099)
 			return cycle01 + '-' + cycle02
 		},
     // 計算平均用到的值
 		averageTotal: function () {
-			const average01 = this.checkNum(this.average01, this.fullYear, 2098)
-			const average02 = this.checkNum(this.average02, 1, 2099 - average01 || this.fullYear)
+			const average01 = this.check(this.average01, this.fullYear, 2098)
+			const average02 = this.check(this.average02, 1, 2099 - average01 || this.fullYear)
 			return average01 + '/' + average02
 		},
     // 計算勾選的checkbox值合集

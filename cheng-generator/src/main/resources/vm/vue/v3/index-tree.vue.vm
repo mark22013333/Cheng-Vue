@@ -83,7 +83,7 @@
             plain
             icon="Sort"
             @click="toggleExpandAll"
-        >展開/折叠
+        >展開/折疊
         </el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -419,7 +419,7 @@
     title.value = "新增${functionName}"
   }
 
-  /** 展開/折叠操作 */
+  /** 展開/折疊操作 */
   function toggleExpandAll() {
     refreshTable.value = false
     isExpandAll.value = !isExpandAll.value

@@ -14,7 +14,7 @@
             </div>
             <div class="welcome-text">
               <h2 class="welcome-title">CoolApps 後台管理系統</h2>
-              <p class="welcome-subtitle">歡迎回來，高效管理您的應用程式與資料數據。</p>
+              <p class="welcome-subtitle">歡迎回來，高效管理您的應用程式與資料資料。</p>
               <div class="version-tags">
                 <el-tag type="primary" effect="dark" size="small">
                   <i class="el-icon-price-tag"></i> {{ version }}
@@ -102,7 +102,7 @@
                   <div class="timeline-header">
                     <div class="version-title">
                       <span class="v-num">{{ log.version }}</span>
-                      <el-tag :type="log.tagType" size="mini" effect="dark">{{ log.tag }}</el-tag>
+                      <el-tag :type="log.tagType" size="small" effect="dark">{{ log.tag }}</el-tag>
                     </div>
                   </div>
                   <ul class="version-list">
@@ -147,7 +147,7 @@ export default {
       const diffTime = Math.abs(today - this.launchDate)
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     },
-    // 產生統計卡片數據結構，方便 v-for
+    // 產生統計卡片資料結構，方便 v-for
     statCards() {
       return [
         {label: "版本迭代", value: this.totalVersions, icon: "el-icon-data-line", colorClass: "primary"},
