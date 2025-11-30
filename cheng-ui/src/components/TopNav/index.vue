@@ -41,7 +41,7 @@ import usePermissionStore from '@/store/modules/permission'
 
 // 頂部欄初始數
 const visibleNumber = ref(null)
-// 當前激活選單的 index
+// 當前啟用選單的 index
 const currentIndex = ref(null)
 // 隱藏側邊欄路由
 const hideList = ['/index', '/user/profile']
@@ -94,7 +94,7 @@ const childrenMenus = computed(() => {
   return constantRoutes.concat(childrenMenus)
 })
 
-// 預設激活的選單
+// 預設啟用的選單
 const activeMenu = computed(() => {
   const path = route.path
   let activePath = path
@@ -121,7 +121,7 @@ function handleSelect(key, keyPath) {
   currentIndex.value = key
   const route = routers.value.find(item => item.path === key)
   if (isHttp(key)) {
-    // http(s):// 路徑新窗口打開
+    // http(s):// 路徑新視窗打開
     window.open(key, "_blank")
   } else if (!route || !route.children) {
     // 沒有子路由路徑内部打開

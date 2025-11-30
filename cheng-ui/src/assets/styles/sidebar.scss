@@ -179,7 +179,7 @@
     }
 
     .sidebar-container {
-      transition: transform .28s;
+      transition: transform .28s, width .28s;
       width: vars.$base-sidebar-width !important;
     }
 
@@ -188,6 +188,14 @@
         pointer-events: none;
         transition-duration: 0.3s;
         transform: translate3d(-(vars.$base-sidebar-width), 0, 0);
+        width: 0 !important; // 手機模式關閉時寬度為 0，避免佔據空間
+      }
+    }
+
+    &.openSidebar {
+      .sidebar-container {
+        // 開啟時顯示為抽屜
+        transform: translate3d(0, 0, 0);
       }
     }
   }

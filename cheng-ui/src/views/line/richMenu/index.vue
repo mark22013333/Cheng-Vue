@@ -378,7 +378,7 @@ import RichMenuEditor from './components/RichMenuEditor.vue'
 import ImageUpload from '@/components/ImageUpload'
 import ProgressDialog from '@/components/ProgressDialog'
 import {getImageUrl} from '@/utils/image'
-import request from '@/utils/request'
+import request, { download } from '@/utils/request'
 import SseClient, {SSE_CHANNELS, SSE_EVENTS} from '@/utils/sse/SseClient'
 
 const {proxy} = getCurrentInstance()
@@ -881,7 +881,13 @@ const handleDeleteFromLine = (row) => {
 }
 
 const handleExport = () => {
-  console.warn('請確認 download 方法已正確掛載或引入')
+  download(
+    '/line/richMenu/export',
+    {
+      ...queryParams
+    },
+    `richmenu_${new Date().getTime()}.xlsx`
+  )
 }
 
 const handleTemplateChange = (value) => {

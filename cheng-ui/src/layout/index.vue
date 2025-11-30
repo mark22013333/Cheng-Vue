@@ -1,11 +1,11 @@
 <template>
-  <div :class="classObj" class="app-wrapper" :style="{ '--current-color': theme, '--sidebar-width': (sidebar.hide ? '0px' : (sidebar.opened ? sidebar.width + 'px' : '54px')) }">
+  <div :class="classObj" class="app-wrapper" :style="{ '--current-color': theme, '--sidebar-width': (sidebar.hide || device === 'mobile') ? '0px' : (sidebar.opened ? sidebar.width + 'px' : '54px') }">
     <div v-if="device === 'mobile' && sidebar.opened" class="drawer-bg" @click="handleClickOutside"/>
     <sidebar v-if="!sidebar.hide" class="sidebar-container" />
     <div 
       :class="{ hasTagsView: needTagsView, sidebarHide: sidebar.hide }" 
       class="main-container"
-      :style="{ marginLeft: sidebar.hide ? '0px' : (sidebar.opened ? sidebar.width + 'px' : '54px') }"
+      :style="{ marginLeft: (sidebar.hide || device === 'mobile') ? '0px' : (sidebar.opened ? sidebar.width + 'px' : '54px') }"
     >
       <div :class="{ 'fixed-header': fixedHeader }">
         <navbar @setLayout="setLayout" />

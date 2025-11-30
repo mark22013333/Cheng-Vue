@@ -102,6 +102,7 @@ function toggleSearch() {
 
 // 重新整理
 function refresh() {
+  console.log('🔄 RightToolbar: 點擊重新整理按鈕，發送 queryTable 事件')
   emits("queryTable")
 }
 

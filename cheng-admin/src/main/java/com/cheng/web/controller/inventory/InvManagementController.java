@@ -47,7 +47,9 @@ public class InvManagementController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo list(InvItemWithStockDTO dto) {
         startPage();
-        log.info("dto:{}", JSON.toJSONString(dto));
+        log.info("接收到查詢請求 - DTO: {}", JSON.toJSONString(dto));
+        log.info("stockStatus 值: [{}], 類型: [{}]", dto.getStockStatus(),
+                 dto.getStockStatus() != null ? dto.getStockStatus().getClass().getName() : "null");
         List<InvItemWithStockDTO> list = invItemMapper.selectItemWithStockList(dto);
 
         // 計算庫存狀態和總價值
