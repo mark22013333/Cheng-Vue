@@ -90,9 +90,8 @@
             v-model="globalLowStockThreshold"
             :min="0"
             :max="1000"
-            size="small"
             placeholder="低庫存閾值"
-            style="width: 130px"
+            style="width: 180px"
             @change="handleThresholdChange"
           />
         </el-tooltip>
@@ -231,6 +230,7 @@
           <span>{{ detailData.barcode }}</span>
           <el-button
             v-if="detailData.barcode && isValidIsbn(detailData.barcode)"
+            v-hasPermi="['inventory:management:refreshIsbn']"
             type="primary"
             icon="Refresh"
             @click="handleRefreshIsbn"
@@ -585,10 +585,15 @@ export default {
   methods: {
     /** 查詢物品與庫存整合列表 */
     getList() {
+      console.log('🔄 重新整理物品列表，查詢參數：', JSON.parse(JSON.stringify(this.queryParams)));
       this.loading = true;
       listManagement(this.queryParams).then(response => {
         this.managementList = response.rows;
         this.total = response.total;
+        this.loading = false;
+        console.log(`✅ 載入完成，共 ${response.total} 筆資料，當前頁顯示 ${response.rows.length} 筆`);
+      }).catch(error => {
+        console.error('❌ 載入物品列表失敗：', error);
         this.loading = false;
       });
     },
@@ -776,17 +781,17 @@ export default {
     },
     /** 全域低庫存閾值變化 */
     handleThresholdChange(value) {
-      if (this.queryParams.stockStatus === '1') {
-        this.queryParams.lowStockThreshold = value;
-        this.handleQuery();
+      this.queryParams.lowStockThreshold = value;
+      // 如果設定了閾值但未選擇庫存狀態，自動切換到「低庫存」
+      if (value != null && value > 0 && !this.queryParams.stockStatus) {
+        this.queryParams.stockStatus = '1';
       }
+      this.handleQuery();
     },
     /** 庫存狀態變化處理 */
     handleStockStatusChange() {
-      // 當切換到非低庫存狀態時，清除低庫存閾值參數
-      if (this.queryParams.stockStatus !== '1') {
-        this.queryParams.lowStockThreshold = null;
-      }
+      console.log('📊 庫存狀態篩選變更為：', this.queryParams.stockStatus);
+      // 保留閾值設定，不清除
       this.handleQuery();
     },
     /** 格式化金錢顯示 */
@@ -1095,6 +1100,7 @@ export default {
           if (this.isEdit) {
             // 修改物品
             updateManagement(this.editForm).then(response => {
+              console.log('✅ 修改物品成功：', this.editForm.itemName);
               this.$modal.msgSuccess("修改成功");
               this.editDialogVisible = false;
               this.getList();
@@ -1102,8 +1108,10 @@ export default {
           } else {
             // 新增物品
             addManagement(this.editForm).then(response => {
+              console.log('✅ 新增物品成功：', this.editForm.itemName);
               this.$modal.msgSuccess("新增成功");
               this.editDialogVisible = false;
+              // 重新載入列表
               this.getList();
             });
           }

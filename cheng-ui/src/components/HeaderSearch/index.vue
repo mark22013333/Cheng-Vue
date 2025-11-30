@@ -82,7 +82,7 @@ function change(val) {
   const path = val.path
   const query = val.query
   if (isHttp(path)) {
-    // http(s):// 路徑新窗口打開
+    // http(s):// 路徑新視窗打開
     const pindex = path.indexOf("http")
     window.open(path.substr(pindex, path.length), "_blank")
   } else {

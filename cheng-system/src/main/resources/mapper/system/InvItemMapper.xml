@@ -160,11 +160,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="stockStatus != null and stockStatus != ''">
                 <choose>
                     <!-- 無庫存：可用數量為 null 或 <= 0 -->
-                    <when test="stockStatus == 2">
+                    <when test='stockStatus.equals("2")'>
                         and (s.available_qty is null or s.available_qty &lt;= 0)
                     </when>
                     <!-- 低庫存：可用數量 > 0 且低於閾值 -->
-                    <when test="stockStatus == 1">
+                    <when test='stockStatus.equals("1")'>
                         and s.available_qty > 0
                         <choose>
                             <!-- 使用自訂閾值 -->
@@ -179,7 +179,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                         </choose>
                     </when>
                     <!-- 正常：可用數量 > 0 且高於閾值 -->
-                    <when test="stockStatus == 0">
+                    <when test='stockStatus.equals("0")'>
                         and s.available_qty > 0
                         <choose>
                             <!-- 使用自訂閾值 -->
