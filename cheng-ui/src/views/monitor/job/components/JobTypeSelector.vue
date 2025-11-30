@@ -48,14 +48,14 @@
     <!-- 動態參數表單 -->
     <div v-if="currentParameters.length > 0" class="parameters-section">
       <el-divider content-position="left">任務參數</el-divider>
-      
+
       <el-form-item
         v-for="param in currentParameters"
         :key="param.name"
         :label="param.description"
         :prop="`params.${param.name}`"
         :required="param.required">
-        
+
         <!-- 字串類型 -->
         <el-input
           v-if="param.type === 'STRING'"
@@ -71,7 +71,7 @@
           v-model="form.params[param.name]"
           :placeholder="`範例: ${param.example}`"
           style="width: 100%"
-          controls-position="right" />
+          controls-position="right"/>
 
         <!-- 長整數類型 -->
         <el-input-number
@@ -79,20 +79,20 @@
           v-model="form.params[param.name]"
           :placeholder="`範例: ${param.example}`"
           style="width: 100%"
-          controls-position="right" />
+          controls-position="right"/>
 
         <!-- 布林類型 -->
         <el-switch
           v-else-if="param.type === 'BOOLEAN'"
-          v-model="form.params[param.name]" />
+          v-model="form.params[param.name]"/>
 
         <!-- 預設（字串） -->
         <el-input
           v-else
           v-model="form.params[param.name]"
           :placeholder="`範例: ${param.example}`"
-          clearable />
-        
+          clearable/>
+
         <!-- 參數說明 -->
         <div v-if="param.required" class="param-hint required">
           <i class="el-icon-warning"></i> 必填參數
@@ -124,7 +124,7 @@
 </template>
 
 <script>
-import { listJobTypes, getJobTypeByCode } from '@/api/monitor/jobType'
+import {listJobTypes, getJobTypeByCode} from '@/api/monitor/jobType'
 
 export default {
   name: 'JobTypeSelector',
@@ -153,12 +153,12 @@ export default {
     currentParameters() {
       return this.currentTaskType ? this.currentTaskType.parameters : []
     },
-    
+
     // 建議的 Cron 表達式
     suggestedCron() {
       return this.currentTaskType ? this.currentTaskType.suggestedCron : null
     },
-    
+
     // 按分類分組的任務類型
     groupedJobTypes() {
       const groups = {}
@@ -186,48 +186,39 @@ export default {
     this.loadJobTypes()
   },
   methods: {
-    // 載入所有任務類型
+    /** 載入任務類型列表 */
     async loadJobTypes() {
       try {
+        console.log('[loadJobTypes] 開始載入任務類型列表...')
         const response = await listJobTypes()
-        this.jobTypes = response.data || []
+        console.log('[loadJobTypes] ✅ 成功載入任務類型:', response)
+
+        // 修改開始：增加對陣列格式的判斷
+        if (Array.isArray(response.data)) {
+          // 情境 1: 後端直接回傳 List 陣列 (符合您目前的 Console Log)
+          this.jobTypes = response.data
+          console.log('[loadJobTypes] 📋 已載入任務類型數量 (陣列模式):', this.jobTypes.length)
+        } else if (response.data && response.data.tasks) {
+          // 情境 2: 後端回傳分類物件結構 (保留原本邏輯以防後端改格式)
+          const allTasks = []
+          Object.values(response.data.tasks).forEach(taskList => {
+            allTasks.push(...taskList)
+          })
+          this.jobTypes = allTasks
+          console.log('[loadJobTypes] 📋 已載入任務類型數量 (物件模式):', this.jobTypes.length)
+        } else {
+          this.jobTypes = []
+          console.log('[loadJobTypes] ⚠️ 後端未返回任務類型數據')
+        }
+        // 修改結束
+
       } catch (error) {
-        console.error('載入任務類型失敗:', error)
+        console.warn('[loadJobTypes] ⚠️ 載入任務類型失敗 (這不影響基本功能):', error)
+        // 如果後端沒有實現 jobType API，使用空陣列
         this.jobTypes = []
       }
     },
-    
-    // 選擇任務類型
-    async handleTaskTypeChange(code) {
-      try {
-        const response = await getJobTypeByCode(code)
-        this.currentTaskType = response.data
-        
-        // 自動填入 Bean 和方法
-        this.form.beanName = this.currentTaskType.beanName
-        this.form.methodName = this.currentTaskType.methodName
-        
-        // 清空參數
-        this.form.params = {}
-        
-        // 初始化參數預設值
-        this.currentTaskType.parameters.forEach(param => {
-          if (param.example) {
-            this.$set(this.form.params, param.name, param.example)
-          }
-        })
-        
-        // 使用建議的 Cron（如果有）
-        if (this.currentTaskType.suggestedCron) {
-          this.form.cronExpression = this.currentTaskType.suggestedCron
-        }
-        
-        this.$message.success(`已選擇任務: ${this.currentTaskType.name}`)
-      } catch (error) {
-        this.$message.error('載入任務詳情失敗: ' + error.message)
-      }
-    },
-    
+
     // 使用建議的 Cron
     useSuggestedCron() {
       this.form.cronExpression = this.suggestedCron

@@ -629,15 +629,19 @@ export default {
         const response = await listJobTypes()
         console.log('[loadJobTypes] ✅ 成功載入任務類型:', response)
 
-        // 後端返回格式：{ categories: [], tasks: { category1: [...], category2: [...] } }
-        // 需要將 tasks 物件轉換為扁平化的任務列表
-        if (response.data && response.data.tasks) {
+        // 判斷後端返回格式
+        if (Array.isArray(response.data)) {
+          // 情境 1: 後端直接回傳 List 陣列
+          this.jobTypes = response.data
+          console.log('[loadJobTypes] 📋 已載入任務類型數量 (陣列格式):', this.jobTypes.length)
+        } else if (response.data && response.data.tasks) {
+          // 情境 2: 後端回傳分類物件結構 { categories: [], tasks: { category1: [...], category2: [...] } }
           const allTasks = []
           Object.values(response.data.tasks).forEach(taskList => {
             allTasks.push(...taskList)
           })
           this.jobTypes = allTasks
-          console.log('[loadJobTypes] 📋 已載入任務類型數量:', this.jobTypes.length)
+          console.log('[loadJobTypes] 📋 已載入任務類型數量 (物件格式):', this.jobTypes.length)
         } else {
           this.jobTypes = []
           console.log('[loadJobTypes] ⚠️ 後端未返回任務類型數據')

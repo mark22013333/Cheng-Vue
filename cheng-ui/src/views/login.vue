@@ -10,7 +10,9 @@
         <div class="card-header">
           <div class="logo-wrapper">
             <div class="logo-icon">
-              <el-icon><Connection /></el-icon>
+              <el-icon>
+                <Connection/>
+              </el-icon>
             </div>
             <div class="logo-ring"></div>
           </div>
@@ -22,7 +24,9 @@
 
           <el-form-item prop="username">
             <div class="input-group" :class="{ 'is-focused': focusedInput === 'username' }">
-              <el-icon class="prefix-icon"><User /></el-icon>
+              <el-icon class="prefix-icon">
+                <User/>
+              </el-icon>
               <el-input
                 v-model="loginForm.username"
                 placeholder="使用者帳號 / User ID"
@@ -34,7 +38,9 @@
 
           <el-form-item prop="password">
             <div class="input-group" :class="{ 'is-focused': focusedInput === 'password' }">
-              <el-icon class="prefix-icon"><Lock /></el-icon>
+              <el-icon class="prefix-icon">
+                <Lock/>
+              </el-icon>
               <el-input
                 v-model="loginForm.password"
                 :type="showPassword ? 'text' : 'password'"
@@ -44,8 +50,8 @@
                 @keyup.enter="handleLogin"
               />
               <el-icon class="suffix-icon" @click="togglePassword">
-                <View v-if="showPassword" />
-                <Hide v-else />
+                <View v-if="showPassword"/>
+                <Hide v-else/>
               </el-icon>
             </div>
           </el-form-item>
@@ -53,7 +59,9 @@
           <el-form-item prop="code" v-if="captchaEnabled">
             <div class="captcha-row">
               <div class="input-group captcha-input" :class="{ 'is-focused': focusedInput === 'code' }">
-                <el-icon class="prefix-icon"><Key /></el-icon>
+                <el-icon class="prefix-icon">
+                  <Key/>
+                </el-icon>
                 <el-input
                   v-model="loginForm.code"
                   placeholder="驗證碼"
@@ -68,7 +76,9 @@
               <div class="captcha-img-wrapper" @click="getCode">
                 <img :src="codeUrl" alt="captcha" class="captcha-img"/>
                 <div class="captcha-overlay">
-                  <el-icon><Refresh /></el-icon>
+                  <el-icon>
+                    <Refresh/>
+                  </el-icon>
                 </div>
               </div>
             </div>
@@ -76,7 +86,6 @@
 
           <div class="form-options">
             <el-checkbox v-model="loginForm.rememberMe">記住我</el-checkbox>
-<!--            <span class="forgot-pwd">忘記密碼?</span>-->
           </div>
 
           <el-button
@@ -85,7 +94,9 @@
             @click.prevent="handleLogin"
           >
             {{ loading ? '驗證身分中...' : '登 入 系 統' }}
-            <el-icon v-if="!loading"><Right /></el-icon>
+            <el-icon v-if="!loading">
+              <Right/>
+            </el-icon>
           </el-button>
 
           <div class="register-hint" v-if="register">
@@ -106,12 +117,12 @@
 import {getCodeImg} from "@/api/login";
 import Cookies from "js-cookie";
 import {decrypt, encrypt} from '@/utils/jsencrypt';
-import { Connection, User, Lock, View, Hide, Key, Refresh, Right } from '@element-plus/icons-vue'
+import {Connection, User, Lock, View, Hide, Key, Refresh, Right} from '@element-plus/icons-vue'
 import useUserStore from '@/store/modules/user'
 
 export default {
   name: "Login",
-  components: { Connection, User, Lock, View, Hide, Key, Refresh, Right },
+  components: {Connection, User, Lock, View, Hide, Key, Refresh, Right},
   data() {
     return {
       title: import.meta.env.VITE_APP_TITLE || "CoolApps Admin",
@@ -224,15 +235,9 @@ export default {
           }
           const userStore = useUserStore();
           userStore.login(this.loginForm).then(() => {
-            console.log('[Login] Login success, redirecting to:', this.redirect || "/");
-            this.$router.push({path: this.redirect || "/"}).then(() => {
-              console.log('[Login] Router push success');
-            }).catch((err) => {
-              console.error('[Login] Router push error:', err);
-              this.loading = false;
+            this.$router.push({path: this.redirect || "/"}).catch(() => {
             });
-          }).catch((err) => {
-            console.error('[Login] Login failed:', err);
+          }).catch(() => {
             this.loading = false;
             if (this.captchaEnabled) {
               this.getCode();
@@ -260,7 +265,6 @@ $text-light: #e2e8f0;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  // 與 Loading 頁面一致的深邃背景
   background: radial-gradient(circle at center, #2b32b2 0%, #0f172a 100%);
   display: flex;
   justify-content: center;
@@ -268,7 +272,7 @@ $text-light: #e2e8f0;
   font-family: 'Segoe UI', sans-serif;
 }
 
-// --- 視差背景層 (取代模糊氣泡) ---
+// --- 視差背景層 ---
 .parallax-layer {
   position: absolute;
   top: -10%;
@@ -276,11 +280,10 @@ $text-light: #e2e8f0;
   width: 120%;
   height: 120%;
   pointer-events: none;
-  transition: transform 0.1s linear; // 平滑跟隨
+  transition: transform 0.1s linear;
 }
 
 .layer-back {
-  // 星塵 / 遠景粒子
   background-image: radial-gradient(2px 2px at 20px 30px, #fff, transparent),
   radial-gradient(2px 2px at 40px 70px, #fff, transparent),
   radial-gradient(2px 2px at 50px 160px, #fff, transparent),
@@ -291,7 +294,6 @@ $text-light: #e2e8f0;
 }
 
 .layer-mid {
-  // 近景光斑 (較大，較亮)
   background-image: radial-gradient(circle at 50% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
   radial-gradient(circle at 20% 80%, rgba(118, 75, 162, 0.15) 0%, transparent 40%);
   background-size: 100% 100%;
@@ -318,7 +320,7 @@ $text-light: #e2e8f0;
   width: 100%;
   max-width: 420px;
   padding: 20px;
-  perspective: 1000px; // 3D 空間
+  perspective: 1000px;
 }
 
 .login-card {
@@ -326,7 +328,7 @@ $text-light: #e2e8f0;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid $glass-border;
-  border-top: 1px solid rgba(255, 255, 255, 0.2); // 頂部高光
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 24px;
   padding: 40px 36px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
@@ -368,7 +370,7 @@ $text-light: #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   :deep(.el-icon) {
     font-size: 32px;
   }
@@ -414,12 +416,14 @@ $text-light: #e2e8f0;
   text-transform: uppercase;
 }
 
-// --- Form Styles ---
+// --- Form Styles (重點修改區塊) ---
 .input-group {
   position: relative;
   display: flex;
   align-items: center;
-  background: rgba(30, 41, 59, 0.6); // 深色半透明
+  width: 100%; // 確保寬度佔滿容器
+  box-sizing: border-box; // 確保 Padding 不影響寬度計算
+  background: rgba(30, 41, 59, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 0 14px;
@@ -441,31 +445,41 @@ $text-light: #e2e8f0;
     font-size: 18px;
     color: #64748b;
     margin-right: 12px;
+    flex-shrink: 0; // 防止擠壓
     transition: color 0.3s;
     display: flex;
     align-items: center;
   }
 
   .suffix-icon {
-    font-size: 16px;
+    font-size: 20px; // [修改] 加大圖示
     color: #64748b;
     cursor: pointer;
-    padding: 5px;
-    transition: color 0.3s;
+    padding: 4px; // 增加可點擊範圍
+    margin-left: 8px;
+    transition: all 0.3s;
+    flex-shrink: 0; // 防止擠壓
     display: flex;
     align-items: center;
 
     &:hover {
       color: #fff;
+      transform: scale(1.1); // [新增] 懸浮放大效果
     }
   }
 
-  // Element Plus Input Override (Vue 3 語法)
+  // 強制 Element Plus 輸入框填滿剩餘空間
+  :deep(.el-input) {
+    flex: 1;
+    width: 100%;
+  }
+
   :deep(.el-input__wrapper) {
     background: transparent !important;
     border: none;
     box-shadow: none !important;
     padding: 0;
+    width: 100%;
   }
 
   :deep(.el-input__inner) {
@@ -475,6 +489,7 @@ $text-light: #e2e8f0;
     color: #fff !important;
     font-size: 15px;
     padding: 0;
+    width: 100%;
 
     &::placeholder {
       color: #475569;
@@ -499,6 +514,7 @@ $text-light: #e2e8f0;
     overflow: hidden;
     cursor: pointer;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0; // 確保圖片寬度固定
 
     img {
       width: 100%;
@@ -539,7 +555,7 @@ $text-light: #e2e8f0;
   }
 }
 
-// --- Options (Checkbox & Forgot Pwd) ---
+// --- Options ---
 .form-options {
   display: flex;
   justify-content: space-between;
@@ -560,18 +576,6 @@ $text-light: #e2e8f0;
   :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
     background: $primary;
     border-color: $primary;
-  }
-
-  .forgot-pwd {
-    font-size: 13px;
-    color: #94a3b8;
-    cursor: pointer;
-    transition: color 0.3s;
-
-    &:hover {
-      color: $primary;
-      text-decoration: underline;
-    }
   }
 }
 
@@ -641,11 +645,9 @@ $text-light: #e2e8f0;
   .login-card {
     padding: 30px 20px;
   }
-
   .parallax-layer, .mouse-glow {
-    display: none; // 手機端為了效能，關閉複雜背景特效
+    display: none;
   }
-
   .login-page {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   }
