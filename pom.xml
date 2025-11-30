@@ -6,7 +6,7 @@
 
     <groupId>com.cheng</groupId>
     <artifactId>cheng</artifactId>
-    <version>${cheng.version}</version>
+    <version>3.9.0</version>
 
     <name>cheng</name>
     <url>https://cool-apps.zeabur.app</url>
