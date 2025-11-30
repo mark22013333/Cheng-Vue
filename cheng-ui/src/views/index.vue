@@ -7,19 +7,22 @@
           <div class="welcome-content">
             <div class="logo-wrapper">
               <svg class="welcome-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-                <path fill="#A0CFFF" d="M266.7 128h576c70.7 0 128 57.3 128 128v576c0 70.7-57.3 128-128 128h-576c-70.7 0-128-57.3-128-128v-576c0-70.7 57.3-128 128-128z"/>
-                <path fill="#79BBFF" d="M192 213.3h576c70.7 0 128 57.3 128 128v576c0 70.7-57.3 128-128 128h-576c-70.7 0-128-57.3-128-128v-576c0-70.7 57.3-128 128-128z"/>
-                <path fill="#409EFF" d="M117.3 298.7h576c70.7 0 128 57.3 128 128v576c0 70.7-57.3 128-128 128h-576c-70.7 0-128-57.3-128-128v-576c0-70.7 57.3-128 128-128z"/>
+                <path fill="#A0CFFF"
+                      d="M266.7 128h576c70.7 0 128 57.3 128 128v576c0 70.7-57.3 128-128 128h-576c-70.7 0-128-57.3-128-128v-576c0-70.7 57.3-128 128-128z"/>
+                <path fill="#79BBFF"
+                      d="M192 213.3h576c70.7 0 128 57.3 128 128v576c0 70.7-57.3 128-128 128h-576c-70.7 0-128-57.3-128-128v-576c0-70.7 57.3-128 128-128z"/>
+                <path fill="#409EFF"
+                      d="M117.3 298.7h576c70.7 0 128 57.3 128 128v576c0 70.7-57.3 128-128 128h-576c-70.7 0-128-57.3-128-128v-576c0-70.7 57.3-128 128-128z"/>
               </svg>
             </div>
             <div class="welcome-text">
               <h2 class="welcome-title">CoolApps 後台管理系統</h2>
-              <p class="welcome-subtitle">歡迎回來，高效管理您的應用程式與資料資料。</p>
+              <p class="welcome-subtitle">歡迎回來，高效管理您的應用程式與資料。</p>
               <div class="version-tags">
-                <el-tag type="primary" effect="dark" size="small">
+                <el-tag type="primary" effect="dark">
                   <i class="el-icon-price-tag"></i> {{ version }}
                 </el-tag>
-                <el-tag type="danger" effect="plain" size="small" class="ml-10">
+                <el-tag type="danger" effect="plain" class="ml-10">
                   <i class="el-icon-warning-outline"></i> 測試環境
                 </el-tag>
               </div>
@@ -50,7 +53,6 @@
               class="blog-btn"
               type="primary"
               plain
-              size="small"
               icon="el-icon-s-promotion"
               @click="goTarget('https://mark22013333.github.io/')">
               造訪部落格
@@ -84,7 +86,7 @@
               <i class="el-icon-notebook-2"></i>
               <span>系統更新日誌</span>
             </div>
-            <el-tag size="small" type="info" effect="plain">共 {{ versionLogs.length }} 個版本紀錄</el-tag>
+            <el-tag type="info" effect="plain">共 {{ versionLogs.length }} 個版本紀錄</el-tag>
           </div>
 
           <div class="changelog-container">
@@ -102,7 +104,7 @@
                   <div class="timeline-header">
                     <div class="version-title">
                       <span class="v-num">{{ log.version }}</span>
-                      <el-tag :type="log.tagType" size="small" effect="dark">{{ log.tag }}</el-tag>
+                      <el-tag :type="log.tagType" effect="dark">{{ log.tag }}</el-tag>
                     </div>
                   </div>
                   <ul class="version-list">
@@ -122,7 +124,7 @@
 
 <script>
 import request from "@/utils/request"
-import { versionLogs, getLatestVersion } from "@/data/changelog"
+import {versionLogs, getLatestVersion} from "@/data/changelog"
 
 export default {
   name: "Index",

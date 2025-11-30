@@ -23,28 +23,28 @@ VUE_APP_DIR="${VUE_APP_DIR:-$PROJECT_ROOT/cheng-ui}"
 BUILD_OUTPUT_DIR="${BUILD_OUTPUT_DIR:-$PROJECT_ROOT/cheng.deploy/frontend-dist}"
 NGINX_CONFIG_DIR="${NGINX_CONFIG_DIR:-$PROJECT_ROOT/cheng.deploy/nginx}"
 
-# 檢查 Node.js 和 npm
+# 檢查 Node.js 和 pnpm
 log "📋 檢查環境..."
 if ! command -v node &> /dev/null; then
-    log "❌ 錯誤: 未找到 Node.js，請先安裝 Node.js 16+ 版本"
+    log "❌ 錯誤: 未找到 Node.js，請先安裝 Node.js 18+ 版本"
     exit 1
 fi
 
-if ! command -v npm &> /dev/null; then
-    log "❌ 錯誤: 未找到 npm"
+if ! command -v pnpm &> /dev/null; then
+    log "❌ 錯誤: 未找到 pnpm，請先安裝 pnpm"
     exit 1
 fi
 
 # 檢查 Node.js 版本
 NODE_VERSION=$(node --version | sed 's/v//')
 NODE_MAJOR=$(echo $NODE_VERSION | cut -d. -f1)
-if [ "$NODE_MAJOR" -lt 16 ]; then
-    log "❌ 錯誤: Node.js 版本過低 ($NODE_VERSION)，需要 16+ 版本"
+if [ "$NODE_MAJOR" -lt 18 ]; then
+    log "❌ 錯誤: Node.js 版本過低 ($NODE_VERSION)，需要 18+ 版本"
     exit 1
 fi
 
 log "✅ Node.js 版本: $(node --version)"
-log "✅ npm 版本: $(npm --version)"
+log "✅ pnpm 版本: $(pnpm --version)"
 
 # 檢查 Vue.js 專案目錄
 if [ ! -d "$VUE_APP_DIR" ]; then
@@ -60,18 +60,11 @@ fi
 # 進入 Vue.js 專案目錄
 cd "$VUE_APP_DIR"
 
-# 安裝依賴（CI 環境優先使用 npm ci）
+# 安裝依賴（使用 pnpm）
 log "📦 安裝前端依賴..."
-if [ -n "$CI" ]; then
-  if ! npm ci 2>&1 | tee -a "$LOG_FILE"; then
-      log "❌ 錯誤: npm ci 失敗"
-      exit 1
-  fi
-else
-  if ! npm install 2>&1 | tee -a "$LOG_FILE"; then
-    log "❌ 錯誤: npm install 失敗"
+if ! pnpm install 2>&1 | tee -a "$LOG_FILE"; then
+    log "❌ 錯誤: pnpm install 失敗"
     exit 1
-  fi
 fi
 
 # 清理舊的建置檔案
@@ -84,8 +77,8 @@ fi
 
 # 建置正式版本 (Vite 建置，不需要 NODE_OPTIONS)
 log "🔨 建置正式版本..."
-if ! npm run build:prod 2>&1 | tee -a "$LOG_FILE"; then
-    log "❌ 錯誤: npm run build:prod 失敗"
+if ! pnpm run build:prod 2>&1 | tee -a "$LOG_FILE"; then
+    log "❌ 錯誤: pnpm run build:prod 失敗"
     exit 1
 fi
 
@@ -122,7 +115,7 @@ fi
 # 建立建置時間戳記
 BUILD_TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 echo "建置時間: $BUILD_TIMESTAMP" > "$BUILD_OUTPUT_DIR/build-info.txt"
-echo "建置版本: $(cd "$VUE_APP_DIR" && npm version --json | grep '"cheng"' | cut -d'"' -f4)" >> "$BUILD_OUTPUT_DIR/build-info.txt"
+echo "建置版本: $(cd "$VUE_APP_DIR" && pnpm version --json | grep '"cheng"' | cut -d'"' -f4)" >> "$BUILD_OUTPUT_DIR/build-info.txt"
 log "✅ 已建立建置資訊檔案"
 
 # 驗證複製結果

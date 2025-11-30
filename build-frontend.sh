@@ -74,6 +74,33 @@ check_requirements() {
 }
 
 # ============================================
+# 讀取前端版本號
+# ============================================
+read_frontend_version() {
+    local CHANGELOG_FILE="cheng-ui/src/data/changelog.js"
+    
+    if [ ! -f "$CHANGELOG_FILE" ]; then
+        print_warning "changelog.js 不存在，使用預設版本 $BASE_VERSION"
+        return
+    fi
+    
+    # 使用更精確的 grep 模式，避免匹配到註解
+    # 匹配 4 個空格縮排的 version 行，跳過註解行（* 或 / 開頭）
+    local EXTRACTED_VERSION=$(grep -m 1 '^    version: "v' "$CHANGELOG_FILE" | sed 's/.*"\(v[0-9.]*\)".*/\1/')
+    
+    # 驗證版本號格式（前端版本號有 v 前綴）
+    if [[ $EXTRACTED_VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        BASE_VERSION="$EXTRACTED_VERSION"
+        print_success "從 changelog.js 讀取到前端版本: $BASE_VERSION"
+        print_info "讀取自: $CHANGELOG_FILE (第一個 version 欄位)"
+    else
+        print_warning "無法從 changelog.js 提取有效版本號，使用預設版本 $BASE_VERSION"
+        print_warning "提取到的內容: '$EXTRACTED_VERSION'"
+        print_warning "請檢查 $CHANGELOG_FILE 檔案格式是否正確"
+    fi
+}
+
+# ============================================
 # 產生版本號
 # ============================================
 generate_version() {
@@ -175,6 +202,7 @@ main() {
     echo ""
     
     check_requirements
+    read_frontend_version
     generate_version
     confirm_build
     build_image
