@@ -82,14 +82,14 @@ if [ -d "$VUE_OUTPUT_DIR" ]; then
     log "✅ 已清理舊的 dist 目錄"
 fi
 
-# 建置正式版本 (加入 NODE_OPTIONS)
+# 建置正式版本 (Vite 建置，不需要 NODE_OPTIONS)
 log "🔨 建置正式版本..."
-if ! NODE_OPTIONS=--openssl-legacy-provider npm run build:prod 2>&1 | tee -a "$LOG_FILE"; then
+if ! npm run build:prod 2>&1 | tee -a "$LOG_FILE"; then
     log "❌ 錯誤: npm run build:prod 失敗"
     exit 1
 fi
 
-# 檢查建置結果 - Vue CLI 輸出到 dist 目錄
+# 檢查建置結果 - Vite 輸出到 dist 目錄
 if [ ! -d "$VUE_OUTPUT_DIR" ]; then
     log "❌ 錯誤: 建置失敗，找不到輸出目錄: $VUE_OUTPUT_DIR"
     exit 1

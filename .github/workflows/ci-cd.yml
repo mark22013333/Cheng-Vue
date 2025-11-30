@@ -66,7 +66,7 @@ jobs:
 
       - name: Build frontend production
         working-directory: cheng-ui
-        run: NODE_OPTIONS=--openssl-legacy-provider npm run build:prod
+        run: npm run build:prod
 
       - name: Verify build output
         run: |

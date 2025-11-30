@@ -1,6 +1,7 @@
 {
   "name": "cheng",
   "version": "3.9.0",
+  "type": "module",
   "description": "CoolApps管理系統",
   "author": "CoolApps",
   "license": "MIT",

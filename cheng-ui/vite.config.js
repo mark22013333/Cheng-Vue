@@ -64,7 +64,7 @@ export default defineConfig(({ mode }) => {
     // 開發伺服器設定
     server: {
       host: '0.0.0.0',
-      port: 80,
+      port: 1024,
       open: true,
       proxy: {
         // API 代理
