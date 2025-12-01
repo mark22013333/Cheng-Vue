@@ -1,10 +1,10 @@
 <template>
    <div class="app-container">
       <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-         <el-form-item label="操作位置" prop="operIp">
+         <el-form-item label="操作IP" prop="operIp">
             <el-input
                v-model="queryParams.operIp"
-               placeholder="請輸入操作位置"
+               placeholder="請輸入操作IP"
                clearable
                style="width: 240px;"
                @keyup.enter="handleQuery"

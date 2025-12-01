@@ -131,12 +131,22 @@
 </template>
 
 <script>
+import { getCurrentInstance } from 'vue'
 import {listCategory, getCategory, delCategory, addCategory, updateCategory} from "@/api/inventory/category"
 import {download} from '@/utils/request'
 
 export default {
   name: "CategoryManagement",
-  dicts: ['sys_normal_disable'],
+  setup() {
+    const { proxy } = getCurrentInstance()
+    
+    // 字典數據（如果將來需要使用）
+    const { sys_normal_disable } = proxy.useDict('sys_normal_disable')
+    
+    return {
+      sys_normal_disable
+    }
+  },
   data() {
     return {
       // 遮罩層

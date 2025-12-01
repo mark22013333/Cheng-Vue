@@ -18,7 +18,7 @@
           style="width: 240px"
         >
           <el-option
-            v-for="dict in dict.type.sys_job_group"
+            v-for="dict in sys_job_group"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
@@ -33,7 +33,7 @@
           style="width: 240px"
         >
           <el-option
-            v-for="dict in dict.type.sys_common_status"
+            v-for="dict in sys_common_status"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
@@ -117,14 +117,14 @@
       <el-table-column :show-overflow-tooltip="true" align="center" label="任務名稱" prop="jobName"/>
       <el-table-column :show-overflow-tooltip="true" align="center" label="任務組名" prop="jobGroup">
         <template #default="scope">
-          <dict-tag :options="dict.type.sys_job_group" :value="scope.row.jobGroup"/>
+          <dict-tag :options="sys_job_group" :value="scope.row.jobGroup"/>
         </template>
       </el-table-column>
       <el-table-column :show-overflow-tooltip="true" align="center" label="呼叫目標字串" prop="invokeTarget"/>
       <el-table-column :show-overflow-tooltip="true" align="center" label="日誌訊息" prop="jobMessage"/>
       <el-table-column align="center" label="執行狀態" prop="status">
         <template #default="scope">
-          <dict-tag :options="dict.type.sys_common_status" :value="scope.row.status"/>
+          <dict-tag :options="sys_common_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column align="center" label="執行時間" prop="createTime" width="180">
@@ -157,7 +157,7 @@
 
     <!-- 呼叫日誌詳細 -->
     <el-dialog v-model="open" append-to-body title="呼叫日誌詳細" width="700px">
-      <el-form ref="form" :model="form" label-width="100px">
+      <el-form ref="formRef" :model="form" label-width="100px">
         <el-row>
           <el-col :span="12">
             <el-form-item label="日誌序號：">{{ form.jobLogId }}</el-form-item>
@@ -193,119 +193,125 @@
   </div>
 </template>
 
-<script>
+<script setup name="JobLog">
+import { ref, reactive, onMounted, getCurrentInstance } from 'vue'
 import { Search, Refresh, Delete, Download, Close, View } from '@element-plus/icons-vue'
-import {getJob} from "@/api/monitor/job"
-import {cleanJobLog, delJobLog, listJobLog} from "@/api/monitor/jobLog"
+import { getJob } from "@/api/monitor/job"
+import { cleanJobLog, delJobLog, listJobLog } from "@/api/monitor/jobLog"
+import { useRoute } from 'vue-router'
 
-export default {
-  name: "JobLog",
-  components: { Search, Refresh, Delete, Download, Close, View },
-  dicts: ['sys_common_status', 'sys_job_group'],
-  data() {
-    return {
-      // 遮罩層
-      loading: true,
-      // 選中陣列
-      ids: [],
-      // 非多個禁用
-      multiple: true,
-      // 顯示搜尋條件
-      showSearch: true,
-      // 總則數
-      total: 0,
-      // 呼叫日誌表格資料
-      jobLogList: [],
-      // 是否顯示彈出層
-      open: false,
-      // 日期範圍
-      dateRange: [],
-      // 表單參數
-      form: {},
-      // 查詢參數
-      queryParams: {
-        pageNum: 1,
-        pageSize: 10,
-        jobName: undefined,
-        jobGroup: undefined,
-        status: undefined
-      }
-    }
-  },
-  created() {
-    const jobId = this.$route.params && this.$route.params.jobId
-    if (jobId !== undefined && jobId != 0) {
-      getJob(jobId).then(response => {
-        this.queryParams.jobName = response.data.jobName
-        this.queryParams.jobGroup = response.data.jobGroup
-        this.getList()
-      })
-    } else {
-      this.getList()
-    }
-  },
-  methods: {
-    /** 查詢呼叫日誌列表 */
-    getList() {
-      this.loading = true
-      listJobLog(this.addDateRange(this.queryParams, this.dateRange)).then(response => {
-          this.jobLogList = response.rows
-          this.total = response.total
-          this.loading = false
-        }
-      )
-    },
-    // 返回按鈕
-    handleClose() {
-      const obj = { path: "/monitor/job" }
-      this.$tab.closeOpenPage(obj)
-    },
-    /** 搜尋按鈕操作 */
-    handleQuery() {
-      this.queryParams.pageNum = 1
-      this.getList()
-    },
-    /** 重置按鈕操作 */
-    resetQuery() {
-      this.dateRange = []
-      this.resetForm("queryForm")
-      this.handleQuery()
-    },
-    // 多選框選中資料
-    handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.jobLogId)
-      this.multiple = !selection.length
-    },
-    /** 詳細按鈕操作 */
-    handleView(row) {
-      this.open = true
-      this.form = row
-    },
-    /** 刪除按鈕操作 */
-    handleDelete(row) {
-      const jobLogIds = this.ids
-      this.$modal.confirm('是否確認刪除呼叫日誌編號為"' + jobLogIds + '"的資料選項？').then(function () {
-        return delJobLog(jobLogIds)
-      }).then(() => {
-        this.getList()
-        this.$modal.msgSuccess("刪除成功")
-      }).catch(() => {})
-    },
-    /** 清除按鈕操作 */
-    handleClean() {
-      this.$modal.confirm('是否確認清除所有呼叫日誌資料選項？').then(function () {
-        return cleanJobLog()
-      }).then(() => {
-        this.getList()
-        this.$modal.msgSuccess("清除成功")
-      }).catch(() => {})
-    },
-    /** 匯出按鈕操作 */
-    handleExport() {
-      this.download('/monitor/jobLog/export', {
-        ...this.queryParams
-      }, `log_${new Date().getTime()}.xlsx`)
-    }
-  }
+const { proxy } = getCurrentInstance()
+const route = useRoute()
+
+// 字典數據
+const { sys_common_status, sys_job_group } = proxy.useDict('sys_common_status', 'sys_job_group')
+
+// 遮罩層
+const loading = ref(true)
+// 選中陣列
+const ids = ref([])
+// 非多個禁用
+const multiple = ref(true)
+// 顯示搜尋條件
+const showSearch = ref(true)
+// 總則數
+const total = ref(0)
+// 呼叫日誌表格資料
+const jobLogList = ref([])
+// 是否顯示彈出層
+const open = ref(false)
+// 日期範圍
+const dateRange = ref([])
+// 表單參數
+const form = ref({})
+// 查詢參數
+const queryParams = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  jobName: undefined,
+  jobGroup: undefined,
+  status: undefined
+})
+
+/** 查詢呼叫日誌列表 */
+function getList() {
+  loading.value = true
+  listJobLog(proxy.addDateRange(queryParams, dateRange.value)).then(response => {
+    jobLogList.value = response.rows
+    total.value = response.total
+    loading.value = false
+  })
 }
+
+// 返回按鈕
+function handleClose() {
+  const obj = { path: "/monitor/job" }
+  proxy.$tab.closeOpenPage(obj)
+}
+
+/** 搜尋按鈕操作 */
+function handleQuery() {
+  queryParams.pageNum = 1
+  getList()
+}
+
+/** 重置按鈕操作 */
+function resetQuery() {
+  dateRange.value = []
+  proxy.resetForm("queryForm")
+  handleQuery()
+}
+
+// 多選框選中資料
+function handleSelectionChange(selection) {
+  ids.value = selection.map(item => item.jobLogId)
+  multiple.value = !selection.length
+}
+
+/** 詳細按鈕操作 */
+function handleView(row) {
+  open.value = true
+  form.value = row
+}
+
+/** 刪除按鈕操作 */
+function handleDelete(row) {
+  const jobLogIds = ids.value
+  proxy.$modal.confirm('是否確認刪除呼叫日誌編號為"' + jobLogIds + '"的資料選項？').then(function () {
+    return delJobLog(jobLogIds)
+  }).then(() => {
+    getList()
+    proxy.$modal.msgSuccess("刪除成功")
+  }).catch(() => {})
+}
+
+/** 清除按鈕操作 */
+function handleClean() {
+  proxy.$modal.confirm('是否確認清除所有呼叫日誌資料選項？').then(function () {
+    return cleanJobLog()
+  }).then(() => {
+    getList()
+    proxy.$modal.msgSuccess("清除成功")
+  }).catch(() => {})
+}
+
+/** 匯出按鈕操作 */
+function handleExport() {
+  proxy.download('/monitor/jobLog/export', {
+    ...queryParams
+  }, `log_${new Date().getTime()}.xlsx`)
+}
+
+onMounted(() => {
+  const jobId = route.params && route.params.jobId
+  if (jobId !== undefined && jobId != 0) {
+    getJob(jobId).then(response => {
+      queryParams.jobName = response.data.jobName
+      queryParams.jobGroup = response.data.jobGroup
+      getList()
+    })
+  } else {
+    getList()
+  }
+})
 </script>

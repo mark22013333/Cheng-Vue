@@ -1,15 +1,23 @@
 # ---- Frontend (Vue3 + Vite) build then serve with Nginx ----
 # Build stage
 FROM node:18-alpine AS build
+
+# 安裝 pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --no-audit --no-fund
+
+# 複製 pnpm 相關檔案
+COPY package.json pnpm-lock.yaml ./
+
+# 使用 pnpm 安裝依賴（frozen-lockfile 確保使用精確版本）
+RUN pnpm install --frozen-lockfile --prod=false
 COPY . .
 # Ensure .env.production is present and log it for debugging
 RUN ls -la .env* || echo "No .env files found"
 RUN cat .env.production || echo ".env.production not found"
 # Use production build (package.json already sets NODE_OPTIONS)
-RUN npm run build:prod
+RUN pnpm run build:prod
 # Verify VUE_APP_BASE_API was properly embedded
 RUN grep -r "VUE_APP_BASE_API" dist/ || echo "VUE_APP_BASE_API not found in build"
 

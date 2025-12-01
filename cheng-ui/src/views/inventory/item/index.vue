@@ -30,7 +30,7 @@
       <el-form-item label="狀態" prop="status">
         <el-select v-model="queryParams.status" placeholder="物品狀態" clearable>
           <el-option
-            v-for="dict in dict.type.sys_normal_disable"
+            v-for="dict in sys_normal_disable"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
@@ -129,7 +129,7 @@
       <el-table-column label="存放位置" align="center" prop="location" />
       <el-table-column label="狀態" align="center" prop="status">
         <template #default="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
+          <dict-tag :options="sys_normal_disable" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width" fixed="right">
@@ -266,7 +266,7 @@
         <el-form-item label="狀態" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio
-              v-for="dict in dict.type.sys_normal_disable"
+              v-for="dict in sys_normal_disable"
               :key="dict.value"
               :label="dict.value"
             >{{dict.label}}</el-radio>
@@ -315,12 +315,22 @@
 </template>
 
 <script>
+import { getCurrentInstance } from 'vue'
 import { listItem, getItem, delItem, addItem, updateItem } from "@/api/inventory/item";
 import { getToken } from "@/utils/auth";
 
 export default {
   name: "Item",
-  dicts: ['sys_normal_disable'],
+  setup() {
+    const { proxy } = getCurrentInstance()
+    
+    // 字典數據
+    const { sys_normal_disable } = proxy.useDict('sys_normal_disable')
+    
+    return {
+      sys_normal_disable
+    }
+  },
   data() {
     return {
       // 遮罩層

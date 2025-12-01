@@ -19,8 +19,8 @@
                @keyup.enter="handleQuery"
             />
          </el-form-item>
-         <el-form-item label="系統内置" prop="configType">
-            <el-select v-model="queryParams.configType" placeholder="系統内置" clearable style="width: 240px">
+         <el-form-item label="系統內建" prop="configType">
+            <el-select v-model="queryParams.configType" placeholder="系統內建" clearable style="width: 240px">
                <el-option
                   v-for="dict in sys_yes_no"
                   :key="dict.value"
@@ -102,7 +102,7 @@
          <el-table-column label="參數名稱" align="center" prop="configName" :show-overflow-tooltip="true" />
          <el-table-column label="參數鍵名" align="center" prop="configKey" :show-overflow-tooltip="true" />
          <el-table-column label="參數鍵值" align="center" prop="configValue" :show-overflow-tooltip="true" />
-         <el-table-column label="系統内置" align="center" prop="configType">
+         <el-table-column label="系統內建" align="center" prop="configType">
             <template #default="scope">
                <dict-tag :options="sys_yes_no" :value="scope.row.configType" />
             </template>
@@ -141,7 +141,7 @@
             <el-form-item label="參數鍵值" prop="configValue">
                <el-input v-model="form.configValue" type="textarea" placeholder="請輸入參數鍵值" />
             </el-form-item>
-            <el-form-item label="系統内置" prop="configType">
+            <el-form-item label="系統內建" prop="configType">
                <el-radio-group v-model="form.configType">
                   <el-radio
                      v-for="dict in sys_yes_no"

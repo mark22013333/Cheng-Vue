@@ -103,13 +103,13 @@
                   </el-form-item>
                </el-col>
                <el-col :span="12">
-                  <el-form-item label="负责人" prop="leader">
-                     <el-input v-model="form.leader" placeholder="請輸入负责人" maxlength="20" />
+                  <el-form-item label="負責人" prop="leader">
+                     <el-input v-model="form.leader" placeholder="請輸入負責人" maxlength="20" />
                   </el-form-item>
                </el-col>
                <el-col :span="12">
-                  <el-form-item label="聯絡电話" prop="phone">
-                     <el-input v-model="form.phone" placeholder="請輸入聯絡电話" maxlength="11" />
+                  <el-form-item label="聯絡電話" prop="phone">
+                     <el-input v-model="form.phone" placeholder="請輸入聯絡電話" maxlength="11" />
                   </el-form-item>
                </el-col>
                <el-col :span="12">

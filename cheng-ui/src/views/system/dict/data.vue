@@ -202,7 +202,7 @@ const listClassOptions = ref([
   { value: "success", label: "成功" },
   { value: "info", label: "訊息" },
   { value: "warning", label: "警告" },
-  { value: "danger", label: "危险" }
+  { value: "danger", label: "危險" }
 ])
 
 const data = reactive({

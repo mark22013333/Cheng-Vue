@@ -85,10 +85,10 @@
                 <el-option label="下拉框" value="select" />
                 <el-option label="單選框" value="radio" />
                 <el-option label="複選框" value="checkbox" />
-                <el-option label="日期控件" value="datetime" />
+                <el-option label="日期元件" value="datetime" />
                 <el-option label="圖片上傳" value="imageUpload" />
                 <el-option label="文件上傳" value="fileUpload" />
-                <el-option label="富文字控件" value="editor" />
+                <el-option label="豐富文字元件" value="editor" />
               </el-select>
             </template>
           </el-table-column>
