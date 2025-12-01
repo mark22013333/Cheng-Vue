@@ -11,7 +11,7 @@
     "build:prod": "vite build --mode production",
     "build:stage": "vite build --mode staging",
     "preview": "vite preview",
-    "install": "echo '⚠️  請勿使用 npm install！使用 pnpm install 代替' && exit 1",
+    "preinstall": "node -e \"if(process.env.npm_config_user_agent.indexOf('pnpm')===-1){console.log('⚠️  請使用 pnpm install 代替 npm install');process.exit(1)}\"",
     "i": "echo '⚠️  請勿使用 npm i！使用 pnpm 代替' && exit 1"
   },
   "keywords": [
