@@ -10,7 +10,9 @@
     "build": "vite build",
     "build:prod": "vite build --mode production",
     "build:stage": "vite build --mode staging",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "install": "echo '⚠️  請勿使用 npm install！使用 pnpm install 代替' && exit 1",
+    "i": "echo '⚠️  請勿使用 npm i！使用 pnpm 代替' && exit 1"
   },
   "keywords": [
     "vue",
