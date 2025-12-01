@@ -13,7 +13,8 @@ set -e  # 遇到錯誤立即退出
 # ============================================
 REGISTRY="android106"
 IMAGE_NAME="coolapps-backend"
-BASE_VERSION="v1.5.2"
+# Fallback version if pom.xml parsing fails (backend uses no 'v' prefix)
+BASE_VERSION="3.9.0"
 DOCKERFILE="Dockerfile.backend-tomcat"
 BUILD_CONTEXT="."
 
@@ -79,6 +80,32 @@ check_requirements() {
 }
 
 # ============================================
+# 讀取後端版本號
+# ============================================
+read_backend_version() {
+    local POM_FILE="pom.xml"
+    
+    if [ ! -f "$POM_FILE" ]; then
+        print_warning "pom.xml 不存在，使用預設版本 $BASE_VERSION"
+        return
+    fi
+    
+    # 使用 grep + sed 提取 cheng.version 屬性值
+    local EXTRACTED_VERSION=$(grep '<cheng.version>' "$POM_FILE" | sed 's/.*<cheng.version>\(.*\)<\/cheng.version>.*/\1/')
+    
+    # 驗證版本號格式（後端版本號無 v 前綴）
+    if [[ $EXTRACTED_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        BASE_VERSION="$EXTRACTED_VERSION"
+        print_success "從 pom.xml 讀取到後端版本: $BASE_VERSION"
+        print_info "讀取自: $POM_FILE (cheng.version 屬性)"
+    else
+        print_warning "無法從 pom.xml 提取有效版本號，使用預設版本 $BASE_VERSION"
+        print_warning "提取到的內容: '$EXTRACTED_VERSION'"
+        print_warning "請檢查 $POM_FILE 檔案格式是否正確"
+    fi
+}
+
+# ============================================
 # 產生版本號
 # ============================================
 generate_version() {
@@ -93,7 +120,7 @@ generate_version() {
         fi
     fi
     
-    # 預設版本號格式：v1.2.2-20251013-0008
+    # 預設版本號格式：v2.0.0-20251130-1438
     VERSION_TAG="${BASE_VERSION}-${BUILD_DATE}"
     
     print_info "版本資訊："
@@ -197,6 +224,7 @@ main() {
     echo ""
     
     check_requirements
+    read_backend_version
     generate_version
     confirm_build
     build_image

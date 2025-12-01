@@ -19,6 +19,9 @@ const LOG_STYLES = {
 /**
  * 原始資料 (Raw Data)
  * 僅需維護 version, date, items，其餘樣式由演算法自動產生
+ * 
+ * ⚠️ 重要：第一個 version 欄位會被 build-backend.sh 自動解析作為建置版本號
+ *    格式必須是：version: "vX.Y.Z"（使用雙引號）
  */
 const rawLogs = [
   {

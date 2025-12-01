@@ -251,6 +251,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@use "sass:color";
+
 // --- 變數定義 ---
 $bg-dark: #0f172a;
 $primary: #667eea;
@@ -596,7 +598,7 @@ $text-light: #e2e8f0;
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
-    background: linear-gradient(135deg, mix(white, $primary, 5%) 0%, mix(white, $accent, 5%) 100%);
+    background: linear-gradient(135deg, color.mix(white, $primary, 5%) 0%, color.mix(white, $accent, 5%) 100%);
   }
 
   &:active {

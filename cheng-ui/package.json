@@ -71,8 +71,8 @@
     "vite-plugin-svg-icons": "^2.0.1"
   },
   "engines": {
-    "node": ">=8.9",
-    "npm": ">= 3.0.0"
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
   },
   "browserslist": [
     "> 1%",
