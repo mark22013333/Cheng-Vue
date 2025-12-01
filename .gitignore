@@ -43,6 +43,10 @@ nbdist/
 *.xml.versionsBackup
 *.swp
 
+# Node.js
+cheng-ui/.npm-cache/
+cheng-ui/node_modules/.cache/
+
 !*/build/*.java
 !*/build/*.html
 !*/build/*.xml
