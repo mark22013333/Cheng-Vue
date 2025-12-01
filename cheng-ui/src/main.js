@@ -33,7 +33,7 @@ import { parseTime, resetForm, addDateRange, handleTree, selectDictLabel, select
 import Pagination from '@/components/Pagination'
 // 自定義表格工具元件
 import RightToolbar from '@/components/RightToolbar'
-// 富文字元件
+// 豐富文字元件
 import Editor from "@/components/Editor"
 // 文件上傳元件
 import FileUpload from "@/components/FileUpload"

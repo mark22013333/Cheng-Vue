@@ -29,21 +29,15 @@
       <div class="dialog-content">
         <div class="left-section">
           <div class="cropper-wrapper">
-            <vue-cropper
-              v-if="visible"
-              :key="cropKey"
+            <Cropper
+              v-if="visible && options.img"
               ref="cropper"
-              :img="options.img"
-              :info="true"
-              :autoCrop="true"
-              :autoCropWidth="200"
-              :autoCropHeight="200"
-              :fixedBox="false"
-              :fixed="true"
-              :fixedNumber="[1, 1]"
-              :centerBox="true"
-              :outputType="options.outputType"
-              @realTime="realTime"
+              :src="options.img"
+              :stencil-props="{
+                aspectRatio: 1
+              }"
+              :auto-zoom="true"
+              @change="onChange"
             />
 
             <div class="drag-tip" v-if="isDragging"
@@ -74,19 +68,19 @@
             <div class="control-row tools-row">
               <el-button-group>
                 <el-tooltip content="放大" placement="top">
-                  <el-button @click="changeScale(1)" icon="ZoomIn"></el-button>
+                  <el-button @click="zoom(1.2)" icon="ZoomIn"></el-button>
                 </el-tooltip>
                 <el-tooltip content="縮小" placement="top">
-                  <el-button @click="changeScale(-1)" icon="ZoomOut"></el-button>
+                  <el-button @click="zoom(0.8)" icon="ZoomOut"></el-button>
                 </el-tooltip>
                 <el-tooltip content="向左旋轉" placement="top">
-                  <el-button @click="rotateLeft()" icon="RefreshLeft"></el-button>
+                  <el-button @click="rotate(-90)" icon="RefreshLeft"></el-button>
                 </el-tooltip>
                 <el-tooltip content="向右旋轉" placement="top">
-                  <el-button @click="rotateRight()" icon="RefreshRight"></el-button>
+                  <el-button @click="rotate(90)" icon="RefreshRight"></el-button>
                 </el-tooltip>
                 <el-tooltip content="重置" placement="top">
-                  <el-button @click="resetCrop" icon="Refresh"></el-button>
+                  <el-button @click="reset" icon="Refresh"></el-button>
                 </el-tooltip>
               </el-button-group>
             </div>
@@ -99,19 +93,19 @@
             <div class="preview-list">
               <div class="preview-item">
                 <div class="preview-circle large">
-                  <img v-if="previews.url" :src="previews.url" :style="previews.img">
+                  <img v-if="previewUrl" :src="previewUrl">
                 </div>
                 <span>大頭像 (200x200)</span>
               </div>
               <div class="preview-item">
                 <div class="preview-circle medium">
-                  <img v-if="previews.url" :src="previews.url" :style="previews.img">
+                  <img v-if="previewUrl" :src="previewUrl">
                 </div>
                 <span>中頭像 (100x100)</span>
               </div>
               <div class="preview-item">
                 <div class="preview-circle small">
-                  <img v-if="previews.url" :src="previews.url" :style="previews.img">
+                  <img v-if="previewUrl" :src="previewUrl">
                 </div>
                 <span>小頭像 (50x50)</span>
               </div>
@@ -142,9 +136,10 @@
 </template>
 
 <script>
-import {VueCropper} from "vue-cropper"
 import {uploadAvatar} from "@/api/system/user"
 import useUserStore from '@/store/modules/user'
+import {Cropper} from 'vue-advanced-cropper'
+import 'vue-advanced-cropper/dist/style.css'
 import {
   Camera, Check, FolderOpened, ZoomIn, ZoomOut,
   RefreshLeft, RefreshRight, Upload, Refresh
@@ -152,7 +147,7 @@ import {
 
 export default {
   components: {
-    VueCropper, Camera, Check, FolderOpened, ZoomIn, ZoomOut,
+    Cropper, Camera, Check, FolderOpened, ZoomIn, ZoomOut,
     RefreshLeft, RefreshRight, Upload, Refresh
   },
   data() {
@@ -170,7 +165,8 @@ export default {
         outputType: "png",
         filename: 'avatar'
       },
-      previews: {},
+      previewUrl: null,
+      coordinates: null
     }
   },
   watch: {
@@ -195,26 +191,28 @@ export default {
     editCropper() {
       this.open = true
     },
-    // [修正] 移除錯誤的屬性修改，只呼叫方法
-    resetCrop() {
-      if (this.$refs.cropper) {
-        this.$refs.cropper.goAutoCrop()
+    onChange({coordinates, canvas}) {
+      this.coordinates = coordinates
+      if (canvas) {
+        this.previewUrl = canvas.toDataURL()
       }
-    },
-    realTime(data) {
-      this.previews = data
     },
     requestUpload() {
     },
-    rotateLeft() {
-      this.$refs.cropper.rotateLeft()
+    reset() {
+      if (this.$refs.cropper) {
+        this.$refs.cropper.reset()
+      }
     },
-    rotateRight() {
-      this.$refs.cropper.rotateRight()
+    rotate(angle) {
+      if (this.$refs.cropper) {
+        this.$refs.cropper.rotate(angle)
+      }
     },
-    changeScale(num) {
-      num = num || 1
-      this.$refs.cropper.changeScale(num)
+    zoom(factor) {
+      if (this.$refs.cropper) {
+        this.$refs.cropper.zoom(factor)
+      }
     },
     beforeUpload(file) {
       if (file.type.indexOf("image/") == -1) {
@@ -235,25 +233,60 @@ export default {
     },
     uploadImg() {
       this.uploading = true
-      this.$refs.cropper.getCropBlob(data => {
-        let formData = new FormData()
-        formData.append("avatarfile", data, this.options.filename)
-        uploadAvatar(formData).then(response => {
-          this.open = false
-          let avatarUrl = response.imgUrl
-          const baseApi = import.meta.env.VITE_APP_BASE_API || ''
-          if (avatarUrl && !avatarUrl.startsWith('http') && !avatarUrl.startsWith(baseApi)) {
-            avatarUrl = baseApi + avatarUrl
+
+      // 檢查 cropper 是否已掛載
+      if (!this.$refs.cropper) {
+        this.$modal.msgError("圖片裁剪器未初始化，請重試")
+        this.uploading = false
+        return
+      }
+
+      // 使用 vue-advanced-cropper 的 getResult 方法
+      try {
+        const result = this.$refs.cropper.getResult()
+
+        if (!result || !result.canvas) {
+          this.$modal.msgError("無法獲取圖片數據，請確保已上傳圖片")
+          this.uploading = false
+          return
+        }
+
+        // 從 canvas 獲取 Blob
+        result.canvas.toBlob((blob) => {
+          if (!blob) {
+            this.$modal.msgError("圖片處理失敗")
+            this.uploading = false
+            return
           }
-          this.options.img = avatarUrl
-          this.userStore.avatar = avatarUrl
-          this.$modal.msgSuccess("頭像更新成功")
-          this.visible = false
-          this.uploading = false
-        }).catch(() => {
-          this.uploading = false
-        })
-      })
+
+          // 建立 FormData
+          let formData = new FormData()
+          const filename = this.options.filename || 'avatar'
+          const file = new File([blob], filename + '.png', {type: 'image/png'})
+          formData.append("avatarfile", file)
+
+          // 上傳
+          uploadAvatar(formData).then(response => {
+            this.open = false
+            let avatarUrl = response.imgUrl
+            const baseApi = import.meta.env.VITE_APP_BASE_API || ''
+            if (avatarUrl && !avatarUrl.startsWith('http') && !avatarUrl.startsWith(baseApi)) {
+              avatarUrl = baseApi + avatarUrl
+            }
+            this.options.img = avatarUrl
+            this.userStore.avatar = avatarUrl
+            this.$modal.msgSuccess("頭像更新成功")
+            this.visible = false
+            this.uploading = false
+          }).catch(() => {
+            this.uploading = false
+          })
+        }, 'image/png')
+      } catch (error) {
+        console.error('上傳頭像失敗:', error)
+        this.$modal.msgError("上傳失敗：" + error.message)
+        this.uploading = false
+      }
     },
     closeDialog() {
       this.open = false
@@ -263,6 +296,23 @@ export default {
 </script>
 
 <style scoped lang="scss">
+// vue-advanced-cropper 樣式調整
+.cropper-wrapper {
+  :deep(.vue-advanced-cropper) {
+    background: #f5f5f5;
+    border-radius: 8px;
+  }
+
+  :deep(.vue-handler) {
+    background: #409EFF;
+    border: 2px solid white;
+  }
+
+  :deep(.vue-line) {
+    border-color: #409EFF;
+  }
+}
+
 .avatar-container {
   position: relative;
   display: inline-block;

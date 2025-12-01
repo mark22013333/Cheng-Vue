@@ -153,7 +153,7 @@ function handleBeforeUpload(file) {
 function handleUploadSuccess(res, file) {
   // 如果上傳成功
   if (res.code == 200) {
-    // 取得富文字實例
+    // 取得豐富文字實例
     let quill = toRaw(quillEditorRef.value).getQuill()
     // 取得光標位置
     let length = quill.selection.savedRange.index

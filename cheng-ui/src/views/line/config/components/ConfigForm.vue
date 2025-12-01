@@ -185,6 +185,7 @@
 </template>
 
 <script>
+import { getCurrentInstance } from 'vue'
 import { getConfig, addConfig, updateConfig, checkChannelType, setLineWebhook, setLineWebhookWithParams, getDefaultWebhookBaseUrl } from '@/api/line/config'
 import { InfoFilled, DocumentCopy, Link, WarningFilled, Close, Check } from '@element-plus/icons-vue'
 
@@ -194,11 +195,16 @@ export default {
     InfoFilled, DocumentCopy, Link, WarningFilled, Close, Check
   },
   setup() {
+    const { proxy } = getCurrentInstance()
+    
+    // 字典數據（如果將來需要使用）
+    const { line_channel_type } = proxy.useDict('line_channel_type')
+    
     return {
-      Link, Close, Check, DocumentCopy
+      Link, Close, Check, DocumentCopy,
+      line_channel_type
     }
   },
-  dicts: ['line_channel_type'],
   data() {
     return {
       // 對話框標題

@@ -105,7 +105,7 @@ public class GenUtils {
         else if (StringUtils.endsWithIgnoreCase(columnName, "file")) {
             column.setHtmlType(GenConstants.HTML_FILE_UPLOAD);
         }
-        // 内容欄位設定富文字元件
+        // 内容欄位設定豐富文字元件
         else if (StringUtils.endsWithIgnoreCase(columnName, "content")) {
             column.setHtmlType(GenConstants.HTML_EDITOR);
         }
