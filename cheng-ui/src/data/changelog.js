@@ -19,11 +19,18 @@ const LOG_STYLES = {
 /**
  * 原始資料 (Raw Data)
  * 僅需維護 version, date, items，其餘樣式由演算法自動產生
- * 
+ *
  * ⚠️ 重要：第一個 version 欄位會被 build-backend.sh 自動解析作為建置版本號
  *    格式必須是：version: "vX.Y.Z"（使用雙引號）
  */
 const rawLogs = [
+  {
+    version: "v2.0.1",
+    date: "2025-12-03",
+    items: [
+      "新增物品資料 Excel 批次匯入功能與進度即時顯示。"
+    ]
+  },
   {
     version: "v2.0.0",
     date: "2025-11-30",
