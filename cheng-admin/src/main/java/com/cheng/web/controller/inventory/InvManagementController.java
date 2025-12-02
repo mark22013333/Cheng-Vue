@@ -2,24 +2,38 @@ package com.cheng.web.controller.inventory;
 
 import com.alibaba.fastjson2.JSON;
 import com.cheng.common.annotation.Log;
+import com.cheng.common.annotation.Anonymous;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.system.domain.InvItem;
+import com.cheng.system.dto.ImportTaskResult;
 import com.cheng.system.dto.InvItemWithStockDTO;
 import com.cheng.system.mapper.InvItemMapper;
 import com.cheng.system.service.IInvItemService;
 import com.cheng.system.service.IInvStockService;
+import com.cheng.framework.sse.SseChannels;
+import com.cheng.framework.sse.SseManager;
+import com.cheng.framework.sse.SseEvent;
+import com.cheng.system.service.impl.InvItemServiceImpl;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -39,6 +53,7 @@ public class InvManagementController extends BaseController {
     private final InvItemMapper invItemMapper;
     private final IInvItemService invItemService;
     private final IInvStockService invStockService;
+    private final SseManager sseManager;
 
     /**
      * 查詢物品與庫存整合列表
@@ -49,7 +64,7 @@ public class InvManagementController extends BaseController {
         startPage();
         log.info("接收到查詢請求 - DTO: {}", JSON.toJSONString(dto));
         log.info("stockStatus 值: [{}], 類型: [{}]", dto.getStockStatus(),
-                 dto.getStockStatus() != null ? dto.getStockStatus().getClass().getName() : "null");
+                dto.getStockStatus() != null ? dto.getStockStatus().getClass().getName() : "null");
         List<InvItemWithStockDTO> list = invItemMapper.selectItemWithStockList(dto);
 
         // 計算庫存狀態和總價值
@@ -114,6 +129,39 @@ public class InvManagementController extends BaseController {
     }
 
     /**
+     * 匯入物品資料
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:management:import')")
+    @Log(title = "物品資訊", businessType = BusinessType.IMPORT)
+    @PostMapping("/importData")
+    public AjaxResult importData(MultipartFile file, Boolean updateSupport, Long defaultCategoryId, String defaultUnit) throws Exception {
+        // 檢查檔案是否為空
+        if (file.isEmpty()) {
+            return error("上傳檔案不能為空");
+        }
+
+        // 檢查檔案格式
+        String filename = file.getOriginalFilename();
+        if (filename == null || !filename.endsWith(".xlsx") && !filename.endsWith(".xls")) {
+            return error("請上傳Excel檔案（.xlsx或.xls格式）");
+        }
+
+        // 檢查必要參數
+        if (defaultCategoryId == null) {
+            return error("請選擇預設分類");
+        }
+        if (defaultUnit == null || defaultUnit.trim().isEmpty()) {
+            return error("請輸入預設單位");
+        }
+
+        // 建立匯入任務並返回taskId
+        ImportTaskResult taskResult = invItemService.createImportTask(file, updateSupport, defaultCategoryId, defaultUnit);
+
+        return success("匯入任務已啟動，準備匯入 " + taskResult.rowCount() + " 筆資料，taskId: " + taskResult.taskId());
+    }
+
+
+    /**
      * 新增物品資訊
      */
     @PreAuthorize("@ss.hasPermi('inventory:management:add')")
@@ -142,12 +190,12 @@ public class InvManagementController extends BaseController {
         if (!invItemService.checkBarcodeUnique(invItem)) {
             return error("修改物品'" + invItem.getItemName() + "'失敗，條碼已存在");
         }
-        
+
         // 記錄修改的物品名稱，讓操作日誌能記錄
         AjaxResult result = toAjax(invItemService.updateInvItem(invItem));
         result.put("itemName", invItem.getItemName());
         log.info("修改物品：{}", invItem.getItemName());
-        
+
         return result;
     }
 
@@ -170,17 +218,17 @@ public class InvManagementController extends BaseController {
                     itemNames.append(item.getItemName());
                 }
             }
-            
+
             // 執行刪除
             String resultMsg = invItemService.safeDeleteInvItemByItemIds(itemIds);
-            
+
             // 將刪除的物品名稱加入返回結果，讓操作日誌能記錄
             AjaxResult result = success(resultMsg);
             if (!itemNames.isEmpty()) {
                 result.put("deletedItems", itemNames.toString());
                 log.info("刪除物品：{}", itemNames);
             }
-            
+
             return result;
         } catch (Exception e) {
             return error(e.getMessage());
@@ -250,6 +298,122 @@ public class InvManagementController extends BaseController {
         } catch (Exception e) {
             return error(e.getMessage());
         }
+    }
+
+
+    /**
+     * 下載匯入範本
+     */
+    @PostMapping("/downloadTemplate")
+    public void downloadTemplate(HttpServletResponse response) {
+        try {
+            invItemService.downloadTemplate(response);
+        } catch (Exception e) {
+            log.error("下載匯入範本失敗", e);
+        }
+    }
+
+    /**
+     * 建立匯入任務（支援SSE進度顯示）
+     * 使用 SseManager 統一管理 SSE 連線
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:management:import')")
+    @PostMapping("/importData/create")
+    public AjaxResult createImportTask(@RequestParam("file") MultipartFile file,
+                                       @RequestParam(value = "updateSupport", defaultValue = "false") Boolean updateSupport,
+                                       @RequestParam(value = "defaultCategoryId", required = false) Long defaultCategoryId,
+                                       @RequestParam(value = "defaultUnit", required = false) String defaultUnit) {
+        try {
+            // 驗證參數
+            if (file == null || file.isEmpty()) {
+                return error("請選擇要匯入的檔案");
+            }
+            if (defaultCategoryId == null) {
+                return error("請選擇預設分類");
+            }
+            if (defaultUnit == null || defaultUnit.trim().isEmpty()) {
+                return error("請輸入預設單位");
+            }
+
+            // 調用 service 建立任務
+            ImportTaskResult taskResult = invItemService.createImportTask(file, updateSupport, defaultCategoryId, defaultUnit);
+
+            log.info("匯入任務已建立 - taskId: {}, rowCount: {}", taskResult.taskId(), taskResult.rowCount());
+
+            // 返回響應（包含taskId和rowCount）
+            AjaxResult result = success("匯入任務已建立");
+            result.put("taskId", taskResult.taskId());
+            result.put("rowCount", taskResult.rowCount());
+            return result;
+        } catch (Exception e) {
+            log.error("建立匯入任務失敗", e);
+            return error("建立匯入任務失敗: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 訂閱匯入任務進度（SSE）
+     * 使用 SseManager 訂閱頻道
+     */
+    @Anonymous
+    @GetMapping(value = "/importData/subscribe/{taskId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribeImportTask(@PathVariable String taskId) {
+        log.info("========== SSE 訂閱請求 - taskId: {} ==========", taskId);
+
+        // 使用 SseManager 訂閱物品匯入頻道（超時: 10分鐘）
+        SseEmitter emitter = sseManager.subscribe(SseChannels.ITEM_IMPORT, taskId, 600000L);
+
+        // 啟動定期輪詢任務，從 PROGRESS_MAP 取得進度並推送
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                InvItemServiceImpl.ProgressInfo progressInfo = InvItemServiceImpl.PROGRESS_MAP.get(taskId);
+                if (progressInfo != null) {
+                    int progress = progressInfo.getProgress();
+                    String message = progressInfo.getMessage();
+
+                    if (progress == -1) {
+                        // 錯誤 - 發送事件並立即停止輪詢
+                        SseEvent event = SseEvent.error(message);
+                        sseManager.send(SseChannels.ITEM_IMPORT, taskId, event);
+                        
+                        // 立即清除進度，停止輪詢
+                        InvItemServiceImpl.PROGRESS_MAP.remove(taskId);
+
+                        // 延遲關閉連線，確保前端有時間處理事件
+                        scheduler.schedule(() -> {
+                            sseManager.unsubscribe(SseChannels.ITEM_IMPORT, taskId);
+                            scheduler.shutdown();
+                        }, 1000, TimeUnit.MILLISECONDS);
+                    } else if (progress >= 100) {
+                        // 完成 - 發送事件並立即停止輪詢
+                        SseEvent event = SseEvent.success(message, null);
+                        sseManager.send(SseChannels.ITEM_IMPORT, taskId, event);
+                        
+                        // 立即清除進度，停止輪詢
+                        InvItemServiceImpl.PROGRESS_MAP.remove(taskId);
+
+                        // 延遲關閉連線，確保前端有時間處理事件
+                        scheduler.schedule(() -> {
+                            sseManager.unsubscribe(SseChannels.ITEM_IMPORT, taskId);
+                            scheduler.shutdown();
+                        }, 1000, TimeUnit.MILLISECONDS);
+                    } else {
+                        // 進度更新
+                        SseEvent event = SseEvent.progress("processing", progress, message);
+                        sseManager.send(SseChannels.ITEM_IMPORT, taskId, event);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("輪詢進度失敗 - taskId: {}", taskId, e);
+                scheduler.shutdown();
+            }
+        }, 100, 200, TimeUnit.MILLISECONDS);  // 每 200ms 檢查一次
+
+        // 訂閱成功後，啟動異步匯入任務（避免競爭條件）
+        invItemService.asyncImportItems(taskId);
+
+        return emitter;
     }
 
     /**

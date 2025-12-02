@@ -110,7 +110,7 @@ public class TraceUtils {
      *
      * @return traceId
      */
-    private static String generateTraceId() {
+    public static String generateTraceId() {
         byte[] bytes = new byte[TRACE_ID_LENGTH];
         ThreadLocalRandom.current().nextBytes(bytes);
         StringBuilder traceId = new StringBuilder(TRACE_ID_LENGTH);
