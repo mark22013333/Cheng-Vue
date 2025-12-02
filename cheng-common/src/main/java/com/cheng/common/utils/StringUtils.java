@@ -29,7 +29,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     private static final char ASTERISK = '*';
 
     /**
-     * Ant 路徑匹配器（靜態實例，避免重複創建）
+     * Ant 路徑匹配器（靜態實例，避免重複建立）
      */
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
 

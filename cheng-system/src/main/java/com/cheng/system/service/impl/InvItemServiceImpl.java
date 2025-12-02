@@ -1,67 +1,78 @@
 package com.cheng.system.service.impl;
 
 import com.cheng.common.constant.UserConstants;
-import com.cheng.common.core.domain.entity.SysUser;
+import com.cheng.common.enums.ScanType;
+import com.cheng.common.enums.UserStatus;
 import com.cheng.common.exception.ServiceException;
 import com.cheng.common.utils.DateUtils;
 import com.cheng.common.utils.SecurityUtils;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.bean.BeanValidators;
+import com.cheng.common.utils.poi.ExcelUtil;
+import com.cheng.common.utils.uuid.IdUtils;
 import com.cheng.system.domain.InvItem;
 import com.cheng.system.domain.InvStock;
+import com.cheng.system.domain.InvStockRecord;
 import com.cheng.system.domain.InvBookInfo;
 import com.cheng.system.domain.InvBorrow;
+import com.cheng.system.domain.InvCategory;
+import com.cheng.system.dto.InvItemImportDTO;
+import com.cheng.system.dto.ImportTaskResult;
 import com.cheng.system.domain.enums.BorrowStatus;
-import com.cheng.system.mapper.InvBookInfoMapper;
-import com.cheng.system.mapper.InvBorrowMapper;
-import com.cheng.system.mapper.InvItemMapper;
-import com.cheng.system.mapper.InvStockMapper;
-import com.cheng.system.mapper.InvStockRecordMapper;
+import com.cheng.system.mapper.*;
 import com.cheng.system.service.IInvItemService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Validator;
 
 import java.io.File;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 物品資訊 服務層實現
  *
  * @author cheng
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class InvItemServiceImpl implements IInvItemService {
-    private static final Logger log = LoggerFactory.getLogger(InvItemServiceImpl.class);
 
-    @Autowired
-    private InvItemMapper invItemMapper;
-
-    @Autowired
-    private InvStockMapper invStockMapper;
-
-    @Autowired
-    private InvBookInfoMapper invBookInfoMapper;
-
-    @Autowired
-    private InvStockRecordMapper invStockRecordMapper;
-
-    @Autowired
-    private InvBorrowMapper invBorrowMapper;
-
-    @Autowired
-    protected Validator validator;
+    private final InvItemMapper invItemMapper;
+    private final InvStockMapper invStockMapper;
+    private final InvBookInfoMapper invBookInfoMapper;
+    private final InvStockRecordMapper invStockRecordMapper;
+    private final InvBorrowMapper invBorrowMapper;
+    private final InvCategoryMapper invCategoryMapper;
+    private final Validator validator;
 
     /**
      * 檔案上傳根路徑
      */
     @Value("${cheng.profile:/tmp/uploadPath}")
     private String uploadPath;
+
+    /**
+     * 匯入任務參數儲存（taskId -> ImportTaskParams）
+     */
+    private static final ConcurrentHashMap<String, Object> IMPORT_TASK_MAP = new ConcurrentHashMap<>();
+
+    /**
+     * 進度資訊儲存（taskId -> ProgressInfo）
+     * 供 Controller 輪詢並推送到 SSE
+     */
+    public static final ConcurrentHashMap<String, ProgressInfo> PROGRESS_MAP = new ConcurrentHashMap<>();
 
     /**
      * 查詢物品資訊
@@ -141,17 +152,13 @@ public class InvItemServiceImpl implements IInvItemService {
             throw new ServiceException("掃描內容不能為空");
         }
 
-        InvItem item = null;
-        if ("1".equals(scanType)) {
-            // 條碼掃描
-            item = invItemMapper.selectInvItemByBarcode(scanCode);
-        } else if ("2".equals(scanType)) {
-            // QR碼掃描
-            item = invItemMapper.selectInvItemByQrCode(scanCode);
-        }
+        InvItem item;
+        ScanType type = ScanType.fromCode(scanType);
 
-        if (item == null) {
-            throw new ServiceException("未找到對應的物品資訊");
+        switch (type) {
+            case BARCODE -> item = invItemMapper.selectInvItemByBarcode(scanCode);
+            case QRCODE -> item = invItemMapper.selectInvItemByQrCode(scanCode);
+            default -> throw new ServiceException("未找到對應的物品資訊");
         }
 
         return item;
@@ -167,22 +174,52 @@ public class InvItemServiceImpl implements IInvItemService {
     @Transactional
     public int insertInvItem(InvItem invItem) {
         invItem.setCreateTime(DateUtils.getNowDate());
-        invItem.setCreateBy(SecurityUtils.getUsername());
+        invItem.setCreateBy(getUsername());
 
         int result = invItemMapper.insertInvItem(invItem);
 
         // 同時建立庫存記錄
         if (result > 0) {
+            // 取得初始庫存數量（從remark欄位臨時取得，用於匯入時的初始庫存設定）
+            Integer initialStock = 0;
+            if (invItem.getRemark() != null && invItem.getRemark().startsWith("INITIAL_STOCK:")) {
+                try {
+                    initialStock = Integer.parseInt(invItem.getRemark().substring("INITIAL_STOCK:".length()));
+                    invItem.setRemark(null); // 清除臨時標記
+                } catch (NumberFormatException e) {
+                    log.warn("解析初始庫存數量失敗: {}", invItem.getRemark());
+                }
+            }
+
             InvStock stock = new InvStock();
             stock.setItemId(invItem.getItemId());
-            stock.setTotalQuantity(0);
-            stock.setAvailableQty(0);
+            stock.setTotalQuantity(initialStock);
+            stock.setAvailableQty(initialStock);
             stock.setBorrowedQty(0);
             stock.setReservedQty(0);
             stock.setDamagedQty(0);
             stock.setLostQty(0);
             stock.setUpdateTime(DateUtils.getNowDate());
             invStockMapper.insertInvStock(stock);
+
+            // 如果有初始庫存，記錄庫存異動
+            if (initialStock > 0) {
+                InvStockRecord record = new InvStockRecord();
+                record.setItemId(invItem.getItemId());
+                record.setRecordType("0"); // 入庫
+                record.setQuantity(initialStock);
+                record.setBeforeQty(0);
+                record.setAfterQty(initialStock);
+                try {
+                    record.setOperatorId(SecurityUtils.getUserId());
+                } catch (Exception e) {
+                    record.setOperatorId(1L); // 系統管理員 ID
+                }
+                record.setOperatorName(getUsername());
+                record.setRecordTime(DateUtils.getNowDate());
+                record.setReason("初始庫存");
+                invStockRecordMapper.insertInvStockRecord(record);
+            }
         }
 
         return result;
@@ -197,7 +234,7 @@ public class InvItemServiceImpl implements IInvItemService {
     @Override
     public int updateInvItem(InvItem invItem) {
         invItem.setUpdateTime(DateUtils.getNowDate());
-        invItem.setUpdateBy(SecurityUtils.getUsername());
+        invItem.setUpdateBy(getUsername());
         return invItemMapper.updateInvItem(invItem);
     }
 
@@ -289,7 +326,7 @@ public class InvItemServiceImpl implements IInvItemService {
      */
     @Override
     public String importItem(List<InvItem> itemList, Boolean isUpdateSupport, String operName) {
-        if (StringUtils.isNull(itemList) || itemList.size() == 0) {
+        if (StringUtils.isNull(itemList) || itemList.isEmpty()) {
             throw new ServiceException("匯入物品資料不能為空！");
         }
         int successNum = 0;
@@ -304,7 +341,8 @@ public class InvItemServiceImpl implements IInvItemService {
                 if (StringUtils.isNull(existItem)) {
                     BeanValidators.validateWithException(validator, item);
                     item.setCreateBy(operName);
-                    this.insertInvItem(item);
+                    int insertInvItem = this.insertInvItem(item);
+                    log.info("insertInv:{}", insertInvItem);
                     successNum++;
                     successMsg.append("<br/>").append(successNum).append("、物品編碼 ").append(item.getItemCode()).append(" 匯入成功");
                 } else if (isUpdateSupport) {
@@ -544,5 +582,289 @@ public class InvItemServiceImpl implements IInvItemService {
             // 圖片刪除失敗不應影響物品刪除，只記錄警告
             log.error("刪除圖片檔案時發生異常，物品: {}, 圖片路徑: {}, 錯誤: {}", itemName, imageUrl, e.getMessage(), e);
         }
+    }
+
+    /**
+     * 建立匯入任務並返回任務ID
+     *
+     * @param file              上傳的Excel檔案
+     * @param updateSupport     是否更新支援
+     * @param defaultCategoryId 預設分類ID
+     * @param defaultUnit       預設單位
+     * @return 任務ID
+     */
+    @Override
+    public ImportTaskResult createImportTask(MultipartFile file, Boolean updateSupport, Long defaultCategoryId, String defaultUnit) {
+        try {
+            // 產生任務ID
+            String taskId = UUID.randomUUID().toString();
+
+            // 先解析Excel檔案並保存到內存（避免異步執行時臨時文件已被刪除）
+            ExcelUtil<InvItemImportDTO> util = new ExcelUtil<>(InvItemImportDTO.class);
+            List<InvItemImportDTO> importList = util.importExcel(file.getInputStream());
+            int rowCount = importList != null ? importList.size() : 0;
+
+            // 將任務參數和已解析的資料存入Map供後續使用
+            ImportTaskParams params = new ImportTaskParams();
+            params.setImportList(importList);  // 保存已解析的資料到內存
+            params.setUpdateSupport(updateSupport);
+            params.setDefaultCategoryId(defaultCategoryId);
+            params.setDefaultUnit(defaultUnit);
+            params.setTaskId(taskId);
+            params.setRowCount(rowCount);
+            IMPORT_TASK_MAP.put(taskId, params);
+
+            // 註解：不在此處執行，等待 SSE 訂閱後再執行（由 Controller 調用）
+            // asyncImportItems(taskId);
+
+            // 返回任務資訊
+            return new ImportTaskResult(taskId, rowCount);
+        } catch (Exception e) {
+            log.error("建立匯入任務失敗", e);
+            throw new ServiceException("解析Excel檔案失敗: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 異步執行匯入任務
+     *
+     * @param taskId 任務ID
+     */
+    @Async
+    public void asyncImportItems(String taskId) {
+        ImportTaskParams params = (ImportTaskParams) IMPORT_TASK_MAP.get(taskId);
+        if (params == null) {
+            log.error("找不到匯入任務參數，taskId: {}", taskId);
+            return;
+        }
+
+        try {
+            // 推送開始進度
+            pushImportProgress(taskId, 0, "開始解析Excel檔案...");
+
+            // 從參數中獲取已解析的資料
+            List<InvItemImportDTO> importList = params.getImportList();
+
+            pushImportProgress(taskId, 10, String.format("成功解析 %d 條資料，開始驗證...", importList.size()));
+
+            // 驗證和轉換資料
+            List<InvItem> validItemList = validateAndConvertItems(importList, params, taskId);
+
+            pushImportProgress(taskId, 30, String.format("驗證完成，有效資料 %d 條，開始匯入...", validItemList.size()));
+
+            // 執行匯入
+            String result = importItem(validItemList, params.getUpdateSupport(), getUsername());
+
+            pushImportProgress(taskId, 100, "匯入完成：" + result);
+
+        } catch (Exception e) {
+            log.error("匯入任務執行失敗，taskId: {}", taskId, e);
+            pushImportProgress(taskId, -1, "匯入失敗：" + e.getMessage());
+        } finally {
+            // 清理任務參數
+            IMPORT_TASK_MAP.remove(taskId);
+        }
+    }
+
+    /**
+     * 驗證和轉換匯入資料
+     *
+     * @param importList 匯入資料列表
+     * @param params     任務參數
+     * @param taskId     任務ID
+     * @return 有效物品列表
+     */
+    private List<InvItem> validateAndConvertItems(List<InvItemImportDTO> importList, ImportTaskParams params, String taskId) {
+        List<InvItem> validItemList = new java.util.ArrayList<>();
+        int total = importList.size();
+        int processed = 0;
+
+        for (InvItemImportDTO importDTO : importList) {
+            try {
+                // 設定行號便於錯誤定位
+                importDTO.setRowNum(processed + 2); // Excel行號從2開始
+
+                // 驗證必填欄位
+                if (StringUtils.isEmpty(importDTO.getItemName())) {
+                    pushImportProgress(taskId, -1, String.format("第 %d 行錯誤：物品名稱不能為空", importDTO.getRowNum()));
+                    continue;
+                }
+
+                // 轉換為InvItem對象
+                InvItem item = convertImportDTOToInvItem(importDTO, params);
+
+                // 驗證資料
+                BeanValidators.validateWithException(validator, item);
+
+                validItemList.add(item);
+
+                // 推送進度（驗證階段佔20%進度）
+                int progress = 10 + (int) ((double) processed / total * 20);
+                pushImportProgress(taskId, progress, String.format("已驗證 %d/%d 條資料...", processed + 1, total));
+
+            } catch (Exception e) {
+                pushImportProgress(taskId, -1, String.format("第 %d 行錯誤：%s", importDTO.getRowNum(), e.getMessage()));
+            }
+            processed++;
+        }
+
+        return validItemList;
+    }
+
+    /**
+     * 將ImportDTO轉換為InvItem
+     *
+     * @param importDTO 匯入DTO
+     * @param params    任務參數
+     * @return InvItem對象
+     */
+    private InvItem convertImportDTOToInvItem(InvItemImportDTO importDTO, ImportTaskParams params) {
+        InvItem item = new InvItem();
+
+        // 物品編碼：如果為空則自動產生
+        if (StringUtils.isEmpty(importDTO.getItemCode())) {
+            item.setItemCode(IdUtils.generateItemCode());
+        } else {
+            item.setItemCode(importDTO.getItemCode());
+        }
+
+        // 基本資訊
+        item.setItemName(importDTO.getItemName());
+        item.setBarcode(importDTO.getBarcode());
+        item.setSpecification(importDTO.getSpecification());
+        item.setBrand(importDTO.getBrand());
+        item.setModel(importDTO.getModel());
+        item.setSupplier(importDTO.getSupplier());
+        item.setLocation(importDTO.getLocation());
+        item.setDescription(importDTO.getDescription());
+
+        // 分類：如果為空則使用預設分類
+        if (StringUtils.isEmpty(importDTO.getCategoryName())) {
+            item.setCategoryId(params.getDefaultCategoryId());
+        } else {
+            // 根據分類名稱查找分類ID
+            InvCategory category = findCategoryByName(importDTO.getCategoryName());
+            item.setCategoryId(category != null ? category.getCategoryId() : params.getDefaultCategoryId());
+        }
+
+        // 單位：如果為空則使用預設單位
+        item.setUnit(StringUtils.isEmpty(importDTO.getUnit()) ? params.getDefaultUnit() : importDTO.getUnit());
+
+        // 價格資訊
+        item.setPurchasePrice(importDTO.getPurchasePrice());
+        item.setCurrentPrice(importDTO.getCurrentPrice());
+
+        // 庫存設定
+        item.setMinStock(importDTO.getMinStock());
+        item.setMaxStock(importDTO.getMaxStock());
+
+        // 初始庫存數量（使用remark欄位臨時傳遞，在insertInvItem中處理）
+        if (importDTO.getInitialStock() != null && importDTO.getInitialStock() > 0) {
+            item.setRemark("INITIAL_STOCK:" + importDTO.getInitialStock());
+        }
+
+        // 設定預設值
+        item.setStatus(UserStatus.OK.getCode()); // 啟用狀態
+        item.setCreateBy(getUsername());
+        item.setCreateTime(DateUtils.getNowDate());
+
+        return item;
+    }
+
+    /**
+     * 根據分類名稱查找分類
+     *
+     * @param categoryName 分類名稱
+     * @return 分類對象
+     */
+    private InvCategory findCategoryByName(String categoryName) {
+        if (StringUtils.isEmpty(categoryName)) {
+            return null;
+        }
+
+        // 使用分類名稱查詢
+        InvCategory queryParam = new InvCategory();
+        queryParam.setCategoryName(categoryName);
+        List<InvCategory> categories = invCategoryMapper.selectInvCategoryList(queryParam);
+
+        // 返回第一個匹配的分類
+        if (categories != null && !categories.isEmpty()) {
+            return categories.get(0);
+        }
+
+        return null;
+    }
+
+    /**
+     * 安全地取得使用者名稱
+     * <p>
+     * 在執行緒池環境中，即使透過 TaskDecorator 複製了 SecurityContext，
+     * 仍可能出現意外情況導致無法取得使用者名稱。
+     * 此方法提供備用方案，確保程式不會因此中斷。
+     *
+     * @return 使用者名稱，如果無法取得則返回 "system"
+     */
+    private String getUsername() {
+        try {
+            return SecurityUtils.getUsername();
+        } catch (Exception e) {
+            log.warn("無法取得使用者名稱，使用系統帳號: {}", e.getMessage());
+            return "system";
+        }
+    }
+
+    /**
+     * 推送匯入進度（存入靜態Map，供 Controller 輪詢）
+     *
+     * @param taskId   任務ID
+     * @param progress 進度百分比（-1 表示錯誤）
+     * @param message  訊息
+     */
+    private void pushImportProgress(String taskId, int progress, String message) {
+        log.info("匯入進度 - taskId: {}, progress: {}, message: {}", taskId, progress, message);
+
+        ProgressInfo progressInfo = new ProgressInfo();
+        progressInfo.setProgress(progress);
+        progressInfo.setMessage(message);
+        progressInfo.setTimestamp(System.currentTimeMillis());
+        PROGRESS_MAP.put(taskId, progressInfo);
+    }
+
+    /**
+     * 進度資訊類別
+     */
+    @Setter
+    @Getter
+    public static class ProgressInfo {
+        private int progress;
+        private String message;
+        private long timestamp;
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        ExcelUtil<InvItemImportDTO> util = new ExcelUtil<>(InvItemImportDTO.class);
+        util.importTemplateExcel(response, "物品資料匯入範本");
+    }
+
+    @Override
+    public String importItems(InvItemImportDTO importDTO) {
+        // 這個方法應該接收檔案和參數，而不是單個 DTO
+        // 由於介面已經定義，我們暫時實作一個簡化版本
+        throw new RuntimeException("此方法暫不支援，請使用 createImportTask 方法進行匯入");
+    }
+
+    /**
+     * 匯入任務參數類別
+     */
+    @Setter
+    @Getter
+    private static class ImportTaskParams {
+        private List<InvItemImportDTO> importList;  // 已解析的資料（避免文件被刪除）
+        private Boolean updateSupport;
+        private Long defaultCategoryId;
+        private String defaultUnit;
+        private String taskId;
+        private Integer rowCount;
     }
 }

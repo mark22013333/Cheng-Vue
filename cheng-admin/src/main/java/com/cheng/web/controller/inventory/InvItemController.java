@@ -220,7 +220,7 @@ public class InvItemController extends BaseController {
     @Log(title = "物品資訊", businessType = BusinessType.IMPORT)
     @PostMapping("/importData")
     public AjaxResult importData(MultipartFile file, boolean updateSupport) throws Exception {
-        ExcelUtil<InvItem> util = new ExcelUtil<InvItem>(InvItem.class);
+        ExcelUtil<InvItem> util = new ExcelUtil<>(InvItem.class);
         List<InvItem> itemList = util.importExcel(file.getInputStream());
         String operName = getUsername();
         String message = invItemService.importItem(itemList, updateSupport, operName);
@@ -232,7 +232,7 @@ public class InvItemController extends BaseController {
      */
     @PostMapping("/importTemplate")
     public void importTemplate(HttpServletResponse response) {
-        ExcelUtil<InvItem> util = new ExcelUtil<InvItem>(InvItem.class);
+        ExcelUtil<InvItem> util = new ExcelUtil<>(InvItem.class);
         util.importTemplateExcel(response, "物品資料");
     }
 

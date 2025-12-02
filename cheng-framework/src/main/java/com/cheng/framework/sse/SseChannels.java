@@ -23,6 +23,11 @@ public class SseChannels {
      */
     public static final String CRAWL_TASK = "crawl-task";
     
+    /**
+     * 物品匯入任務
+     */
+    public static final String ITEM_IMPORT = "item-import";
+    
     // 未來可擴充其他頻道
     // public static final String ANOTHER_CHANNEL = "another-channel";
 }

@@ -3,453 +3,568 @@
     <el-tabs v-model="activeTab" type="card" @tab-click="handleTabChange">
       <!-- 物品管理頁籤 -->
       <el-tab-pane label="物品管理" name="items">
-    <!-- 搜尋表單 -->
-    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="88px">
-      <el-form-item label="物品編碼" prop="itemCode">
-        <el-input
-          v-model="queryParams.itemCode"
-          placeholder="請輸入物品編碼"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="物品名稱" prop="itemName">
-        <el-input
-          v-model="queryParams.itemName"
-          placeholder="請輸入物品名稱"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="庫存狀態" prop="stockStatus">
-        <el-select v-model="queryParams.stockStatus" placeholder="請選擇" clearable style="width: 150px"
-                   @change="handleStockStatusChange">
-          <el-option label="全部" value=""/>
-          <el-option label="正常" value="0"/>
-          <el-option label="低庫存" value="1"/>
-          <el-option label="無庫存" value="2"/>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="低庫存閾值" prop="lowStockThreshold" v-if="queryParams.stockStatus === '1'">
-        <el-input-number v-model="queryParams.lowStockThreshold" :min="0" :max="1000" placeholder="預設為物品最低庫存"
-                         style="width: 150px"/>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜尋</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+        <!-- 搜尋表單 -->
+        <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="88px">
+          <el-form-item label="物品編碼" prop="itemCode">
+            <el-input
+              v-model="queryParams.itemCode"
+              placeholder="請輸入物品編碼"
+              clearable
+              style="width: 200px"
+              @keyup.enter.native="handleQuery"
+            />
+          </el-form-item>
+          <el-form-item label="物品名稱" prop="itemName">
+            <el-input
+              v-model="queryParams.itemName"
+              placeholder="請輸入物品名稱"
+              clearable
+              style="width: 200px"
+              @keyup.enter.native="handleQuery"
+            />
+          </el-form-item>
+          <el-form-item label="庫存狀態" prop="stockStatus">
+            <el-select v-model="queryParams.stockStatus" placeholder="請選擇" clearable style="width: 150px"
+                       @change="handleStockStatusChange">
+              <el-option label="全部" value=""/>
+              <el-option label="正常" value="0"/>
+              <el-option label="低庫存" value="1"/>
+              <el-option label="無庫存" value="2"/>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="低庫存閾值" prop="lowStockThreshold" v-if="queryParams.stockStatus === '1'">
+            <el-input-number v-model="queryParams.lowStockThreshold" :min="0" :max="1000"
+                             placeholder="預設為物品最低庫存"
+                             style="width: 150px"/>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" icon="Search" @click="handleQuery">搜尋</el-button>
+            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+          </el-form-item>
+        </el-form>
 
-    <!-- 操作按鈕 -->
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="Plus"
-          @click="handleAdd"
-          v-hasPermi="['inventory:management:add']"
-        >新增物品
-        </el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="Delete"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['inventory:management:remove']"
-        >刪除
-        </el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['inventory:management:export']"
-        >匯出
-        </el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="info"
-          plain
-          icon="Warning"
-          @click="showLowStockOnly"
-        >低庫存提醒
-        </el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-tooltip content="點擊可設定全域低庫存閾值" placement="top">
-          <el-input-number
-            v-model="globalLowStockThreshold"
-            :min="0"
-            :max="1000"
-            placeholder="低庫存閾值"
-            style="width: 180px"
-            @change="handleThresholdChange"
-          />
-        </el-tooltip>
-      </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-    </el-row>
+        <!-- 操作按鈕 -->
+        <el-row :gutter="10" class="mb8">
+          <el-col :span="1.5">
+            <el-button
+              type="primary"
+              plain
+              icon="Plus"
+              @click="handleAdd"
+              v-hasPermi="['inventory:management:add']"
+            >新增物品
+            </el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-button
+              type="danger"
+              plain
+              icon="Delete"
+              :disabled="multiple"
+              @click="handleDelete"
+              v-hasPermi="['inventory:management:remove']"
+            >刪除
+            </el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-button
+              type="warning"
+              plain
+              icon="Download"
+              @click="handleExport"
+              v-hasPermi="['inventory:management:export']"
+            >匯出
+            </el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-button
+              type="success"
+              plain
+              icon="Upload"
+              @click="handleImport"
+              v-hasPermi="['inventory:management:import']"
+            >匯入
+            </el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-button
+              type="info"
+              plain
+              icon="Warning"
+              @click="showLowStockOnly"
+            >低庫存提醒
+            </el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-tooltip content="點擊可設定全域低庫存閾值" placement="top">
+              <el-input-number
+                v-model="globalLowStockThreshold"
+                :min="0"
+                :max="1000"
+                placeholder="低庫存閾值"
+                style="width: 180px"
+                @change="handleThresholdChange"
+              />
+            </el-tooltip>
+          </el-col>
+          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+        </el-row>
 
-    <!-- 資料表格 -->
-    <el-table v-loading="loading" :data="managementList" @selection-change="handleSelectionChange"
-              @sort-change="handleSortChange">
-      <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="物品編碼" align="center" prop="itemCode" min-width="180" sortable="custom"
-                       :show-overflow-tooltip="true"/>
-      <el-table-column label="圖片" align="center" width="80">
-        <template #default="scope">
-          <el-image
-            v-if="scope.row.imageUrl"
-            :src="getImageUrl(scope.row.imageUrl)"
-            :preview-src-list="[getImageUrl(scope.row.imageUrl)]"
-            :hide-on-click-modal="true"
-            :preview-teleported="true"
-            fit="cover"
-            style="width: 50px; height: 50px; border-radius: 4px; cursor: pointer;"
-          >
-            <template #error>
-              <div class="image-slot">
-                <i class="el-icon-picture-outline" style="font-size: 30px; color: #ccc;"></i>
-              </div>
+        <!-- 資料表格 -->
+        <el-table v-loading="loading" :data="managementList" @selection-change="handleSelectionChange"
+                  @sort-change="handleSortChange">
+          <el-table-column type="selection" width="55" align="center"/>
+          <el-table-column label="物品編碼" align="center" prop="itemCode" min-width="180" sortable="custom"
+                           :show-overflow-tooltip="true"/>
+          <el-table-column label="圖片" align="center" width="80">
+            <template #default="scope">
+              <el-image
+                v-if="scope.row.imageUrl"
+                :src="getImageUrl(scope.row.imageUrl)"
+                :preview-src-list="[getImageUrl(scope.row.imageUrl)]"
+                :hide-on-click-modal="true"
+                :preview-teleported="true"
+                fit="cover"
+                style="width: 50px; height: 50px; border-radius: 4px; cursor: pointer;"
+              >
+                <template #error>
+                  <div class="image-slot">
+                    <i class="el-icon-picture-outline" style="font-size: 30px; color: #ccc;"></i>
+                  </div>
+                </template>
+              </el-image>
+              <span v-else style="color: #ccc;">無圖</span>
             </template>
-          </el-image>
-          <span v-else style="color: #ccc;">無圖</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="物品名稱" align="center" prop="itemName" min-width="150" sortable="custom"
-                       :show-overflow-tooltip="true"/>
-      <el-table-column label="作者" align="center" prop="author" width="120" :show-overflow-tooltip="true" v-if="hasAuthorColumn"/>
-      <el-table-column label="規格" align="center" prop="specification" width="120"/>
-      <el-table-column label="品牌/型號" align="center" width="150">
-        <template #default="scope">
-          {{ scope.row.brand }} {{ scope.row.model }}
-        </template>
-      </el-table-column>
+          </el-table-column>
+          <el-table-column label="物品名稱" align="center" prop="itemName" min-width="150" sortable="custom"
+                           :show-overflow-tooltip="true"/>
+          <el-table-column label="作者" align="center" prop="author" width="120" :show-overflow-tooltip="true"
+                           v-if="hasAuthorColumn"/>
+          <el-table-column label="規格" align="center" prop="specification" width="120"/>
+          <el-table-column label="品牌/型號" align="center" width="150">
+            <template #default="scope">
+              {{ scope.row.brand }} {{ scope.row.model }}
+            </template>
+          </el-table-column>
 
-      <!-- 庫存資訊 -->
-      <el-table-column label="總數量" align="center" prop="totalQuantity" width="80">
-        <template #default="scope">
-          <el-tag v-if="scope.row.totalQuantity > 0" type="success">{{ scope.row.totalQuantity }}</el-tag>
-          <el-tag v-else type="danger">0</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="可用" align="center" prop="availableQty" width="70"/>
-      <el-table-column label="借出" align="center" prop="borrowedQty" width="70"/>
-      <el-table-column label="庫存狀態" align="center" prop="stockStatusText" width="90">
-        <template #default="scope">
-          <el-tag v-if="scope.row.stockStatus === '0'" type="success">{{ scope.row.stockStatusText }}</el-tag>
-          <el-tag v-else-if="scope.row.stockStatus === '1'" type="warning">{{ scope.row.stockStatusText }}</el-tag>
-          <el-tag v-else type="danger">{{ scope.row.stockStatusText }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="存放位置" align="center" prop="location" width="140" sortable="custom"
-                       :show-overflow-tooltip="true"/>
+          <!-- 庫存資訊 -->
+          <el-table-column label="總數量" align="center" prop="totalQuantity" width="80">
+            <template #default="scope">
+              <el-tag v-if="scope.row.totalQuantity > 0" type="success">{{ scope.row.totalQuantity }}</el-tag>
+              <el-tag v-else type="danger">0</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="可用" align="center" prop="availableQty" width="70"/>
+          <el-table-column label="借出" align="center" prop="borrowedQty" width="70"/>
+          <el-table-column label="庫存狀態" align="center" prop="stockStatusText" width="90">
+            <template #default="scope">
+              <el-tag v-if="scope.row.stockStatus === '0'" type="success">{{ scope.row.stockStatusText }}</el-tag>
+              <el-tag v-else-if="scope.row.stockStatus === '1'" type="warning">{{ scope.row.stockStatusText }}</el-tag>
+              <el-tag v-else type="danger">{{ scope.row.stockStatusText }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="存放位置" align="center" prop="location" width="140" sortable="custom"
+                           :show-overflow-tooltip="true"/>
 
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column" min-width="140" fixed="right">
-        <template #default="scope">
-          <el-button link type="primary" icon="View" @click="handleView(scope.row)" v-hasPermi="['inventory:management:query']">詳情</el-button>
-          <el-button link type="primary" icon="Top" @click="handleStockIn(scope.row)" v-hasPermi="['inventory:management:stockIn']">入庫</el-button>
-          <el-button link type="primary" icon="Bottom" @click="handleStockOut(scope.row)" v-hasPermi="['inventory:management:stockOut']">出庫</el-button>
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['inventory:management:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['inventory:management:remove']">刪除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+          <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column"
+                           min-width="140" fixed="right">
+            <template #default="scope">
+              <el-button link type="primary" icon="View" @click="handleView(scope.row)"
+                         v-hasPermi="['inventory:management:query']">詳情
+              </el-button>
+              <el-button link type="primary" icon="Top" @click="handleStockIn(scope.row)"
+                         v-hasPermi="['inventory:management:stockIn']">入庫
+              </el-button>
+              <el-button link type="primary" icon="Bottom" @click="handleStockOut(scope.row)"
+                         v-hasPermi="['inventory:management:stockOut']">出庫
+              </el-button>
+              <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+                         v-hasPermi="['inventory:management:edit']">修改
+              </el-button>
+              <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
+                         v-hasPermi="['inventory:management:remove']">刪除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
 
-    <!-- 分頁 -->
-    <pagination
-      v-show="total>0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+        <!-- 分頁 -->
+        <pagination
+          v-show="total>0"
+          :total="total"
+          v-model:page="queryParams.pageNum"
+          v-model:limit="queryParams.pageSize"
+          @pagination="getList"
+        />
 
-    <!-- 入庫對話框 -->
-    <el-dialog :title="'入庫 - ' + currentItem.itemName" :model-value="stockInDialogVisible" @update:model-value="val => stockInDialogVisible = val" width="500px"
-               append-to-body>
-      <el-form ref="stockInForm" :model="stockInForm" :rules="stockInRules" label-width="100px">
-        <el-form-item label="入庫數量" prop="quantity">
-          <el-input-number v-model="stockInForm.quantity" :min="1" :max="10000" controls-position="right"
-                           style="width: 100%"/>
-        </el-form-item>
-        <el-form-item label="入庫原因" prop="reason">
-          <el-input v-model="stockInForm.reason" type="textarea" :rows="3" placeholder="請輸入入庫原因"/>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="stockInDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitStockIn">確定</el-button>
-      </div>
-    </el-dialog>
+        <!-- 入庫對話框 -->
+        <el-dialog :title="'入庫 - ' + currentItem.itemName" :model-value="stockInDialogVisible"
+                   @update:model-value="val => stockInDialogVisible = val" width="500px"
+                   append-to-body>
+          <el-form ref="stockInForm" :model="stockInForm" :rules="stockInRules" label-width="100px">
+            <el-form-item label="入庫數量" prop="quantity">
+              <el-input-number v-model="stockInForm.quantity" :min="1" :max="10000" controls-position="right"
+                               style="width: 100%"/>
+            </el-form-item>
+            <el-form-item label="入庫原因" prop="reason">
+              <el-input v-model="stockInForm.reason" type="textarea" :rows="3" placeholder="請輸入入庫原因"/>
+            </el-form-item>
+          </el-form>
+          <div slot="footer" class="dialog-footer">
+            <el-button @click="stockInDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="submitStockIn">確定</el-button>
+          </div>
+        </el-dialog>
 
-    <!-- 出庫對話框 -->
-    <el-dialog :title="'出庫 - ' + currentItem.itemName" :model-value="stockOutDialogVisible" @update:model-value="val => stockOutDialogVisible = val" width="500px"
-               append-to-body>
-      <el-form ref="stockOutForm" :model="stockOutForm" :rules="stockOutRules" label-width="100px">
-        <el-form-item label="可用數量">
-          <span style="color: #409EFF; font-weight: bold;">{{ currentItem.availableQty }}</span>
-        </el-form-item>
-        <el-form-item label="出庫數量" prop="quantity">
-          <el-input-number v-model="stockOutForm.quantity" :min="1" :max="currentItem.availableQty"
-                           controls-position="right" style="width: 100%"/>
-        </el-form-item>
-        <el-form-item label="出庫原因" prop="reason">
-          <el-input v-model="stockOutForm.reason" type="textarea" :rows="3" placeholder="請輸入出庫原因"/>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="stockOutDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitStockOut">確定</el-button>
-      </div>
-    </el-dialog>
+        <!-- 出庫對話框 -->
+        <el-dialog :title="'出庫 - ' + currentItem.itemName" :model-value="stockOutDialogVisible"
+                   @update:model-value="val => stockOutDialogVisible = val" width="500px"
+                   append-to-body>
+          <el-form ref="stockOutForm" :model="stockOutForm" :rules="stockOutRules" label-width="100px">
+            <el-form-item label="可用數量">
+              <span style="color: #409EFF; font-weight: bold;">{{ currentItem.availableQty }}</span>
+            </el-form-item>
+            <el-form-item label="出庫數量" prop="quantity">
+              <el-input-number v-model="stockOutForm.quantity" :min="1" :max="currentItem.availableQty"
+                               controls-position="right" style="width: 100%"/>
+            </el-form-item>
+            <el-form-item label="出庫原因" prop="reason">
+              <el-input v-model="stockOutForm.reason" type="textarea" :rows="3" placeholder="請輸入出庫原因"/>
+            </el-form-item>
+          </el-form>
+          <div slot="footer" class="dialog-footer">
+            <el-button @click="stockOutDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="submitStockOut">確定</el-button>
+          </div>
+        </el-dialog>
 
-    <!-- 詳情對話框 -->
-    <el-dialog title="物品與庫存詳情" :model-value="detailDialogVisible" @update:model-value="val => detailDialogVisible = val" width="900px" append-to-body>
-      <el-descriptions :column="2" border v-if="detailData">
-        <el-descriptions-item label="物品編碼">{{ detailData.itemCode }}</el-descriptions-item>
-        <el-descriptions-item label="物品名稱">{{ detailData.itemName }}</el-descriptions-item>
-        <el-descriptions-item label="作者" v-if="detailData.author">{{ detailData.author }}</el-descriptions-item>
-        <el-descriptions-item label="分類">{{ detailData.categoryName }}</el-descriptions-item>
-        <el-descriptions-item label="規格">{{ detailData.specification }}</el-descriptions-item>
-        <el-descriptions-item label="品牌">{{ detailData.brand }}</el-descriptions-item>
-        <el-descriptions-item label="型號">{{ detailData.model }}</el-descriptions-item>
-        <el-descriptions-item label="單位">{{ detailData.unit }}</el-descriptions-item>
-        <el-descriptions-item label="供應商">{{ detailData.supplier }}</el-descriptions-item>
-        <el-descriptions-item label="存放位置">{{ detailData.location }}</el-descriptions-item>
-        <el-descriptions-item label="條碼">
-          <span>{{ detailData.barcode }}</span>
-          <el-button
-            v-if="detailData.barcode && isValidIsbn(detailData.barcode)"
-            v-hasPermi="['inventory:management:refreshIsbn']"
-            type="primary"
-            icon="Refresh"
-            @click="handleRefreshIsbn"
-            style="margin-left: 10px;"
-          >重新抓取
-          </el-button>
-        </el-descriptions-item>
-        <el-descriptions-item label="最低庫存">{{ detailData.minStock }}</el-descriptions-item>
-        <el-descriptions-item label="最高庫存">{{ detailData.maxStock }}</el-descriptions-item>
+        <!-- 詳情對話框 -->
+        <el-dialog title="物品與庫存詳情" :model-value="detailDialogVisible"
+                   @update:model-value="val => detailDialogVisible = val" width="900px" append-to-body>
+          <el-descriptions :column="2" border v-if="detailData">
+            <el-descriptions-item label="物品編碼">{{ detailData.itemCode }}</el-descriptions-item>
+            <el-descriptions-item label="物品名稱">{{ detailData.itemName }}</el-descriptions-item>
+            <el-descriptions-item label="作者" v-if="detailData.author">{{ detailData.author }}</el-descriptions-item>
+            <el-descriptions-item label="分類">{{ detailData.categoryName }}</el-descriptions-item>
+            <el-descriptions-item label="規格">{{ detailData.specification }}</el-descriptions-item>
+            <el-descriptions-item label="品牌">{{ detailData.brand }}</el-descriptions-item>
+            <el-descriptions-item label="型號">{{ detailData.model }}</el-descriptions-item>
+            <el-descriptions-item label="單位">{{ detailData.unit }}</el-descriptions-item>
+            <el-descriptions-item label="供應商">{{ detailData.supplier }}</el-descriptions-item>
+            <el-descriptions-item label="存放位置">{{ detailData.location }}</el-descriptions-item>
+            <el-descriptions-item label="條碼">
+              <span>{{ detailData.barcode }}</span>
+              <el-button
+                v-if="detailData.barcode && isValidIsbn(detailData.barcode)"
+                v-hasPermi="['inventory:management:refreshIsbn']"
+                type="primary"
+                icon="Refresh"
+                @click="handleRefreshIsbn"
+                style="margin-left: 10px;"
+              >重新抓取
+              </el-button>
+            </el-descriptions-item>
+            <el-descriptions-item label="最低庫存">{{ detailData.minStock }}</el-descriptions-item>
+            <el-descriptions-item label="最高庫存">{{ detailData.maxStock }}</el-descriptions-item>
 
-        <el-descriptions-item label="庫存狀態" :span="2">
-          <el-tag v-if="detailData.stockStatus === '0'" type="success">{{ detailData.stockStatusText }}</el-tag>
-          <el-tag v-else-if="detailData.stockStatus === '1'" type="warning">{{ detailData.stockStatusText }}</el-tag>
-          <el-tag v-else type="danger">{{ detailData.stockStatusText }}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="採購價格">{{ formatMoney(detailData.purchasePrice) }}</el-descriptions-item>
-        <el-descriptions-item label="現價">{{ formatMoney(detailData.currentPrice) }}</el-descriptions-item>
-        <el-descriptions-item label="總數量">{{ detailData.totalQuantity }}</el-descriptions-item>
-        <el-descriptions-item label="可用數量">{{ detailData.availableQty }}</el-descriptions-item>
-        <el-descriptions-item label="借出數量">{{ detailData.borrowedQty }}</el-descriptions-item>
-        <el-descriptions-item label="損壞數量">{{ detailData.damagedQty }}</el-descriptions-item>
-        <el-descriptions-item label="遺失數量">{{ detailData.lostQty || 0 }}</el-descriptions-item>
+            <el-descriptions-item label="庫存狀態" :span="2">
+              <el-tag v-if="detailData.stockStatus === '0'" type="success">{{ detailData.stockStatusText }}</el-tag>
+              <el-tag v-else-if="detailData.stockStatus === '1'" type="warning">{{
+                  detailData.stockStatusText
+                }}
+              </el-tag>
+              <el-tag v-else type="danger">{{ detailData.stockStatusText }}</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="採購價格">{{ formatMoney(detailData.purchasePrice) }}</el-descriptions-item>
+            <el-descriptions-item label="現價">{{ formatMoney(detailData.currentPrice) }}</el-descriptions-item>
+            <el-descriptions-item label="總數量">{{ detailData.totalQuantity }}</el-descriptions-item>
+            <el-descriptions-item label="可用數量">{{ detailData.availableQty }}</el-descriptions-item>
+            <el-descriptions-item label="借出數量">{{ detailData.borrowedQty }}</el-descriptions-item>
+            <el-descriptions-item label="損壞數量">{{ detailData.damagedQty }}</el-descriptions-item>
+            <el-descriptions-item label="遺失數量">{{ detailData.lostQty || 0 }}</el-descriptions-item>
 
-        <!-- ========== 財務分析 ========== -->
-        <!-- 歷史成本 -->
-        <el-descriptions-item label="歷史採購成本" :span="2">
-          <span style="color: #909399; font-weight: bold;">{{ formatMoney(detailData.historicalCost) }}</span>
-          <el-tag type="info" size="small" style="margin-left: 8px;">已支付總成本</el-tag>
-        </el-descriptions-item>
+            <!-- ========== 財務分析 ========== -->
+            <!-- 歷史成本 -->
+            <el-descriptions-item label="歷史採購成本" :span="2">
+              <span style="color: #909399; font-weight: bold;">{{ formatMoney(detailData.historicalCost) }}</span>
+              <el-tag type="info" size="small" style="margin-left: 8px;">已支付總成本</el-tag>
+            </el-descriptions-item>
 
-        <!-- 當前庫存資產 -->
-        <el-descriptions-item label="當前庫存成本" :span="2">
-          <span style="color: #E6A23C; font-weight: bold;">{{ formatMoney(detailData.costValue) }}</span>
-          <span style="color: #909399; font-size: 12px; margin-left: 8px;">（現存 {{ detailData.totalQuantity }} 件）</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="當前庫存市值" :span="2">
-          <span style="color: #409EFF; font-weight: bold;">{{ formatMoney(detailData.stockValue) }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="預期利潤" :span="2">
+            <!-- 當前庫存資產 -->
+            <el-descriptions-item label="當前庫存成本" :span="2">
+              <span style="color: #E6A23C; font-weight: bold;">{{ formatMoney(detailData.costValue) }}</span>
+              <span style="color: #909399; font-size: 12px; margin-left: 8px;">（現存 {{
+                  detailData.totalQuantity
+                }} 件）</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="當前庫存市值" :span="2">
+              <span style="color: #409EFF; font-weight: bold;">{{ formatMoney(detailData.stockValue) }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="預期利潤" :span="2">
           <span :style="{color: detailData.expectedProfit >= 0 ? '#67C23A' : '#F56C6C', fontWeight: 'bold'}">
             {{ formatMoney(detailData.expectedProfit) }}
           </span>
-        </el-descriptions-item>
+            </el-descriptions-item>
 
-        <!-- 可用庫存資產 -->
-        <el-descriptions-item label="可用庫存成本" :span="2">
-          <span style="color: #E6A23C; font-weight: bold;">{{ formatMoney(detailData.availableCost) }}</span>
-          <span style="color: #909399; font-size: 12px; margin-left: 8px;">（可售 {{ detailData.availableQty }} 件）</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="可用庫存市值" :span="2">
-          <span style="color: #67C23A; font-weight: bold;">{{ formatMoney(detailData.availableValue) }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="可實現利潤" :span="2">
+            <!-- 可用庫存資產 -->
+            <el-descriptions-item label="可用庫存成本" :span="2">
+              <span style="color: #E6A23C; font-weight: bold;">{{ formatMoney(detailData.availableCost) }}</span>
+              <span style="color: #909399; font-size: 12px; margin-left: 8px;">（可售 {{
+                  detailData.availableQty
+                }} 件）</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="可用庫存市值" :span="2">
+              <span style="color: #67C23A; font-weight: bold;">{{ formatMoney(detailData.availableValue) }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="可實現利潤" :span="2">
           <span :style="{color: detailData.realizableProfit >= 0 ? '#67C23A' : '#F56C6C', fontWeight: 'bold'}">
             {{ formatMoney(detailData.realizableProfit) }}
           </span>
-          <span style="color: #909399; font-size: 12px; margin-left: 8px;">（利潤率: {{ formatPercent(detailData.profitRate) }}）</span>
-        </el-descriptions-item>
+              <span style="color: #909399; font-size: 12px; margin-left: 8px;">（利潤率: {{
+                  formatPercent(detailData.profitRate)
+                }}）</span>
+            </el-descriptions-item>
 
-        <!-- 損失明細 -->
-        <el-descriptions-item label="損壞損失" :span="2" v-if="detailData.damagedQty > 0">
-          <span style="color: #E6A23C; font-weight: bold;">-{{ formatMoney(detailData.damagedValue) }}</span>
-          <el-tag type="warning" size="small" style="margin-left: 8px;">{{ detailData.damagedQty }} 件損壞</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="遺失損失" :span="2" v-if="detailData.lostQty > 0">
-          <span style="color: #F56C6C; font-weight: bold;">-{{ formatMoney(detailData.lostValue) }}</span>
-          <el-tag type="danger" size="small" style="margin-left: 8px;">{{ detailData.lostQty }} 件遺失</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="累計損失" :span="2" v-if="detailData.totalLoss > 0">
-          <span style="color: #F56C6C; font-weight: bold; font-size: 16px;">-{{ formatMoney(detailData.totalLoss) }}</span>
-          <el-tag type="danger" size="small" style="margin-left: 8px;">⚠️ 總損失</el-tag>
-        </el-descriptions-item>
+            <!-- 損失明細 -->
+            <el-descriptions-item label="損壞損失" :span="2" v-if="detailData.damagedQty > 0">
+              <span style="color: #E6A23C; font-weight: bold;">-{{ formatMoney(detailData.damagedValue) }}</span>
+              <el-tag type="warning" size="small" style="margin-left: 8px;">{{ detailData.damagedQty }} 件損壞</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="遺失損失" :span="2" v-if="detailData.lostQty > 0">
+              <span style="color: #F56C6C; font-weight: bold;">-{{ formatMoney(detailData.lostValue) }}</span>
+              <el-tag type="danger" size="small" style="margin-left: 8px;">{{ detailData.lostQty }} 件遺失</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="累計損失" :span="2" v-if="detailData.totalLoss > 0">
+              <span style="color: #F56C6C; font-weight: bold; font-size: 16px;">-{{
+                  formatMoney(detailData.totalLoss)
+                }}</span>
+              <el-tag type="danger" size="small" style="margin-left: 8px;">⚠️ 總損失</el-tag>
+            </el-descriptions-item>
 
-        <el-descriptions-item label="最後入庫時間" :span="2">{{
-            parseTime(detailData.lastInTime)
-          }}
-        </el-descriptions-item>
-        <el-descriptions-item label="最後出庫時間" :span="2">{{
-            parseTime(detailData.lastOutTime)
-          }}
-        </el-descriptions-item>
-        <el-descriptions-item label="圖片" :span="2">
-          <el-image
-            v-if="detailData.imageUrl"
-            :src="getImageUrl(detailData.imageUrl)"
-            :preview-src-list="[getImageUrl(detailData.imageUrl)]"
-            :hide-on-click-modal="true"
-            :preview-teleported="true"
-            fit="contain"
-            style="max-width: 200px; max-height: 200px; border-radius: 4px; cursor: pointer;"
-          >
-            <template #error>
-              <div class="image-slot">
-                <i class="el-icon-picture-outline" style="font-size: 50px; color: #ccc;"></i>
-              </div>
-            </template>
-          </el-image>
-          <span v-else style="color: #999;">無圖片</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="描述" :span="2">{{ detailData.description }}</el-descriptions-item>
-        <el-descriptions-item label="備註" :span="2">{{ detailData.remark }}</el-descriptions-item>
-      </el-descriptions>
-    </el-dialog>
+            <el-descriptions-item label="最後入庫時間" :span="2">{{
+                parseTime(detailData.lastInTime)
+              }}
+            </el-descriptions-item>
+            <el-descriptions-item label="最後出庫時間" :span="2">{{
+                parseTime(detailData.lastOutTime)
+              }}
+            </el-descriptions-item>
+            <el-descriptions-item label="圖片" :span="2">
+              <el-image
+                v-if="detailData.imageUrl"
+                :src="getImageUrl(detailData.imageUrl)"
+                :preview-src-list="[getImageUrl(detailData.imageUrl)]"
+                :hide-on-click-modal="true"
+                :preview-teleported="true"
+                fit="contain"
+                style="max-width: 200px; max-height: 200px; border-radius: 4px; cursor: pointer;"
+              >
+                <template #error>
+                  <div class="image-slot">
+                    <i class="el-icon-picture-outline" style="font-size: 50px; color: #ccc;"></i>
+                  </div>
+                </template>
+              </el-image>
+              <span v-else style="color: #999;">無圖片</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="描述" :span="2">{{ detailData.description }}</el-descriptions-item>
+            <el-descriptions-item label="備註" :span="2">{{ detailData.remark }}</el-descriptions-item>
+          </el-descriptions>
+        </el-dialog>
 
-    <!-- 進度對話框 -->
-    <ProgressDialog ref="progressDialog" />
-
-    <!-- 編輯對話框 -->
-    <el-dialog :title="editDialogTitle" :model-value="editDialogVisible" @update:model-value="val => editDialogVisible = val" width="800px" append-to-body>
-      <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="100px">
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="物品編碼" prop="itemCode">
-              <el-input v-model="editForm.itemCode" :disabled="isEdit" placeholder="請輸入物品編碼"/>
+        <!-- 匯入對話框 -->
+        <el-dialog title="匯入物品資料" :model-value="importDialogVisible"
+                   @update:model-value="val => importDialogVisible = val" width="600px" append-to-body>
+          <el-form ref="importFormRef" :model="importForm" :rules="importRules" label-width="120px">
+            <el-form-item label="Excel檔案" prop="file">
+              <el-upload
+                ref="uploadRef"
+                :limit="1"
+                accept=".xlsx,.xls"
+                :auto-upload="false"
+                :file-list="fileList"
+                :on-change="handleFileChange"
+                :on-remove="handleFileRemove"
+                drag
+              >
+                <i class="el-icon-upload"></i>
+                <div class="el-upload__text">
+                  將檔案拖到此處，或<em>點擊上傳</em>
+                </div>
+                <template #tip>
+                  <div class="el-upload__tip">
+                    只能上傳xlsx/xls檔案，且不超過10MB
+                  </div>
+                </template>
+              </el-upload>
             </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="物品名稱" prop="itemName">
-              <el-input v-model="editForm.itemName" placeholder="請輸入物品名稱"/>
+
+            <el-form-item label="更新支援" prop="updateSupport">
+              <el-switch
+                v-model="importForm.updateSupport"
+                active-text="如果物品存在則更新"
+                inactive-text="跳過已存在的物品"
+              />
             </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="24">
-            <el-form-item label="物品分類" prop="categoryId">
-              <el-select v-model="editForm.categoryId" placeholder="請選擇分類" style="width: 100%">
+
+            <el-form-item label="預設分類" prop="defaultCategoryId">
+              <el-select v-model="importForm.defaultCategoryId" placeholder="請選擇預設分類" clearable
+                         style="width: 100%">
                 <el-option
-                  v-for="category in categoryList"
+                  v-for="category in categoryOptions"
                   :key="category.categoryId"
                   :label="category.categoryName"
                   :value="category.categoryId"
                 />
               </el-select>
             </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="條碼" prop="barcode">
-              <el-input v-model="editForm.barcode" :disabled="isEdit" :placeholder="isEdit ? '條碼不可修改' : '請輸入條碼'"/>
+
+            <el-form-item label="預設單位" prop="defaultUnit">
+              <el-select v-model="importForm.defaultUnit" placeholder="請選擇預設單位" clearable style="width: 100%">
+                <el-option label="個" value="個"/>
+                <el-option label="本" value="本"/>
+                <el-option label="套" value="套"/>
+                <el-option label="件" value="件"/>
+                <el-option label="盒" value="盒"/>
+                <el-option label="箱" value="箱"/>
+                <el-option label="包" value="包"/>
+                <el-option label="組" value="組"/>
+                <el-option label="台" value="台"/>
+                <el-option label="張" value="張"/>
+              </el-select>
             </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="規格" prop="specification">
-              <el-input v-model="editForm.specification" placeholder="請輸入規格"/>
+          </el-form>
+
+          <div slot="footer" class="dialog-footer">
+            <el-button @click="downloadTemplate">
+              <i class="el-icon-download"></i>
+              下載範本
+            </el-button>
+            <el-button @click="importDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="submitImport" :loading="importLoading">
+              <i class="el-icon-upload2"></i>
+              開始匯入
+            </el-button>
+          </div>
+        </el-dialog>
+
+        <!-- 進度對話框 -->
+        <ProgressDialog ref="progressDialog"/>
+
+        <!-- 編輯對話框 -->
+        <el-dialog :title="editDialogTitle" :model-value="editDialogVisible"
+                   @update:model-value="val => editDialogVisible = val" width="800px" append-to-body>
+          <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="100px">
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="物品編碼" prop="itemCode">
+                  <el-input v-model="editForm.itemCode" :disabled="isEdit" placeholder="請輸入物品編碼"/>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="物品名稱" prop="itemName">
+                  <el-input v-model="editForm.itemName" placeholder="請輸入物品名稱"/>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="24">
+                <el-form-item label="物品分類" prop="categoryId">
+                  <el-select v-model="editForm.categoryId" placeholder="請選擇分類" style="width: 100%">
+                    <el-option
+                      v-for="category in categoryList"
+                      :key="category.categoryId"
+                      :label="category.categoryName"
+                      :value="category.categoryId"
+                    />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="條碼" prop="barcode">
+                  <el-input v-model="editForm.barcode" :disabled="isEdit"
+                            :placeholder="isEdit ? '條碼不可修改' : '請輸入條碼'"/>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="規格" prop="specification">
+                  <el-input v-model="editForm.specification" placeholder="請輸入規格"/>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="單位" prop="unit">
+                  <el-input v-model="editForm.unit" placeholder="請輸入單位"/>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="品牌" prop="brand">
+                  <el-input v-model="editForm.brand" placeholder="請輸入品牌"/>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="型號" prop="model">
+                  <el-input v-model="editForm.model" placeholder="請輸入型號"/>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="供應商" prop="supplier">
+                  <el-input v-model="editForm.supplier" placeholder="請輸入供應商"/>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="採購價格" prop="purchasePrice">
+                  <el-input-number v-model="editForm.purchasePrice" :precision="2" :min="0" style="width: 100%"/>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="現價" prop="currentPrice">
+                  <el-input-number v-model="editForm.currentPrice" :precision="2" :min="0" style="width: 100%"/>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="最低庫存" prop="minStock">
+                  <el-input-number v-model="editForm.minStock" :min="0" style="width: 100%"/>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="最高庫存" prop="maxStock">
+                  <el-input-number v-model="editForm.maxStock" :min="0" style="width: 100%"/>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-form-item label="存放位置" prop="location">
+              <el-input v-model="editForm.location" placeholder="請輸入存放位置"/>
             </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="單位" prop="unit">
-              <el-input v-model="editForm.unit" placeholder="請輸入單位"/>
+            <el-form-item label="圖片" prop="imageUrl">
+              <image-upload v-model="editForm.imageUrl" :limit="1"/>
             </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="品牌" prop="brand">
-              <el-input v-model="editForm.brand" placeholder="請輸入品牌"/>
+            <el-form-item label="描述" prop="description">
+              <el-input v-model="editForm.description" type="textarea" :rows="3" placeholder="請輸入描述"/>
             </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="型號" prop="model">
-              <el-input v-model="editForm.model" placeholder="請輸入型號"/>
+            <el-form-item label="備註" prop="remark">
+              <el-input v-model="editForm.remark" type="textarea" :rows="2" placeholder="請輸入備註"/>
             </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="供應商" prop="supplier">
-              <el-input v-model="editForm.supplier" placeholder="請輸入供應商"/>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="採購價格" prop="purchasePrice">
-              <el-input-number v-model="editForm.purchasePrice" :precision="2" :min="0" style="width: 100%"/>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="現價" prop="currentPrice">
-              <el-input-number v-model="editForm.currentPrice" :precision="2" :min="0" style="width: 100%"/>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="最低庫存" prop="minStock">
-              <el-input-number v-model="editForm.minStock" :min="0" style="width: 100%"/>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="最高庫存" prop="maxStock">
-              <el-input-number v-model="editForm.maxStock" :min="0" style="width: 100%"/>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-form-item label="存放位置" prop="location">
-          <el-input v-model="editForm.location" placeholder="請輸入存放位置"/>
-        </el-form-item>
-        <el-form-item label="圖片" prop="imageUrl">
-          <image-upload v-model="editForm.imageUrl" :limit="1"/>
-        </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="editForm.description" type="textarea" :rows="3" placeholder="請輸入描述"/>
-        </el-form-item>
-        <el-form-item label="備註" prop="remark">
-          <el-input v-model="editForm.remark" type="textarea" :rows="2" placeholder="請輸入備註"/>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitEdit">確定</el-button>
-      </div>
-    </el-dialog>
+          </el-form>
+          <div slot="footer" class="dialog-footer">
+            <el-button @click="editDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="submitEdit">確定</el-button>
+          </div>
+        </el-dialog>
       </el-tab-pane>
 
       <!-- 分類管理頁籤 -->
       <el-tab-pane label="分類管理" name="categories">
-        <CategoryManagement />
+        <CategoryManagement/>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -464,13 +579,16 @@ import {
   updateManagement,
   exportManagement,
   stockIn,
-  stockOut
+  stockOut,
+  importData,
+  createImportTask,
+  downloadTemplate
 } from "@/api/inventory/management"
-import { listCategory } from "@/api/inventory/category"
-import { createRefreshTask } from "@/api/inventory/scan"
+import {listCategory} from "@/api/inventory/category"
+import {createRefreshTask} from "@/api/inventory/scan"
 import ImageUpload from '@/components/ImageUpload'
 import ProgressDialog from '@/components/ProgressDialog'
-import { getImageUrl } from '@/utils/image'
+import {getImageUrl} from '@/utils/image'
 import CategoryManagement from './components/CategoryManagement'
 
 export default {
@@ -563,7 +681,23 @@ export default {
         ]
       },
       // 分類列表
-      categoryList: []
+      categoryList: [],
+      // 匯入相關數據
+      importDialogVisible: false,
+      importLoading: false,
+      fileList: [],
+      categoryOptions: [],
+      importForm: {
+        file: null,
+        updateSupport: false,
+        defaultCategoryId: null,
+        defaultUnit: ''
+      },
+      importRules: {
+        file: [
+          {required: true, message: '請選擇要匯入的Excel檔案', trigger: 'change'}
+        ]
+      }
     };
   },
   computed: {
@@ -847,8 +981,217 @@ export default {
     getImageUrl,
     /** 取得分類列表 */
     getCategoryList() {
-      listCategory({ status: '0' }).then(response => {
+      listCategory({status: '0'}).then(response => {
         this.categoryList = response.rows || [];
+        this.categoryOptions = response.rows || [];
+      });
+    },
+    /** 匯入操作 */
+    handleImport() {
+      this.importDialogVisible = true;
+      this.fileList = [];
+      this.importForm = {
+        file: null,
+        updateSupport: false,
+        defaultCategoryId: null,
+        defaultUnit: ''
+      };
+    },
+    /** 文件變更處理 */
+    handleFileChange(file, fileList) {
+      this.fileList = fileList;
+      this.importForm.file = file.raw;
+    },
+    /** 文件移除處理 */
+    handleFileRemove() {
+      this.fileList = [];
+      this.importForm.file = null;
+    },
+    /** 下載範本 */
+    downloadTemplate() {
+      downloadTemplate().then(response => {
+        // 處理blob下載
+        const blob = new Blob([response], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = '物品匯入範本.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        this.$modal.msgSuccess("範本下載成功");
+      }).catch(error => {
+        console.error('下載範本失敗:', error);
+        this.$modal.msgError("範本下載失敗");
+      });
+    },
+    /** 提交匯入 */
+    submitImport() {
+      this.$refs.importFormRef.validate(valid => {
+        if (valid) {
+          if (!this.importForm.file) {
+            this.$modal.msgError("請選擇要匯入的檔案");
+            return;
+          }
+
+          this.importLoading = true;
+
+          // 建立匯入任務
+          createImportTask(
+            this.importForm.file,
+            this.importForm.updateSupport,
+            this.importForm.defaultCategoryId,
+            this.importForm.defaultUnit
+          ).then(response => {
+            if (response.code === 200) {
+              const taskId = response.taskId;
+              const rowCount = response.rowCount || 0;
+
+              if (taskId) {
+                // 關閉匯入對話框
+                this.importDialogVisible = false;
+                this.importLoading = false;
+
+                // 標記對話框是否被最小化
+                let dialogMinimized = false;
+
+                // 開啟進度對話框
+                this.$refs.progressDialog.show({
+                  title: `物品匯入進度 - ${rowCount} 筆資料`,
+                  message: '準備中...',
+                  showLogs: true,
+                  onMinimize: () => {
+                    dialogMinimized = true;
+                    this.$notify.info({
+                      title: '背景執行中',
+                      message: `正在背景匯入 ${rowCount} 筆資料...`,
+                      duration: 3000
+                    });
+                  }
+                });
+
+                // 建立SSE連線（使用環境變數適配環境）
+                const baseURL = import.meta.env.VITE_APP_BASE_API || '';
+                const eventSource = new EventSource(`${baseURL}/inventory/management/importData/subscribe/${taskId}`);
+
+                // 標記連線是否正常完成（避免正常關閉觸發錯誤處理）
+                let normalClose = false;
+
+                // 監聽連線成功事件
+                eventSource.addEventListener('connected', (event) => {
+                  console.log('SSE 連線成功');
+                });
+
+                // 監聽進度事件
+                eventSource.addEventListener('progress', (event) => {
+                  try {
+                    const data = JSON.parse(event.data);
+                    // 只有對話框未最小化時才更新進度
+                    if (!dialogMinimized) {
+                      this.$refs.progressDialog.updateProgress(data.progress, data.message);
+                    }
+                  } catch (error) {
+                    console.error('解析進度事件失敗', error);
+                  }
+                });
+
+                // 監聽成功事件
+                eventSource.addEventListener('success', (event) => {
+                  try {
+                    const data = JSON.parse(event.data);
+                    normalClose = true;
+                    eventSource.close();
+
+                    // 如果對話框已最小化，使用通知提示
+                    if (dialogMinimized) {
+                      this.$notify.success({
+                        title: '✅ 匯入完成',
+                        message: `成功匯入 ${rowCount} 筆資料`,
+                        duration: 8000
+                      });
+                    } else {
+                      // 否則在對話框中顯示
+                      this.$refs.progressDialog.setSuccess(
+                        '匯入完成',
+                        data.message || '資料匯入成功'
+                      );
+                    }
+
+                    // 重新整理列表
+                    this.getList();
+                  } catch (error) {
+                    console.error('處理成功事件失敗', error);
+                  }
+                });
+
+                // 監聽錯誤事件
+                eventSource.addEventListener('error', (event) => {
+                  try {
+                    const data = JSON.parse(event.data);
+                    normalClose = true;
+                    eventSource.close();
+
+                    const errorMsg = data.message || '資料匯入失敗';
+
+                    // 如果對話框已最小化，使用通知提示
+                    if (dialogMinimized) {
+                      this.$notify.error({
+                        title: '❌ 匯入失敗',
+                        message: errorMsg,
+                        duration: 10000
+                      });
+                    } else {
+                      // 否則在對話框中顯示
+                      this.$refs.progressDialog.setError('匯入失敗', errorMsg);
+                    }
+                  } catch (error) {
+                    console.error('處理錯誤事件失敗', error);
+                  }
+                });
+
+                eventSource.onerror = (error) => {
+                  if (normalClose) {
+                    console.log('SSE 連線正常關閉');
+                    return;
+                  }
+
+                  console.error('SSE連線錯誤:', error);
+                  eventSource.close();
+
+                  // 如果對話框已最小化，使用通知提示
+                  if (dialogMinimized) {
+                    this.$notify.error({
+                      title: '❌ 連線錯誤',
+                      message: '無法連接到進度服務',
+                      duration: 5000
+                    });
+                  } else {
+                    this.$refs.progressDialog.setError('連線錯誤', '無法連接到進度服務');
+                  }
+                };
+
+                // 儲存SSE連線以便清理
+                if (!this.sseConnections) {
+                  this.sseConnections = new Map();
+                }
+                this.sseConnections.set(taskId, eventSource);
+
+              } else {
+                this.importLoading = false;
+                this.$modal.msgError("無法取得任務ID");
+              }
+            } else {
+              this.importLoading = false;
+              this.$modal.msgError(response.msg || "建立匯入任務失敗");
+            }
+          }).catch(error => {
+            this.importLoading = false;
+            console.error('建立匯入任務失敗:', error);
+          });
+        }
       });
     },
     /** Tab 切換事件（重新整理資料） */
@@ -904,7 +1247,7 @@ export default {
       ).then(() => {
         // 1. 建立任務並取得 taskId
         createRefreshTask(itemId).then(response => {
-          const taskId = response.data;
+          const taskId = response.taskId;
           let dialogMinimized = false; // 標記對話框是否被最小化
 
           // 2. 開啟進度對話框
@@ -1326,7 +1669,6 @@ export default {
   background-color: rgba(0, 0, 0, 0.05);
   border-radius: 3px;
 }
-
 
 
 </style>

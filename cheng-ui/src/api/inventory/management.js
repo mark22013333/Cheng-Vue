@@ -96,3 +96,54 @@ export function stockCheck(data) {
     data: data
   })
 }
+
+// 匯入物品資料
+export function importData(file, updateSupport, defaultCategoryId, defaultUnit) {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('updateSupport', updateSupport)
+  formData.append('defaultCategoryId', defaultCategoryId)
+  formData.append('defaultUnit', defaultUnit)
+
+  return request({
+    url: '/inventory/management/importData',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+// 建立匯入任務（支援SSE進度顯示）
+export function createImportTask(file, updateSupport, defaultCategoryId, defaultUnit) {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('updateSupport', updateSupport || false)
+  
+  // 只有在有值時才傳遞（避免傳遞空字串導致後端驗證失敗）
+  if (defaultCategoryId) {
+    formData.append('defaultCategoryId', defaultCategoryId)
+  }
+  if (defaultUnit) {
+    formData.append('defaultUnit', defaultUnit)
+  }
+
+  return request({
+    url: '/inventory/management/importData/create',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+// 下載匯入範本
+export function downloadTemplate() {
+  return request({
+    url: '/inventory/management/downloadTemplate',
+    method: 'post',
+    responseType: 'blob'
+  })
+}

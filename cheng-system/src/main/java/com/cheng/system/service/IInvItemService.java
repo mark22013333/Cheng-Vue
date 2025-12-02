@@ -1,6 +1,10 @@
 package com.cheng.system.service;
 
 import com.cheng.system.domain.InvItem;
+import com.cheng.system.dto.ImportTaskResult;
+import com.cheng.system.dto.InvItemImportDTO;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -131,4 +135,37 @@ public interface IInvItemService {
      * @return 刪除結果訊息
      */
     String safeDeleteInvItemByItemIds(Long[] itemIds);
+
+    /**
+     * 建立匯入任務並返回任務資訊
+     *
+     * @param file              上傳的Excel檔案
+     * @param updateSupport     是否更新支援
+     * @param defaultCategoryId 預設分類ID
+     * @param defaultUnit       預設單位
+     * @return 任務資訊（包含taskId和rowCount）
+     */
+    ImportTaskResult createImportTask(MultipartFile file, Boolean updateSupport, Long defaultCategoryId, String defaultUnit);
+
+    /**
+     * 異步執行匯入任務
+     * 
+     * @param taskId 任務ID
+     */
+    void asyncImportItems(String taskId);
+
+    /**
+     * 下載匯入範本
+     *
+     * @param response HTTP響應
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 匯入物品資料
+     *
+     * @param importDTO 匯入DTO
+     * @return 匯入結果
+     */
+    String importItems(InvItemImportDTO importDTO);
 }
