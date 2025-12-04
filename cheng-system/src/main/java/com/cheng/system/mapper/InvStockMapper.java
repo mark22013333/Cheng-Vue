@@ -140,6 +140,22 @@ public interface InvStockMapper {
     int updateReturnedQty(@Param("itemId") Long itemId, @Param("quantity") Integer quantity);
 
     /**
+     * 更新預約數量
+     *
+     * @param itemId 物品ID
+     * @param quantity 數量（正數表示增加，負數表示減少）
+     * @return 結果
+     */
+    @Update("update inv_stock " +
+            "set reserved_qty = case " +
+            "    when reserved_qty + #{quantity} < 0 then 0 " +
+            "    else reserved_qty + #{quantity} " +
+            "end, " +
+            "    update_time   = now() " +
+            "where item_id = #{itemId}")
+    int updateReservedQty(@Param("itemId") Long itemId, @Param("quantity") Integer quantity);
+
+    /**
      * 刪除庫存
      *
      * @param stockId 庫存主鍵

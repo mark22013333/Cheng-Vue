@@ -130,6 +130,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="lastInTime"       column="last_in_time"      />
         <result property="lastOutTime"      column="last_out_time"     />
         <result property="stockUpdateTime"  column="stock_update_time" />
+        <result property="version"          column="version"           />
     </resultMap>
 
     <sql id="selectItemWithStockVo">
@@ -137,7 +138,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             i.item_id, i.item_code, i.item_name, i.category_id, c.category_name,
             i.barcode, i.qr_code, i.specification, i.unit, i.brand, i.model,
             i.purchase_price, i.current_price, i.supplier, i.min_stock, i.max_stock,
-            i.location, i.description, i.image_url, i.status, i.remark,
+            i.location, i.description, i.image_url, i.status, i.remark, i.version,
             s.stock_id, s.total_quantity, s.available_qty, s.borrowed_qty,
             s.reserved_qty, s.damaged_qty, s.lost_qty, s.last_in_time, s.last_out_time,
             s.update_time as stock_update_time
@@ -322,5 +323,31 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{itemId}
         </foreach>
     </delete>
+
+    <!-- 預約物品（使用樂觀鎖） -->
+    <update id="reserveItem">
+        UPDATE inv_stock 
+        SET available_qty = CASE 
+                WHEN available_qty >= #{quantity} THEN available_qty - #{quantity}
+                ELSE available_qty
+            END,
+            reserved_qty = CASE 
+                WHEN available_qty >= #{quantity} THEN reserved_qty + #{quantity}
+                ELSE reserved_qty
+            END,
+            update_time = NOW()
+        WHERE item_id = #{itemId}
+          AND available_qty >= #{quantity}
+    </update>
+    
+    <!-- 更新物品版本（用於樂觀鎖） -->
+    <update id="updateItemVersion">
+        UPDATE inv_item 
+        SET version = version + 1,
+            update_by = #{userId},
+            update_time = NOW()
+        WHERE item_id = #{itemId}
+          AND version = #{version}
+    </update>
 
 </mapper>

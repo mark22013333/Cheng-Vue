@@ -147,3 +147,12 @@ export function downloadTemplate() {
     responseType: 'blob'
   })
 }
+
+// 預約物品
+export function reserveItem(data) {
+  return request({
+    url: '/inventory/management/reserve',
+    method: 'post',
+    data: data
+  })
+}

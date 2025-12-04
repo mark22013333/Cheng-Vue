@@ -2,6 +2,7 @@ package com.cheng.line.service;
 
 import com.cheng.line.domain.LineConfig;
 import com.cheng.line.enums.ChannelType;
+import com.cheng.line.vo.ConnectionTestVO;
 
 import java.util.List;
 
@@ -14,7 +15,7 @@ public interface ILineConfigService {
 
 
     String WEBHOOK = "/webhook/line";
-    
+
     /**
      * 查詢 LINE 頻道設定
      *
@@ -115,7 +116,7 @@ public interface ILineConfigService {
      * @param configId 設定ID
      * @return 測試結果
      */
-    com.cheng.line.vo.ConnectionTestVO testLineConnection(Integer configId);
+    ConnectionTestVO testLineConnection(Integer configId);
 
     /**
      * 測試 Webhook 端點
@@ -155,9 +156,9 @@ public interface ILineConfigService {
      * 呼叫 LINE Messaging API 將 Webhook URL 設定到 LINE Platform
      * 不從資料庫讀取，直接使用傳入的參數
      *
-     * @param webhookUrl Webhook URL
+     * @param webhookUrl         Webhook URL
      * @param channelAccessToken Channel Access Token
-     * @param configId 設定ID（可選，用於更新資料庫狀態）
+     * @param configId           設定ID（可選，用於更新資料庫狀態）
      */
     void setLineWebhookEndpointWithParams(String webhookUrl, String channelAccessToken, Integer configId);
 

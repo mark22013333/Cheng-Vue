@@ -140,6 +140,11 @@ public class InvItemWithStockDTO implements Serializable {
      * 備註
      */
     private String remark;
+    
+    /**
+     * 樂觀鎖版本號
+     */
+    private Integer version;
 
     // ========== 庫存資訊 ==========
     /**

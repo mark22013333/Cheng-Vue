@@ -8,6 +8,7 @@ import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.poi.ExcelUtil;
+import com.cheng.common.event.ReservationEvent;
 import com.cheng.system.domain.InvItem;
 import com.cheng.system.dto.ImportTaskResult;
 import com.cheng.system.dto.InvItemWithStockDTO;
@@ -19,12 +20,15 @@ import com.cheng.framework.sse.SseManager;
 import com.cheng.framework.sse.SseEvent;
 import com.cheng.system.service.impl.InvItemServiceImpl;
 
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.context.event.EventListener;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -157,7 +161,7 @@ public class InvManagementController extends BaseController {
         // 建立匯入任務並返回taskId
         ImportTaskResult taskResult = invItemService.createImportTask(file, updateSupport, defaultCategoryId, defaultUnit);
 
-        return success("匯入任務已啟動，準備匯入 " + taskResult.rowCount() + " 筆資料，taskId: " + taskResult.taskId());
+        return success("匯入任務已啟動，準備匯入 " + taskResult.getRowCount() + " 筆資料，taskId: " + taskResult.getTaskId());
     }
 
 
@@ -300,6 +304,41 @@ public class InvManagementController extends BaseController {
         }
     }
 
+    /**
+     * 預約物品
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:management:reserve')")
+    @Log(title = "物品預約", businessType = BusinessType.INSERT)
+    @PostMapping("/reserve")
+    public AjaxResult reserveItem(@Validated @RequestBody com.cheng.system.domain.vo.ReserveRequest request) {
+        try {
+            com.cheng.system.domain.vo.ReserveResult result = invItemService.reserveItem(request, getUserId());
+            return success(result);
+        } catch (Exception e) {
+            log.error("物品預約失敗", e);
+            return error(e.getMessage());
+        }
+    }
+
+    /**
+     * 訂閱預約廣播（SSE）
+     * 使用 SseManager 訂閱頻道
+     */
+    @Anonymous
+    @GetMapping(value = "/subscribe/reserve", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribeReserveUpdates(@RequestParam String taskId) {
+        log.info("========== SSE 預約廣播訂閱請求 - taskId: {} ==========", taskId);
+
+        // 使用 taskId 作為訂閱 ID（前端產生的 UUID）
+        // 使用 SseManager 訂閱物品預約頻道（超時: 5分鐘）
+        SseEmitter emitter = sseManager.subscribe(SseChannels.ITEM_RESERVE, taskId, 300000L);
+
+        // 將 SseManager 實例傳遞給 Service 層用於廣播
+        InvItemServiceImpl.SSE_EMITTER_MAP.put("sse-manager", sseManager);
+
+        return emitter;
+    }
+
 
     /**
      * 下載匯入範本
@@ -338,12 +377,12 @@ public class InvManagementController extends BaseController {
             // 調用 service 建立任務
             ImportTaskResult taskResult = invItemService.createImportTask(file, updateSupport, defaultCategoryId, defaultUnit);
 
-            log.info("匯入任務已建立 - taskId: {}, rowCount: {}", taskResult.taskId(), taskResult.rowCount());
+            log.info("匯入任務已建立 - taskId: {}, rowCount: {}", taskResult.getTaskId(), taskResult.getRowCount());
 
             // 返回響應（包含taskId和rowCount）
             AjaxResult result = success("匯入任務已建立");
-            result.put("taskId", taskResult.taskId());
-            result.put("rowCount", taskResult.rowCount());
+            result.put("taskId", taskResult.getTaskId());
+            result.put("rowCount", taskResult.getRowCount());
             return result;
         } catch (Exception e) {
             log.error("建立匯入任務失敗", e);
@@ -376,7 +415,7 @@ public class InvManagementController extends BaseController {
                         // 錯誤 - 發送事件並立即停止輪詢
                         SseEvent event = SseEvent.error(message);
                         sseManager.send(SseChannels.ITEM_IMPORT, taskId, event);
-                        
+
                         // 立即清除進度，停止輪詢
                         InvItemServiceImpl.PROGRESS_MAP.remove(taskId);
 
@@ -389,7 +428,7 @@ public class InvManagementController extends BaseController {
                         // 完成 - 發送事件並立即停止輪詢
                         SseEvent event = SseEvent.success(message, null);
                         sseManager.send(SseChannels.ITEM_IMPORT, taskId, event);
-                        
+
                         // 立即清除進度，停止輪詢
                         InvItemServiceImpl.PROGRESS_MAP.remove(taskId);
 
@@ -436,5 +475,37 @@ public class InvManagementController extends BaseController {
         private Long itemId;
         private Integer actualQuantity;
         private String reason;
+    }
+
+    /**
+     * 監聽預約事件並廣播 SSE 更新
+     */
+    @Async
+    @EventListener
+    public void handleReservationEvent(ReservationEvent event) {
+        try {
+            log.info("收到預約事件 - itemId: {}, eventType: {}, userId: {}",
+                    event.getItemId(), event.getEventType(), event.getUserId());
+
+            // 建立廣播事件
+            SseEvent sseEvent = SseEvent.success(event.getEventType(), Map.of(
+                    "itemId", event.getItemId(),
+                    "userId", event.getUserId(),
+                    "borrowId", event.getBorrowId(),
+                    "message", event.getMessage(),
+                    "availableQuantity", event.getAvailableQuantity(),
+                    "reservedQuantity", event.getReservedQuantity(),
+                    "timestamp", event.getEventTime().getTime()
+            ));
+
+            // 廣播到所有訂閱者
+            sseManager.broadcast(SseChannels.ITEM_RESERVE, sseEvent);
+
+            log.info("預約事件廣播成功 - itemId: {}, eventType: {}",
+                    event.getItemId(), event.getEventType());
+
+        } catch (Exception e) {
+            log.error("處理預約事件失敗 - itemId: {}", event.getItemId(), e);
+        }
     }
 }

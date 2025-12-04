@@ -154,13 +154,13 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width" fixed="right">
         <template #default="scope">
-          <!-- 只有待審核狀態可以修改 -->
+          <!-- 只有待審核狀態可以修改，但預約記錄除外 -->
           <el-button
             link
             type="primary"
             icon="Edit"
             @click="handleUpdate(scope.row)"
-            v-if="scope.row.status === '0'"
+            v-if="scope.row.status === '0' && scope.row.reserveStatus !== 1"
             v-hasPermi="['inventory:borrow:edit']"
           >修改
           </el-button>
@@ -174,13 +174,13 @@
             v-hasPermi="['inventory:borrow:approve']"
           >審核
           </el-button>
-          <!-- 已借出、部分歸還、逾期狀態可以歸還 -->
+          <!-- 已借出、部分歸還、逾期狀態可以歸還（只有借出人本人或管理員）-->
           <el-button
             link
             type="primary"
             icon="RefreshLeft"
             @click="handleReturn(scope.row)"
-            v-if="scope.row.status === '1' || scope.row.status === '4' || scope.row.status === '5'"
+            v-if="(scope.row.status === '1' || scope.row.status === '4' || scope.row.status === '5') && canReturn(scope.row)"
             v-hasPermi="['inventory:borrow:return']"
           >歸還
           </el-button>
@@ -356,6 +356,8 @@ import {
   getReturnRecords
 } from "@/api/inventory/borrow";
 import {listManagement} from "@/api/inventory/management";
+import { mapState } from 'pinia';
+import useUserStore from '@/store/modules/user';
 
 export default {
   name: "Borrow",
@@ -442,6 +444,13 @@ export default {
       }
     };
   },
+  computed: {
+    ...mapState(useUserStore, ['id', 'roles']),
+    /** 判斷當前使用者是否為管理員 */
+    isAdmin() {
+      return this.roles && this.roles.includes('admin');
+    }
+  },
   created() {
     this.getList();
     this.getItemList();
@@ -453,6 +462,15 @@ export default {
     this.getBorrowStatistics();
   },
   methods: {
+    /** 判斷是否可以歸還（只有借出人本人或管理員可以歸還）*/
+    canReturn(row) {
+      // 管理員可以歸還任何人的借出
+      if (this.isAdmin) {
+        return true;
+      }
+      // 借出人本人可以歸還自己的借出
+      return row.borrowerId === this.id;
+    },
     /** 查詢借出記錄列表 */
     getList() {
       this.loading = true;

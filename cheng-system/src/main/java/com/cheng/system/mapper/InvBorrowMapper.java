@@ -1,7 +1,9 @@
 package com.cheng.system.mapper;
 
 import com.cheng.system.domain.InvBorrow;
+import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -131,4 +133,45 @@ public interface InvBorrowMapper {
      * @return 未完成的借出記錄列表
      */
     List<InvBorrow> selectActiveBorrowsByItemId(Long itemId);
+    
+    /**
+     * 查詢重疊時間段的預約記錄
+     * 
+     * @param itemId 物品ID
+     * @param startDate 開始日期
+     * @param endDate 結束日期
+     * @return 重疊的預約記錄列表
+     */
+    List<InvBorrow> selectOverlappingReservations(@Param("itemId") Long itemId, 
+                                                @Param("startDate") Date startDate, 
+                                                @Param("endDate") Date endDate);
+    
+    /**
+     * 計算重疊時間段的總預約數量
+     * 
+     * @param itemId 物品ID
+     * @param startDate 開始日期
+     * @param endDate 結束日期
+     * @return 重疊時間段的總預約數量
+     */
+    Integer sumOverlappingReservationQuantity(@Param("itemId") Long itemId, 
+                                             @Param("startDate") Date startDate, 
+                                             @Param("endDate") Date endDate);
+    
+    /**
+     * 查詢用戶的待審核預約
+     * 
+     * @param userId 用戶ID
+     * @param itemId 物品ID
+     * @return 待審核的預約記錄列表
+     */
+    List<InvBorrow> selectPendingReservationsByUser(@Param("userId") Long userId, 
+                                                   @Param("itemId") Long itemId);
+    
+    /**
+     * 查詢所有過期的預約
+     * 
+     * @return 過期的預約記錄列表
+     */
+    List<InvBorrow> selectExpiredReservations();
 }

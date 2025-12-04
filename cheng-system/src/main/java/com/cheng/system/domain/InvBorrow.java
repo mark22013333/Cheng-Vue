@@ -148,6 +148,27 @@ public class InvBorrow extends BaseEntity {
     private Date approveTime;
 
     /**
+     * 預約狀態
+     * 0=正常借出, 1=待審核預約, 2=預約通過, 3=預約拒絕, 4=預約取消
+     */
+    @Excel(name = "預約狀態", readConverterExp = "0=正常借出,1=待審核預約,2=預約通過,3=預約拒絕,4=預約取消")
+    private Integer reserveStatus;
+
+    /**
+     * 預約開始日期
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @Excel(name = "預約開始日期", width = 30, dateFormat = "yyyy-MM-dd")
+    private Date reserveStartDate;
+
+    /**
+     * 預約結束日期
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @Excel(name = "預約結束日期", width = 30, dateFormat = "yyyy-MM-dd")
+    private Date reserveEndDate;
+
+    /**
      * 借用目的
      */
     @Excel(name = "借用目的")

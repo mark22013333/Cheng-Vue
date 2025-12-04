@@ -1,6 +1,7 @@
 package com.cheng.system.service.impl;
 
 import com.cheng.common.utils.DateUtils;
+import com.cheng.common.utils.SecurityUtils;
 import com.cheng.system.domain.InvBorrow;
 import com.cheng.system.domain.InvItem;
 import com.cheng.system.domain.InvReturn;
@@ -134,6 +135,11 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
             throw new RuntimeException("借出記錄不存在");
         }
 
+        // 🚨 安全檢查：禁止修改預約狀態的記錄
+        if (oldBorrow.getReserveStatus() != null && oldBorrow.getReserveStatus() == 1) {
+            throw new RuntimeException("預約記錄不允許修改，請先取消預約或等待審核");
+        }
+
         // 檢查是否修改了借出數量
         if (invBorrow.getQuantity() != null && !invBorrow.getQuantity().equals(oldBorrow.getQuantity())) {
             int quantityDiff = invBorrow.getQuantity() - oldBorrow.getQuantity();
@@ -221,6 +227,15 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
         if (borrow == null) {
             throw new RuntimeException("借出記錄不存在");
         }
+        
+        // 🚨 權限檢查：只有借出人本人或管理員可以歸還
+        Long currentUserId = SecurityUtils.getUserId();
+        boolean isAdmin = SecurityUtils.getLoginUser().getUser().isAdmin();
+        
+        if (!isAdmin && !currentUserId.equals(borrow.getBorrowerId())) {
+            log.warn("權限不足 - 使用者ID: {} 嘗試歸還 借出人ID: {} 的物品", currentUserId, borrow.getBorrowerId());
+            throw new RuntimeException("權限不足：只有借出人本人或管理員可以歸還物品");
+        }
 
         // 檢查歸還數量
         int remainingQty = borrow.getQuantity() - borrow.getReturnQuantity();
@@ -258,9 +273,11 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
                 stock.setLostQty((currentLostQty != null ? currentLostQty : 0) + returnQuantity);
                 log.info("處理遺失物品 - 新總數量: {}, 新遺失數量: {}", stock.getTotalQuantity(), stock.getLostQty());
             } else if ("1".equals(isDamaged) || "damaged".equals(conditionDesc) || "損壞".equals(conditionDesc)) {
-                // 損壞：增加損壞數量，可用數量不變
-                log.info("處理損壞物品 - 原損壞數量: {}, 新損壞數量: {}", stock.getDamagedQty(), stock.getDamagedQty() + returnQuantity);
+                // 損壞：增加損壞數量，同時增加可用數量（損壞的物品仍可使用或維修後使用）
+                log.info("處理損壞物品 - 原損壞數量: {}, 原可用數量: {}", stock.getDamagedQty(), stock.getAvailableQty());
                 stock.setDamagedQty(stock.getDamagedQty() + returnQuantity);
+                stock.setAvailableQty(stock.getAvailableQty() + returnQuantity);
+                log.info("處理損壞物品 - 新損壞數量: {}, 新可用數量: {}", stock.getDamagedQty(), stock.getAvailableQty());
             } else {
                 // 完好：增加可用數量
                 log.info("處理完好物品 - 原可用數量: {}, 新可用數量: {}", stock.getAvailableQty(), stock.getAvailableQty() + returnQuantity);
@@ -337,22 +354,41 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
             throw new RuntimeException("只能審核待審核狀態的借出申請");
         }
 
+        // 加入日誌追蹤
+        log.info("審核借出申請 - borrowId: {}, isApproved: {}, reserveStatus: {}, status: {}", 
+                borrowId, isApproved, borrow.getReserveStatus(), borrow.getStatus());
+        
         borrow.setApproverId(approverId);
         borrow.setApproverName(approverName);
         borrow.setApproveTime(DateUtils.getNowDate());
         borrow.setUpdateTime(DateUtils.getNowDate());
 
+        InvStock stock = invStockMapper.selectInvStockByItemId(borrow.getItemId());
         if (isApproved) {
-            // 審核通過：檢查庫存並扣減
-            if (!checkItemAvailable(borrow.getItemId(), borrow.getQuantity())) {
-                throw new RuntimeException("物品庫存不足，無法審核通過");
-            }
-
-            // 更新庫存：扣減可用數量，增加借出數量
-            InvStock stock = invStockMapper.selectInvStockByItemId(borrow.getItemId());
+            // 更新庫存
             if (stock != null) {
-                stock.setAvailableQty(stock.getAvailableQty() - borrow.getQuantity());
-                stock.setBorrowedQty(stock.getBorrowedQty() + borrow.getQuantity());
+                log.info("當前庫存狀態 - available: {}, reserved: {}, borrowed: {}", 
+                        stock.getAvailableQty(), stock.getReservedQty(), stock.getBorrowedQty());
+                
+                // 判斷是否為預約記錄（reserve_status = 1 代表待審核預約）
+                if (borrow.getReserveStatus() != null && borrow.getReserveStatus() == 1) {
+                    log.info("處理預約記錄 - 從 reserved_qty 轉移到 borrowed_qty");
+                    // 預約記錄：庫存已在預約時扣除，只需從 reserved_qty 轉移到 borrowed_qty
+                    stock.setReservedQty(stock.getReservedQty() - borrow.getQuantity());
+                    stock.setBorrowedQty(stock.getBorrowedQty() + borrow.getQuantity());
+                    
+                    // 更新預約狀態為已通過
+                    borrow.setReserveStatus(2); // 2=預約通過
+                } else {
+                    // 一般借出記錄：檢查庫存並扣減
+                    if (!checkItemAvailable(borrow.getItemId(), borrow.getQuantity())) {
+                        throw new RuntimeException("物品庫存不足，無法審核通過");
+                    }
+                    
+                    stock.setAvailableQty(stock.getAvailableQty() - borrow.getQuantity());
+                    stock.setBorrowedQty(stock.getBorrowedQty() + borrow.getQuantity());
+                }
+                
                 stock.setUpdateTime(DateUtils.getNowDate());
                 invStockMapper.updateInvStock(stock);
             }
@@ -360,7 +396,22 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
             // 設定為已借出狀態
             borrow.setStatusEnum(BorrowStatus.BORROWED);
         } else {
-            // 審核拒絕：不扣減庫存
+            // 審核拒絕
+            if (stock != null) {
+                // 判斷是否為預約記錄
+                if (borrow.getReserveStatus() != null && borrow.getReserveStatus() == 1) {
+                    // 預約記錄被拒絕：歸還預留的庫存
+                    stock.setReservedQty(stock.getReservedQty() - borrow.getQuantity());
+                    stock.setAvailableQty(stock.getAvailableQty() + borrow.getQuantity());
+                    stock.setUpdateTime(DateUtils.getNowDate());
+                    invStockMapper.updateInvStock(stock);
+                    
+                    // 更新預約狀態為已拒絕
+                    borrow.setReserveStatus(3); // 3=預約拒絕
+                }
+                // 一般借出記錄被拒絕：不需要恢復庫存（因為還沒扣減）
+            }
+            
             borrow.setStatusEnum(BorrowStatus.REJECTED);
         }
 
@@ -381,18 +432,24 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
         for (Long borrowId : borrowIds) {
             InvBorrow borrow = invBorrowMapper.selectInvBorrowByBorrowId(borrowId);
             if (borrow != null) {
-                // 只有已借出、部分歸還、逾期的記錄需要恢復庫存
-                // 待審核和審核拒絕的記錄不需要恢復（因為沒有扣減過）
-                if (borrow.needsReturn()) {
-                    InvStock stock = invStockMapper.selectInvStockByItemId(borrow.getItemId());
-                    if (stock != null) {
-                        // 恢復可用數量，減少借出數量
+                InvStock stock = invStockMapper.selectInvStockByItemId(borrow.getItemId());
+                if (stock != null) {
+                    // 判斷記錄類型並恢復庫存
+                    if (borrow.getReserveStatus() != null && borrow.getReserveStatus() == 1 && borrow.isPending()) {
+                        // 待審核的預約記錄：恢復預留的庫存
+                        stock.setReservedQty(stock.getReservedQty() - borrow.getQuantity());
+                        stock.setAvailableQty(stock.getAvailableQty() + borrow.getQuantity());
+                        stock.setUpdateTime(DateUtils.getNowDate());
+                        invStockMapper.updateInvStock(stock);
+                    } else if (borrow.needsReturn()) {
+                        // 已借出、部分歸還、逾期的記錄：恢復借出數量
                         int remainingQty = borrow.getQuantity() - borrow.getReturnQuantity();
                         stock.setAvailableQty(stock.getAvailableQty() + remainingQty);
                         stock.setBorrowedQty(stock.getBorrowedQty() - remainingQty);
                         stock.setUpdateTime(DateUtils.getNowDate());
                         invStockMapper.updateInvStock(stock);
                     }
+                    // 待審核的一般借出記錄和已拒絕的記錄不需要恢復（沒有扣減過庫存）
                 }
             }
         }

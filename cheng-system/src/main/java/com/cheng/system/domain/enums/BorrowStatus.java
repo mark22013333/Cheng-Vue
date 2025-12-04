@@ -1,10 +1,15 @@
 package com.cheng.system.domain.enums;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 /**
  * 借出記錄狀態列舉
  *
  * @author cheng
  */
+@Getter
+@RequiredArgsConstructor
 public enum BorrowStatus {
     /**
      * 待審核
@@ -38,19 +43,6 @@ public enum BorrowStatus {
 
     private final String code;
     private final String description;
-
-    BorrowStatus(String code, String description) {
-        this.code = code;
-        this.description = description;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getDescription() {
-        return description;
-    }
 
     /**
      * 根據代碼取得狀態

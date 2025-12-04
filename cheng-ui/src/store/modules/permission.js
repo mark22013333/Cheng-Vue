@@ -52,13 +52,13 @@ const usePermissionStore = defineStore(
 
             // 新增動態路由
             asyncRoutes.forEach(route => {
-              // console.log('[路由調試] 添加動態路由:', route.path)
+              // console.log('[路由調試] 新增動態路由:', route.path)
               router.addRoute(route)
             })
 
             // 新增後端返回的路由
             rewriteRoutes.forEach(route => {
-              // console.log('[路由調試] 添加後端路由:', route.path, '組件:', route.component)
+              // console.log('[路由調試] 新增後端路由:', route.path, '組件:', route.component)
               // console.log('[路由調試] 子路由數量:', route.children?.length || 0)
               if (route.children && route.children.length > 0) {
                 route.children.forEach(child => {
