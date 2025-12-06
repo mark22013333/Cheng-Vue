@@ -52,13 +52,13 @@ const usePermissionStore = defineStore(
 
             // 新增動態路由
             asyncRoutes.forEach(route => {
-              // console.log('[路由調試] 添加動態路由:', route.path)
+              // console.log('[路由調試] 新增動態路由:', route.path)
               router.addRoute(route)
             })
 
             // 新增後端返回的路由
             rewriteRoutes.forEach(route => {
-              // console.log('[路由調試] 添加後端路由:', route.path, '組件:', route.component)
+              // console.log('[路由調試] 新增後端路由:', route.path, '組件:', route.component)
               // console.log('[路由調試] 子路由數量:', route.children?.length || 0)
               if (route.children && route.children.length > 0) {
                 route.children.forEach(child => {
@@ -84,6 +84,12 @@ const usePermissionStore = defineStore(
 // 遍歷後台傳來的路由字串，轉換為元件物件
 function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
   return asyncRouterMap.filter(route => {
+    // 跳過外部連結（以 http 開頭的路徑不是 Vue 路由）
+    if (route.path && route.path.startsWith('http')) {
+      console.log('[filterAsyncRouter] 🚫 Skipping external link:', route.path)
+      return false
+    }
+    
     // 修正路由名稱重複問題：Marketing -> User 與 System -> User 名稱衝突
     // 同時配合組件名稱 LineUser 以確保 keep-alive 生效
     if (route.path === 'line/user' && route.name === 'User') {

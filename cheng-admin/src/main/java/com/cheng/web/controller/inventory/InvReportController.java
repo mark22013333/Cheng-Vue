@@ -20,6 +20,8 @@ import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.enums.ScanResult;
 import com.cheng.common.enums.ScanType;
+import com.cheng.system.domain.enums.BorrowStatus;
+import com.cheng.system.domain.enums.StockRecordType;
 import com.cheng.system.domain.InvStock;
 import com.cheng.system.domain.InvBorrow;
 import com.cheng.system.domain.InvStockRecord;
@@ -87,10 +89,10 @@ public class InvReportController extends BaseController {
         List<InvBorrow> allList = invBorrowService.selectInvBorrowList(new InvBorrow());
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("totalBorrows", allList.size());
-        statistics.put("pendingBorrows", allList.stream().filter(b -> "0".equals(b.getStatus())).count());
-        statistics.put("approvedBorrows", allList.stream().filter(b -> "1".equals(b.getStatus())).count());
-        statistics.put("returnedBorrows", allList.stream().filter(b -> "3".equals(b.getStatus())).count());
-        statistics.put("overdueBorrows", invBorrowService.selectOverdueBorrowList().size());
+        statistics.put("pendingBorrows", allList.stream().filter(b -> BorrowStatus.PENDING.getCode().equals(b.getStatus())).count());
+        statistics.put("approvedBorrows", allList.stream().filter(b -> BorrowStatus.BORROWED.getCode().equals(b.getStatus())).count());
+        statistics.put("returnedBorrows", allList.stream().filter(b -> BorrowStatus.RETURNED.getCode().equals(b.getStatus())).count());
+        statistics.put("overdueBorrows", invBorrowService.selectOverdueBorrowList(null).size());
 
         TableDataInfo dataInfo = getDataTable(list);
         dataInfo.put("statistics", statistics);
@@ -110,9 +112,9 @@ public class InvReportController extends BaseController {
         List<InvStockRecord> allList = invStockRecordService.selectInvStockRecordList(new InvStockRecord());
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("totalRecords", allList.size());
-        statistics.put("inRecords", allList.stream().filter(r -> "1".equals(r.getRecordType())).count());
-        statistics.put("outRecords", allList.stream().filter(r -> "2".equals(r.getRecordType())).count());
-        statistics.put("checkRecords", allList.stream().filter(r -> "5".equals(r.getRecordType())).count());
+        statistics.put("inRecords", allList.stream().filter(r -> StockRecordType.IN.getCode().equals(r.getRecordType())).count());
+        statistics.put("outRecords", allList.stream().filter(r -> StockRecordType.OUT.getCode().equals(r.getRecordType())).count());
+        statistics.put("checkRecords", allList.stream().filter(r -> StockRecordType.CHECK.getCode().equals(r.getRecordType())).count());
 
         TableDataInfo dataInfo = getDataTable(list);
         dataInfo.put("statistics", statistics);
@@ -209,8 +211,8 @@ public class InvReportController extends BaseController {
         // 借出統計
         List<InvBorrow> borrowList = invBorrowService.selectInvBorrowList(new InvBorrow());
         dashboard.put("totalBorrows", borrowList.size());
-        dashboard.put("pendingBorrows", borrowList.stream().filter(b -> "0".equals(b.getStatus())).count());
-        dashboard.put("overdueBorrows", invBorrowService.selectOverdueBorrowList().size());
+        dashboard.put("pendingBorrows", borrowList.stream().filter(b -> BorrowStatus.PENDING.getCode().equals(b.getStatus())).count());
+        dashboard.put("overdueBorrows", invBorrowService.selectOverdueBorrowList(null).size());
 
         // 異動統計
         List<InvStockRecord> recordList = invStockRecordService.selectInvStockRecordList(new InvStockRecord());

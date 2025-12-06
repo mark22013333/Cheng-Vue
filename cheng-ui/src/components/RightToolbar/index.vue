@@ -7,7 +7,7 @@
       <el-tooltip class="item" effect="dark" content="重新整理" placement="top">
         <el-button circle icon="Refresh" @click="refresh()" />
       </el-tooltip>
-      <el-tooltip class="item" effect="dark" content="顯隱列" placement="top" v-if="Object.keys(columns).length > 0">
+      <el-tooltip class="item" effect="dark" content="顯示/隱藏(欄位)" placement="top" v-if="Object.keys(columns).length > 0">
         <el-button circle icon="Menu" @click="showColumn()" v-if="showColumnsType == 'transfer'"/>
         <el-dropdown trigger="click" :hide-on-click="false" style="padding-left: 12px" v-if="showColumnsType == 'checkbox'">
           <el-button circle icon="Menu" />
@@ -40,7 +40,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useTableConfig } from '@/composables/useTableConfig'
+import { ElMessage } from 'element-plus'
 
 const props = defineProps({
   /* 是否顯示檢索条件 */
@@ -48,7 +50,7 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  /* 顯隱列訊息（陣列格式、對象格式） */
+  /* 顯示/隱藏(欄位)訊息（陣列格式、對象格式） */
   columns: {
     type: [Array, Object],
     default: () => ({})
@@ -58,7 +60,7 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  /* 顯隱列類型（transfer穿梭框、checkbox複選框） */
+  /* 顯示/隱藏(欄位)類型（transfer穿梭框、checkbox複選框） */
   showColumnsType: {
     type: String,
     default: "checkbox"
@@ -68,6 +70,16 @@ const props = defineProps({
     type: Number,
     default: 10
   },
+  /* 頁面唯一標識（用於儲存配置） */
+  pageKey: {
+    type: String,
+    default: ''
+  },
+  /* 是否自動儲存欄位配置 */
+  autoSave: {
+    type: Boolean,
+    default: true
+  }
 })
 
 const emits = defineEmits(['update:showSearch', 'queryTable'])
@@ -118,15 +130,17 @@ function dataChange(data) {
       props.columns[key].visible = !data.includes(index)
     })
   }
+  // 觸發自動儲存
+  triggerAutoSave()
 }
 
-// 打開顯隱列dialog
+// 打開顯示/隱藏(欄位)dialog
 function showColumn() {
   open.value = true
 }
 
 if (props.showColumnsType == "transfer") {
-  // transfer穿梭顯隱列初始預設隱藏列
+  // transfer穿梭顯示/隱藏(欄位)初始預設隱藏列
   if (Array.isArray(props.columns)) {
     for (let item in props.columns) {
       if (props.columns[item].visible === false) {
@@ -149,6 +163,8 @@ function checkboxChange(event, key) {
   } else {
     props.columns[key].visible = event
   }
+  // 觸發自動儲存
+  triggerAutoSave()
 }
 
 // 切換全選/反選
@@ -159,7 +175,66 @@ function toggleCheckAll() {
   } else {
     Object.values(props.columns).forEach((col) => (col.visible = newValue))
   }
+  // 觸發自動儲存
+  triggerAutoSave()
 }
+
+// ============================================================
+// 表格欄位配置自動儲存功能
+// ============================================================
+
+const { saveConfig } = useTableConfig()
+
+// 防抖計時器
+let saveTimer = null
+
+// 觸發自動儲存（防抖 2 秒）
+function triggerAutoSave() {
+  if (!props.autoSave || !props.pageKey) {
+    return
+  }
+  
+  // 清除之前的計時器
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+  }
+  
+  // 設定新的計時器
+  saveTimer = setTimeout(() => {
+    handleSaveConfig()
+  }, 2000)
+}
+
+// 執行儲存配置
+async function handleSaveConfig() {
+  if (!props.pageKey || Object.keys(props.columns).length === 0) {
+    return
+  }
+  
+  try {
+    await saveConfig(props.pageKey, props.columns)
+    console.log(`✅ 表格欄位配置已自動儲存：${props.pageKey}`)
+  } catch (error) {
+    console.error('❌ 儲存表格欄位配置失敗：', error)
+  }
+}
+
+// 監聽 columns 變化，觸發自動儲存
+watch(
+  () => props.columns,
+  () => {
+    triggerAutoSave()
+  },
+  { deep: true }
+)
+
+// 組件掛載時，如果有 pageKey，載入配置
+onMounted(() => {
+  if (props.pageKey) {
+    console.log(`📋 表格欄位配置功能已啟用：${props.pageKey}`)
+    console.log('💡 提示：修改欄位顯示/隱藏後，會在 2 秒後自動儲存')
+  }
+})
 </script>
 
 <style lang='scss' scoped>

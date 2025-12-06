@@ -1,6 +1,14 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="借出單號" prop="borrowNo">
+        <el-input
+          v-model="queryParams.borrowNo"
+          placeholder="請輸入借出單號"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       <el-form-item label="物品名稱" prop="itemName">
         <el-input
           v-model="queryParams.itemName"
@@ -9,7 +17,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="借用人" prop="borrowerName">
+      <el-form-item label="借用人" prop="borrowerName" v-hasPermi="['inventory:borrow:all']">
         <el-input
           v-model="queryParams.borrowerName"
           placeholder="請輸入借用人"
@@ -30,6 +38,17 @@
       <el-form-item label="借出時間">
         <el-date-picker
           v-model="daterangeBorrow"
+          style="width: 240px"
+          value-format="YYYY-MM-DD"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="開始日期"
+          end-placeholder="結束日期"
+        ></el-date-picker>
+      </el-form-item>
+      <el-form-item label="歸還日期">
+        <el-date-picker
+          v-model="daterangeReturn"
           style="width: 240px"
           value-format="YYYY-MM-DD"
           type="daterange"
@@ -66,7 +85,7 @@
         >匯出
         </el-button>
       </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns" pageKey="inventory_borrow"></right-toolbar>
     </el-row>
 
     <!-- 借出統計卡片 -->
@@ -123,29 +142,29 @@
 
     <el-table v-loading="loading" :data="borrowList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="借出單號" align="center" prop="borrowNo" width="180" :show-overflow-tooltip="true"/>
-      <el-table-column label="物品名稱" align="center" prop="itemName"/>
-      <el-table-column label="物品編碼" align="center" prop="itemCode"/>
-      <el-table-column label="借出數量" align="center" prop="quantity"/>
-      <el-table-column label="借用人" align="center" prop="borrowerName"/>
-      <el-table-column label="借用目的" align="center" prop="purpose" show-overflow-tooltip/>
-      <el-table-column label="借出時間" align="center" prop="borrowTime" width="180">
+      <el-table-column v-if="columns.borrowNo.visible" label="借出單號" align="center" prop="borrowNo" width="180" :show-overflow-tooltip="true"/>
+      <el-table-column v-if="columns.itemName.visible" label="物品名稱" align="center" prop="itemName"/>
+      <el-table-column v-if="columns.itemCode.visible" label="物品編碼" align="center" prop="itemCode"/>
+      <el-table-column v-if="columns.quantity.visible" label="借出數量" align="center" prop="quantity"/>
+      <el-table-column v-if="columns.borrowerName.visible" label="借用人" align="center" prop="borrowerName"/>
+      <el-table-column v-if="columns.purpose.visible" label="借用目的" align="center" prop="purpose" show-overflow-tooltip/>
+      <el-table-column v-if="columns.borrowTime.visible" label="借出時間" align="center" prop="borrowTime" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.borrowTime, '{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="預計歸還" align="center" prop="expectedReturn" width="180">
+      <el-table-column v-if="columns.expectedReturn.visible" label="預計歸還" align="center" prop="expectedReturn" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.expectedReturn, '{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="實際歸還" align="center" prop="actualReturn" width="180">
+      <el-table-column v-if="columns.actualReturn.visible" label="實際歸還" align="center" prop="actualReturn" width="180">
         <template #default="scope">
           <span v-if="scope.row.actualReturn">{{ parseTime(scope.row.actualReturn, '{y}-{m}-{d} {h}:{i}') }}</span>
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="狀態" align="center" prop="status">
+      <el-table-column v-if="columns.status.visible" label="狀態" align="center" prop="status">
         <template #default="scope">
           <el-tag :type="getStatusType(scope.row.status)">
             {{ getStatusText(scope.row.status) }}
@@ -154,13 +173,13 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width" fixed="right">
         <template #default="scope">
-          <!-- 只有待審核狀態可以修改 -->
+          <!-- 只有待審核狀態可以修改，但預約記錄除外 -->
           <el-button
             link
             type="primary"
             icon="Edit"
             @click="handleUpdate(scope.row)"
-            v-if="scope.row.status === '0'"
+            v-if="scope.row.status === '0' && scope.row.reserveStatus !== 1"
             v-hasPermi="['inventory:borrow:edit']"
           >修改
           </el-button>
@@ -174,13 +193,13 @@
             v-hasPermi="['inventory:borrow:approve']"
           >審核
           </el-button>
-          <!-- 已借出、部分歸還、逾期狀態可以歸還 -->
+          <!-- 已借出、部分歸還、逾期狀態可以歸還（只有借出人本人或管理員）-->
           <el-button
             link
             type="primary"
             icon="RefreshLeft"
             @click="handleReturn(scope.row)"
-            v-if="scope.row.status === '1' || scope.row.status === '4' || scope.row.status === '5'"
+            v-if="(scope.row.status === '1' || scope.row.status === '4' || scope.row.status === '5') && canReturn(scope.row)"
             v-hasPermi="['inventory:borrow:return']"
           >歸還
           </el-button>
@@ -193,6 +212,16 @@
             v-if="scope.row.status === '3' || scope.row.status === '4'"
             v-hasPermi="['inventory:borrow:query']"
           >歸還記錄
+          </el-button>
+          <!-- 審核拒絕狀態顯示查看拒絕原因按鈕 -->
+          <el-button
+            link
+            type="warning"
+            icon="Warning"
+            @click="handleViewRejectReason(scope.row)"
+            v-if="scope.row.status === '2' && scope.row.approveRemark"
+            v-hasPermi="['inventory:borrow:query']"
+          >拒絕原因
           </el-button>
           <!-- 移除刪除按鈕，借出記錄應完整保留 -->
         </template>
@@ -271,8 +300,17 @@
     </el-dialog>
 
     <!-- 審核對話框 -->
-    <el-dialog title="審核借出申請" :model-value="approveOpen" @update:model-value="val => approveOpen = val" width="400px" append-to-body>
-      <el-form ref="approveForm" :model="approveForm" label-width="80px">
+    <el-dialog title="審核借出申請" :model-value="approveOpen" @update:model-value="val => approveOpen = val" width="500px" append-to-body>
+      <el-form ref="approveForm" :model="approveForm" label-width="100px">
+        <el-form-item label="借用人">
+          <el-input v-model="approveForm.borrowerName" disabled/>
+        </el-form-item>
+        <el-form-item label="借用物品">
+          <el-input v-model="approveForm.itemName" disabled/>
+        </el-form-item>
+        <el-form-item label="借用數量">
+          <el-input-number v-model="approveForm.quantity" disabled style="width: 100%"/>
+        </el-form-item>
         <el-form-item label="審核結果">
           <el-radio-group v-model="approveForm.approved">
             <el-radio :label="true">通過</el-radio>
@@ -280,12 +318,29 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="審核意見">
-          <el-input v-model="approveForm.remark" type="textarea" placeholder="請輸入審核意見"/>
+          <el-input v-model="approveForm.approveRemark" type="textarea" placeholder="請輸入審核意見（拒絕時必填）"/>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitApprove">確 定</el-button>
         <el-button @click="cancelApprove">取 消</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 拒絕原因對話框 -->
+    <el-dialog title="審核拒絕原因" :model-value="rejectReasonOpen" @update:model-value="val => rejectReasonOpen = val" width="500px" append-to-body>
+      <el-descriptions :column="1" border>
+        <el-descriptions-item label="借用人">{{ rejectReasonData.borrowerName }}</el-descriptions-item>
+        <el-descriptions-item label="物品名稱">{{ rejectReasonData.itemName }}</el-descriptions-item>
+        <el-descriptions-item label="借用數量">{{ rejectReasonData.quantity }}</el-descriptions-item>
+        <el-descriptions-item label="審核人">{{ rejectReasonData.approverName }}</el-descriptions-item>
+        <el-descriptions-item label="審核時間">{{ parseTime(rejectReasonData.approveTime) }}</el-descriptions-item>
+        <el-descriptions-item label="拒絕原因">
+          <div style="white-space: pre-wrap; color: #F56C6C;">{{ rejectReasonData.approveRemark || '無' }}</div>
+        </el-descriptions-item>
+      </el-descriptions>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="rejectReasonOpen = false">確 定</el-button>
       </div>
     </el-dialog>
 
@@ -352,10 +407,14 @@ import {
   updateBorrow,
   approveBorrow,
   returnBorrow,
+  lostItem,
   getBorrowStats,
   getReturnRecords
 } from "@/api/inventory/borrow";
 import {listManagement} from "@/api/inventory/management";
+import {getTableConfig, saveTableConfig} from "@/api/system/tableConfig";
+import { mapState } from 'pinia';
+import useUserStore from '@/store/modules/user';
 
 export default {
   name: "Borrow",
@@ -402,15 +461,48 @@ export default {
       returnRecords: [],
       // 日期範圍
       daterangeBorrow: [],
+      daterangeReturn: [],
+      // 拒絕原因對話框
+      rejectReasonOpen: false,
+      rejectReasonData: {},
       // 查詢參數
       queryParams: {
         pageNum: 1,
         pageSize: 10,
+        borrowNo: null,
         itemName: null,
         borrowerName: null,
         status: null,
         beginBorrowTime: null,
-        endBorrowTime: null
+        endBorrowTime: null,
+        beginActualReturn: null,
+        endActualReturn: null
+      },
+      // 預設列訊息
+      defaultColumns: {
+        borrowNo: {label: '借出單號', visible: true},
+        itemName: {label: '物品名稱', visible: true},
+        itemCode: {label: '物品編碼', visible: true},
+        quantity: {label: '借出數量', visible: true},
+        borrowerName: {label: '借用人', visible: true},
+        purpose: {label: '借用目的', visible: true},
+        borrowTime: {label: '借出時間', visible: true},
+        expectedReturn: {label: '預計歸還', visible: true},
+        actualReturn: {label: '實際歸還', visible: true},
+        status: {label: '狀態', visible: true}
+      },
+      // 列訊息
+      columns: {
+        borrowNo: {label: '借出單號', visible: true},
+        itemName: {label: '物品名稱', visible: true},
+        itemCode: {label: '物品編碼', visible: true},
+        quantity: {label: '借出數量', visible: true},
+        borrowerName: {label: '借用人', visible: true},
+        purpose: {label: '借用目的', visible: true},
+        borrowTime: {label: '借出時間', visible: true},
+        expectedReturn: {label: '預計歸還', visible: true},
+        actualReturn: {label: '實際歸還', visible: true},
+        status: {label: '狀態', visible: true}
       },
       // 表單參數
       form: {},
@@ -442,7 +534,15 @@ export default {
       }
     };
   },
-  created() {
+  computed: {
+    ...mapState(useUserStore, ['id', 'roles']),
+    /** 判斷當前使用者是否為管理員 */
+    isAdmin() {
+      return this.roles && this.roles.includes('admin');
+    }
+  },
+  async created() {
+    await this.loadTableConfig();
     this.getList();
     this.getItemList();
     this.getBorrowStatistics();
@@ -453,10 +553,46 @@ export default {
     this.getBorrowStatistics();
   },
   methods: {
+    /** 載入表格欄位配置 */
+    async loadTableConfig() {
+      try {
+        const response = await getTableConfig('inventory_borrow');
+        if (response.data) {
+          const savedConfig = JSON.parse(response.data);
+          const merged = {};
+          
+          // 合併配置：優先使用儲存的配置，但包含新增的欄位
+          for (const key in this.defaultColumns) {
+            if (savedConfig.hasOwnProperty(key)) {
+              merged[key] = {
+                label: this.defaultColumns[key].label,
+                visible: savedConfig[key].visible
+              };
+            } else {
+              merged[key] = { ...this.defaultColumns[key] };
+            }
+          }
+          
+          // 使用 Object.assign 來觸發響應式更新
+          Object.assign(this.columns, merged);
+        }
+      } catch (error) {
+        console.error('載入表格欄位配置失敗：', error);
+      }
+    },
+    /** 判斷是否可以歸還（只有借出人本人或管理員可以歸還）*/
+    canReturn(row) {
+      // 管理員可以歸還任何人的借出
+      if (this.isAdmin) {
+        return true;
+      }
+      // 借出人本人可以歸還自己的借出
+      return row.borrowerId === this.id;
+    },
     /** 查詢借出記錄列表 */
     getList() {
       this.loading = true;
-      // 檢查日期範圍是否有效
+      // 檢查借出日期範圍是否有效
       if (this.daterangeBorrow && this.daterangeBorrow.length === 2) {
         this.queryParams.beginBorrowTime = this.daterangeBorrow[0];
         this.queryParams.endBorrowTime = this.daterangeBorrow[1];
@@ -464,6 +600,15 @@ export default {
         // 清除日期範圍參數
         this.queryParams.beginBorrowTime = null;
         this.queryParams.endBorrowTime = null;
+      }
+      // 檢查歸還日期範圍是否有效
+      if (this.daterangeReturn && this.daterangeReturn.length === 2) {
+        this.queryParams.beginActualReturn = this.daterangeReturn[0];
+        this.queryParams.endActualReturn = this.daterangeReturn[1];
+      } else {
+        // 清除日期範圍參數
+        this.queryParams.beginActualReturn = null;
+        this.queryParams.endActualReturn = null;
       }
       listBorrow(this.queryParams).then(response => {
         this.borrowList = response.rows;
@@ -506,7 +651,14 @@ export default {
     },
     /** 取得借出統計 */
     getBorrowStatistics() {
-      getBorrowStats().then(response => {
+      // 使用相同的搜尋條件過濾統計結果
+      const statsQuery = {
+        itemName: this.queryParams.itemName,
+        borrowerName: this.queryParams.borrowerName,
+        beginBorrowTime: this.queryParams.beginBorrowTime,
+        endBorrowTime: this.queryParams.endBorrowTime
+      };
+      getBorrowStats(statsQuery).then(response => {
         this.borrowStats = response.data;
       });
     },
@@ -534,12 +686,27 @@ export default {
     handleQuery() {
       this.queryParams.pageNum = 1;
       this.getList();
+      // 同時更新統計數字
+      this.getBorrowStatistics();
     },
     /** 重置按鈕操作 */
     resetQuery() {
       this.daterangeBorrow = [];
+      this.daterangeReturn = [];
       this.resetForm("queryForm");
       this.handleQuery();
+    },
+    /** 查看拒絕原因按鈕操作 */
+    handleViewRejectReason(row) {
+      this.rejectReasonData = {
+        borrowerName: row.borrowerName,
+        itemName: row.itemName,
+        quantity: row.quantity,
+        approverName: row.approverName,
+        approveTime: row.approveTime,
+        approveRemark: row.approveRemark
+      };
+      this.rejectReasonOpen = true;
     },
     // 多選框選中資料
     handleSelectionChange(selection) {
@@ -609,8 +776,11 @@ export default {
     handleApprove(row) {
       this.approveForm = {
         borrowId: row.borrowId,
+        borrowerName: row.borrowerName,
+        itemName: row.itemName,
+        quantity: row.quantity,
         approved: true,
-        remark: ''
+        approveRemark: ''
       };
       this.approveOpen = true;
     },
@@ -643,7 +813,36 @@ export default {
     },
     /** 提交歸還 */
     submitReturn() {
-      // 轉換前端參數為後端需要的格式
+      // 如果是遺失，跳出二次確認
+      if (this.returnForm.condition === 'lost') {
+        this.$confirm('確定要將此物品標記為遺失嗎？此操作將記錄在操作日誌中。', '遺失確認', {
+          confirmButtonText: '確定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          // 確認後調用遺失物品 API
+          const requestData = {
+            borrowId: this.returnForm.borrowId,
+            returnQuantity: this.returnForm.quantity,
+            remark: this.returnForm.remark
+          };
+
+          lostItem(requestData).then(response => {
+            this.$modal.msgSuccess("已記錄為遺失");
+            this.returnOpen = false;
+            this.getList();
+            this.getBorrowStatistics();
+            this.getItemList();
+          }).catch(error => {
+            console.error('遺失記錄失敗:', error);
+          });
+        }).catch(() => {
+          // 取消遺失
+        });
+        return;
+      }
+
+      // 一般歸還或損壞歸還
       const requestData = {
         borrowId: this.returnForm.borrowId,
         returnQuantity: this.returnForm.quantity,

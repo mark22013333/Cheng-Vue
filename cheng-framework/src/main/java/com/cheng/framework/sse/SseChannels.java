@@ -28,6 +28,11 @@ public class SseChannels {
      */
     public static final String ITEM_IMPORT = "item-import";
     
+    /**
+     * 物品預約廣播
+     */
+    public static final String ITEM_RESERVE = "item-reserve";
+    
     // 未來可擴充其他頻道
     // public static final String ANOTHER_CHANNEL = "another-channel";
 }

@@ -174,6 +174,17 @@ public class InvItem extends BaseEntity {
     @Excel(name = "可用數量")
     private Integer availableQuantity;
 
+    /**
+     * 樂觀鎖版本號
+     */
+    private Integer version;
+
+    /**
+     * 預約數量（關聯查詢用）
+     */
+    @Excel(name = "預約數量")
+    private Integer reservedQuantity;
+
     public InvItem() {
     }
 

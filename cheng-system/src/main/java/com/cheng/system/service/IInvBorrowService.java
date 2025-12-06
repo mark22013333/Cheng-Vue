@@ -37,9 +37,10 @@ public interface IInvBorrowService {
     /**
      * 查詢逾期借出記錄列表
      *
+     * @param borrowerId 借出人ID（可選，若為null則查詢所有逾期記錄）
      * @return 借出記錄集合
      */
-    List<InvBorrow> selectOverdueBorrowList();
+    List<InvBorrow> selectOverdueBorrowList(Long borrowerId);
 
     /**
      * 查詢用戶的借出記錄
@@ -103,9 +104,10 @@ public interface IInvBorrowService {
      * @param approverId   審核人ID
      * @param approverName 審核人姓名
      * @param isApproved   是否通過審核
+     * @param approveRemark 審核備註（拒絕原因）
      * @return 結果
      */
-    int approveBorrow(Long borrowId, Long approverId, String approverName, boolean isApproved);
+    int approveBorrow(Long borrowId, Long approverId, String approverName, boolean isApproved, String approveRemark);
 
     /**
      * 批量刪除借出記錄

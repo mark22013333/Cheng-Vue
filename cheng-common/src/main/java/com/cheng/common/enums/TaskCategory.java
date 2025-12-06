@@ -40,6 +40,11 @@ public enum TaskCategory {
     BACKUP("備份任務", "backup"),
     
     /**
+     * 預約任務
+     */
+    RESERVATION("預約任務", "reservation"),
+    
+    /**
      * 自訂任務
      */
     CUSTOM("自訂任務", "custom");

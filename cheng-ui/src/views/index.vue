@@ -125,6 +125,7 @@
 <script>
 import request from "@/utils/request"
 import {versionLogs, getLatestVersion} from "@/data/changelog"
+import { checkPermi } from "@/utils/permission"
 
 export default {
   name: "Index",
@@ -151,11 +152,27 @@ export default {
     },
     // 產生統計卡片資料結構，方便 v-for
     statCards() {
+      // 使用 checkPermi 函數檢查權限（支援萬用字元權限）
+      const hasOnlinePermission = checkPermi(['monitor:online:list'])
+      const hasUserPermission = checkPermi(['system:user:list'])
+      
       return [
         {label: "版本迭代", value: this.totalVersions, icon: "el-icon-data-line", colorClass: "primary"},
         {label: "執行天數", value: this.daysSinceLaunch, icon: "el-icon-time", colorClass: "success"},
-        {label: "線上人數", value: this.onlineUsers, icon: "el-icon-user", colorClass: "warning"},
-        {label: "註冊帳號", value: this.totalUsers, icon: "el-icon-s-custom", colorClass: "info"}
+        {
+          label: "線上人數",
+          value: hasOnlinePermission ? this.onlineUsers : "無權限查看",
+          icon: "el-icon-user",
+          colorClass: "warning",
+          noPermission: !hasOnlinePermission
+        },
+        {
+          label: "註冊帳號",
+          value: hasUserPermission ? this.totalUsers : "無權限查看",
+          icon: "el-icon-s-custom",
+          colorClass: "info",
+          noPermission: !hasUserPermission
+        }
       ]
     }
   },
@@ -168,25 +185,31 @@ export default {
       window.open(href, "_blank")
     },
     getOnlineUsers() {
-      request({
-        url: "/monitor/online/list",
-        method: "get"
-      }).then(response => {
-        this.onlineUsers = response.total || 0
-      }).catch(() => {
-        this.onlineUsers = 0
-      })
+      // 有權限才呼叫 API，避免不必要的請求
+      if (checkPermi(['monitor:online:list'])) {
+        request({
+          url: "/monitor/online/list",
+          method: "get"
+        }).then(response => {
+          this.onlineUsers = response.total || 0
+        }).catch(() => {
+          this.onlineUsers = 0
+        })
+      }
     },
     getTotalUsers() {
-      request({
-        url: "/system/user/list",
-        method: "get",
-        params: {pageNum: 1, pageSize: 1}
-      }).then(response => {
-        this.totalUsers = response.total || 0
-      }).catch(() => {
-        this.totalUsers = 0
-      })
+      // 有權限才呼叫 API，避免不必要的請求
+      if (checkPermi(['system:user:list'])) {
+        request({
+          url: "/system/user/list",
+          method: "get",
+          params: {pageNum: 1, pageSize: 1}
+        }).then(response => {
+          this.totalUsers = response.total || 0
+        }).catch(() => {
+          this.totalUsers = 0
+        })
+      }
     }
   }
 }

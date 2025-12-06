@@ -107,16 +107,16 @@
               />
             </el-tooltip>
           </el-col>
-          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns" pageKey="inventory_management"></right-toolbar>
         </el-row>
 
         <!-- 資料表格 -->
         <el-table v-loading="loading" :data="managementList" @selection-change="handleSelectionChange"
                   @sort-change="handleSortChange">
           <el-table-column type="selection" width="55" align="center"/>
-          <el-table-column label="物品編碼" align="center" prop="itemCode" min-width="180" sortable="custom"
+          <el-table-column v-if="columns.itemCode.visible" label="物品編碼" align="center" prop="itemCode" min-width="180" sortable="custom"
                            :show-overflow-tooltip="true"/>
-          <el-table-column label="圖片" align="center" width="80">
+          <el-table-column v-if="columns.image.visible" label="圖片" align="center" width="80">
             <template #default="scope">
               <el-image
                 v-if="scope.row.imageUrl"
@@ -136,38 +136,37 @@
               <span v-else style="color: #ccc;">無圖</span>
             </template>
           </el-table-column>
-          <el-table-column label="物品名稱" align="center" prop="itemName" min-width="150" sortable="custom"
+          <el-table-column v-if="columns.itemName.visible" label="物品名稱" align="center" prop="itemName" min-width="150" sortable="custom"
                            :show-overflow-tooltip="true"/>
-          <el-table-column label="作者" align="center" prop="author" width="120" :show-overflow-tooltip="true"
-                           v-if="hasAuthorColumn"/>
-          <el-table-column label="規格" align="center" prop="specification" width="120"/>
-          <el-table-column label="品牌/型號" align="center" width="150">
+          <el-table-column v-if="columns.author.visible && hasAuthorColumn" label="作者" align="center" prop="author" width="120" :show-overflow-tooltip="true"/>
+          <el-table-column v-if="columns.specification.visible" label="規格" align="center" prop="specification" width="120"/>
+          <el-table-column v-if="columns.brandModel.visible" label="品牌/型號" align="center" width="150">
             <template #default="scope">
               {{ scope.row.brand }} {{ scope.row.model }}
             </template>
           </el-table-column>
 
           <!-- 庫存資訊 -->
-          <el-table-column label="總數量" align="center" prop="totalQuantity" width="80">
+          <el-table-column v-if="columns.totalQuantity.visible" label="總數量" align="center" prop="totalQuantity" width="80">
             <template #default="scope">
               <el-tag v-if="scope.row.totalQuantity > 0" type="success">{{ scope.row.totalQuantity }}</el-tag>
               <el-tag v-else type="danger">0</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="可用" align="center" prop="availableQty" width="70"/>
-          <el-table-column label="借出" align="center" prop="borrowedQty" width="70"/>
-          <el-table-column label="庫存狀態" align="center" prop="stockStatusText" width="90">
+          <el-table-column v-if="columns.availableQty.visible" label="可用" align="center" prop="availableQty" width="70"/>
+          <el-table-column v-if="columns.borrowedQty.visible" label="借出" align="center" prop="borrowedQty" width="70"/>
+          <el-table-column v-if="columns.stockStatus.visible" label="庫存狀態" align="center" prop="stockStatusText" width="90">
             <template #default="scope">
               <el-tag v-if="scope.row.stockStatus === '0'" type="success">{{ scope.row.stockStatusText }}</el-tag>
               <el-tag v-else-if="scope.row.stockStatus === '1'" type="warning">{{ scope.row.stockStatusText }}</el-tag>
               <el-tag v-else type="danger">{{ scope.row.stockStatusText }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="存放位置" align="center" prop="location" width="140" sortable="custom"
+          <el-table-column v-if="columns.location.visible" label="存放位置" align="center" prop="location" width="140" sortable="custom"
                            :show-overflow-tooltip="true"/>
 
           <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column"
-                           min-width="140" fixed="right">
+                           min-width="180" fixed="right">
             <template #default="scope">
               <el-button link type="primary" icon="View" @click="handleView(scope.row)"
                          v-hasPermi="['inventory:management:query']">詳情
@@ -177,6 +176,10 @@
               </el-button>
               <el-button link type="primary" icon="Bottom" @click="handleStockOut(scope.row)"
                          v-hasPermi="['inventory:management:stockOut']">出庫
+              </el-button>
+              <el-button link type="warning" icon="Calendar" @click="handleReserve(scope.row)"
+                         v-hasPermi="['inventory:management:reserve']"
+                         :disabled="scope.row.availableQty <= 0">預約
               </el-button>
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
                          v-hasPermi="['inventory:management:edit']">修改
@@ -451,6 +454,69 @@
         <!-- 進度對話框 -->
         <ProgressDialog ref="progressDialog"/>
 
+        <!-- 預約對話框 -->
+        <el-dialog title="預約物品" :model-value="reserveDialogVisible"
+                   @update:model-value="val => reserveDialogVisible = val" width="600px" append-to-body>
+          <el-form ref="reserveForm" :model="reserveForm" :rules="reserveRules" label-width="100px">
+            <el-form-item label="物品名稱">
+              <el-input v-model="reserveForm.itemName" disabled />
+            </el-form-item>
+            <el-form-item label="物品編碼">
+              <el-input v-model="reserveForm.itemCode" disabled />
+            </el-form-item>
+            <el-form-item label="可用庫存">
+              <el-input v-model="reserveForm.availableQty" disabled />
+            </el-form-item>
+            <el-form-item label="借用人" prop="borrowerName">
+              <el-input v-model="reserveForm.borrowerName" disabled
+                        placeholder="預設為當前登入用戶" />
+            </el-form-item>
+            <el-form-item label="預約數量" prop="borrowQty">
+              <el-input-number
+                v-model="reserveForm.borrowQty"
+                :min="1"
+                :max="reserveForm.availableQty"
+                :disabled="!reserveForm.availableQty || reserveForm.availableQty <= 0"
+                controls-position="right"
+                style="width: 200px"
+              />
+              <span style="margin-left: 10px; color: #999;">可用數量：{{ reserveForm.availableQty || 0 }}</span>
+            </el-form-item>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="開始日期" prop="startDate">
+                  <el-date-picker
+                    v-model="reserveForm.startDate"
+                    type="date"
+                    placeholder="選擇開始日期"
+                    style="width: 100%"
+                    :disabled-date="disabledDate"
+                  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="結束日期" prop="endDate">
+                  <el-date-picker
+                    v-model="reserveForm.endDate"
+                    type="date"
+                    placeholder="選擇結束日期"
+                    style="width: 100%"
+                    :disabled-date="disabledEndDate"
+                  />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form>
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button @click="reserveDialogVisible = false">取消</el-button>
+              <el-button type="primary" @click="submitReserve" :loading="reserveLoading">
+                確認預約
+              </el-button>
+            </div>
+          </template>
+        </el-dialog>
+
         <!-- 編輯對話框 -->
         <el-dialog :title="editDialogTitle" :model-value="editDialogVisible"
                    @update:model-value="val => editDialogVisible = val" width="800px" append-to-body>
@@ -582,14 +648,17 @@ import {
   stockOut,
   importData,
   createImportTask,
-  downloadTemplate
+  downloadTemplate,
+  reserveItem
 } from "@/api/inventory/management"
 import {listCategory} from "@/api/inventory/category"
 import {createRefreshTask} from "@/api/inventory/scan"
+import {getTableConfig, saveTableConfig} from "@/api/system/tableConfig"
 import ImageUpload from '@/components/ImageUpload'
 import ProgressDialog from '@/components/ProgressDialog'
 import {getImageUrl} from '@/utils/image'
 import CategoryManagement from './components/CategoryManagement'
+import useUserStore from '@/store/modules/user'
 
 export default {
   name: "InvManagement",
@@ -632,6 +701,34 @@ export default {
       },
       // 全域低庫存閾值
       globalLowStockThreshold: null,
+      // 預設列訊息
+      defaultColumns: {
+        itemCode: {label: '物品編碼', visible: true},
+        image: {label: '圖片', visible: true},
+        itemName: {label: '物品名稱', visible: true},
+        author: {label: '作者', visible: true},
+        specification: {label: '規格', visible: true},
+        brandModel: {label: '品牌/型號', visible: true},
+        totalQuantity: {label: '總數量', visible: true},
+        availableQty: {label: '可用', visible: true},
+        borrowedQty: {label: '借出', visible: true},
+        stockStatus: {label: '庫存狀態', visible: true},
+        location: {label: '存放位置', visible: true}
+      },
+      // 列訊息
+      columns: {
+        itemCode: {label: '物品編碼', visible: true},
+        image: {label: '圖片', visible: true},
+        itemName: {label: '物品名稱', visible: true},
+        author: {label: '作者', visible: true},
+        specification: {label: '規格', visible: true},
+        brandModel: {label: '品牌/型號', visible: true},
+        totalQuantity: {label: '總數量', visible: true},
+        availableQty: {label: '可用', visible: true},
+        borrowedQty: {label: '借出', visible: true},
+        stockStatus: {label: '庫存狀態', visible: true},
+        location: {label: '存放位置', visible: true}
+      },
       // 入庫表單
       stockInForm: {
         itemId: null,
@@ -697,6 +794,28 @@ export default {
         file: [
           {required: true, message: '請選擇要匯入的Excel檔案', trigger: 'change'}
         ]
+      },
+      // 預約對話框
+      reserveDialogVisible: false,
+      reserveLoading: false,
+      reserveForm: {
+        itemId: null,
+        itemName: '',
+        itemCode: '',
+        borrowQty: 1,
+        version: null,
+        startDate: null,
+        endDate: null,
+        borrowerName: '',
+        availableQty: 0
+      },
+      reserveRules: {
+        startDate: [
+          { required: true, message: '請選擇預約開始日期', trigger: 'change' }
+        ],
+        endDate: [
+          { required: true, message: '請選擇預約結束日期', trigger: 'change' }
+        ]
       }
     };
   },
@@ -706,17 +825,45 @@ export default {
       return this.managementList.some(item => item.author && item.author.trim() !== '');
     }
   },
-  created() {
+  async created() {
     // 檢查路由，如果是從分類管理選單進來，自動切換到分類管理頁籤
     if (this.$route.path === '/inventory/category') {
       this.activeTab = 'categories';
     }
+    await this.loadTableConfig();
     this.getList();
     this.getCategoryList();
   },
   mounted() {
   },
   methods: {
+    /** 載入表格欄位配置 */
+    async loadTableConfig() {
+      try {
+        const response = await getTableConfig('inventory_management');
+        if (response.data) {
+          const savedConfig = JSON.parse(response.data);
+          const merged = {};
+          
+          // 合併配置：優先使用儲存的配置，但包含新增的欄位
+          for (const key in this.defaultColumns) {
+            if (savedConfig.hasOwnProperty(key)) {
+              merged[key] = {
+                label: this.defaultColumns[key].label,
+                visible: savedConfig[key].visible
+              };
+            } else {
+              merged[key] = { ...this.defaultColumns[key] };
+            }
+          }
+          
+          // 使用 Object.assign 來觸發響應式更新
+          Object.assign(this.columns, merged);
+        }
+      } catch (error) {
+        console.error('載入表格欄位配置失敗：', error);
+      }
+    },
     /** 查詢物品與庫存整合列表 */
     getList() {
       console.log('🔄 重新整理物品列表，查詢參數：', JSON.parse(JSON.stringify(this.queryParams)));
@@ -1247,7 +1394,8 @@ export default {
       ).then(() => {
         // 1. 建立任務並取得 taskId
         createRefreshTask(itemId).then(response => {
-          const taskId = response.taskId;
+          console.log('response:', response)
+          const taskId = response.data;
           let dialogMinimized = false; // 標記對話框是否被最小化
 
           // 2. 開啟進度對話框
@@ -1460,6 +1608,124 @@ export default {
           }
         }
       });
+    },
+    /** 預約按鈕操作 */
+    handleReserve(row) {
+      if (row.availableQty <= 0) {
+        this.$modal.msgError('該物品可用庫存不足，無法預約');
+        return;
+      }
+
+      // 重置表單
+      this.resetReserveForm();
+
+      // 填充表單數據
+      this.reserveForm.itemId = row.itemId;
+      this.reserveForm.itemName = row.itemName;
+      this.reserveForm.itemCode = row.itemCode;
+      this.reserveForm.availableQty = row.availableQty;
+      this.reserveForm.version = row.version;
+      // 使用 resetReserveForm 中已設置的 userStore.name
+      // this.reserveForm.borrowerName 已在 resetReserveForm() 中設置
+
+      // 設置預設日期（今天開始，30天後結束）
+      const today = new Date();
+      const endDate = new Date();
+      endDate.setDate(today.getDate() + 30);
+
+      this.reserveForm.startDate = today;
+      this.reserveForm.endDate = endDate;
+
+      this.reserveDialogVisible = true;
+    },
+    /** 重置預約表單 */
+    resetReserveForm() {
+      const userStore = useUserStore();
+      this.reserveForm = {
+        itemId: null,
+        itemName: '',
+        itemCode: '',
+        borrowQty: 1,
+        version: null,
+        startDate: null,
+        endDate: null,
+        borrowerName: userStore.name,
+        availableQty: 0
+      };
+      if (this.$refs.reserveForm) {
+        this.$refs.reserveForm.resetFields();
+      }
+    },
+    /** 提交預約 */
+    submitReserve() {
+      this.$refs.reserveForm.validate(valid => {
+        if (valid) {
+          this.reserveLoading = true;
+
+          const requestData = {
+            itemId: this.reserveForm.itemId,
+            borrowQty: this.reserveForm.borrowQty,
+            version: this.reserveForm.version,
+            startDate: this.formatDate(this.reserveForm.startDate),
+            endDate: this.formatDate(this.reserveForm.endDate)
+          };
+
+          reserveItem(requestData).then(response => {
+            this.$message({
+              message: '預約成功，等待管理員審核',
+              type: 'success',
+              duration: 5000
+            });
+            this.reserveDialogVisible = false;
+            this.getList(); // 重新載入列表以更新庫存
+
+          }).catch(error => {
+            console.error('預約失敗：', error);
+            this.$message({
+              message: error.msg || '預約失敗',
+              type: 'error',
+              duration: 5000
+            });
+
+          }).finally(() => {
+            this.reserveLoading = false;
+          });
+        }
+      });
+    },
+    /** 設置預約 SSE 連線（已停用，改用直接重新整理） */
+    setupReserveSSE() {
+      // 此功能已停用，因為 process.env 在生產環境中不可用
+      // 改用直接重新整理列表的方式
+      console.log('SSE 功能已停用，使用直接重新整理替代');
+    },
+    /** 日期格式化 */
+    formatDate(date) {
+      if (!date) return null;
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    },
+    /** 禁用今天之前的日期 */
+    disabledDate(time) {
+      return time.getTime() < Date.now() - 8.64e7; // 減去一天的毫秒數，允許選擇今天
+    },
+    /** 禁用結束日期早於開始日期 */
+    disabledEndDate(time) {
+      if (!this.reserveForm.startDate) {
+        return time.getTime() < Date.now() - 8.64e7;
+      }
+      return time.getTime() < this.reserveForm.startDate.getTime();
+    },
+    /** 產生任務ID */
+    generateTaskId() {
+      // 使用瀏覽器原生的 crypto.randomUUID()，若不支援則降級使用時間戳+隨機數
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+      }
+      // 降級方案
+      return Date.now().toString(36) + Math.random().toString(36).substr(2);
     }
   },
   beforeDestroy() {

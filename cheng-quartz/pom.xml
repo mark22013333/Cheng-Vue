@@ -49,6 +49,12 @@
             <artifactId>cheng-crawler</artifactId>
         </dependency>
 
+        <!-- 系統模組 -->
+        <dependency>
+            <groupId>com.cheng</groupId>
+            <artifactId>cheng-system</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>

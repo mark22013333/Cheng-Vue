@@ -1,7 +1,7 @@
 <template>
-    <div 
-        :class="{'has-logo':showLogo}" 
-        :style="{ 
+    <div
+        :class="{'has-logo':showLogo}"
+        :style="{
             backgroundColor: settingsStore.sideTheme === 'theme-dark' ? variables.menuBackground : variables.menuLightBackground,
             width: appStore.sidebar.width + 'px'
         }"
@@ -132,7 +132,7 @@ function startResize(e) {
     width: 8px; /* 增加寬度到 8px，更容易點擊 */
     height: 100%;
     cursor: ew-resize;
-    background-color: rgba(64, 158, 255, 0.1); /* 添加淡淡的背景色便於識別 */
+    background-color: rgba(64, 158, 255, 0.1); /* 新增淡淡的背景色便於識別 */
     z-index: 1002;
     transition: background-color 0.2s;
     display: flex;
@@ -141,7 +141,7 @@ function startResize(e) {
 
     &:hover {
         background-color: rgba(64, 158, 255, 0.5);
-        
+
         .resizer-indicator {
             opacity: 1;
         }

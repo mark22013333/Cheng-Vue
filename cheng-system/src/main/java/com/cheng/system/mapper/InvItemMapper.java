@@ -2,6 +2,7 @@ package com.cheng.system.mapper;
 
 import com.cheng.system.domain.InvItem;
 import com.cheng.system.dto.InvItemWithStockDTO;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
@@ -160,4 +161,26 @@ public interface InvItemMapper {
      * @return 結果
      */
     int deleteInvItemByItemIds(Long[] itemIds);
+
+    /**
+     * 預約物品（使用樂觀鎖）
+     *
+     * @param itemId   物品ID
+     * @param quantity 預約數量
+     * @return 影響行數
+     */
+    int reserveItem(@Param("itemId") Long itemId,
+                    @Param("quantity") Integer quantity);
+
+    /**
+     * 更新物品版本（用於樂觀鎖）
+     *
+     * @param itemId  物品ID
+     * @param version 版本號
+     * @param userId  用戶ID
+     * @return 影響行數
+     */
+    int updateItemVersion(@Param("itemId") Long itemId,
+                          @Param("version") Integer version,
+                          @Param("userId") Long userId);
 }

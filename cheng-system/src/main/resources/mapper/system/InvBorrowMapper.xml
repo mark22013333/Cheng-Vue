@@ -31,6 +31,10 @@
         <result property="updateBy" column="update_by"/>
         <result property="updateTime" column="update_time"/>
         <result property="remark" column="remark"/>
+        <result property="quantity" column="quantity"/>
+        <result property="reserveStatus" column="reserve_status"/>
+        <result property="reserveStartDate" column="reserve_start_date"/>
+        <result property="reserveEndDate" column="reserve_end_date"/>
     </resultMap>
 
     <sql id="selectInvBorrowVo">
@@ -53,12 +57,16 @@
                b.approver_id,
                b.approver_name,
                b.approve_time,
+               b.approve_remark,
                b.purpose,
                b.create_by,
                b.create_time,
                b.update_by,
                b.update_time,
-               b.remark
+               b.remark,
+               b.reserve_status,
+               b.reserve_start_date,
+               b.reserve_end_date
         from inv_borrow b
                  left join inv_item i on b.item_id = i.item_id
                  left join inv_category c on i.category_id = c.category_id
@@ -71,6 +79,7 @@
         <where>
             <if test="borrowNo != null and borrowNo != ''">and b.borrow_no like concat('%', #{borrowNo}, '%')</if>
             <if test="itemName != null and itemName != ''">and b.item_name like concat('%', #{itemName}, '%')</if>
+            <if test="borrowerId != null">and b.borrower_id = #{borrowerId}</if>
             <if test="borrowerName != null and borrowerName != ''">and (b.borrower_name like concat('%', #{borrowerName}, '%') OR u.nick_name like concat('%', #{borrowerName}, '%') OR u.user_name like concat('%', #{borrowerName}, '%'))
             </if>
             <if test="status != null and status != ''">and b.status = #{status}</if>
@@ -113,6 +122,9 @@
     <select id="selectOverdueBorrowList" resultMap="InvBorrowResult">
         <include refid="selectInvBorrowVo"/>
         where b.status = '1' and b.expected_return &lt; now()
+        <if test="borrowerId != null">
+            and b.borrower_id = #{borrowerId}
+        </if>
         order by b.expected_return asc
     </select>
 
@@ -154,6 +166,9 @@
             <if test="updateBy != null">update_by,</if>
             <if test="updateTime != null">update_time,</if>
             <if test="remark != null">remark,</if>
+            <if test="reserveStatus != null">reserve_status,</if>
+            <if test="reserveStartDate != null">reserve_start_date,</if>
+            <if test="reserveEndDate != null">reserve_end_date,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="borrowNo != null and borrowNo != ''">#{borrowNo},</if>
@@ -177,6 +192,9 @@
             <if test="updateBy != null">#{updateBy},</if>
             <if test="updateTime != null">#{updateTime},</if>
             <if test="remark != null">#{remark},</if>
+            <if test="reserveStatus != null">#{reserveStatus},</if>
+            <if test="reserveStartDate != null">#{reserveStartDate},</if>
+            <if test="reserveEndDate != null">#{reserveEndDate},</if>
         </trim>
     </insert>
 
@@ -203,6 +221,9 @@
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
             <if test="remark != null">remark = #{remark},</if>
+            <if test="reserveStatus != null">reserve_status = #{reserveStatus},</if>
+            <if test="reserveStartDate != null">reserve_start_date = #{reserveStartDate},</if>
+            <if test="reserveEndDate != null">reserve_end_date = #{reserveEndDate},</if>
         </trim>
         where borrow_id = #{borrowId}
     </update>
@@ -246,6 +267,63 @@
         where b.item_id = #{itemId}
           and b.status in ('0', '1', '4', '5')
         order by b.borrow_time desc
+    </select>
+    
+    <!-- 查詢重疊時間段的預約記錄 -->
+    <select id="selectOverlappingReservations" resultMap="InvBorrowResult">
+        <include refid="selectInvBorrowVo"/>
+        where b.item_id = #{itemId}
+          and b.reserve_status in (1, 2)  <!-- 待審核(1)和已確認(2)的預約 -->
+          and b.status not in ('2', '3')  <!-- 排除審核拒絕(2)和已歸還(3)的記錄 -->
+          and (
+              <!-- 新預約的開始日期在現有預約期間內 -->
+              <![CDATA[ (#{startDate} >= b.reserve_start_date and #{startDate} <= b.reserve_end_date) ]]>
+              or
+              <!-- 新預約的結束日期在現有預約期間內 -->
+              <![CDATA[ (#{endDate} >= b.reserve_start_date and #{endDate} <= b.reserve_end_date) ]]>
+              or
+              <!-- 新預約完全包含現有預約 -->
+              <![CDATA[ (#{startDate} <= b.reserve_start_date and #{endDate} >= b.reserve_end_date) ]]>
+          )
+        order by b.create_time desc
+    </select>
+    
+    <!-- 計算重疊時間段的總預約數量 -->
+    <select id="sumOverlappingReservationQuantity" resultType="java.lang.Integer">
+        select COALESCE(SUM(b.quantity), 0)
+        from inv_borrow b
+        where b.item_id = #{itemId}
+          and b.reserve_status in (1, 2)  <!-- 待審核(1)和已確認(2)的預約 -->
+          and b.status not in ('2', '3')  <!-- 排除審核拒絕(2)和已歸還(3)的記錄 -->
+          and (
+              <!-- 新預約的開始日期在現有預約期間內 -->
+              <![CDATA[ (#{startDate} >= b.reserve_start_date and #{startDate} <= b.reserve_end_date) ]]>
+              or
+              <!-- 新預約的結束日期在現有預約期間內 -->
+              <![CDATA[ (#{endDate} >= b.reserve_start_date and #{endDate} <= b.reserve_end_date) ]]>
+              or
+              <!-- 新預約完全包含現有預約 -->
+              <![CDATA[ (#{startDate} <= b.reserve_start_date and #{endDate} >= b.reserve_end_date) ]]>
+          )
+    </select>
+    
+    <!-- 查詢用戶的待審核預約 -->
+    <select id="selectPendingReservationsByUser" resultMap="InvBorrowResult">
+        <include refid="selectInvBorrowVo"/>
+        where b.borrower_id = #{userId}
+          and b.item_id = #{itemId}
+          and b.reserve_status = 1  <!-- 待審核狀態 -->
+          and b.status = '0'  <!-- 待審核狀態 -->
+        order by b.create_time desc
+    </select>
+    
+    <!-- 查詢所有過期的預約 -->
+    <select id="selectExpiredReservations" resultMap="InvBorrowResult">
+        <include refid="selectInvBorrowVo"/>
+        where b.reserve_status = 1  <!-- 待審核狀態 -->
+          and b.reserve_end_date &lt; current_date  <!-- 預約結束日期小於今天 -->
+          and b.status = '0'  <!-- 待審核狀態 -->
+        order by b.reserve_end_date asc
     </select>
 
 </mapper>

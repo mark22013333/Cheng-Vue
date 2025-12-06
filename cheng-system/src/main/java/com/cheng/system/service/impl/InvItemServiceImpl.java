@@ -10,6 +10,7 @@ import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.bean.BeanValidators;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.common.utils.uuid.IdUtils;
+import com.cheng.common.event.ReservationEvent;
 import com.cheng.system.domain.InvItem;
 import com.cheng.system.domain.InvStock;
 import com.cheng.system.domain.InvStockRecord;
@@ -17,16 +18,21 @@ import com.cheng.system.domain.InvBookInfo;
 import com.cheng.system.domain.InvBorrow;
 import com.cheng.system.domain.InvCategory;
 import com.cheng.system.dto.InvItemImportDTO;
+import com.cheng.system.domain.vo.ReserveResult;
+import com.cheng.system.domain.vo.ReserveRequest;
 import com.cheng.system.dto.ImportTaskResult;
 import com.cheng.system.domain.enums.BorrowStatus;
+import com.cheng.system.dto.InvItemWithStockDTO;
 import com.cheng.system.mapper.*;
 import com.cheng.system.service.IInvItemService;
+import com.cheng.system.service.IInvBorrowService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.Validator;
 
 import java.io.File;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,7 +62,15 @@ public class InvItemServiceImpl implements IInvItemService {
     private final InvStockRecordMapper invStockRecordMapper;
     private final InvBorrowMapper invBorrowMapper;
     private final InvCategoryMapper invCategoryMapper;
+    private final IInvBorrowService invBorrowService;
     private final Validator validator;
+    private final ApplicationEventPublisher eventPublisher;
+
+    /**
+     * 靜態 Map 供 Controller 傳遞 SseManager 實例
+     * 用於 SSE 廣播功能（跨模組橋接）
+     */
+    public static final ConcurrentHashMap<String, Object> SSE_EMITTER_MAP = new ConcurrentHashMap<>();
 
     /**
      * 檔案上傳根路徑
@@ -854,6 +869,156 @@ public class InvItemServiceImpl implements IInvItemService {
         throw new RuntimeException("此方法暫不支援，請使用 createImportTask 方法進行匯入");
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ReserveResult reserveItem(ReserveRequest request, Long userId) {
+        log.info("開始預約物品 - itemId: {}, userId: {}", request.getItemId(), userId);
+        
+        try {
+            // 1. 檢查預約日期是否有效
+            if (request.getStartDate() == null || request.getEndDate() == null) {
+                throw new ServiceException("預約開始日期和結束日期不能為空");
+            }
+            
+            if (request.getStartDate().after(request.getEndDate())) {
+                throw new ServiceException("預約開始日期不能晚於結束日期");
+            }
+            
+            // 2. 取得物品資訊，檢查總數量
+            InvItemWithStockDTO item = invItemMapper.selectItemWithStockByItemId(request.getItemId());
+            if (item == null) {
+                throw new ServiceException("物品不存在");
+            }
+            
+            // 3. 檢查是否已有重疊日期的預約記錄
+            List<InvBorrow> existingReservations = invBorrowMapper.selectOverlappingReservations(
+                request.getItemId(), request.getStartDate(), request.getEndDate());
+            
+            // 檢查是否包含自己未審核的預約
+            boolean hasOwnPendingReservation = existingReservations.stream()
+                .anyMatch(r -> r.getBorrowerId().equals(userId) && r.getReserveStatus() == 1);
+            
+            if (hasOwnPendingReservation) {
+                throw new ServiceException("您已經預約了此物品在該時間段，請勿重複預約");
+            }
+            
+            // 4. 計算重疊時間段的總預約數量（包含待審核和已確認的預約）
+            Integer overlappingQuantity = invBorrowMapper.sumOverlappingReservationQuantity(
+                request.getItemId(), request.getStartDate(), request.getEndDate());
+            
+            if (overlappingQuantity == null) {
+                overlappingQuantity = 0;
+            }
+            
+            // 5. 檢查剩餘可預約數量
+            int totalQuantity = item.getTotalQuantity();
+            int availableForReservation = totalQuantity - overlappingQuantity;
+            
+            log.info("預約檢查 - 物品總數: {}, 已預約數量: {}, 剩餘可預約: {}, 本次預約: {}", 
+                    totalQuantity, overlappingQuantity, availableForReservation, request.getBorrowQty());
+            
+            if (availableForReservation < request.getBorrowQty()) {
+                throw new ServiceException(
+                    String.format("預約失敗：該物品在選擇的時間段剩餘可預約數量為 %d，您想預約 %d，數量不足",
+                        availableForReservation, request.getBorrowQty()));
+            }
+            
+            // 6. 檢查用戶是否已預約該物品且尚未審核（避免重複預約）
+            List<InvBorrow> userPendingReservations = invBorrowMapper.selectPendingReservationsByUser(
+                userId, request.getItemId());
+            
+            if (!userPendingReservations.isEmpty()) {
+                throw new ServiceException("您已有該物品的待審核預約，請等待管理員審核或取消後重新預約");
+            }
+            
+            // 7. 使用樂觀鎖更新庫存和物品版本
+            // 先更新庫存
+            int updatedStockRows = invItemMapper.reserveItem(
+                request.getItemId(),
+                request.getBorrowQty()
+            );
+            
+            if (updatedStockRows == 0) {
+                // 檢查具體失敗原因
+                InvItemWithStockDTO currentItem = invItemMapper.selectItemWithStockByItemId(request.getItemId());
+                if (currentItem == null) {
+                    throw new ServiceException("物品不存在");
+                }
+                
+                // 檢查可用庫存
+                if (currentItem.getAvailableQty() < request.getBorrowQty()) {
+                    throw new ServiceException("該物品目前可用庫存不足，無法預約");
+                }
+                
+                throw new ServiceException("預約失敗，請重新整理後重試");
+            }
+            
+            // 再更新物品版本
+            int updatedItemRows = invItemMapper.updateItemVersion(
+                request.getItemId(),
+                request.getVersion(),
+                userId
+            );
+            
+            if (updatedItemRows == 0) {
+                // 版本更新失敗，說明資料已被其他用戶修改
+                // 需要回滾庫存更新並拋出異常
+                throw new ServiceException("資料已過期，請重新整理頁面後重試");
+            }
+            
+            // 6. 新增預約記錄
+            InvBorrow borrow = new InvBorrow();
+            borrow.setBorrowNo(invBorrowService.generateBorrowNo());  // 產生借出編號
+            borrow.setItemId(request.getItemId());
+            borrow.setItemName(item.getItemName());  // 冗餘欄位：物品名稱
+            borrow.setItemCode(item.getItemCode());  // 冗餘欄位：物品編碼
+            borrow.setBorrowerId(userId);
+            borrow.setBorrowerName(SecurityUtils.getLoginUser().getUser().getNickName());  // 借出人姓名
+            borrow.setQuantity(request.getBorrowQty());
+            borrow.setBorrowTime(DateUtils.getNowDate());  // 借出時間（預約建立時間）
+            borrow.setStatus(BorrowStatus.PENDING.getCode());  // 0=待審核（預約需要審核）
+            borrow.setReserveStatus(1); // 1=待審核預約
+            borrow.setReserveStartDate(request.getStartDate());
+            borrow.setReserveEndDate(request.getEndDate());
+            borrow.setPurpose("已預約");  // 借用目的：標記為預約
+            borrow.setExpectedReturn(request.getEndDate());  // 預計歸還：預約結束日期
+            borrow.setCreateBy(userId.toString());
+            borrow.setCreateTime(DateUtils.getNowDate());
+            
+            invBorrowMapper.insertInvBorrow(borrow);
+            
+            // 5. 發布預約事件
+            ReservationEvent event = new ReservationEvent(
+                "reserved",
+                request.getItemId(),
+                userId,
+                borrow.getBorrowId(),
+                "預約成功，等待管理員審核",
+                DateUtils.getNowDate(),
+                item.getAvailableQty(),
+                item.getReservedQty(),
+                null  // taskId 不需要，使用 broadcast
+            );
+            eventPublisher.publishEvent(event);
+            
+            // 6. 返回結果
+            return ReserveResult.builder()
+                .success(true)
+                .message("預約成功，等待管理員審核")
+                .borrowId(borrow.getBorrowId())
+                .availableQty(item.getAvailableQty())
+                .reservedQty(item.getReservedQty())
+                .build();
+                
+        } catch (ServiceException e) {
+            log.error("物品預約失敗 - itemId: {}, error: {}", request.getItemId(), e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("物品預約異常 - itemId: {}", request.getItemId(), e);
+            throw new ServiceException("預約失敗：" + e.getMessage());
+        }
+    }
+
     /**
      * 匯入任務參數類別
      */
@@ -866,5 +1031,72 @@ public class InvItemServiceImpl implements IInvItemService {
         private String defaultUnit;
         private String taskId;
         private Integer rowCount;
+    }
+
+    @Override
+    public boolean restoreReservedQuantity(Long itemId, Integer quantity) {
+        try {
+            if (itemId == null || quantity == null || quantity <= 0) {
+                log.warn("恢復預約數量參數無效 - itemId: {}, quantity: {}", itemId, quantity);
+                return false;
+            }
+
+            // 檢查物品是否存在
+            InvItem item = invItemMapper.selectInvItemByItemId(itemId);
+            if (item == null) {
+                log.warn("物品不存在，無法恢復預約數量 - itemId: {}", itemId);
+                return false;
+            }
+
+            // 檢查庫存記錄是否存在
+            InvStock stock = invStockMapper.selectInvStockByItemId(itemId);
+            if (stock == null) {
+                log.warn("庫存記錄不存在，無法恢復預約數量 - itemId: {}", itemId);
+                return false;
+            }
+
+            // 檢查當前預約數量是否足夠減少
+            if (stock.getReservedQty() < quantity) {
+                log.warn("當前預約數量不足，無法恢復 - itemId: {}, currentReserved: {}, restoreQuantity: {}", 
+                    itemId, stock.getReservedQty(), quantity);
+                return false;
+            }
+
+            // 更新庫存：減少預約數量
+            int result = invStockMapper.updateReservedQty(itemId, -quantity);
+            
+            if (result > 0) {
+                // 記錄庫存變動
+                InvStockRecord record = new InvStockRecord();
+                record.setItemId(itemId);
+                record.setItemName(item.getItemName());
+                record.setItemCode(item.getItemCode());
+                record.setRecordType("RESTORE_RESERVED");
+                record.setQuantity(quantity);
+                record.setBeforeQty(stock.getTotalQuantity());
+                record.setAfterQty(stock.getTotalQuantity());
+                record.setOperatorId(-1L); // 系統操作
+                record.setOperatorName("system");
+                record.setDeptId(-1L);
+                record.setDeptName("系統");
+                record.setRecordTime(new Date());
+                record.setReason("預約取消，恢復預約數量");
+                record.setCreateBy("system");
+                record.setCreateTime(new Date());
+                
+                invStockRecordMapper.insertInvStockRecord(record);
+                
+                log.info("成功恢復物品預約數量 - itemId: {}, itemName: {}, quantity: {}", 
+                    itemId, item.getItemName(), quantity);
+                return true;
+            } else {
+                log.error("恢復預約數量失敗，資料庫更新影響0行 - itemId: {}, quantity: {}", itemId, quantity);
+                return false;
+            }
+            
+        } catch (Exception e) {
+            log.error("恢復預約數量異常 - itemId: {}, quantity: {}", itemId, quantity, e);
+            return false;
+        }
     }
 }

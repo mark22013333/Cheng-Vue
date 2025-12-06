@@ -18,8 +18,8 @@ import com.linecorp.bot.messaging.model.SetWebhookEndpointRequest;
 import com.linecorp.bot.messaging.model.TestWebhookEndpointRequest;
 import com.linecorp.bot.messaging.model.TestWebhookEndpointResponse;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,16 +34,14 @@ import java.util.concurrent.ExecutionException;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class LineConfigServiceImpl implements ILineConfigService {
 
     @Resource
     private LineConfigMapper lineConfigMapper;
 
-    @Autowired
-    private LineProperties lineProperties;
-
-    @Autowired
-    private LineClientFactory lineClientFactory;
+    private final LineProperties lineProperties;
+    private final LineClientFactory lineClientFactory;
 
     /**
      * 查詢 LINE 頻道設定
@@ -53,12 +51,7 @@ public class LineConfigServiceImpl implements ILineConfigService {
      */
     @Override
     public LineConfig selectLineConfigById(Integer configId) {
-        LineConfig config = lineConfigMapper.selectLineConfigById(configId);
-        if (config != null) {
-            // 解密敏感資料 - 已停用，改為明碼存儲
-            // decryptSensitiveData(config);
-        }
-        return config;
+        return lineConfigMapper.selectLineConfigById(configId);
     }
 
     /**
@@ -69,11 +62,7 @@ public class LineConfigServiceImpl implements ILineConfigService {
      */
     @Override
     public LineConfig selectLineConfigByChannelType(ChannelType channelType) {
-        LineConfig config = lineConfigMapper.selectLineConfigByType(channelType.getCode());
-        if (config != null) {
-            // decryptSensitiveData(config);  // 已停用，改為明碼存儲
-        }
-        return config;
+        return lineConfigMapper.selectLineConfigByType(channelType.getCode());
     }
 
     /**
@@ -84,11 +73,7 @@ public class LineConfigServiceImpl implements ILineConfigService {
      */
     @Override
     public LineConfig selectLineConfigByBotBasicId(String botBasicId) {
-        LineConfig config = lineConfigMapper.selectLineConfigByBotBasicId(botBasicId);
-        if (config != null) {
-            // decryptSensitiveData(config);  // 已停用，改為明碼存儲
-        }
-        return config;
+        return lineConfigMapper.selectLineConfigByBotBasicId(botBasicId);
     }
 
     /**
@@ -98,11 +83,7 @@ public class LineConfigServiceImpl implements ILineConfigService {
      */
     @Override
     public LineConfig selectDefaultLineConfig() {
-        LineConfig config = lineConfigMapper.selectDefaultLineConfig();
-        if (config != null) {
-            // decryptSensitiveData(config);  // 已停用，改為明碼存儲
-        }
-        return config;
+        return lineConfigMapper.selectDefaultLineConfig();
     }
 
     /**
@@ -140,12 +121,7 @@ public class LineConfigServiceImpl implements ILineConfigService {
      */
     @Override
     public LineConfig selectLineConfigByType(String channelType) {
-        LineConfig config = lineConfigMapper.selectLineConfigByType(channelType);
-        if (config != null) {
-            // 查詢詳情時解密敏感資料 - 已停用，改為明碼存儲
-            // decryptSensitiveData(config);
-        }
-        return config;
+        return lineConfigMapper.selectLineConfigByType(channelType);
     }
 
     /**
@@ -225,14 +201,14 @@ public class LineConfigServiceImpl implements ILineConfigService {
 
         // 重新產生 Webhook URL（因為可能更新了 webhookBaseUrl 或 botBasicId）
         String webhookUrl = generateWebhookUrl(lineConfig);
-        
+
         // 只有在 Webhook URL 改變時，才重置驗證狀態
         if (!webhookUrl.equals(oldConfig.getWebhookUrl())) {
             lineConfig.setWebhookStatus(Status.DISABLE);
             log.info("Webhook URL 已變更，重置驗證狀態為未驗證（configId={}）", lineConfig.getConfigId());
         }
         // 否則保留原有的驗證狀態（不覆蓋）
-        
+
         lineConfig.setWebhookUrl(webhookUrl);
 
         return lineConfigMapper.updateLineConfig(lineConfig);
@@ -345,23 +321,23 @@ public class LineConfigServiceImpl implements ILineConfigService {
                             URI.create(config.getWebhookUrl())
                     );
                     TestWebhookEndpointResponse testResult = client.testWebhookEndpoint(webhookRequest).get().body();
-                    
+
                     if (testResult.success()) {
                         webhookResult = ConnectionTestVO.TestItemVO.builder()
                                 .success(true)
                                 .message(String.format("Webhook URL 已設定：%s", config.getWebhookUrl()))
                                 .build();
-                        
-                        log.info("Webhook 測試成功：url={}, statusCode={}", 
+
+                        log.info("Webhook 測試成功：url={}, statusCode={}",
                                 config.getWebhookUrl(), testResult.statusCode());
                     } else {
                         webhookResult = ConnectionTestVO.TestItemVO.builder()
                                 .success(false)
-                                .message(String.format("Webhook 測試失敗：%s - %s", 
+                                .message(String.format("Webhook 測試失敗：%s - %s",
                                         testResult.reason(), testResult.detail()))
                                 .build();
-                        
-                        log.warn("Webhook 測試失敗：reason={}, detail={}", 
+
+                        log.warn("Webhook 測試失敗：reason={}, detail={}",
                                 testResult.reason(), testResult.detail());
                     }
                 } catch (Exception e) {
@@ -369,7 +345,7 @@ public class LineConfigServiceImpl implements ILineConfigService {
                             .success(false)
                             .message("Webhook 測試失敗：" + e.getMessage())
                             .build();
-                    
+
                     log.error("Webhook 測試發生錯誤", e);
                 }
             }
@@ -407,7 +383,7 @@ public class LineConfigServiceImpl implements ILineConfigService {
         // 測試完成後，根據 Webhook 測試結果更新資料庫狀態
         log.info("=== 準備更新 Webhook 狀態到資料庫 ===");
         log.info("webhookResult.success = {}", webhookResult.getSuccess());
-        
+
         if (Boolean.TRUE.equals(webhookResult.getSuccess())) {
             int updateCount = lineConfigMapper.updateWebhookStatus(configId, Status.ENABLE.getCode());
             log.info("Webhook 測試成功，已更新資料庫狀態為已驗證（configId={}，更新筆數={}）", configId, updateCount);
@@ -524,14 +500,14 @@ public class LineConfigServiceImpl implements ILineConfigService {
                 config.setChannelId(JasyptUtils.encryptVal(key, config.getChannelId()));
             }
         }
-        
+
         // 加密 Channel Secret
         if (StringUtils.isNotEmpty(config.getChannelSecret())) {
             if (!isEncrypted(key, config.getChannelSecret())) {
                 config.setChannelSecret(JasyptUtils.encryptVal(key, config.getChannelSecret()));
             }
         }
-        
+
         // 加密 Channel Access Token
         if (StringUtils.isNotEmpty(config.getChannelAccessToken())) {
             if (!isEncrypted(key, config.getChannelAccessToken())) {
@@ -539,12 +515,12 @@ public class LineConfigServiceImpl implements ILineConfigService {
             }
         }
     }
-    
+
     /**
      * 判斷字串是否已加密
      * 透過嘗試解密來判斷，如果解密成功則說明已加密
      *
-     * @param key 加密金鑰
+     * @param key   加密金鑰
      * @param value 待檢查的值
      * @return true=已加密, false=未加密
      */
@@ -579,7 +555,7 @@ public class LineConfigServiceImpl implements ILineConfigService {
                 // 不拋出異常，保留明碼資料，允許系統繼續執行
             }
         }
-        
+
         // 解密 Channel Secret
         if (StringUtils.isNotEmpty(config.getChannelSecret())) {
             try {
@@ -588,7 +564,7 @@ public class LineConfigServiceImpl implements ILineConfigService {
                 log.warn("Channel Secret 解密失敗，可能是明碼資料（configId={}），建議重新儲存以加密", config.getConfigId());
             }
         }
-        
+
         // 解密 Channel Access Token
         if (StringUtils.isNotEmpty(config.getChannelAccessToken())) {
             try {
