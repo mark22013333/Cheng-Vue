@@ -85,7 +85,7 @@
         >匯出
         </el-button>
       </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns" pageKey="inventory_borrow"></right-toolbar>
     </el-row>
 
     <!-- 借出統計卡片 -->
@@ -142,29 +142,29 @@
 
     <el-table v-loading="loading" :data="borrowList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="借出單號" align="center" prop="borrowNo" width="180" :show-overflow-tooltip="true"/>
-      <el-table-column label="物品名稱" align="center" prop="itemName"/>
-      <el-table-column label="物品編碼" align="center" prop="itemCode"/>
-      <el-table-column label="借出數量" align="center" prop="quantity"/>
-      <el-table-column label="借用人" align="center" prop="borrowerName"/>
-      <el-table-column label="借用目的" align="center" prop="purpose" show-overflow-tooltip/>
-      <el-table-column label="借出時間" align="center" prop="borrowTime" width="180">
+      <el-table-column v-if="columns.borrowNo.visible" label="借出單號" align="center" prop="borrowNo" width="180" :show-overflow-tooltip="true"/>
+      <el-table-column v-if="columns.itemName.visible" label="物品名稱" align="center" prop="itemName"/>
+      <el-table-column v-if="columns.itemCode.visible" label="物品編碼" align="center" prop="itemCode"/>
+      <el-table-column v-if="columns.quantity.visible" label="借出數量" align="center" prop="quantity"/>
+      <el-table-column v-if="columns.borrowerName.visible" label="借用人" align="center" prop="borrowerName"/>
+      <el-table-column v-if="columns.purpose.visible" label="借用目的" align="center" prop="purpose" show-overflow-tooltip/>
+      <el-table-column v-if="columns.borrowTime.visible" label="借出時間" align="center" prop="borrowTime" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.borrowTime, '{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="預計歸還" align="center" prop="expectedReturn" width="180">
+      <el-table-column v-if="columns.expectedReturn.visible" label="預計歸還" align="center" prop="expectedReturn" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.expectedReturn, '{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="實際歸還" align="center" prop="actualReturn" width="180">
+      <el-table-column v-if="columns.actualReturn.visible" label="實際歸還" align="center" prop="actualReturn" width="180">
         <template #default="scope">
           <span v-if="scope.row.actualReturn">{{ parseTime(scope.row.actualReturn, '{y}-{m}-{d} {h}:{i}') }}</span>
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="狀態" align="center" prop="status">
+      <el-table-column v-if="columns.status.visible" label="狀態" align="center" prop="status">
         <template #default="scope">
           <el-tag :type="getStatusType(scope.row.status)">
             {{ getStatusText(scope.row.status) }}
@@ -412,6 +412,7 @@ import {
   getReturnRecords
 } from "@/api/inventory/borrow";
 import {listManagement} from "@/api/inventory/management";
+import {getTableConfig, saveTableConfig} from "@/api/system/tableConfig";
 import { mapState } from 'pinia';
 import useUserStore from '@/store/modules/user';
 
@@ -477,6 +478,32 @@ export default {
         beginActualReturn: null,
         endActualReturn: null
       },
+      // 預設列訊息
+      defaultColumns: {
+        borrowNo: {label: '借出單號', visible: true},
+        itemName: {label: '物品名稱', visible: true},
+        itemCode: {label: '物品編碼', visible: true},
+        quantity: {label: '借出數量', visible: true},
+        borrowerName: {label: '借用人', visible: true},
+        purpose: {label: '借用目的', visible: true},
+        borrowTime: {label: '借出時間', visible: true},
+        expectedReturn: {label: '預計歸還', visible: true},
+        actualReturn: {label: '實際歸還', visible: true},
+        status: {label: '狀態', visible: true}
+      },
+      // 列訊息
+      columns: {
+        borrowNo: {label: '借出單號', visible: true},
+        itemName: {label: '物品名稱', visible: true},
+        itemCode: {label: '物品編碼', visible: true},
+        quantity: {label: '借出數量', visible: true},
+        borrowerName: {label: '借用人', visible: true},
+        purpose: {label: '借用目的', visible: true},
+        borrowTime: {label: '借出時間', visible: true},
+        expectedReturn: {label: '預計歸還', visible: true},
+        actualReturn: {label: '實際歸還', visible: true},
+        status: {label: '狀態', visible: true}
+      },
       // 表單參數
       form: {},
       // 審核表單
@@ -514,7 +541,8 @@ export default {
       return this.roles && this.roles.includes('admin');
     }
   },
-  created() {
+  async created() {
+    await this.loadTableConfig();
     this.getList();
     this.getItemList();
     this.getBorrowStatistics();
@@ -525,6 +553,33 @@ export default {
     this.getBorrowStatistics();
   },
   methods: {
+    /** 載入表格欄位配置 */
+    async loadTableConfig() {
+      try {
+        const response = await getTableConfig('inventory_borrow');
+        if (response.data) {
+          const savedConfig = JSON.parse(response.data);
+          const merged = {};
+          
+          // 合併配置：優先使用儲存的配置，但包含新增的欄位
+          for (const key in this.defaultColumns) {
+            if (savedConfig.hasOwnProperty(key)) {
+              merged[key] = {
+                label: this.defaultColumns[key].label,
+                visible: savedConfig[key].visible
+              };
+            } else {
+              merged[key] = { ...this.defaultColumns[key] };
+            }
+          }
+          
+          // 使用 Object.assign 來觸發響應式更新
+          Object.assign(this.columns, merged);
+        }
+      } catch (error) {
+        console.error('載入表格欄位配置失敗：', error);
+      }
+    },
     /** 判斷是否可以歸還（只有借出人本人或管理員可以歸還）*/
     canReturn(row) {
       // 管理員可以歸還任何人的借出

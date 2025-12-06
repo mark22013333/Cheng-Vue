@@ -107,16 +107,16 @@
               />
             </el-tooltip>
           </el-col>
-          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns" pageKey="inventory_management"></right-toolbar>
         </el-row>
 
         <!-- 資料表格 -->
         <el-table v-loading="loading" :data="managementList" @selection-change="handleSelectionChange"
                   @sort-change="handleSortChange">
           <el-table-column type="selection" width="55" align="center"/>
-          <el-table-column label="物品編碼" align="center" prop="itemCode" min-width="180" sortable="custom"
+          <el-table-column v-if="columns.itemCode.visible" label="物品編碼" align="center" prop="itemCode" min-width="180" sortable="custom"
                            :show-overflow-tooltip="true"/>
-          <el-table-column label="圖片" align="center" width="80">
+          <el-table-column v-if="columns.image.visible" label="圖片" align="center" width="80">
             <template #default="scope">
               <el-image
                 v-if="scope.row.imageUrl"
@@ -136,34 +136,33 @@
               <span v-else style="color: #ccc;">無圖</span>
             </template>
           </el-table-column>
-          <el-table-column label="物品名稱" align="center" prop="itemName" min-width="150" sortable="custom"
+          <el-table-column v-if="columns.itemName.visible" label="物品名稱" align="center" prop="itemName" min-width="150" sortable="custom"
                            :show-overflow-tooltip="true"/>
-          <el-table-column label="作者" align="center" prop="author" width="120" :show-overflow-tooltip="true"
-                           v-if="hasAuthorColumn"/>
-          <el-table-column label="規格" align="center" prop="specification" width="120"/>
-          <el-table-column label="品牌/型號" align="center" width="150">
+          <el-table-column v-if="columns.author.visible && hasAuthorColumn" label="作者" align="center" prop="author" width="120" :show-overflow-tooltip="true"/>
+          <el-table-column v-if="columns.specification.visible" label="規格" align="center" prop="specification" width="120"/>
+          <el-table-column v-if="columns.brandModel.visible" label="品牌/型號" align="center" width="150">
             <template #default="scope">
               {{ scope.row.brand }} {{ scope.row.model }}
             </template>
           </el-table-column>
 
           <!-- 庫存資訊 -->
-          <el-table-column label="總數量" align="center" prop="totalQuantity" width="80">
+          <el-table-column v-if="columns.totalQuantity.visible" label="總數量" align="center" prop="totalQuantity" width="80">
             <template #default="scope">
               <el-tag v-if="scope.row.totalQuantity > 0" type="success">{{ scope.row.totalQuantity }}</el-tag>
               <el-tag v-else type="danger">0</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="可用" align="center" prop="availableQty" width="70"/>
-          <el-table-column label="借出" align="center" prop="borrowedQty" width="70"/>
-          <el-table-column label="庫存狀態" align="center" prop="stockStatusText" width="90">
+          <el-table-column v-if="columns.availableQty.visible" label="可用" align="center" prop="availableQty" width="70"/>
+          <el-table-column v-if="columns.borrowedQty.visible" label="借出" align="center" prop="borrowedQty" width="70"/>
+          <el-table-column v-if="columns.stockStatus.visible" label="庫存狀態" align="center" prop="stockStatusText" width="90">
             <template #default="scope">
               <el-tag v-if="scope.row.stockStatus === '0'" type="success">{{ scope.row.stockStatusText }}</el-tag>
               <el-tag v-else-if="scope.row.stockStatus === '1'" type="warning">{{ scope.row.stockStatusText }}</el-tag>
               <el-tag v-else type="danger">{{ scope.row.stockStatusText }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="存放位置" align="center" prop="location" width="140" sortable="custom"
+          <el-table-column v-if="columns.location.visible" label="存放位置" align="center" prop="location" width="140" sortable="custom"
                            :show-overflow-tooltip="true"/>
 
           <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column"
@@ -654,6 +653,7 @@ import {
 } from "@/api/inventory/management"
 import {listCategory} from "@/api/inventory/category"
 import {createRefreshTask} from "@/api/inventory/scan"
+import {getTableConfig, saveTableConfig} from "@/api/system/tableConfig"
 import ImageUpload from '@/components/ImageUpload'
 import ProgressDialog from '@/components/ProgressDialog'
 import {getImageUrl} from '@/utils/image'
@@ -701,6 +701,34 @@ export default {
       },
       // 全域低庫存閾值
       globalLowStockThreshold: null,
+      // 預設列訊息
+      defaultColumns: {
+        itemCode: {label: '物品編碼', visible: true},
+        image: {label: '圖片', visible: true},
+        itemName: {label: '物品名稱', visible: true},
+        author: {label: '作者', visible: true},
+        specification: {label: '規格', visible: true},
+        brandModel: {label: '品牌/型號', visible: true},
+        totalQuantity: {label: '總數量', visible: true},
+        availableQty: {label: '可用', visible: true},
+        borrowedQty: {label: '借出', visible: true},
+        stockStatus: {label: '庫存狀態', visible: true},
+        location: {label: '存放位置', visible: true}
+      },
+      // 列訊息
+      columns: {
+        itemCode: {label: '物品編碼', visible: true},
+        image: {label: '圖片', visible: true},
+        itemName: {label: '物品名稱', visible: true},
+        author: {label: '作者', visible: true},
+        specification: {label: '規格', visible: true},
+        brandModel: {label: '品牌/型號', visible: true},
+        totalQuantity: {label: '總數量', visible: true},
+        availableQty: {label: '可用', visible: true},
+        borrowedQty: {label: '借出', visible: true},
+        stockStatus: {label: '庫存狀態', visible: true},
+        location: {label: '存放位置', visible: true}
+      },
       // 入庫表單
       stockInForm: {
         itemId: null,
@@ -797,17 +825,45 @@ export default {
       return this.managementList.some(item => item.author && item.author.trim() !== '');
     }
   },
-  created() {
+  async created() {
     // 檢查路由，如果是從分類管理選單進來，自動切換到分類管理頁籤
     if (this.$route.path === '/inventory/category') {
       this.activeTab = 'categories';
     }
+    await this.loadTableConfig();
     this.getList();
     this.getCategoryList();
   },
   mounted() {
   },
   methods: {
+    /** 載入表格欄位配置 */
+    async loadTableConfig() {
+      try {
+        const response = await getTableConfig('inventory_management');
+        if (response.data) {
+          const savedConfig = JSON.parse(response.data);
+          const merged = {};
+          
+          // 合併配置：優先使用儲存的配置，但包含新增的欄位
+          for (const key in this.defaultColumns) {
+            if (savedConfig.hasOwnProperty(key)) {
+              merged[key] = {
+                label: this.defaultColumns[key].label,
+                visible: savedConfig[key].visible
+              };
+            } else {
+              merged[key] = { ...this.defaultColumns[key] };
+            }
+          }
+          
+          // 使用 Object.assign 來觸發響應式更新
+          Object.assign(this.columns, merged);
+        }
+      } catch (error) {
+        console.error('載入表格欄位配置失敗：', error);
+      }
+    },
     /** 查詢物品與庫存整合列表 */
     getList() {
       console.log('🔄 重新整理物品列表，查詢參數：', JSON.parse(JSON.stringify(this.queryParams)));

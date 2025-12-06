@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.system.mapper.SysUserTableConfigMapper">
+    
+    <resultMap type="SysUserTableConfig" id="SysUserTableConfigResult">
+        <result property="configId"     column="config_id"    />
+        <result property="userId"       column="user_id"      />
+        <result property="pageKey"      column="page_key"     />
+        <result property="columnConfig" column="column_config" />
+        <result property="createBy"     column="create_by"    />
+        <result property="createTime"   column="create_time"  />
+        <result property="updateBy"     column="update_by"    />
+        <result property="updateTime"   column="update_time"  />
+        <result property="remark"       column="remark"       />
+    </resultMap>
+
+    <sql id="selectSysUserTableConfigVo">
+        select config_id, user_id, page_key, column_config, create_by, create_time, update_by, update_time, remark
+        from sys_user_table_config
+    </sql>
+
+    <select id="selectSysUserTableConfigByConfigId" parameterType="Long" resultMap="SysUserTableConfigResult">
+        <include refid="selectSysUserTableConfigVo"/>
+        where config_id = #{configId}
+    </select>
+
+    <select id="selectByUserIdAndPageKey" resultMap="SysUserTableConfigResult">
+        <include refid="selectSysUserTableConfigVo"/>
+        where user_id = #{userId} and page_key = #{pageKey}
+    </select>
+        
+    <insert id="insertSysUserTableConfig" parameterType="SysUserTableConfig" useGeneratedKeys="true" keyProperty="configId">
+        insert into sys_user_table_config
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="pageKey != null and pageKey != ''">page_key,</if>
+            <if test="columnConfig != null and columnConfig != ''">column_config,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null">remark,</if>
+            create_time
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="pageKey != null and pageKey != ''">#{pageKey},</if>
+            <if test="columnConfig != null and columnConfig != ''">#{columnConfig},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null">#{remark},</if>
+            now()
+         </trim>
+    </insert>
+
+    <update id="updateSysUserTableConfig" parameterType="SysUserTableConfig">
+        update sys_user_table_config
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="pageKey != null and pageKey != ''">page_key = #{pageKey},</if>
+            <if test="columnConfig != null and columnConfig != ''">column_config = #{columnConfig},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = now()
+        </trim>
+        where config_id = #{configId}
+    </update>
+
+    <insert id="insertOrUpdate" parameterType="SysUserTableConfig">
+        insert into sys_user_table_config (user_id, page_key, column_config, create_by, create_time)
+        values (#{userId}, #{pageKey}, #{columnConfig}, #{createBy}, now())
+        on duplicate key update
+            column_config = #{columnConfig},
+            update_by = #{updateBy},
+            update_time = now()
+    </insert>
+
+    <delete id="deleteSysUserTableConfigByConfigId" parameterType="Long">
+        delete from sys_user_table_config where config_id = #{configId}
+    </delete>
+
+    <delete id="deleteSysUserTableConfigByConfigIds" parameterType="Long">
+        delete from sys_user_table_config where config_id in
+        <foreach item="configId" collection="array" open="(" separator="," close=")">
+            #{configId}
+        </foreach>
+    </delete>
+</mapper>

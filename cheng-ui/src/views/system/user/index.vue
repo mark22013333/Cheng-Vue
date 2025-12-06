@@ -106,7 +106,7 @@
                   匯出
                 </el-button>
               </el-col>
-              <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
+              <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns" pageKey="system_user"></right-toolbar>
             </el-row>
 
             <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange"
@@ -319,6 +319,7 @@ import {
   updateUser
 } from "@/api/system/user"
 import {getToken} from "@/utils/auth"
+import {getTableConfig, saveTableConfig} from "@/api/system/tableConfig"
 import Treeselect from "vue3-treeselect"
 import "vue3-treeselect/dist/vue3-treeselect.css"
 import {Pane, Splitpanes} from "splitpanes"
@@ -409,6 +410,16 @@ export default {
         status: undefined,
         deptId: undefined
       },
+      // 預設列訊息
+      defaultColumns: {
+        userId: {label: '使用者編號', visible: true},
+        userName: {label: '使用者名稱', visible: true},
+        nickName: {label: '使用者暱稱', visible: true},
+        deptName: {label: '部門', visible: true},
+        phonenumber: {label: '手機號碼', visible: true},
+        status: {label: '狀態', visible: true},
+        createTime: {label: '建立時間', visible: true}
+      },
       // 列訊息
       columns: {
         userId: {label: '使用者編號', visible: true},
@@ -459,7 +470,8 @@ export default {
       this.$refs.tree.filter(val)
     }
   },
-  created() {
+  async created() {
+    await this.loadTableConfig()
     this.getList()
     this.getDeptTree()
     this.getConfigKey("sys.user.initPassword").then(response => {
@@ -467,6 +479,33 @@ export default {
     })
   },
   methods: {
+    /** 載入表格欄位配置 */
+    async loadTableConfig() {
+      try {
+        const response = await getTableConfig('system_user')
+        if (response.data) {
+          const savedConfig = JSON.parse(response.data)
+          const merged = {}
+          
+          // 合併配置：優先使用儲存的配置，但包含新增的欄位
+          for (const key in this.defaultColumns) {
+            if (savedConfig.hasOwnProperty(key)) {
+              merged[key] = {
+                label: this.defaultColumns[key].label,
+                visible: savedConfig[key].visible
+              }
+            } else {
+              merged[key] = { ...this.defaultColumns[key] }
+            }
+          }
+          
+          // 使用 Object.assign 來觸發響應式更新
+          Object.assign(this.columns, merged)
+        }
+      } catch (error) {
+        console.error('載入表格欄位配置失敗：', error)
+      }
+    },
     /** 查詢使用者列表 */
     getList() {
       this.loading = true
