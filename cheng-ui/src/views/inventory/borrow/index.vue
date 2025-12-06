@@ -9,7 +9,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="借用人" prop="borrowerName">
+      <el-form-item label="借用人" prop="borrowerName" v-hasPermi="['inventory:borrow:all']">
         <el-input
           v-model="queryParams.borrowerName"
           placeholder="請輸入借用人"
@@ -271,8 +271,17 @@
     </el-dialog>
 
     <!-- 審核對話框 -->
-    <el-dialog title="審核借出申請" :model-value="approveOpen" @update:model-value="val => approveOpen = val" width="400px" append-to-body>
-      <el-form ref="approveForm" :model="approveForm" label-width="80px">
+    <el-dialog title="審核借出申請" :model-value="approveOpen" @update:model-value="val => approveOpen = val" width="500px" append-to-body>
+      <el-form ref="approveForm" :model="approveForm" label-width="100px">
+        <el-form-item label="借用人">
+          <el-input v-model="approveForm.borrowerName" disabled/>
+        </el-form-item>
+        <el-form-item label="借用物品">
+          <el-input v-model="approveForm.itemName" disabled/>
+        </el-form-item>
+        <el-form-item label="借用數量">
+          <el-input-number v-model="approveForm.quantity" disabled style="width: 100%"/>
+        </el-form-item>
         <el-form-item label="審核結果">
           <el-radio-group v-model="approveForm.approved">
             <el-radio :label="true">通過</el-radio>
@@ -352,6 +361,7 @@ import {
   updateBorrow,
   approveBorrow,
   returnBorrow,
+  lostItem,
   getBorrowStats,
   getReturnRecords
 } from "@/api/inventory/borrow";
@@ -524,7 +534,14 @@ export default {
     },
     /** 取得借出統計 */
     getBorrowStatistics() {
-      getBorrowStats().then(response => {
+      // 使用相同的搜尋條件過濾統計結果
+      const statsQuery = {
+        itemName: this.queryParams.itemName,
+        borrowerName: this.queryParams.borrowerName,
+        beginBorrowTime: this.queryParams.beginBorrowTime,
+        endBorrowTime: this.queryParams.endBorrowTime
+      };
+      getBorrowStats(statsQuery).then(response => {
         this.borrowStats = response.data;
       });
     },
@@ -552,6 +569,8 @@ export default {
     handleQuery() {
       this.queryParams.pageNum = 1;
       this.getList();
+      // 同時更新統計數字
+      this.getBorrowStatistics();
     },
     /** 重置按鈕操作 */
     resetQuery() {
@@ -627,6 +646,9 @@ export default {
     handleApprove(row) {
       this.approveForm = {
         borrowId: row.borrowId,
+        borrowerName: row.borrowerName,
+        itemName: row.itemName,
+        quantity: row.quantity,
         approved: true,
         remark: ''
       };
@@ -661,7 +683,36 @@ export default {
     },
     /** 提交歸還 */
     submitReturn() {
-      // 轉換前端參數為後端需要的格式
+      // 如果是遺失，跳出二次確認
+      if (this.returnForm.condition === 'lost') {
+        this.$confirm('確定要將此物品標記為遺失嗎？此操作將記錄在操作日誌中。', '遺失確認', {
+          confirmButtonText: '確定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          // 確認後調用遺失物品 API
+          const requestData = {
+            borrowId: this.returnForm.borrowId,
+            returnQuantity: this.returnForm.quantity,
+            remark: this.returnForm.remark
+          };
+
+          lostItem(requestData).then(response => {
+            this.$modal.msgSuccess("已記錄為遺失");
+            this.returnOpen = false;
+            this.getList();
+            this.getBorrowStatistics();
+            this.getItemList();
+          }).catch(error => {
+            console.error('遺失記錄失敗:', error);
+          });
+        }).catch(() => {
+          // 取消遺失
+        });
+        return;
+      }
+
+      // 一般歸還或損壞歸還
       const requestData = {
         borrowId: this.returnForm.borrowId,
         returnQuantity: this.returnForm.quantity,

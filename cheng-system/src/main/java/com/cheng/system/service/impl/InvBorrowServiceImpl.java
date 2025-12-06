@@ -7,6 +7,8 @@ import com.cheng.system.domain.InvItem;
 import com.cheng.system.domain.InvReturn;
 import com.cheng.system.domain.InvStock;
 import com.cheng.system.domain.enums.BorrowStatus;
+import com.cheng.system.domain.enums.ItemCondition;
+import com.cheng.common.enums.YesNo;
 import com.cheng.system.mapper.InvBorrowMapper;
 import com.cheng.system.mapper.InvItemMapper;
 import com.cheng.system.mapper.InvReturnMapper;
@@ -17,8 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -78,11 +78,12 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
     /**
      * 查詢逾期借出記錄列表
      *
+     * @param borrowerId 借出人ID（可選，若為null則查詢所有逾期記錄）
      * @return 借出記錄集合
      */
     @Override
-    public List<InvBorrow> selectOverdueBorrowList() {
-        return invBorrowMapper.selectOverdueBorrowList();
+    public List<InvBorrow> selectOverdueBorrowList(Long borrowerId) {
+        return invBorrowMapper.selectOverdueBorrowList(borrowerId);
     }
 
     /**
@@ -264,7 +265,12 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
             stock.setBorrowedQty(stock.getBorrowedQty() - returnQuantity);
 
             // 根據物品狀況更新庫存
-            if ("lost".equals(conditionDesc) || "遺失".equals(conditionDesc)) {
+            ItemCondition condition = ItemCondition.getByDescription(conditionDesc);
+            if (condition == null && YesNo.YES.getCodeAsString().equals(isDamaged)) {
+                condition = ItemCondition.DAMAGED;
+            }
+            
+            if (condition == ItemCondition.LOST) {
                 // 遺失：總數量減少，增加遺失數量，可用數量不變
                 log.info("處理遺失物品 - 原總數量: {}, 原遺失數量: {}", stock.getTotalQuantity(), stock.getLostQty());
                 stock.setTotalQuantity(stock.getTotalQuantity() - returnQuantity);
@@ -272,7 +278,7 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
                 Integer currentLostQty = stock.getLostQty();
                 stock.setLostQty((currentLostQty != null ? currentLostQty : 0) + returnQuantity);
                 log.info("處理遺失物品 - 新總數量: {}, 新遺失數量: {}", stock.getTotalQuantity(), stock.getLostQty());
-            } else if ("1".equals(isDamaged) || "damaged".equals(conditionDesc) || "損壞".equals(conditionDesc)) {
+            } else if (condition == ItemCondition.DAMAGED) {
                 // 損壞：增加損壞數量，同時增加可用數量（損壞的物品仍可使用或維修後使用）
                 log.info("處理損壞物品 - 原損壞數量: {}, 原可用數量: {}", stock.getDamagedQty(), stock.getAvailableQty());
                 stock.setDamagedQty(stock.getDamagedQty() + returnQuantity);
@@ -302,27 +308,31 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
 
         // 判斷是否逾期
         if (borrow.getExpectedReturn() != null && DateUtils.getNowDate().after(borrow.getExpectedReturn())) {
-            invReturn.setIsOverdue("1");
+            invReturn.setIsOverdue(YesNo.YES.getCodeAsString());
             long diffInMillies = DateUtils.getNowDate().getTime() - borrow.getExpectedReturn().getTime();
             long overdueDays = diffInMillies / (24 * 60 * 60 * 1000);
             invReturn.setOverdueDays(overdueDays);
         } else {
-            invReturn.setIsOverdue("0");
+            invReturn.setIsOverdue(YesNo.NO.getCodeAsString());
             invReturn.setOverdueDays(0L);
         }
 
         // 設定物品狀況
-        if ("lost".equals(conditionDesc) || "遺失".equals(conditionDesc)) {
-            invReturn.setItemCondition("lost");
-        } else if ("1".equals(isDamaged) || "damaged".equals(conditionDesc) || "損壞".equals(conditionDesc)) {
-            invReturn.setItemCondition("damaged");
+        ItemCondition finalCondition = ItemCondition.getByDescription(conditionDesc);
+        if (finalCondition == null && YesNo.YES.getCodeAsString().equals(isDamaged)) {
+            finalCondition = ItemCondition.DAMAGED;
+        }
+        if (finalCondition == null) {
+            finalCondition = ItemCondition.GOOD;
+        }
+        
+        invReturn.setItemCondition(finalCondition.getCode());
+        if (finalCondition == ItemCondition.DAMAGED) {
             invReturn.setDamageDescription(damageDesc);
-        } else {
-            invReturn.setItemCondition("good");
         }
 
         invReturn.setReceiverId(returnerId);
-        invReturn.setReturnStatus("1"); // 已確認
+        invReturn.setReturnStatus(YesNo.YES.getCodeAsString()); // 已確認
         invReturn.setRemark(remark); // 設定說明/備註
         invReturn.setCreateTime(DateUtils.getNowDate());
 

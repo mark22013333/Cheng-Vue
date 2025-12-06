@@ -61,6 +61,15 @@ export function returnBorrow(data) {
   })
 }
 
+// 遺失物品
+export function lostItem(data) {
+  return request({
+    url: '/inventory/borrow/lostItem',
+    method: 'post',
+    data: data
+  })
+}
+
 // 審核借出申請
 export function approveBorrow(data) {
   return request({
@@ -71,10 +80,11 @@ export function approveBorrow(data) {
 }
 
 // 取得借出統計
-export function getBorrowStats() {
+export function getBorrowStats(query) {
   return request({
     url: '/inventory/borrow/stats',
-    method: 'get'
+    method: 'get',
+    params: query
   })
 }
 

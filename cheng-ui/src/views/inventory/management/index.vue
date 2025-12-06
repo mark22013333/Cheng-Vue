@@ -473,10 +473,10 @@
                         placeholder="預設為當前登入用戶" />
             </el-form-item>
             <el-form-item label="預約數量" prop="borrowQty">
-              <el-input-number 
-                v-model="reserveForm.borrowQty" 
-                :min="1" 
-                :max="reserveForm.availableQty" 
+              <el-input-number
+                v-model="reserveForm.borrowQty"
+                :min="1"
+                :max="reserveForm.availableQty"
                 :disabled="!reserveForm.availableQty || reserveForm.availableQty <= 0"
                 controls-position="right"
                 style="width: 200px"
@@ -1338,7 +1338,8 @@ export default {
       ).then(() => {
         // 1. 建立任務並取得 taskId
         createRefreshTask(itemId).then(response => {
-          const taskId = response.taskId;
+          console.log('response:', response)
+          const taskId = response.data;
           let dialogMinimized = false; // 標記對話框是否被最小化
 
           // 2. 開啟進度對話框

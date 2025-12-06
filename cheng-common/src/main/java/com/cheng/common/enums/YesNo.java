@@ -82,4 +82,32 @@ public enum YesNo {
     public Boolean toBoolean() {
         return this == YES;
     }
+
+    /**
+     * 取得字串格式的代碼（"0" 或 "1"）
+     * 用於資料庫欄位為 VARCHAR 類型的情況
+     *
+     * @return "0" 或 "1"
+     */
+    public String getCodeAsString() {
+        return String.valueOf(this.code);
+    }
+
+    /**
+     * 從字串代碼建立 YesNo
+     *
+     * @param code 字串代碼（"0" 或 "1"）
+     * @return YesNo 實例
+     */
+    public static YesNo fromStringCode(String code) {
+        if (code == null) {
+            return null;
+        }
+        try {
+            Integer intCode = Integer.parseInt(code);
+            return fromCode(intCode);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("無效的字串代碼: " + code);
+        }
+    }
 }

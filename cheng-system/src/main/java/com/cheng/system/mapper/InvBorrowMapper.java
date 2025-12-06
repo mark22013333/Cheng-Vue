@@ -39,9 +39,10 @@ public interface InvBorrowMapper {
     /**
      * 查詢逾期借出記錄列表
      *
+     * @param borrowerId 借出人ID（可選，若為null則查詢所有逾期記錄）
      * @return 借出記錄集合
      */
-    List<InvBorrow> selectOverdueBorrowList();
+    List<InvBorrow> selectOverdueBorrowList(@Param("borrowerId") Long borrowerId);
 
     /**
      * 查詢用戶的借出記錄

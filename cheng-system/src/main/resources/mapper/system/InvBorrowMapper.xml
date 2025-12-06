@@ -78,6 +78,7 @@
         <where>
             <if test="borrowNo != null and borrowNo != ''">and b.borrow_no like concat('%', #{borrowNo}, '%')</if>
             <if test="itemName != null and itemName != ''">and b.item_name like concat('%', #{itemName}, '%')</if>
+            <if test="borrowerId != null">and b.borrower_id = #{borrowerId}</if>
             <if test="borrowerName != null and borrowerName != ''">and (b.borrower_name like concat('%', #{borrowerName}, '%') OR u.nick_name like concat('%', #{borrowerName}, '%') OR u.user_name like concat('%', #{borrowerName}, '%'))
             </if>
             <if test="status != null and status != ''">and b.status = #{status}</if>
@@ -120,6 +121,9 @@
     <select id="selectOverdueBorrowList" resultMap="InvBorrowResult">
         <include refid="selectInvBorrowVo"/>
         where b.status = '1' and b.expected_return &lt; now()
+        <if test="borrowerId != null">
+            and b.borrower_id = #{borrowerId}
+        </if>
         order by b.expected_return asc
     </select>
 

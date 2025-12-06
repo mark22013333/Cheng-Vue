@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +32,7 @@ import java.util.Map;
  * @author cheng
  * @since 2025-09-23
  */
+@Slf4j
 @RestController
 @RequestMapping("/inventory/borrow")
 @RequiredArgsConstructor
@@ -42,23 +44,61 @@ public class InvBorrowController extends BaseController {
 
     /**
      * 查詢借出記錄列表
+     * 如果沒有 inventory:borrow:all 權限，只能查看自己的借出記錄
      */
     @PreAuthorize("@ss.hasPermi('inventory:borrow:list')")
     @GetMapping("/list")
     public TableDataInfo list(InvBorrow invBorrow) {
+        Long currentUserId = getUserId();
+        boolean isAdmin = getLoginUser().getUser().isAdmin();
+        boolean hasAllPermission = isAdmin || getLoginUser().getPermissions().contains("inventory:borrow:all");
+        
+        log.info("=== 借出記錄查詢權限檢查 ===");
+        log.info("當前使用者ID: {}", currentUserId);
+        log.info("是否管理員: {}", isAdmin);
+        log.info("是否有 inventory:borrow:all 權限: {}", getLoginUser().getPermissions().contains("inventory:borrow:all"));
+        log.info("hasAllPermission: {}", hasAllPermission);
+        log.info("查詢參數 - borrowerId (before): {}", invBorrow.getBorrowerId());
+        
+        // 沒有權限時，只能查看自己的借出記錄
+        if (!hasAllPermission) {
+            invBorrow.setBorrowerId(currentUserId);
+            log.info("❌ 無全局查看權限，設定 borrowerId: {}", currentUserId);
+        } else {
+            log.info("✅ 有全局查看權限，可查看所有記錄");
+        }
+        
+        log.info("查詢參數 - borrowerId (after): {}", invBorrow.getBorrowerId());
+        log.info("查詢參數 - status: {}", invBorrow.getStatus());
+        log.info("查詢參數 - itemName: {}", invBorrow.getItemName());
+        
         startPage();
         List<InvBorrow> list = invBorrowService.selectInvBorrowList(invBorrow);
+        
+        log.info("查詢結果數量: {}", list.size());
+        if (!list.isEmpty()) {
+            log.info("第一筆記錄的 borrowerId: {}", list.get(0).getBorrowerId());
+        }
+        
         return getDataTable(list);
     }
 
     /**
      * 查詢逾期借出記錄列表
+     * 如果沒有 inventory:borrow:all 權限，只能查看自己的逾期記錄
      */
     @PreAuthorize("@ss.hasPermi('inventory:borrow:list')")
     @GetMapping("/overdue")
     public TableDataInfo overdueList() {
+        // 檢查是否有查看所有記錄的權限
+        boolean hasAllPermission = getLoginUser().getUser().isAdmin() || 
+                                    getLoginUser().getPermissions().contains("inventory:borrow:all");
+        
+        // 沒有權限時，只能查看自己的逾期記錄
+        Long borrowerId = hasAllPermission ? null : getUserId();
+        
         startPage();
-        List<InvBorrow> list = invBorrowService.selectOverdueBorrowList();
+        List<InvBorrow> list = invBorrowService.selectOverdueBorrowList(borrowerId);
         return getDataTable(list);
     }
 
@@ -87,45 +127,80 @@ public class InvBorrowController extends BaseController {
 
     /**
      * 取得借出統計資料
+     * 支援根據搜尋條件過濾統計結果
      */
     @PreAuthorize("@ss.hasPermi('inventory:borrow:list')")
     @GetMapping("/stats")
-    public AjaxResult getBorrowStats() {
+    public AjaxResult getBorrowStats(InvBorrow searchParams) {
         try {
+            Long currentUserId = getUserId();
+            boolean isAdmin = getLoginUser().getUser().isAdmin();
+            boolean hasAllPermission = isAdmin || getLoginUser().getPermissions().contains("inventory:borrow:all");
+            
+            log.info("=== 借出統計查詢權限檢查 ===");
+            log.info("當前使用者ID: {}", currentUserId);
+            log.info("是否管理員: {}", isAdmin);
+            log.info("hasAllPermission: {}", hasAllPermission);
+            
+            // 沒有權限時，只能查看自己的統計
+            if (!hasAllPermission) {
+                searchParams.setBorrowerId(currentUserId);
+                log.info("❌ 無全局查看權限，統計僅限使用者: {}", currentUserId);
+            } else {
+                log.info("✅ 有全局查看權限，統計所有記錄");
+            }
+            
             // 取得借出統計資料
             Map<String, Object> stats = new HashMap<>();
 
             // 待審核數量
-            InvBorrow pendingQuery = new InvBorrow();
+            InvBorrow pendingQuery = copySearchParams(searchParams);
             pendingQuery.setStatusEnum(BorrowStatus.PENDING);
             int pendingCount = invBorrowService.selectInvBorrowList(pendingQuery).size();
             stats.put("pending", pendingCount);
 
             // 已借出數量（包含部分歸還）
-            InvBorrow borrowedQuery = new InvBorrow();
+            InvBorrow borrowedQuery = copySearchParams(searchParams);
             borrowedQuery.setStatusEnum(BorrowStatus.BORROWED);
             int borrowedCount = invBorrowService.selectInvBorrowList(borrowedQuery).size();
 
-            InvBorrow partialReturnQuery = new InvBorrow();
+            InvBorrow partialReturnQuery = copySearchParams(searchParams);
             partialReturnQuery.setStatusEnum(BorrowStatus.PARTIAL_RETURNED);
             int partialReturnCount = invBorrowService.selectInvBorrowList(partialReturnQuery).size();
 
             stats.put("borrowed", borrowedCount + partialReturnCount);
 
             // 已歸還數量
-            InvBorrow returnedQuery = new InvBorrow();
+            InvBorrow returnedQuery = copySearchParams(searchParams);
             returnedQuery.setStatusEnum(BorrowStatus.RETURNED);
             int returnedCount = invBorrowService.selectInvBorrowList(returnedQuery).size();
             stats.put("returned", returnedCount);
 
-            // 逾期數量
-            int overdueCount = invBorrowService.selectOverdueBorrowList().size();
+            // 逾期數量（根據權限篩選）
+            Long overdueQueryBorrowerId = hasAllPermission ? null : currentUserId;
+            int overdueCount = invBorrowService.selectOverdueBorrowList(overdueQueryBorrowerId).size();
             stats.put("overdue", overdueCount);
+            
+            log.info("統計結果 - pending: {}, borrowed: {}, returned: {}, overdue: {}", 
+                       pendingCount, borrowedCount + partialReturnCount, returnedCount, overdueCount);
 
             return success(stats);
         } catch (Exception e) {
+            log.error("取得借出統計資料失敗", e);
             return error("取得借出統計資料失敗：" + e.getMessage());
         }
+    }
+    
+    /**
+     * 複製搜尋參數（用於統計查詢）
+     */
+    private InvBorrow copySearchParams(InvBorrow source) {
+        InvBorrow target = new InvBorrow();
+        target.setBorrowerId(source.getBorrowerId());
+        target.setItemName(source.getItemName());
+        target.setBorrowerName(source.getBorrowerName());
+        target.setParams(source.getParams());
+        return target;
     }
 
     /**
@@ -230,6 +305,37 @@ public class InvBorrowController extends BaseController {
             int result = invBorrowService.returnItem(request.getBorrowId(), request.getReturnQuantity(),
                     getUserId(), request.getConditionDesc(), request.getIsDamaged(), request.getDamageDesc(), request.getRemark());
             return toAjax(result);
+        } catch (Exception e) {
+            return error(e.getMessage());
+        }
+    }
+    
+    /**
+     * 遺失物品
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:borrow:return')")
+    @Log(title = "遺失物品", businessType = BusinessType.UPDATE)
+    @PostMapping("/lostItem")
+    public AjaxResult lostItem(@RequestBody ReturnRequest request) {
+        try {
+            // 取得借出記錄用於日誌（包含借用人和借出單號，方便追溯）
+            InvBorrow borrow = invBorrowService.selectInvBorrowByBorrowId(request.getBorrowId());
+            String itemName = borrow != null ? borrow.getItemName() : "未知物品";
+            String borrowerName = borrow != null ? borrow.getBorrowerName() : "未知借用人";
+            String borrowNo = borrow != null ? borrow.getBorrowNo() : "未知單號";
+            
+            int result = invBorrowService.returnItem(request.getBorrowId(), request.getReturnQuantity(),
+                    getUserId(), "lost", "0", null, request.getRemark());
+            
+            // 將遺失的詳細資訊加入返回結果，讓操作日誌能記錄
+            AjaxResult ajaxResult = toAjax(result);
+            ajaxResult.put("itemName", itemName);
+            ajaxResult.put("quantity", request.getReturnQuantity());
+            ajaxResult.put("borrowerName", borrowerName);  // 借用人姓名
+            ajaxResult.put("borrowNo", borrowNo);          // 借出單號（方便從借出管理查詢）
+            log.info("遺失物品：{}，數量：{}，借用人：{}，借出單號：{}", itemName, request.getReturnQuantity(), borrowerName, borrowNo);
+            
+            return ajaxResult;
         } catch (Exception e) {
             return error(e.getMessage());
         }
