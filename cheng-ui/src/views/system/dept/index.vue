@@ -55,8 +55,8 @@
          :default-expand-all="isExpandAll"
          :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
       >
-         <el-table-column prop="deptName" label="部門名稱" width="260"></el-table-column>
-         <el-table-column prop="orderNum" label="排序" width="200"></el-table-column>
+         <el-table-column prop="deptName" label="部門名稱" min-width="200"></el-table-column>
+         <el-table-column prop="orderNum" label="排序" width="100"></el-table-column>
          <el-table-column prop="status" label="狀態" width="100">
             <template #default="scope">
                <dict-tag :options="sys_normal_disable" :value="scope.row.status" />

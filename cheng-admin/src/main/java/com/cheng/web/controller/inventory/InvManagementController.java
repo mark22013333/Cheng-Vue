@@ -10,9 +10,11 @@ import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.common.event.ReservationEvent;
 import com.cheng.system.domain.InvItem;
+import com.cheng.system.domain.InvBorrow;
 import com.cheng.system.dto.ImportTaskResult;
 import com.cheng.system.dto.InvItemWithStockDTO;
 import com.cheng.system.mapper.InvItemMapper;
+import com.cheng.system.mapper.InvBorrowMapper;
 import com.cheng.system.service.IInvItemService;
 import com.cheng.system.service.IInvStockService;
 import com.cheng.framework.sse.SseChannels;
@@ -55,6 +57,7 @@ import java.util.List;
 public class InvManagementController extends BaseController {
 
     private final InvItemMapper invItemMapper;
+    private final InvBorrowMapper invBorrowMapper;
     private final IInvItemService invItemService;
     private final IInvStockService invStockService;
     private final SseManager sseManager;
@@ -313,7 +316,21 @@ public class InvManagementController extends BaseController {
     public AjaxResult reserveItem(@Validated @RequestBody com.cheng.system.domain.vo.ReserveRequest request) {
         try {
             com.cheng.system.domain.vo.ReserveResult result = invItemService.reserveItem(request, getUserId());
-            return success(result);
+            
+            // 取得借出記錄的 borrowNo 用於操作日誌
+            AjaxResult ajaxResult = success(result);
+            if (result.getBorrowId() != null) {
+                InvBorrow borrow = invBorrowMapper.selectInvBorrowByBorrowId(result.getBorrowId());
+                if (borrow != null) {
+                    String borrowNo = borrow.getBorrowNo();
+                    String itemName = borrow.getItemName();
+                    ajaxResult.put("borrowNo", borrowNo);
+                    ajaxResult.put("itemName", itemName);
+                    log.info("物品預約成功：借出單號：{}，物品：{}", borrowNo, itemName);
+                }
+            }
+            
+            return ajaxResult;
         } catch (Exception e) {
             log.error("物品預約失敗", e);
             return error(e.getMessage());

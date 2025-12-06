@@ -57,6 +57,7 @@
                b.approver_id,
                b.approver_name,
                b.approve_time,
+               b.approve_remark,
                b.purpose,
                b.create_by,
                b.create_time,

@@ -349,11 +349,12 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
      * @param approverId   審核人ID
      * @param approverName 審核人姓名
      * @param isApproved   是否通過審核
+     * @param approveRemark 審核備註（拒絕原因）
      * @return 結果
      */
     @Override
     @Transactional
-    public int approveBorrow(Long borrowId, Long approverId, String approverName, boolean isApproved) {
+    public int approveBorrow(Long borrowId, Long approverId, String approverName, boolean isApproved, String approveRemark) {
         InvBorrow borrow = invBorrowMapper.selectInvBorrowByBorrowId(borrowId);
         if (borrow == null) {
             throw new RuntimeException("借出記錄不存在");
@@ -371,6 +372,7 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
         borrow.setApproverId(approverId);
         borrow.setApproverName(approverName);
         borrow.setApproveTime(DateUtils.getNowDate());
+        borrow.setApproveRemark(approveRemark);  // 設定審核備註
         borrow.setUpdateTime(DateUtils.getNowDate());
 
         InvStock stock = invStockMapper.selectInvStockByItemId(borrow.getItemId());

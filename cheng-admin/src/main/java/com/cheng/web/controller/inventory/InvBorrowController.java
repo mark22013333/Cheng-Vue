@@ -302,9 +302,22 @@ public class InvBorrowController extends BaseController {
     @PostMapping("/returnItem")
     public AjaxResult returnItem(@RequestBody ReturnRequest request) {
         try {
+            // 取得借出記錄用於操作日誌
+            InvBorrow borrow = invBorrowService.selectInvBorrowByBorrowId(request.getBorrowId());
+            String borrowNo = borrow != null ? borrow.getBorrowNo() : "未知單號";
+            String itemName = borrow != null ? borrow.getItemName() : "未知物品";
+            
             int result = invBorrowService.returnItem(request.getBorrowId(), request.getReturnQuantity(),
                     getUserId(), request.getConditionDesc(), request.getIsDamaged(), request.getDamageDesc(), request.getRemark());
-            return toAjax(result);
+            
+            // 記錄操作日誌資訊
+            AjaxResult ajaxResult = toAjax(result);
+            ajaxResult.put("borrowNo", borrowNo);
+            ajaxResult.put("itemName", itemName);
+            ajaxResult.put("returnQuantity", request.getReturnQuantity());
+            log.info("歸還物品：借出單號：{}，物品：{}，歸還數量：{}", borrowNo, itemName, request.getReturnQuantity());
+            
+            return ajaxResult;
         } catch (Exception e) {
             return error(e.getMessage());
         }
@@ -349,9 +362,25 @@ public class InvBorrowController extends BaseController {
     @PostMapping("/approve")
     public AjaxResult approve(@RequestBody ApproveRequest request) {
         try {
+            // 取得借出記錄用於操作日誌
+            InvBorrow borrow = invBorrowService.selectInvBorrowByBorrowId(request.getBorrowId());
+            String borrowNo = borrow != null ? borrow.getBorrowNo() : "未知單號";
+            String itemName = borrow != null ? borrow.getItemName() : "未知物品";
+            String borrowerName = borrow != null ? borrow.getBorrowerName() : "未知借用人";
+            
             int result = invBorrowService.approveBorrow(request.getBorrowId(), getUserId(),
-                    getUsername(), request.isApproved());
-            return toAjax(result);
+                    getUsername(), request.isApproved(), request.getApproveRemark());
+            
+            // 記錄操作日誌資訊
+            AjaxResult ajaxResult = toAjax(result);
+            ajaxResult.put("borrowNo", borrowNo);
+            ajaxResult.put("itemName", itemName);
+            ajaxResult.put("borrowerName", borrowerName);
+            ajaxResult.put("approved", request.isApproved());
+            log.info("審核借出申請：借出單號：{}，物品：{}，借用人：{}，審核結果：{}", 
+                    borrowNo, itemName, borrowerName, request.isApproved() ? "通過" : "拒絕");
+            
+            return ajaxResult;
         } catch (Exception e) {
             return error(e.getMessage());
         }
@@ -442,5 +471,6 @@ public class InvBorrowController extends BaseController {
     public static class ApproveRequest {
         private Long borrowId;
         private boolean approved;
+        private String approveRemark;  // 審核備註（拒絕原因）
     }
 }

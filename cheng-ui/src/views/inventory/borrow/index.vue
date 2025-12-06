@@ -1,6 +1,14 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="借出單號" prop="borrowNo">
+        <el-input
+          v-model="queryParams.borrowNo"
+          placeholder="請輸入借出單號"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       <el-form-item label="物品名稱" prop="itemName">
         <el-input
           v-model="queryParams.itemName"
@@ -30,6 +38,17 @@
       <el-form-item label="借出時間">
         <el-date-picker
           v-model="daterangeBorrow"
+          style="width: 240px"
+          value-format="YYYY-MM-DD"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="開始日期"
+          end-placeholder="結束日期"
+        ></el-date-picker>
+      </el-form-item>
+      <el-form-item label="歸還日期">
+        <el-date-picker
+          v-model="daterangeReturn"
           style="width: 240px"
           value-format="YYYY-MM-DD"
           type="daterange"
@@ -194,6 +213,16 @@
             v-hasPermi="['inventory:borrow:query']"
           >歸還記錄
           </el-button>
+          <!-- 審核拒絕狀態顯示查看拒絕原因按鈕 -->
+          <el-button
+            link
+            type="warning"
+            icon="Warning"
+            @click="handleViewRejectReason(scope.row)"
+            v-if="scope.row.status === '2' && scope.row.approveRemark"
+            v-hasPermi="['inventory:borrow:query']"
+          >拒絕原因
+          </el-button>
           <!-- 移除刪除按鈕，借出記錄應完整保留 -->
         </template>
       </el-table-column>
@@ -289,12 +318,29 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="審核意見">
-          <el-input v-model="approveForm.remark" type="textarea" placeholder="請輸入審核意見"/>
+          <el-input v-model="approveForm.approveRemark" type="textarea" placeholder="請輸入審核意見（拒絕時必填）"/>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitApprove">確 定</el-button>
         <el-button @click="cancelApprove">取 消</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 拒絕原因對話框 -->
+    <el-dialog title="審核拒絕原因" :model-value="rejectReasonOpen" @update:model-value="val => rejectReasonOpen = val" width="500px" append-to-body>
+      <el-descriptions :column="1" border>
+        <el-descriptions-item label="借用人">{{ rejectReasonData.borrowerName }}</el-descriptions-item>
+        <el-descriptions-item label="物品名稱">{{ rejectReasonData.itemName }}</el-descriptions-item>
+        <el-descriptions-item label="借用數量">{{ rejectReasonData.quantity }}</el-descriptions-item>
+        <el-descriptions-item label="審核人">{{ rejectReasonData.approverName }}</el-descriptions-item>
+        <el-descriptions-item label="審核時間">{{ parseTime(rejectReasonData.approveTime) }}</el-descriptions-item>
+        <el-descriptions-item label="拒絕原因">
+          <div style="white-space: pre-wrap; color: #F56C6C;">{{ rejectReasonData.approveRemark || '無' }}</div>
+        </el-descriptions-item>
+      </el-descriptions>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="rejectReasonOpen = false">確 定</el-button>
       </div>
     </el-dialog>
 
@@ -414,15 +460,22 @@ export default {
       returnRecords: [],
       // 日期範圍
       daterangeBorrow: [],
+      daterangeReturn: [],
+      // 拒絕原因對話框
+      rejectReasonOpen: false,
+      rejectReasonData: {},
       // 查詢參數
       queryParams: {
         pageNum: 1,
         pageSize: 10,
+        borrowNo: null,
         itemName: null,
         borrowerName: null,
         status: null,
         beginBorrowTime: null,
-        endBorrowTime: null
+        endBorrowTime: null,
+        beginActualReturn: null,
+        endActualReturn: null
       },
       // 表單參數
       form: {},
@@ -484,7 +537,7 @@ export default {
     /** 查詢借出記錄列表 */
     getList() {
       this.loading = true;
-      // 檢查日期範圍是否有效
+      // 檢查借出日期範圍是否有效
       if (this.daterangeBorrow && this.daterangeBorrow.length === 2) {
         this.queryParams.beginBorrowTime = this.daterangeBorrow[0];
         this.queryParams.endBorrowTime = this.daterangeBorrow[1];
@@ -492,6 +545,15 @@ export default {
         // 清除日期範圍參數
         this.queryParams.beginBorrowTime = null;
         this.queryParams.endBorrowTime = null;
+      }
+      // 檢查歸還日期範圍是否有效
+      if (this.daterangeReturn && this.daterangeReturn.length === 2) {
+        this.queryParams.beginActualReturn = this.daterangeReturn[0];
+        this.queryParams.endActualReturn = this.daterangeReturn[1];
+      } else {
+        // 清除日期範圍參數
+        this.queryParams.beginActualReturn = null;
+        this.queryParams.endActualReturn = null;
       }
       listBorrow(this.queryParams).then(response => {
         this.borrowList = response.rows;
@@ -575,8 +637,21 @@ export default {
     /** 重置按鈕操作 */
     resetQuery() {
       this.daterangeBorrow = [];
+      this.daterangeReturn = [];
       this.resetForm("queryForm");
       this.handleQuery();
+    },
+    /** 查看拒絕原因按鈕操作 */
+    handleViewRejectReason(row) {
+      this.rejectReasonData = {
+        borrowerName: row.borrowerName,
+        itemName: row.itemName,
+        quantity: row.quantity,
+        approverName: row.approverName,
+        approveTime: row.approveTime,
+        approveRemark: row.approveRemark
+      };
+      this.rejectReasonOpen = true;
     },
     // 多選框選中資料
     handleSelectionChange(selection) {
@@ -650,7 +725,7 @@ export default {
         itemName: row.itemName,
         quantity: row.quantity,
         approved: true,
-        remark: ''
+        approveRemark: ''
       };
       this.approveOpen = true;
     },
