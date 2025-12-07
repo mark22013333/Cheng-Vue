@@ -1,13 +1,17 @@
 package com.cheng.system.service.impl;
 
+import com.cheng.common.annotation.Excel;
 import com.cheng.common.constant.UserConstants;
 import com.cheng.common.enums.ScanType;
 import com.cheng.common.enums.UserStatus;
+import com.cheng.common.event.ExportProgressEvent;
 import com.cheng.common.exception.ServiceException;
 import com.cheng.common.utils.DateUtils;
 import com.cheng.common.utils.SecurityUtils;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.bean.BeanValidators;
+import com.cheng.common.utils.file.ImageExportUtil;
+import com.cheng.common.utils.file.ImageImportUtil;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.common.utils.uuid.IdUtils;
 import com.cheng.common.event.ReservationEvent;
@@ -17,6 +21,7 @@ import com.cheng.system.domain.InvStockRecord;
 import com.cheng.system.domain.InvBookInfo;
 import com.cheng.system.domain.InvBorrow;
 import com.cheng.system.domain.InvCategory;
+import com.cheng.system.domain.vo.ImportResult;
 import com.cheng.system.dto.InvItemImportDTO;
 import com.cheng.system.domain.vo.ReserveResult;
 import com.cheng.system.domain.vo.ReserveRequest;
@@ -31,6 +36,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
@@ -40,11 +47,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Validator;
 
-import java.io.File;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.io.*;
+import java.lang.reflect.Field;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * 物品資訊 服務層實現
@@ -303,9 +316,9 @@ public class InvItemServiceImpl implements IInvItemService {
      */
     @Override
     public boolean checkItemCodeUnique(InvItem invItem) {
-        Long itemId = StringUtils.isNull(invItem.getItemId()) ? -1L : invItem.getItemId();
+        long itemId = StringUtils.isNull(invItem.getItemId()) ? -1L : invItem.getItemId();
         InvItem info = invItemMapper.checkItemCodeUnique(invItem);
-        if (StringUtils.isNotNull(info) && info.getItemId().longValue() != itemId.longValue()) {
+        if (StringUtils.isNotNull(info) && info.getItemId().longValue() != itemId) {
             return UserConstants.NOT_UNIQUE;
         }
         return UserConstants.UNIQUE;
@@ -323,9 +336,9 @@ public class InvItemServiceImpl implements IInvItemService {
             return UserConstants.UNIQUE;
         }
 
-        Long itemId = StringUtils.isNull(invItem.getItemId()) ? -1L : invItem.getItemId();
+        long itemId = StringUtils.isNull(invItem.getItemId()) ? -1L : invItem.getItemId();
         InvItem info = invItemMapper.checkBarcodeUnique(invItem);
-        if (StringUtils.isNotNull(info) && info.getItemId().longValue() != itemId.longValue()) {
+        if (StringUtils.isNotNull(info) && info.getItemId().longValue() != itemId) {
             return UserConstants.NOT_UNIQUE;
         }
         return UserConstants.UNIQUE;
@@ -858,8 +871,331 @@ public class InvItemServiceImpl implements IInvItemService {
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        ExcelUtil<InvItemImportDTO> util = new ExcelUtil<>(InvItemImportDTO.class);
-        util.importTemplateExcel(response, "物品資料匯入範本");
+        // 建立臨時目錄
+        File tempDir = new File(System.getProperty("java.io.tmpdir"), "import_template_" + UUID.randomUUID());
+        if (!tempDir.mkdirs()) {
+            throw new ServiceException("無法建立臨時目錄");
+        }
+
+        try {
+            // 1. 產生 Excel 範本檔案（含範例資料）
+            File excelFile = new File(tempDir, "物品匯入範本.xlsx");
+            generateExcelTemplate(excelFile);
+
+            // 2. 產生圖片範例 ZIP
+            File imagesZip = new File(tempDir, "images.zip");
+            generateImagesZip(imagesZip);
+
+            // 3. 產生說明文件
+            File readmeFile = new File(tempDir, "匯入說明.txt");
+            generateReadmeFile(readmeFile);
+
+            // 4. 將所有檔案打包成 ZIP
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+                // 加入 Excel 檔案
+                addFileToZip(zos, excelFile, "物品匯入範本.xlsx");
+                // 加入圖片 ZIP
+                addFileToZip(zos, imagesZip, "images.zip");
+                // 加入說明文件
+                addFileToZip(zos, readmeFile, "匯入說明.txt");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            // 5. 設定 HTTP 響應
+            response.setContentType("application/zip");
+            response.setCharacterEncoding("UTF-8");
+            String filename = URLEncoder.encode("物品匯入範本_完整版.zip", StandardCharsets.UTF_8);
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+
+            // 6. 輸出到響應流
+            response.getOutputStream().write(baos.toByteArray());
+            response.getOutputStream().flush();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            // 清理臨時目錄
+            deleteDirectory(tempDir);
+        }
+    }
+
+    /**
+     * 產生 Excel 範本檔案（含範例資料）
+     */
+    private void generateExcelTemplate(File excelFile) throws Exception {
+        // 使用正確的資源關閉順序：先 FileOutputStream，後 Workbook
+        // 這樣關閉時會先關閉 Workbook（完成寫入），再關閉 FileOutputStream
+        try (FileOutputStream fos = new FileOutputStream(excelFile);
+             Workbook workbook = new XSSFWorkbook()) {
+
+            Sheet sheet = workbook.createSheet("物品資料");
+
+            // 建立標題樣式
+            CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderTop(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            // 建立資料樣式
+            CellStyle dataStyle = workbook.createCellStyle();
+            dataStyle.setBorderBottom(BorderStyle.THIN);
+            dataStyle.setBorderTop(BorderStyle.THIN);
+            dataStyle.setBorderLeft(BorderStyle.THIN);
+            dataStyle.setBorderRight(BorderStyle.THIN);
+
+            // 建立必填欄位樣式（紅色背景）
+            CellStyle requiredStyle = workbook.createCellStyle();
+            requiredStyle.cloneStyleFrom(headerStyle);
+            requiredStyle.setFillForegroundColor(IndexedColors.LIGHT_CORNFLOWER_BLUE.getIndex());
+
+            // 標題列
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {"物品編碼", "物品名稱*", "分類名稱", "規格", "單位", "品牌",
+                    "型號", "ISBN", "圖片路徑", "條碼", "QR碼", "供應商",
+                    "進價", "現價", "最小庫存", "最大庫存", "存放位置",
+                    "初始庫存", "描述", "備註"};
+
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                // 必填欄位使用特殊樣式
+                if (headers[i].contains("*")) {
+                    cell.setCellStyle(requiredStyle);
+                } else {
+                    cell.setCellStyle(headerStyle);
+                }
+                // 設定欄寬
+                sheet.setColumnWidth(i, 4000);
+            }
+
+            // 範例資料
+            String[][] examples = {
+                    {"BOOK001", "Java 程式設計", "書籍", "精裝", "本", "碁峰",
+                            "JV-2024", "9789863479471", "書籍封面/isbn_9789863479471.jpg", "9789863479471", "QR001", "碁峰出版",
+                            "450", "550", "5", "50", "A區-001", "10", "Java 入門經典", "熱門暢銷書"},
+
+                    {"BOOK002", "Python 資料分析", "書籍", "平裝", "本", "歐萊禮",
+                            "PY-2024", "9787302123456", "書籍封面/isbn_9787302123456.jpg", "9787302123456", "QR002", "歐萊禮出版",
+                            "380", "480", "3", "30", "A區-002", "8", "資料科學必讀", ""},
+
+                    {"TOOL001", "程式設計鍵盤", "辦公用品", "機械軸", "個", "羅技",
+                            "K380", "", "", "1234567890123", "QR003", "羅技科技",
+                            "800", "1200", "2", "20", "B區-001", "5", "藍牙機械鍵盤", "含無線接收器"}
+            };
+
+            for (int i = 0; i < examples.length; i++) {
+                Row row = sheet.createRow(i + 1);
+                for (int j = 0; j < examples[i].length; j++) {
+                    Cell cell = row.createCell(j);
+                    cell.setCellValue(examples[i][j]);
+                    cell.setCellStyle(dataStyle);
+                }
+            }
+
+            // 凍結首列
+            sheet.createFreezePane(0, 1);
+
+            // workbook.write() 在 try-with-resources 結束時會自動執行
+            // 關閉順序：先 Workbook（完成寫入），再 FileOutputStream
+            workbook.write(fos);
+        }
+    }
+
+    /**
+     * 產生圖片範例 ZIP
+     */
+    private void generateImagesZip(File imagesZip) throws Exception {
+        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(imagesZip))) {
+            // 建立範例圖片說明檔
+            ZipEntry readmeEntry = new ZipEntry("圖片說明.txt");
+            zos.putNextEntry(readmeEntry);
+
+            String imageReadme = """
+                    圖片命名規則：
+                    
+                    1. 如果有 ISBN，建議使用：isbn_{ISBN}.jpg
+                       範例：isbn_9789863479471.jpg
+                    
+                    2. 如果無 ISBN，可使用其他命名：
+                       - 使用物品編碼：BOOK001.jpg
+                       - 使用條碼：1234567890123.jpg
+                       - 自訂名稱：product_image_001.jpg
+                    
+                    3. Excel 中的「圖片路徑」欄位需對應實際檔名
+                       範例：書籍封面/isbn_9789863479471.jpg
+                    
+                    4. 支援的圖片格式：jpg, jpeg, png, gif, bmp
+                    
+                    5. 建議圖片大小：10MB 以內
+                    
+                    注意：此 ZIP 檔內的圖片僅為範例，實際使用時請替換為真實圖片。
+                    """;
+
+            zos.write(imageReadme.getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+
+            // 建立三個範例圖片檔案（空檔案，僅作為示範）
+            String[] exampleImages = {
+                    "isbn_9789863479471.jpg",
+                    "isbn_9787302123456.jpg",
+                    "product_001.jpg"
+            };
+
+            for (String imageName : exampleImages) {
+                ZipEntry imageEntry = new ZipEntry(imageName);
+                zos.putNextEntry(imageEntry);
+
+                // 寫入一個極小的 1x1 像素的 JPEG 圖片（Base64 解碼）
+                byte[] minimalJpeg = Base64.getDecoder().decode(
+                        "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAAA="
+                );
+                zos.write(minimalJpeg);
+                zos.closeEntry();
+            }
+        }
+    }
+
+    /**
+     * 產生說明文件
+     */
+    private void generateReadmeFile(File readmeFile) throws Exception {
+        StringBuilder readme = new StringBuilder();
+
+        readme.append("═══════════════════════════════════════════════════\n");
+        readme.append("     物品匯入功能使用說明\n");
+        readme.append("═══════════════════════════════════════════════════\n\n");
+
+        readme.append("📦 檔案說明\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("本壓縮檔包含以下檔案：\n\n");
+        readme.append("  1. 物品匯入範本.xlsx - Excel 資料範本（含範例資料）\n");
+        readme.append("  2. images.zip - 圖片檔案壓縮包（含範例圖片）\n");
+        readme.append("  3. 匯入說明.txt - 本說明文件\n\n");
+
+        readme.append("📋 兩種匯入方式\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("方式一：純資料匯入（無圖片）\n");
+        readme.append("  • 僅上傳「物品匯入範本.xlsx」\n");
+        readme.append("  • 適用於不需要圖片的物品\n");
+        readme.append("  • Excel 中的「圖片路徑」欄位可留空\n\n");
+
+        readme.append("方式二：完整匯入（含圖片）\n");
+        readme.append("  • 準備好 Excel 和圖片\n");
+        readme.append("  • 將圖片放入 images.zip 內\n");
+        readme.append("  • 將 Excel 和 images.zip 一起打包成新的 ZIP\n");
+        readme.append("  • 上傳這個新的 ZIP 檔案\n\n");
+
+        readme.append("🔧 操作步驟（完整匯入）\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("步驟 1：編輯 Excel 檔案\n");
+        readme.append("  • 開啟「物品匯入範本.xlsx」\n");
+        readme.append("  • 填寫物品資料（物品名稱為必填*）\n");
+        readme.append("  • 圖片路徑格式：書籍封面/isbn_9789863479471.jpg\n");
+        readme.append("  • 儲存並關閉\n\n");
+
+        readme.append("步驟 2：準備圖片檔案\n");
+        readme.append("  • 解壓縮 images.zip\n");
+        readme.append("  • 替換或新增您的圖片檔案\n");
+        readme.append("  • 圖片命名要與 Excel 中的「圖片路徑」對應\n");
+        readme.append("  • 將所有圖片重新壓縮為 images.zip\n\n");
+
+        readme.append("步驟 3：打包上傳\n");
+        readme.append("  • 建立一個新的空資料夾\n");
+        readme.append("  • 將編輯好的「物品匯入範本.xlsx」放入\n");
+        readme.append("  • 將準備好的「images.zip」放入\n");
+        readme.append("  • 選擇這兩個檔案，壓縮成新的 ZIP\n");
+        readme.append("  • 在系統中上傳這個新的 ZIP 檔案\n\n");
+
+        readme.append("📝 Excel 欄位說明\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("必填欄位（標題有 * 符號）：\n");
+        readme.append("  • 物品名稱* - 不可為空\n\n");
+
+        readme.append("選填欄位：\n");
+        readme.append("  • 物品編碼 - 系統唯一識別碼（留空則自動產生）\n");
+        readme.append("  • 分類名稱 - 物品分類（留空則使用預設分類）\n");
+        readme.append("  • 規格 - 物品規格說明\n");
+        readme.append("  • 單位 - 計量單位（留空則使用預設單位）\n");
+        readme.append("  • 品牌 - 品牌名稱\n");
+        readme.append("  • 型號 - 型號編號\n");
+        readme.append("  • ISBN - 國際標準書號（書籍類物品）\n");
+        readme.append("  • 圖片路徑 - 對應 images.zip 內的圖片檔名\n");
+        readme.append("  • 條碼 - 商品條碼\n");
+        readme.append("  • QR碼 - QR Code 內容\n");
+        readme.append("  • 供應商 - 供應商名稱\n");
+        readme.append("  • 進價 - 進貨價格（數字）\n");
+        readme.append("  • 現價 - 現行售價（數字）\n");
+        readme.append("  • 最小庫存 - 低庫存警示值（數字）\n");
+        readme.append("  • 最大庫存 - 最大庫存上限（數字）\n");
+        readme.append("  • 存放位置 - 倉庫位置\n");
+        readme.append("  • 初始庫存 - 初始庫存數量（數字）\n");
+        readme.append("  • 描述 - 物品詳細描述\n");
+        readme.append("  • 備註 - 其他備註資訊\n\n");
+
+        readme.append("🖼️  圖片命名規則\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("建議命名方式：\n");
+        readme.append("  1. 書籍類：isbn_{ISBN}.jpg\n");
+        readme.append("     範例：isbn_9789863479471.jpg\n\n");
+        readme.append("  2. 其他類：使用物品編碼或條碼\n");
+        readme.append("     範例：TOOL001.jpg 或 1234567890123.jpg\n\n");
+
+        readme.append("圖片要求：\n");
+        readme.append("  • 支援格式：jpg, jpeg, png, gif, bmp\n");
+        readme.append("  • 大小限制：單張圖片 10MB 以內\n");
+        readme.append("  • 建議尺寸：800x800 像素以上\n\n");
+
+        readme.append("⚠️  注意事項\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("  1. Excel 中的「圖片路徑」必須與實際圖片檔名對應\n");
+        readme.append("  2. 如果物品已存在（依 ISBN 判斷），可選擇「更新」或「跳過」\n");
+        readme.append("  3. 圖片路徑格式：子目錄/檔名.jpg（如：書籍封面/isbn_xxx.jpg）\n");
+        readme.append("  4. images.zip 內可建立子目錄，但須與 Excel 路徑一致\n");
+        readme.append("  5. 匯入完成後會顯示詳細的成功/失敗統計\n");
+        readme.append("  6. 如有錯誤，請根據錯誤訊息調整後重新匯入\n\n");
+
+        readme.append("🔄 更新模式說明\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("更新支援：開啟\n");
+        readme.append("  • 若物品已存在（ISBN 相同），將更新物品資訊\n");
+        readme.append("  • 圖片會覆蓋原有圖片（舊圖片會自動備份）\n\n");
+
+        readme.append("更新支援：關閉\n");
+        readme.append("  • 若物品已存在，將跳過該筆資料\n");
+        readme.append("  • 不會修改現有物品資料\n\n");
+
+        readme.append("💡 範例說明\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("範本中包含 3 筆範例資料：\n");
+        readme.append("  1. Java 程式設計（書籍，含 ISBN 和圖片）\n");
+        readme.append("  2. Python 資料分析（書籍，含 ISBN 和圖片）\n");
+        readme.append("  3. 程式設計鍵盤（辦公用品，無 ISBN）\n\n");
+
+        readme.append("您可以參考這些範例的格式填寫您的資料。\n");
+        readme.append("建議先刪除範例資料，再填入真實資料。\n\n");
+
+        readme.append("📞 技術支援\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("如有任何問題，請聯繫系統管理員。\n\n");
+
+        readme.append("═══════════════════════════════════════════════════\n");
+        readme.append("版本：1.0 | 更新日期：")
+                .append(new SimpleDateFormat("yyyy-MM-dd").format(new Date())).append("\n");
+        readme.append("═══════════════════════════════════════════════════\n");
+
+        // 寫入檔案
+        try (FileWriter writer = new FileWriter(readmeFile)) {
+            writer.write(readme.toString());
+        }
     }
 
     @Override
@@ -873,99 +1209,99 @@ public class InvItemServiceImpl implements IInvItemService {
     @Transactional(rollbackFor = Exception.class)
     public ReserveResult reserveItem(ReserveRequest request, Long userId) {
         log.info("開始預約物品 - itemId: {}, userId: {}", request.getItemId(), userId);
-        
+
         try {
             // 1. 檢查預約日期是否有效
             if (request.getStartDate() == null || request.getEndDate() == null) {
                 throw new ServiceException("預約開始日期和結束日期不能為空");
             }
-            
+
             if (request.getStartDate().after(request.getEndDate())) {
                 throw new ServiceException("預約開始日期不能晚於結束日期");
             }
-            
+
             // 2. 取得物品資訊，檢查總數量
             InvItemWithStockDTO item = invItemMapper.selectItemWithStockByItemId(request.getItemId());
             if (item == null) {
                 throw new ServiceException("物品不存在");
             }
-            
+
             // 3. 檢查是否已有重疊日期的預約記錄
             List<InvBorrow> existingReservations = invBorrowMapper.selectOverlappingReservations(
-                request.getItemId(), request.getStartDate(), request.getEndDate());
-            
+                    request.getItemId(), request.getStartDate(), request.getEndDate());
+
             // 檢查是否包含自己未審核的預約
             boolean hasOwnPendingReservation = existingReservations.stream()
-                .anyMatch(r -> r.getBorrowerId().equals(userId) && r.getReserveStatus() == 1);
-            
+                    .anyMatch(r -> r.getBorrowerId().equals(userId) && r.getReserveStatus() == 1);
+
             if (hasOwnPendingReservation) {
                 throw new ServiceException("您已經預約了此物品在該時間段，請勿重複預約");
             }
-            
+
             // 4. 計算重疊時間段的總預約數量（包含待審核和已確認的預約）
             Integer overlappingQuantity = invBorrowMapper.sumOverlappingReservationQuantity(
-                request.getItemId(), request.getStartDate(), request.getEndDate());
-            
+                    request.getItemId(), request.getStartDate(), request.getEndDate());
+
             if (overlappingQuantity == null) {
                 overlappingQuantity = 0;
             }
-            
+
             // 5. 檢查剩餘可預約數量
             int totalQuantity = item.getTotalQuantity();
             int availableForReservation = totalQuantity - overlappingQuantity;
-            
-            log.info("預約檢查 - 物品總數: {}, 已預約數量: {}, 剩餘可預約: {}, 本次預約: {}", 
+
+            log.info("預約檢查 - 物品總數: {}, 已預約數量: {}, 剩餘可預約: {}, 本次預約: {}",
                     totalQuantity, overlappingQuantity, availableForReservation, request.getBorrowQty());
-            
+
             if (availableForReservation < request.getBorrowQty()) {
                 throw new ServiceException(
-                    String.format("預約失敗：該物品在選擇的時間段剩餘可預約數量為 %d，您想預約 %d，數量不足",
-                        availableForReservation, request.getBorrowQty()));
+                        String.format("預約失敗：該物品在選擇的時間段剩餘可預約數量為 %d，您想預約 %d，數量不足",
+                                availableForReservation, request.getBorrowQty()));
             }
-            
+
             // 6. 檢查用戶是否已預約該物品且尚未審核（避免重複預約）
             List<InvBorrow> userPendingReservations = invBorrowMapper.selectPendingReservationsByUser(
-                userId, request.getItemId());
-            
+                    userId, request.getItemId());
+
             if (!userPendingReservations.isEmpty()) {
                 throw new ServiceException("您已有該物品的待審核預約，請等待管理員審核或取消後重新預約");
             }
-            
+
             // 7. 使用樂觀鎖更新庫存和物品版本
             // 先更新庫存
             int updatedStockRows = invItemMapper.reserveItem(
-                request.getItemId(),
-                request.getBorrowQty()
+                    request.getItemId(),
+                    request.getBorrowQty()
             );
-            
+
             if (updatedStockRows == 0) {
                 // 檢查具體失敗原因
                 InvItemWithStockDTO currentItem = invItemMapper.selectItemWithStockByItemId(request.getItemId());
                 if (currentItem == null) {
                     throw new ServiceException("物品不存在");
                 }
-                
+
                 // 檢查可用庫存
                 if (currentItem.getAvailableQty() < request.getBorrowQty()) {
                     throw new ServiceException("該物品目前可用庫存不足，無法預約");
                 }
-                
+
                 throw new ServiceException("預約失敗，請重新整理後重試");
             }
-            
+
             // 再更新物品版本
             int updatedItemRows = invItemMapper.updateItemVersion(
-                request.getItemId(),
-                request.getVersion(),
-                userId
+                    request.getItemId(),
+                    request.getVersion(),
+                    userId
             );
-            
+
             if (updatedItemRows == 0) {
                 // 版本更新失敗，說明資料已被其他用戶修改
                 // 需要回滾庫存更新並拋出異常
                 throw new ServiceException("資料已過期，請重新整理頁面後重試");
             }
-            
+
             // 6. 新增預約記錄
             InvBorrow borrow = new InvBorrow();
             borrow.setBorrowNo(invBorrowService.generateBorrowNo());  // 產生借出編號
@@ -984,32 +1320,32 @@ public class InvItemServiceImpl implements IInvItemService {
             borrow.setExpectedReturn(request.getEndDate());  // 預計歸還：預約結束日期
             borrow.setCreateBy(userId.toString());
             borrow.setCreateTime(DateUtils.getNowDate());
-            
+
             invBorrowMapper.insertInvBorrow(borrow);
-            
+
             // 5. 發布預約事件
             ReservationEvent event = new ReservationEvent(
-                "reserved",
-                request.getItemId(),
-                userId,
-                borrow.getBorrowId(),
-                "預約成功，等待管理員審核",
-                DateUtils.getNowDate(),
-                item.getAvailableQty(),
-                item.getReservedQty(),
-                null  // taskId 不需要，使用 broadcast
+                    "reserved",
+                    request.getItemId(),
+                    userId,
+                    borrow.getBorrowId(),
+                    "預約成功，等待管理員審核",
+                    DateUtils.getNowDate(),
+                    item.getAvailableQty(),
+                    item.getReservedQty(),
+                    null  // taskId 不需要，使用 broadcast
             );
             eventPublisher.publishEvent(event);
-            
+
             // 6. 返回結果
             return ReserveResult.builder()
-                .success(true)
-                .message("預約成功，等待管理員審核")
-                .borrowId(borrow.getBorrowId())
-                .availableQty(item.getAvailableQty())
-                .reservedQty(item.getReservedQty())
-                .build();
-                
+                    .success(true)
+                    .message("預約成功，等待管理員審核")
+                    .borrowId(borrow.getBorrowId())
+                    .availableQty(item.getAvailableQty())
+                    .reservedQty(item.getReservedQty())
+                    .build();
+
         } catch (ServiceException e) {
             log.error("物品預約失敗 - itemId: {}, error: {}", request.getItemId(), e.getMessage());
             throw e;
@@ -1057,14 +1393,14 @@ public class InvItemServiceImpl implements IInvItemService {
 
             // 檢查當前預約數量是否足夠減少
             if (stock.getReservedQty() < quantity) {
-                log.warn("當前預約數量不足，無法恢復 - itemId: {}, currentReserved: {}, restoreQuantity: {}", 
-                    itemId, stock.getReservedQty(), quantity);
+                log.warn("當前預約數量不足，無法恢復 - itemId: {}, currentReserved: {}, restoreQuantity: {}",
+                        itemId, stock.getReservedQty(), quantity);
                 return false;
             }
 
             // 更新庫存：減少預約數量
             int result = invStockMapper.updateReservedQty(itemId, -quantity);
-            
+
             if (result > 0) {
                 // 記錄庫存變動
                 InvStockRecord record = new InvStockRecord();
@@ -1083,20 +1419,790 @@ public class InvItemServiceImpl implements IInvItemService {
                 record.setReason("預約取消，恢復預約數量");
                 record.setCreateBy("system");
                 record.setCreateTime(new Date());
-                
+
                 invStockRecordMapper.insertInvStockRecord(record);
-                
-                log.info("成功恢復物品預約數量 - itemId: {}, itemName: {}, quantity: {}", 
-                    itemId, item.getItemName(), quantity);
+
+                log.info("成功恢復物品預約數量 - itemId: {}, itemName: {}, quantity: {}",
+                        itemId, item.getItemName(), quantity);
                 return true;
             } else {
                 log.error("恢復預約數量失敗，資料庫更新影響0行 - itemId: {}, quantity: {}", itemId, quantity);
                 return false;
             }
-            
+
         } catch (Exception e) {
             log.error("恢復預約數量異常 - itemId: {}, quantity: {}", itemId, quantity, e);
             return false;
+        }
+    }
+
+    /**
+     * 匯出任務參數儲存（taskId -> ExportTaskParams）
+     */
+    private static final ConcurrentHashMap<String, ExportTaskParams> EXPORT_TASK_MAP = new ConcurrentHashMap<>();
+
+    /**
+     * 匯出結果檔案儲存（taskId -> 最終 ZIP 檔案路徑）
+     */
+    private static final ConcurrentHashMap<String, String> EXPORT_RESULT_MAP = new ConcurrentHashMap<>();
+
+    /**
+     * 匯出任務參數類別
+     */
+    @Setter
+    @Getter
+    private static class ExportTaskParams {
+        private InvItemWithStockDTO queryDto;
+        private String taskId;
+    }
+
+    @Override
+    public String createExportTask(InvItemWithStockDTO dto) {
+        // 產生 taskId
+        String taskId = UUID.randomUUID().toString();
+
+        // 儲存任務參數
+        ExportTaskParams params = new ExportTaskParams();
+        params.setQueryDto(dto);
+        params.setTaskId(taskId);
+        EXPORT_TASK_MAP.put(taskId, params);
+
+        // 初始化進度
+        ProgressInfo progressInfo = new ProgressInfo();
+        progressInfo.setProgress(0);
+        progressInfo.setMessage("任務已建立，準備開始匯出");
+        PROGRESS_MAP.put(taskId, progressInfo);
+
+        log.info("匯出任務已建立 - taskId: {}", taskId);
+        return taskId;
+    }
+
+    @Override
+    @Async
+    public void asyncExportWithImages(String taskId) {
+        log.info("========== 開始執行匯出任務 - taskId: {} ==========", taskId);
+
+        File tempDir = null;
+        try {
+            // 1. 取得任務參數
+            ExportTaskParams params = EXPORT_TASK_MAP.get(taskId);
+            if (params == null) {
+                throw new ServiceException("匯出任務不存在");
+            }
+
+            // 推送 SSE 進度
+            pushExportProgress(taskId, 5, "查詢資料中");
+
+            // 2. 查詢資料
+            List<InvItemWithStockDTO> allData = invItemMapper.selectItemWithStockList(params.getQueryDto());
+            allData.forEach(item -> {
+                item.calculateStockStatus();
+                item.calculateStockValue();
+            });
+
+            int totalCount = allData.size();
+            log.info("查詢到 {} 筆資料", totalCount);
+
+            if (totalCount == 0) {
+                pushExportProgress(taskId, -1, "沒有資料可匯出");
+                return;
+            }
+
+            // 3. 建立臨時目錄
+            tempDir = new File(uploadPath + File.separator + "export_temp" + File.separator + taskId);
+            if (!tempDir.exists() && !tempDir.mkdirs()) {
+                throw new ServiceException("無法建立臨時目錄");
+            }
+
+            pushExportProgress(taskId, 10, String.format("資料查詢完成，共 %d 筆", totalCount));
+
+            // 4. 匯出多 sheet Excel
+            int maxRowsPerSheet = 10000;
+            String excelFileName = "物品匯出_" + DateUtils.dateTimeNow() + ".xlsx";
+            File excelFile = new File(tempDir, excelFileName);
+
+            exportMultiSheetExcel(allData, excelFile, maxRowsPerSheet, taskId);
+
+            pushExportProgress(taskId, 50, "Excel 匯出完成");
+
+            // 5. 收集所有圖片路徑並壓縮
+            List<String> imagePaths = allData.stream()
+                    .map(InvItemWithStockDTO::getImageUrl)
+                    .filter(url -> url != null && !url.trim().isEmpty())
+                    .distinct()
+                    .toList();
+
+            log.info("需要壓縮 {} 張圖片", imagePaths.size());
+
+            ImageExportUtil.ImageZipResult imageResult =
+                    ImageExportUtil.zipImages(
+                            imagePaths,
+                            uploadPath,
+                            tempDir,
+                            "images",
+                            processed -> {
+                                int progress = 50 + (processed * 30 / imagePaths.size());
+                                pushExportProgress(taskId, progress, String.format("壓縮圖片中 (%d/%d)", processed, imagePaths.size()));
+                            }
+                    );
+
+            pushExportProgress(taskId, 80, "圖片壓縮完成");
+
+            // 6. 處理缺失圖片（寫入 Excel 的 remarks 欄位）
+            if (imageResult.hasMissingImages()) {
+                log.warn("發現 {} 張缺失圖片", imageResult.missingImages().size());
+
+                // 產生缺失圖片報告
+                String report = ImageExportUtil.createMissingImagesReport(imageResult.missingImages());
+                File reportFile = new File(tempDir, "missing_images.txt");
+                ImageExportUtil.writeTextToFile(report, reportFile.getAbsolutePath());
+
+                // 將缺失圖片資訊寫入對應物品的 remarks 欄位（需要重新產生 Excel）
+                for (InvItemWithStockDTO item : allData) {
+                    if (imageResult.missingImages().contains(item.getImageUrl())) {
+                        String missingInfo = "【圖片缺失】";
+                        if (item.getRemark() != null && !item.getRemark().trim().isEmpty()) {
+                            item.setRemark(item.getRemark() + "\n" + missingInfo);
+                        } else {
+                            item.setRemark(missingInfo);
+                        }
+                    }
+                }
+
+                // 重新匯出 Excel（包含缺失圖片標記）
+                exportMultiSheetExcel(allData, excelFile, maxRowsPerSheet, taskId);
+            }
+
+            pushExportProgress(taskId, 85, "打包最終檔案");
+
+            // 7. 將 Excel + 圖片 ZIP + 報告打包成最終 ZIP
+            String finalZipName = "物品匯出_" + DateUtils.dateTimeNow() + ".zip";
+            File finalZipFile = new File(uploadPath + File.separator + "export_temp", finalZipName);
+
+            packFinalZip(excelFile, imageResult.zipFiles(),
+                    imageResult.hasMissingImages() ? new File(tempDir, "missing_images.txt") : null,
+                    finalZipFile);
+
+            pushExportProgress(taskId, 95, "清理臨時檔案");
+
+            // 8. 清理臨時檔案（保留最終 ZIP）
+            ImageExportUtil.deleteTempFile(excelFile);
+            imageResult.zipFiles().forEach(ImageExportUtil::deleteTempFile);
+            if (imageResult.hasMissingImages()) {
+                ImageExportUtil.deleteTempFile(new File(tempDir, "missing_images.txt"));
+            }
+            ImageExportUtil.deleteTempDirectory(tempDir);
+
+            // 9. 儲存最終結果路徑
+            EXPORT_RESULT_MAP.put(taskId, finalZipFile.getAbsolutePath());
+
+            // 10. 推送完成事件
+            pushExportProgress(taskId, 100, "匯出完成！");
+
+            log.info("========== 匯出任務完成 - taskId: {}, 檔案: {} ==========", taskId, finalZipFile.getName());
+
+        } catch (Exception e) {
+            log.error("匯出任務執行失敗 - taskId: {}", taskId, e);
+            pushExportProgress(taskId, -1, "匯出失敗：" + e.getMessage());
+
+            // 清理臨時目錄
+            if (tempDir != null && tempDir.exists()) {
+                ImageExportUtil.deleteTempDirectory(tempDir);
+            }
+        } finally {
+            // 清理任務參數
+            EXPORT_TASK_MAP.remove(taskId);
+        }
+    }
+
+    /**
+     * 匯出多 sheet Excel
+     * <p>
+     * 方法：將資料分批，每批匯出到臨時檔案，然後合併所有 sheet 到最終檔案
+     */
+    private void exportMultiSheetExcel(List<InvItemWithStockDTO> allData, File outputFile,
+                                       int maxRowsPerSheet, String taskId) throws Exception {
+        log.info("開始匯出多 sheet Excel - 總資料數: {}, 每 sheet 最多: {} 行",
+                allData.size(), maxRowsPerSheet);
+
+        // 計算需要幾個 sheet
+        int totalSheets = (int) Math.ceil((double) allData.size() / maxRowsPerSheet);
+        log.info("將匯出 {} 個 sheet", totalSheets);
+
+        // 如果資料量小，直接單 sheet 匯出
+        if (totalSheets == 1) {
+            ExcelUtil<InvItemWithStockDTO> util = new ExcelUtil<>(InvItemWithStockDTO.class);
+            // ⚠️ 不要調用 exportExcel()，它會在 finally 中關閉 Workbook
+            // 改為手動調用 init + writeSheet
+            util.init(allData, "物品資料", "", Excel.Type.EXPORT);
+            util.writeSheet();
+
+            try (Workbook wb = extractWorkbookFromExcelUtil(util);
+                 FileOutputStream fos = new FileOutputStream(outputFile)) {
+                wb.write(fos);
+            }
+
+            log.info("單 sheet Excel 匯出完成");
+            return;
+        }
+
+        // 多 sheet：先匯出到臨時檔案，再合併
+        try (Workbook finalWorkbook = new XSSFWorkbook()) {
+            for (int i = 0; i < totalSheets; i++) {
+                int fromIndex = i * maxRowsPerSheet;
+                int toIndex = Math.min((i + 1) * maxRowsPerSheet, allData.size());
+                List<InvItemWithStockDTO> batchData = allData.subList(fromIndex, toIndex);
+
+                String sheetName = "物品資料" + (i + 1);
+                log.debug("匯出 sheet: {}, 資料範圍: {}-{}", sheetName, fromIndex + 1, toIndex);
+
+                // 匯出到臨時檔案
+                ExcelUtil<InvItemWithStockDTO> util = new ExcelUtil<>(InvItemWithStockDTO.class);
+                // ⚠️ 不要調用 exportExcel()，它會在 finally 中關閉 Workbook
+                // 改為手動調用 init + writeSheet
+                util.init(batchData, sheetName, "", Excel.Type.EXPORT);
+                util.writeSheet();
+
+                try (Workbook batchWb = extractWorkbookFromExcelUtil(util)) {
+                    // 複製 sheet 到最終 Workbook
+                    Sheet sourceSheet = batchWb.getSheetAt(0);
+                    Sheet targetSheet = finalWorkbook.createSheet(sheetName);
+                    copySheet(sourceSheet, targetSheet, finalWorkbook);
+                }
+            }
+
+            // 寫入最終檔案
+            try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+                finalWorkbook.write(fos);
+            }
+
+            log.info("多 sheet Excel 匯出完成，共 {} 個 sheet", totalSheets);
+        }
+    }
+
+    /**
+     * 從 ExcelUtil 提取 Workbook
+     * <p>
+     * 注意：這是一個權宜之計，因為 ExcelUtil.exportExcel() 返回 AjaxResult 而非 Workbook。
+     * ExcelUtil 的設計是為了直接寫入 HttpServletResponse，不適合我們的多 sheet 合併場景。
+     * 理想情況下應該重構 ExcelUtil 或直接使用 Apache POI API，但考慮到 DTO 有大量 @Excel 註解，
+     * 目前使用反射是最經濟的方案。
+     *
+     * @param util ExcelUtil 實例
+     * @return Workbook 實例
+     */
+    private Workbook extractWorkbookFromExcelUtil(ExcelUtil<?> util) {
+        try {
+            Field wbField = util.getClass().getDeclaredField("wb");
+            wbField.setAccessible(true);
+            return (Workbook) wbField.get(util);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            log.error("無法從 ExcelUtil 提取 Workbook，可能 ExcelUtil 內部結構已變更", e);
+            throw new RuntimeException("Excel 匯出失敗：無法取得 Workbook", e);
+        }
+    }
+
+    /**
+     * 複製整個 Sheet（包含樣式）
+     */
+    private void copySheet(Sheet sourceSheet, Sheet targetSheet, Workbook targetWorkbook) {
+        // 複製列寬
+        for (int i = 0; i < sourceSheet.getRow(0).getLastCellNum(); i++) {
+            targetSheet.setColumnWidth(i, sourceSheet.getColumnWidth(i));
+        }
+
+        // 複製所有行
+        for (int rowNum = 0; rowNum <= sourceSheet.getLastRowNum(); rowNum++) {
+            Row sourceRow = sourceSheet.getRow(rowNum);
+            if (sourceRow != null) {
+                Row targetRow = targetSheet.createRow(rowNum);
+                targetRow.setHeight(sourceRow.getHeight());
+
+                // 複製所有儲存格
+                for (int cellNum = 0; cellNum < sourceRow.getLastCellNum(); cellNum++) {
+                    Cell sourceCell = sourceRow.getCell(cellNum);
+                    if (sourceCell != null) {
+                        Cell targetCell = targetRow.createCell(cellNum);
+
+                        // 複製樣式（需要先複製到目標 Workbook）
+                        CellStyle newStyle = targetWorkbook.createCellStyle();
+                        newStyle.cloneStyleFrom(sourceCell.getCellStyle());
+                        targetCell.setCellStyle(newStyle);
+
+                        // 複製值
+                        copyCellValue(sourceCell, targetCell);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 複製儲存格值
+     */
+    private void copyCellValue(Cell sourceCell, Cell targetCell) {
+        switch (sourceCell.getCellType()) {
+            case STRING:
+                targetCell.setCellValue(sourceCell.getStringCellValue());
+                break;
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(sourceCell)) {
+                    targetCell.setCellValue(sourceCell.getDateCellValue());
+                } else {
+                    targetCell.setCellValue(sourceCell.getNumericCellValue());
+                }
+                break;
+            case BOOLEAN:
+                targetCell.setCellValue(sourceCell.getBooleanCellValue());
+                break;
+            case FORMULA:
+                targetCell.setCellFormula(sourceCell.getCellFormula());
+                break;
+            case BLANK:
+                targetCell.setBlank();
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * 打包最終 ZIP
+     */
+    private void packFinalZip(File excelFile, List<File> imageZipFiles, File reportFile, File outputZip) throws Exception {
+        try (ZipOutputStream zos = new ZipOutputStream(
+                new FileOutputStream(outputZip))) {
+
+            // 1. 加入 Excel
+            addFileToZip(zos, excelFile, excelFile.getName());
+
+            // 2. 加入圖片 ZIP 檔案
+            for (int i = 0; i < imageZipFiles.size(); i++) {
+                File imageZip = imageZipFiles.get(i);
+                String entryName = imageZipFiles.size() > 1
+                        ? "images_part" + (i + 1) + ".zip"
+                        : "images.zip";
+                addFileToZip(zos, imageZip, entryName);
+            }
+
+            // 3. 加入缺失圖片報告（如果有）
+            if (reportFile != null && reportFile.exists()) {
+                addFileToZip(zos, reportFile, reportFile.getName());
+            }
+        }
+
+        log.info("最終 ZIP 打包完成: {}", outputZip.getName());
+    }
+
+    /**
+     * 將檔案加入 ZIP
+     */
+    private void addFileToZip(ZipOutputStream zos, File file, String entryName) throws Exception {
+        ZipEntry entry = new ZipEntry(entryName);
+        zos.putNextEntry(entry);
+
+        try (FileInputStream fis = new FileInputStream(file)) {
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = fis.read(buffer)) > 0) {
+                zos.write(buffer, 0, length);
+            }
+        }
+
+        zos.closeEntry();
+    }
+
+    /**
+     * 推送匯出進度（透過 Spring Event 解耦）
+     */
+    private void pushExportProgress(String taskId, int progress, String message) {
+        try {
+            // 更新進度 Map
+            ProgressInfo progressInfo = new ProgressInfo();
+            progressInfo.setProgress(progress);
+            progressInfo.setMessage(message);
+            PROGRESS_MAP.put(taskId, progressInfo);
+
+            // 發布進度事件（由 Framework 層的 Listener 監聽並推送 SSE）
+            ExportProgressEvent event = new ExportProgressEvent(this, taskId, progress, message);
+            eventPublisher.publishEvent(event);
+
+            log.debug("匯出進度事件已發布 - taskId: {}, progress: {}", taskId, progress);
+        } catch (Exception e) {
+            log.error("進度事件發布失敗 - taskId: {}", taskId, e);
+        }
+    }
+
+    @Override
+    public void downloadExportResult(String taskId, HttpServletResponse response) throws Exception {
+        String filePath = EXPORT_RESULT_MAP.get(taskId);
+        if (filePath == null || filePath.isEmpty()) {
+            throw new ServiceException("匯出結果不存在或已過期");
+        }
+
+        File file = new File(filePath);
+        if (!file.exists()) {
+            throw new ServiceException("匯出檔案不存在");
+        }
+
+        // 設定響應頭
+        response.setContentType("application/zip");
+        response.setCharacterEncoding("UTF-8");
+        String fileName = file.getName();
+        // 使用 RFC 5987 標準編碼中文檔名
+        String encodedFileName = java.net.URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                .replace("+", "%20");  // 空格編碼為 %20 而非 +
+        response.setHeader("Content-Disposition",
+                "attachment; filename*=UTF-8''" + encodedFileName);
+        response.setContentLengthLong(file.length());
+
+        // 輸出檔案
+        try (FileInputStream fis = new FileInputStream(file);
+             java.io.OutputStream os = response.getOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = fis.read(buffer)) > 0) {
+                os.write(buffer, 0, length);
+            }
+        }
+
+        log.info("匯出結果已下載 - taskId: {}, file: {}", taskId, fileName);
+
+        // 下載完成後刪除檔案和記錄
+        try {
+            Files.deleteIfExists(file.toPath());
+            log.debug("已刪除匯出檔案 - taskId: {}", taskId);
+        } catch (IOException e) {
+            log.warn("刪除匯出檔案失敗 - taskId: {}, 錯誤: {}", taskId, e.getMessage());
+        }
+        EXPORT_RESULT_MAP.remove(taskId);
+        PROGRESS_MAP.remove(taskId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String importDataWithImages(MultipartFile file, Boolean updateSupport, Long defaultCategoryId, String defaultUnit) throws Exception {
+        // 檢查檔案
+        if (file == null || file.isEmpty()) {
+            throw new ServiceException("上傳檔案不能為空");
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new ServiceException("無法取得檔案名稱");
+        }
+
+        // 判斷檔案類型
+        boolean isZip = originalFilename.toLowerCase().endsWith(".zip");
+        boolean isExcel = originalFilename.toLowerCase().endsWith(".xlsx") || originalFilename.toLowerCase().endsWith(".xls");
+
+        if (!isZip && !isExcel) {
+            throw new ServiceException("不支援的檔案格式，請上傳 Excel 或 ZIP 檔案");
+        }
+
+        // 建立臨時目錄
+        File tempDir = new File(System.getProperty("java.io.tmpdir"), "import_" + UUID.randomUUID());
+        if (!tempDir.mkdirs()) {
+            throw new ServiceException("無法建立臨時目錄");
+        }
+
+        try {
+            File excelFile;
+            File imagesDir = null;
+
+            if (isZip) {
+                // ZIP 檔案：解壓縮並尋找 Excel 和 images.zip
+                log.info("開始處理 ZIP 檔案: {}", originalFilename);
+                File zipFile = new File(tempDir, "upload.zip");
+                file.transferTo(zipFile);
+
+                File extractDir = new File(tempDir, "extract");
+                ImageImportUtil.unzip(zipFile, extractDir);
+
+                // 尋找 Excel 檔案
+                excelFile = findExcelFile(extractDir);
+                if (excelFile == null) {
+                    throw new ServiceException("ZIP 檔案中未找到 Excel 檔案");
+                }
+
+                // 尋找 images.zip
+                File imagesZip = new File(extractDir, "images.zip");
+                if (imagesZip.exists()) {
+                    imagesDir = new File(tempDir, "images");
+                    ImageImportUtil.unzip(imagesZip, imagesDir);
+                    log.info("解壓縮圖片: {} 張", countFiles(imagesDir));
+                }
+            } else {
+                // Excel 檔案：直接儲存
+                log.info("開始處理 Excel 檔案: {}", originalFilename);
+                excelFile = new File(tempDir, originalFilename);
+                file.transferTo(excelFile);
+            }
+
+            // 執行匯入
+            ImportResult result = importFromExcel(excelFile, imagesDir, updateSupport, defaultCategoryId, defaultUnit);
+
+            // 返回 HTML 格式的結果訊息
+            return result.toHtmlMessage();
+
+        } finally {
+            // 清理臨時目錄
+            deleteDirectory(tempDir);
+        }
+    }
+
+    /**
+     * 從 Excel 執行匯入
+     */
+    private ImportResult importFromExcel(File excelFile, File imagesDir, Boolean updateSupport, Long defaultCategoryId, String defaultUnit) throws Exception {
+        ImportResult result = new ImportResult();
+
+        // 讀取 Excel
+        ExcelUtil<InvItemWithStockDTO> util = new ExcelUtil<>(InvItemWithStockDTO.class);
+        List<InvItemWithStockDTO> dataList;
+        try (FileInputStream fis = new FileInputStream(excelFile)) {
+            dataList = util.importExcel(fis);
+        } catch (Exception e) {
+            throw new ServiceException("讀取 Excel 失敗: " + e.getMessage());
+        }
+
+        result.setTotalRows(dataList.size());
+        log.info("讀取 Excel 完成，共 {} 筆資料", dataList.size());
+
+        // 統計圖片
+        if (imagesDir != null) {
+            result.setTotalImages(countFiles(imagesDir));
+        }
+
+        // 逐筆處理
+        int rowNum = 2;  // Excel 從第 2 行開始（第 1 行是標題）
+        for (InvItemWithStockDTO dto : dataList) {
+            try {
+                // 驗證必要欄位
+                if (dto.getItemName() == null || dto.getItemName().trim().isEmpty()) {
+                    result.addError(rowNum, "", "物品名稱不能為空");
+                    result.setFailedRows(result.getFailedRows() + 1);
+                    rowNum++;
+                    continue;
+                }
+
+                // 檢查物品編碼是否重複
+                InvItem existingItem = null;
+                if (dto.getItemCode() != null && !dto.getItemCode().trim().isEmpty()) {
+                    existingItem = invItemMapper.selectInvItemByItemCode(dto.getItemCode());
+                }
+
+                if (existingItem != null) {
+                    if (updateSupport != null && updateSupport) {
+                        // 更新現有資料
+                        updateItemFromDTO(existingItem, dto, defaultCategoryId, defaultUnit);
+                        invItemMapper.updateInvItem(existingItem);
+                        result.setSuccessRows(result.getSuccessRows() + 1);
+                        log.debug("更新物品: {} (編碼: {})", dto.getItemName(), dto.getItemCode());
+                    } else {
+                        // 跳過
+                        result.setSkippedRows(result.getSkippedRows() + 1);
+                        log.debug("跳過重複物品: {} (編碼: {})", dto.getItemName(), dto.getItemCode());
+                    }
+                } else {
+                    // 新增
+                    InvItem newItem = createItemFromDTO(dto, defaultCategoryId, defaultUnit);
+                    invItemMapper.insertInvItem(newItem);
+
+                    // 建立庫存記錄
+                    InvStock stock = new InvStock();
+                    stock.setItemId(newItem.getItemId());
+                    stock.setTotalQuantity(dto.getTotalQuantity() != null ? dto.getTotalQuantity() : 0);
+                    stock.setAvailableQty(dto.getTotalQuantity() != null ? dto.getTotalQuantity() : 0);
+                    stock.setBorrowedQty(0);
+                    stock.setReservedQty(0);
+                    stock.setDamagedQty(0);
+                    stock.setLostQty(0);
+                    invStockMapper.insertInvStock(stock);
+
+                    result.setSuccessRows(result.getSuccessRows() + 1);
+                    log.debug("新增物品: {} (編碼: {})", dto.getItemName(), dto.getItemCode());
+                }
+
+                // 處理圖片
+                if (imagesDir != null && dto.getImageUrl() != null && !dto.getImageUrl().trim().isEmpty()) {
+                    processImage(dto.getImageUrl(), imagesDir, result);
+                }
+
+            } catch (Exception e) {
+                result.addError(rowNum, dto.getItemName(), e.getMessage());
+                result.setFailedRows(result.getFailedRows() + 1);
+                log.error("匯入第 {} 行失敗: {}", rowNum, e.getMessage(), e);
+            }
+
+            rowNum++;
+        }
+
+        log.info("匯入完成 - 成功: {}, 失敗: {}, 跳過: {}", result.getSuccessRows(), result.getFailedRows(), result.getSkippedRows());
+        return result;
+    }
+
+    /**
+     * 處理單張圖片
+     */
+    private void processImage(String dbPath, File imagesDir, ImportResult result) {
+        try {
+            // 提取檔名和相對路徑
+            String fileName = com.cheng.common.utils.file.ImageImportUtil.extractFileName(dbPath);
+            String relativePath = com.cheng.common.utils.file.ImageImportUtil.extractRelativePath(dbPath);
+
+            if (fileName.isEmpty()) {
+                result.setMissingImages(result.getMissingImages() + 1);
+                return;
+            }
+
+            // 在 imagesDir 中搜尋圖片
+            File sourceImage = com.cheng.common.utils.file.ImageImportUtil.findImageFile(imagesDir, fileName);
+            if (sourceImage == null) {
+                result.setMissingImages(result.getMissingImages() + 1);
+                log.warn("圖片未找到: {}", fileName);
+                return;
+            }
+
+            // 驗證圖片
+            if (!com.cheng.common.utils.file.ImageImportUtil.validateImage(sourceImage, 10 * 1024 * 1024)) {
+                result.setMissingImages(result.getMissingImages() + 1);
+                log.warn("圖片驗證失敗: {}", fileName);
+                return;
+            }
+
+            // 複製圖片到 uploadPath
+            File backupFile = com.cheng.common.utils.file.ImageImportUtil.copyImageToUploadPath(sourceImage, relativePath, uploadPath);
+
+            result.setCopiedImages(result.getCopiedImages() + 1);
+            if (backupFile != null) {
+                result.setOverwrittenImages(result.getOverwrittenImages() + 1);
+            }
+
+        } catch (Exception e) {
+            result.setMissingImages(result.getMissingImages() + 1);
+            log.error("處理圖片失敗: {}", dbPath, e);
+        }
+    }
+
+    /**
+     * 從 DTO 建立 InvItem
+     */
+    private InvItem createItemFromDTO(InvItemWithStockDTO dto, Long defaultCategoryId, String defaultUnit) {
+        InvItem item = new InvItem();
+        item.setItemName(dto.getItemName());
+        item.setItemCode(dto.getItemCode());
+        item.setBarcode(dto.getBarcode());
+        item.setQrCode(dto.getQrCode());
+        item.setCategoryId(dto.getCategoryId() != null ? dto.getCategoryId() : defaultCategoryId);
+        item.setUnit(dto.getUnit() != null ? dto.getUnit() : defaultUnit);
+        item.setSpecification(dto.getSpecification());
+        item.setBrand(dto.getBrand());
+        item.setModel(dto.getModel());
+        item.setPurchasePrice(dto.getPurchasePrice());
+        item.setCurrentPrice(dto.getCurrentPrice());
+        item.setSupplier(dto.getSupplier());
+        item.setMinStock(dto.getMinStock());
+        item.setMaxStock(dto.getMaxStock());
+        item.setLocation(dto.getLocation());
+        item.setDescription(dto.getDescription());
+        item.setImageUrl(dto.getImageUrl());
+        item.setStatus("0");  // 正常
+        item.setCreateBy(SecurityUtils.getUsername());
+        item.setCreateTime(new Date());
+        return item;
+    }
+
+    /**
+     * 從 DTO 更新 InvItem
+     */
+    private void updateItemFromDTO(InvItem item, InvItemWithStockDTO dto, Long defaultCategoryId, String defaultUnit) {
+        if (dto.getItemName() != null) item.setItemName(dto.getItemName());
+        if (dto.getItemCode() != null) item.setItemCode(dto.getItemCode());
+        if (dto.getBarcode() != null) item.setBarcode(dto.getBarcode());
+        if (dto.getQrCode() != null) item.setQrCode(dto.getQrCode());
+        if (dto.getCategoryId() != null) {
+            item.setCategoryId(dto.getCategoryId());
+        } else if (defaultCategoryId != null) {
+            item.setCategoryId(defaultCategoryId);
+        }
+        if (dto.getUnit() != null) {
+            item.setUnit(dto.getUnit());
+        } else if (defaultUnit != null) {
+            item.setUnit(defaultUnit);
+        }
+        if (dto.getSpecification() != null) item.setSpecification(dto.getSpecification());
+        if (dto.getBrand() != null) item.setBrand(dto.getBrand());
+        if (dto.getModel() != null) item.setModel(dto.getModel());
+        if (dto.getPurchasePrice() != null) item.setPurchasePrice(dto.getPurchasePrice());
+        if (dto.getCurrentPrice() != null) item.setCurrentPrice(dto.getCurrentPrice());
+        if (dto.getSupplier() != null) item.setSupplier(dto.getSupplier());
+        if (dto.getMinStock() != null) item.setMinStock(dto.getMinStock());
+        if (dto.getMaxStock() != null) item.setMaxStock(dto.getMaxStock());
+        if (dto.getLocation() != null) item.setLocation(dto.getLocation());
+        if (dto.getDescription() != null) item.setDescription(dto.getDescription());
+        if (dto.getImageUrl() != null) item.setImageUrl(dto.getImageUrl());
+        item.setUpdateBy(SecurityUtils.getUsername());
+        item.setUpdateTime(new Date());
+    }
+
+    /**
+     * 尋找 Excel 檔案
+     */
+    private File findExcelFile(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                String name = file.getName().toLowerCase();
+                if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+                    return file;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 統計目錄中的檔案數量
+     */
+    private int countFiles(File dir) {
+        if (dir == null || !dir.exists() || !dir.isDirectory()) {
+            return 0;
+        }
+        int count = 0;
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    count++;
+                } else if (file.isDirectory()) {
+                    count += countFiles(file);
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 遞迴刪除目錄
+     */
+    private void deleteDirectory(File dir) {
+        if (dir == null || !dir.exists()) {
+            return;
+        }
+        try {
+            Path dirPath = dir.toPath();
+            Files.walk(dirPath)
+                    .sorted(Comparator.reverseOrder()) // 先刪除檔案，再刪除目錄
+                    .forEach(path -> {
+                        try {
+                            Files.delete(path);
+                        } catch (IOException e) {
+                            log.warn("無法刪除檔案: {}", path, e);
+                        }
+                    });
+        } catch (IOException e) {
+            log.error("刪除目錄失敗: {}", dir.getAbsolutePath(), e);
         }
     }
 }

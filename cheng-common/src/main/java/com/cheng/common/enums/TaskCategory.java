@@ -45,6 +45,11 @@ public enum TaskCategory {
     RESERVATION("預約任務", "reservation"),
     
     /**
+     * 維護任務
+     */
+    MAINTENANCE("維護任務", "maintenance"),
+    
+    /**
      * 自訂任務
      */
     CUSTOM("自訂任務", "custom");

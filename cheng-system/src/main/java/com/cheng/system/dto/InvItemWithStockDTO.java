@@ -127,8 +127,9 @@ public class InvItemWithStockDTO implements Serializable {
     private String description;
 
     /**
-     * 圖片路徑
+     * 圖片路徑（相對路徑，用於匯入時對應圖片檔案）
      */
+    @Excel(name = "圖片存放位置", sort = 25)
     private String imageUrl;
 
     /**
@@ -140,7 +141,7 @@ public class InvItemWithStockDTO implements Serializable {
      * 備註
      */
     private String remark;
-    
+
     /**
      * 樂觀鎖版本號
      */
@@ -324,14 +325,14 @@ public class InvItemWithStockDTO implements Serializable {
         this.lostValue = BigDecimal.ZERO;
         this.damagedValue = BigDecimal.ZERO;
         this.totalLoss = BigDecimal.ZERO;
-        
+
         if (purchasePrice == null || currentPrice == null) {
             return;
         }
 
         // 1. 計算歷史採購成本（原始採購總數 = 現存 + 遺失 + 損壞）
-        int originalQuantity = (totalQuantity != null ? totalQuantity : 0) 
-                             + (lostQty != null ? lostQty : 0);
+        int originalQuantity = (totalQuantity != null ? totalQuantity : 0)
+                + (lostQty != null ? lostQty : 0);
         this.historicalCost = purchasePrice.multiply(BigDecimal.valueOf(originalQuantity));
 
         // 2. 計算當前庫存相關價值（現存物品）

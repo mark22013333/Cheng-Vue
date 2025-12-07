@@ -428,6 +428,12 @@ public class ExcelUtil<T> {
                 if (StringUtils.isNotNull(cell)) {
                     String value = this.getCellValue(heard, i).toString();
                     cellMap.put(value, i);
+                    // 同時支援帶 * 和不帶 * 的標題格式
+                    // 例如：「物品名稱*」和「物品名稱」都能匹配到 @Excel(name = "物品名稱")
+                    if (value.endsWith("*")) {
+                        String valueWithoutAsterisk = value.substring(0, value.length() - 1);
+                        cellMap.put(valueWithoutAsterisk, i);
+                    }
                 } else {
                     cellMap.put(null, i);
                 }
