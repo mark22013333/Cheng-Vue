@@ -32,7 +32,7 @@ public class ReservationTaskTypeProvider implements TaskTypeProvider {
         // 過期預約清理任務
         TaskTypeOption expiredCleanupTask = TaskTypeOption.builder()
                 .code("RS001")
-                .label("過期預約清理")
+                .label("ExpiredBookingCleanup")
                 .category("RESERVATION")
                 .description("自動取消並清理過期的預約記錄，恢復預約數量")
                 .beanName("reservationTask")

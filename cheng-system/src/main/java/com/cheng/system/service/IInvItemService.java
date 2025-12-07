@@ -1,9 +1,11 @@
 package com.cheng.system.service;
 
 import com.cheng.system.domain.InvItem;
+import com.cheng.system.domain.vo.ReserveRequest;
 import com.cheng.system.dto.ImportTaskResult;
 import com.cheng.system.dto.InvItemImportDTO;
 import com.cheng.system.domain.vo.ReserveResult;
+import com.cheng.system.dto.InvItemWithStockDTO;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -150,7 +152,7 @@ public interface IInvItemService {
 
     /**
      * 異步執行匯入任務
-     * 
+     *
      * @param taskId 任務ID
      */
     void asyncImportItems(String taskId);
@@ -174,19 +176,42 @@ public interface IInvItemService {
      * 預約物品
      *
      * @param request 預約請求
-     * @param userId 用戶ID
+     * @param userId  用戶ID
      * @return 預約結果
      */
-    ReserveResult reserveItem(com.cheng.system.domain.vo.ReserveRequest request, Long userId);
+    ReserveResult reserveItem(ReserveRequest request, Long userId);
 
     /**
      * 恢復物品的預約數量
-     * 
+     * <p>
      * 當預約被取消時，需要將預約數量從庫存的 reserved_qty 中減去
      *
-     * @param itemId 物品ID
+     * @param itemId   物品ID
      * @param quantity 要恢復的數量
      * @return 是否成功恢復
      */
     boolean restoreReservedQuantity(Long itemId, Integer quantity);
+
+    /**
+     * 建立完整匯出任務（Excel + 圖片）
+     *
+     * @param dto 查詢條件
+     * @return taskId
+     */
+    String createExportTask(InvItemWithStockDTO dto);
+
+    /**
+     * 異步執行完整匯出任務
+     *
+     * @param taskId 任務ID
+     */
+    void asyncExportWithImages(String taskId);
+
+    /**
+     * 下載匯出結果
+     *
+     * @param taskId   任務ID
+     * @param response HTTP響應
+     */
+    void downloadExportResult(String taskId, HttpServletResponse response) throws Exception;
 }

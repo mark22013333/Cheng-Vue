@@ -73,7 +73,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  		insert into sys_job_log(
  			<if test="jobLogId != null and jobLogId != 0">job_log_id,</if>
  			<if test="jobName != null and jobName != ''">job_name,</if>
- 			<if test="jobGroup != null and jobGroup != ''">job_group,</if>
+ 			job_group,
  			<if test="invokeTarget != null and invokeTarget != ''">invoke_target,</if>
  			<if test="jobMessage != null and jobMessage != ''">job_message,</if>
  			<if test="status != null and status != ''">status,</if>
@@ -82,7 +82,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  		)values(
  			<if test="jobLogId != null and jobLogId != 0">#{jobLogId},</if>
  			<if test="jobName != null and jobName != ''">#{jobName},</if>
- 			<if test="jobGroup != null and jobGroup != ''">#{jobGroup},</if>
+ 			<choose>
+				<when test="jobGroup != null and jobGroup != ''">#{jobGroup},</when>
+				<otherwise>'DEFAULT',</otherwise>
+			</choose>
  			<if test="invokeTarget != null and invokeTarget != ''">#{invokeTarget},</if>
  			<if test="jobMessage != null and jobMessage != ''">#{jobMessage},</if>
  			<if test="status != null and status != ''">#{status},</if>

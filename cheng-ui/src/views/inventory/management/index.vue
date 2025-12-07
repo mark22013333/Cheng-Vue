@@ -649,7 +649,8 @@ import {
   importData,
   createImportTask,
   downloadTemplate,
-  reserveItem
+  reserveItem,
+  createExportTask
 } from "@/api/inventory/management"
 import {listCategory} from "@/api/inventory/category"
 import {createRefreshTask} from "@/api/inventory/scan"
@@ -685,6 +686,8 @@ export default {
       total: 0,
       // 物品與庫存整合表格資料
       managementList: [],
+      // 匯出 Loading 實例
+      exportLoadingInstance: null,
       // 查詢參數
       queryParams: {
         pageNum: 1,
@@ -1035,11 +1038,184 @@ export default {
         }
       });
     },
-    /** 匯出按鈕操作 */
+    /** 匯出按鈕操作（完整匯出：Excel + 圖片）*/
     handleExport() {
-      this.download('inventory/management/export', {
-        ...this.queryParams
-      }, `物品庫存_${new Date().getTime()}.xlsx`)
+      this.$modal.confirm('是否確認匯出所有物品資料（包含 Excel 和圖片）？').then(() => {
+        // 建立匯出任務
+        createExportTask(this.queryParams).then(res => {
+          const taskId = res.taskId;
+          console.log('匯出任務已建立，taskId:', taskId);
+          
+          // 顯示 Loading 並訂閱 SSE 進度
+          this.showExportProgress(taskId);
+        }).catch(error => {
+          console.error('建立匯出任務失敗:', error);
+          this.$modal.msgError('建立匯出任務失敗');
+        });
+      }).catch(() => {});
+    },
+
+    /** 顯示匯出進度 */
+    showExportProgress(taskId) {
+      // 使用 ElLoading 顯示進度
+      const loadingInstance = this.$loading({
+        lock: true,
+        text: '正在建立匯出任務...',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.7)'
+      });
+
+      // 保存 loading 實例
+      this.exportLoadingInstance = loadingInstance;
+
+      // 訂閱 SSE 進度
+      this.subscribeExportProgress(taskId);
+    },
+
+    /** 訂閱匯出進度（SSE）*/
+    subscribeExportProgress(taskId) {
+      console.log('開始訂閱 SSE，taskId:', taskId);
+      console.log('SSE URL:', import.meta.env.VITE_APP_BASE_API + '/inventory/management/export/subscribe/' + taskId);
+      
+      const eventSource = new EventSource(
+        import.meta.env.VITE_APP_BASE_API + '/inventory/management/export/subscribe/' + taskId
+      );
+
+      // ⚠️ 關鍵修正：使用 addEventListener 監聽自定義事件類型
+      // 後端發送的事件類型為 "progress", "success", "error"
+      
+      // 監聽進度事件
+      eventSource.addEventListener('progress', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('收到 SSE 進度事件:', data);
+
+          // 更新 Loading 文字
+          if (this.exportLoadingInstance && data.message) {
+            const progressText = data.progress !== undefined 
+              ? ` (${data.progress}%)` 
+              : '';
+            this.exportLoadingInstance.text = data.message + progressText;
+          }
+        } catch (error) {
+          console.error('解析進度事件失敗:', error);
+        }
+      });
+
+      // 監聽成功事件
+      eventSource.addEventListener('success', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('收到 SSE 成功事件:', data);
+          
+          if (this.exportLoadingInstance) {
+            this.exportLoadingInstance.close();
+          }
+          this.$modal.msgSuccess('匯出完成，開始下載...');
+          setTimeout(() => {
+            this.downloadExportResult(taskId);
+          }, 500);
+          eventSource.close();
+        } catch (error) {
+          console.error('解析成功事件失敗:', error);
+        }
+      });
+
+      // 監聽錯誤事件
+      eventSource.addEventListener('error', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('收到 SSE 錯誤事件:', data);
+          
+          if (this.exportLoadingInstance) {
+            this.exportLoadingInstance.close();
+          }
+          this.$modal.msgError('匯出失敗：' + data.message);
+          eventSource.close();
+        } catch (error) {
+          console.error('解析錯誤事件失敗:', error);
+        }
+      });
+
+      // 監聽連線錯誤
+      eventSource.onerror = (error) => {
+        console.error('SSE 連線錯誤:', error);
+        if (this.exportLoadingInstance) {
+          this.exportLoadingInstance.close();
+        }
+        this.$modal.msgError('進度訂閱失敗，請稍後重試');
+        eventSource.close();
+      };
+      
+      // 監聽連線開啟
+      eventSource.onopen = () => {
+        console.log('SSE 連線已建立');
+      };
+    },
+
+    /** 下載匯出結果 */
+    downloadExportResult(taskId) {
+      console.log('開始下載匯出結果，taskId:', taskId);
+      
+      // 使用 axios + blob 方式下載（參考 plugins/download.js）
+      import('axios').then(({ default: axios }) => {
+        import('@/utils/auth').then(({ getToken }) => {
+          const url = import.meta.env.VITE_APP_BASE_API + '/inventory/management/export/download/' + taskId;
+          
+          console.log('下載 URL:', url);
+          console.log('Token:', getToken() ? '存在' : '不存在');
+          
+          axios({
+            method: 'get',
+            url: url,
+            responseType: 'blob',
+            headers: { 
+              'Authorization': 'Bearer ' + getToken()  // ⚠️ 使用 Bearer 前綴
+            }
+          }).then((response) => {
+            console.log('下載響應:', response);
+            
+            // 檢查是否為有效的 blob
+            const isBlob = response.data instanceof Blob;
+            if (isBlob && response.data.type !== 'application/json') {
+              // 從 response header 取得檔名
+              const contentDisposition = response.headers['content-disposition'];
+              let fileName = '物品匯出.zip';
+              
+              if (contentDisposition) {
+                const fileNameMatch = contentDisposition.match(/filename\*?=(?:UTF-8'')?([^;]+)/);
+                if (fileNameMatch && fileNameMatch[1]) {
+                  fileName = decodeURIComponent(fileNameMatch[1].replace(/['"]/g, ''));
+                }
+              }
+              
+              console.log('下載檔名:', fileName);
+              
+              // 使用 file-saver 下載
+              import('file-saver').then(({ saveAs }) => {
+                const blob = new Blob([response.data], { type: 'application/zip' });
+                saveAs(blob, fileName);
+                console.log('下載觸發成功');
+              });
+            } else {
+              // 如果返回的是 JSON（錯誤訊息），解析並顯示
+              response.data.text().then((text) => {
+                try {
+                  const result = JSON.parse(text);
+                  console.error('下載失敗:', result);
+                  this.$modal.msgError('下載失敗：' + (result.msg || '未知錯誤'));
+                } catch (e) {
+                  console.error('解析錯誤訊息失敗:', e);
+                  this.$modal.msgError('下載失敗，請重試');
+                }
+              });
+            }
+          }).catch((error) => {
+            console.error('下載請求失敗:', error);
+            this.$modal.msgError('下載失敗：' + (error.message || '網路錯誤'));
+          });
+        });
+      });
     },
     /** 顯示低庫存提醒 */
     showLowStockOnly() {

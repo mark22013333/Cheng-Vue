@@ -33,6 +33,11 @@ public class SseChannels {
      */
     public static final String ITEM_RESERVE = "item-reserve";
     
+    /**
+     * 物品匯出任務（含圖片壓縮）
+     */
+    public static final String ITEM_EXPORT = "item-export";
+    
     // 未來可擴充其他頻道
     // public static final String ANOTHER_CHANNEL = "another-channel";
 }

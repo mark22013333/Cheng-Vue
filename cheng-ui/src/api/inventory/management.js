@@ -156,3 +156,12 @@ export function reserveItem(data) {
     data: data
   })
 }
+
+// 建立完整匯出任務（Excel + 圖片）
+export function createExportTask(query) {
+  return request({
+    url: '/inventory/management/exportWithImages',
+    method: 'post',
+    data: query
+  })
+}

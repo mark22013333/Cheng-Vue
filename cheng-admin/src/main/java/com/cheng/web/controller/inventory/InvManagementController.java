@@ -117,7 +117,7 @@ public class InvManagementController extends BaseController {
     }
 
     /**
-     * 匯出物品與庫存列表
+     * 匯出物品與庫存列表（簡單版，僅 Excel）
      */
     @PreAuthorize("@ss.hasPermi('inventory:management:export')")
     @Log(title = "物品與庫存管理", businessType = BusinessType.EXPORT)
@@ -133,6 +133,64 @@ public class InvManagementController extends BaseController {
 
         ExcelUtil<InvItemWithStockDTO> util = new ExcelUtil<>(InvItemWithStockDTO.class);
         util.exportExcel(response, list, "物品與庫存資料");
+    }
+
+    /**
+     * 建立完整匯出任務（Excel + 圖片）
+     * 返回 taskId 供前端訂閱 SSE 進度
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:management:export')")
+    @Log(title = "物品與庫存管理（完整匯出）", businessType = BusinessType.EXPORT)
+    @PostMapping("/exportWithImages")
+    public AjaxResult exportWithImages(InvItemWithStockDTO dto) {
+        try {
+            // 建立匯出任務
+            String taskId = invItemService.createExportTask(dto);
+            
+            log.info("完整匯出任務已建立 - taskId: {}", taskId);
+            
+            AjaxResult result = success("匯出任務已建立");
+            result.put("taskId", taskId);
+            return result;
+        } catch (Exception e) {
+            log.error("建立匯出任務失敗", e);
+            return error("建立匯出任務失敗: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 訂閱匯出任務進度（SSE）
+     * 
+     * 使用 Spring Event 機制解耦：
+     * 1. Controller 訂閱 SSE 頻道
+     * 2. Service 發布進度事件
+     * 3. Framework 層的 Listener 監聽事件並推送 SSE
+     */
+    @Anonymous
+    @GetMapping(value = "/export/subscribe/{taskId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribeExportTask(@PathVariable String taskId) {
+        log.info("========== SSE 匯出訂閱請求 - taskId: {} ==========", taskId);
+        
+        // 使用 SseManager 訂閱匯出頻道（超時: 30分鐘，匯出可能需要較長時間）
+        SseEmitter emitter = sseManager.subscribe(SseChannels.ITEM_EXPORT, taskId, 1800000L);
+        
+        // 訂閱成功後，啟動異步匯出任務
+        invItemService.asyncExportWithImages(taskId);
+        
+        return emitter;
+    }
+
+    /**
+     * 下載匯出結果
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:management:export')")
+    @GetMapping("/export/download/{taskId}")
+    public void downloadExportResult(@PathVariable String taskId, HttpServletResponse response) {
+        try {
+            invItemService.downloadExportResult(taskId, response);
+        } catch (Exception e) {
+            log.error("下載匯出結果失敗 - taskId: {}", taskId, e);
+        }
     }
 
     /**

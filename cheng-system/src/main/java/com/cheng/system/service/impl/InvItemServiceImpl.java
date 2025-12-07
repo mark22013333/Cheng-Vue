@@ -1,13 +1,16 @@
 package com.cheng.system.service.impl;
 
+import com.cheng.common.annotation.Excel;
 import com.cheng.common.constant.UserConstants;
 import com.cheng.common.enums.ScanType;
 import com.cheng.common.enums.UserStatus;
+import com.cheng.common.event.ExportProgressEvent;
 import com.cheng.common.exception.ServiceException;
 import com.cheng.common.utils.DateUtils;
 import com.cheng.common.utils.SecurityUtils;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.bean.BeanValidators;
+import com.cheng.common.utils.file.ImageExportUtil;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.common.utils.uuid.IdUtils;
 import com.cheng.common.event.ReservationEvent;
@@ -31,6 +34,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
@@ -41,10 +46,18 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.Validator;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * 物品資訊 服務層實現
@@ -303,9 +316,9 @@ public class InvItemServiceImpl implements IInvItemService {
      */
     @Override
     public boolean checkItemCodeUnique(InvItem invItem) {
-        Long itemId = StringUtils.isNull(invItem.getItemId()) ? -1L : invItem.getItemId();
+        long itemId = StringUtils.isNull(invItem.getItemId()) ? -1L : invItem.getItemId();
         InvItem info = invItemMapper.checkItemCodeUnique(invItem);
-        if (StringUtils.isNotNull(info) && info.getItemId().longValue() != itemId.longValue()) {
+        if (StringUtils.isNotNull(info) && info.getItemId().longValue() != itemId) {
             return UserConstants.NOT_UNIQUE;
         }
         return UserConstants.UNIQUE;
@@ -323,9 +336,9 @@ public class InvItemServiceImpl implements IInvItemService {
             return UserConstants.UNIQUE;
         }
 
-        Long itemId = StringUtils.isNull(invItem.getItemId()) ? -1L : invItem.getItemId();
+        long itemId = StringUtils.isNull(invItem.getItemId()) ? -1L : invItem.getItemId();
         InvItem info = invItemMapper.checkBarcodeUnique(invItem);
-        if (StringUtils.isNotNull(info) && info.getItemId().longValue() != itemId.longValue()) {
+        if (StringUtils.isNotNull(info) && info.getItemId().longValue() != itemId) {
             return UserConstants.NOT_UNIQUE;
         }
         return UserConstants.UNIQUE;
@@ -873,99 +886,99 @@ public class InvItemServiceImpl implements IInvItemService {
     @Transactional(rollbackFor = Exception.class)
     public ReserveResult reserveItem(ReserveRequest request, Long userId) {
         log.info("開始預約物品 - itemId: {}, userId: {}", request.getItemId(), userId);
-        
+
         try {
             // 1. 檢查預約日期是否有效
             if (request.getStartDate() == null || request.getEndDate() == null) {
                 throw new ServiceException("預約開始日期和結束日期不能為空");
             }
-            
+
             if (request.getStartDate().after(request.getEndDate())) {
                 throw new ServiceException("預約開始日期不能晚於結束日期");
             }
-            
+
             // 2. 取得物品資訊，檢查總數量
             InvItemWithStockDTO item = invItemMapper.selectItemWithStockByItemId(request.getItemId());
             if (item == null) {
                 throw new ServiceException("物品不存在");
             }
-            
+
             // 3. 檢查是否已有重疊日期的預約記錄
             List<InvBorrow> existingReservations = invBorrowMapper.selectOverlappingReservations(
-                request.getItemId(), request.getStartDate(), request.getEndDate());
-            
+                    request.getItemId(), request.getStartDate(), request.getEndDate());
+
             // 檢查是否包含自己未審核的預約
             boolean hasOwnPendingReservation = existingReservations.stream()
-                .anyMatch(r -> r.getBorrowerId().equals(userId) && r.getReserveStatus() == 1);
-            
+                    .anyMatch(r -> r.getBorrowerId().equals(userId) && r.getReserveStatus() == 1);
+
             if (hasOwnPendingReservation) {
                 throw new ServiceException("您已經預約了此物品在該時間段，請勿重複預約");
             }
-            
+
             // 4. 計算重疊時間段的總預約數量（包含待審核和已確認的預約）
             Integer overlappingQuantity = invBorrowMapper.sumOverlappingReservationQuantity(
-                request.getItemId(), request.getStartDate(), request.getEndDate());
-            
+                    request.getItemId(), request.getStartDate(), request.getEndDate());
+
             if (overlappingQuantity == null) {
                 overlappingQuantity = 0;
             }
-            
+
             // 5. 檢查剩餘可預約數量
             int totalQuantity = item.getTotalQuantity();
             int availableForReservation = totalQuantity - overlappingQuantity;
-            
-            log.info("預約檢查 - 物品總數: {}, 已預約數量: {}, 剩餘可預約: {}, 本次預約: {}", 
+
+            log.info("預約檢查 - 物品總數: {}, 已預約數量: {}, 剩餘可預約: {}, 本次預約: {}",
                     totalQuantity, overlappingQuantity, availableForReservation, request.getBorrowQty());
-            
+
             if (availableForReservation < request.getBorrowQty()) {
                 throw new ServiceException(
-                    String.format("預約失敗：該物品在選擇的時間段剩餘可預約數量為 %d，您想預約 %d，數量不足",
-                        availableForReservation, request.getBorrowQty()));
+                        String.format("預約失敗：該物品在選擇的時間段剩餘可預約數量為 %d，您想預約 %d，數量不足",
+                                availableForReservation, request.getBorrowQty()));
             }
-            
+
             // 6. 檢查用戶是否已預約該物品且尚未審核（避免重複預約）
             List<InvBorrow> userPendingReservations = invBorrowMapper.selectPendingReservationsByUser(
-                userId, request.getItemId());
-            
+                    userId, request.getItemId());
+
             if (!userPendingReservations.isEmpty()) {
                 throw new ServiceException("您已有該物品的待審核預約，請等待管理員審核或取消後重新預約");
             }
-            
+
             // 7. 使用樂觀鎖更新庫存和物品版本
             // 先更新庫存
             int updatedStockRows = invItemMapper.reserveItem(
-                request.getItemId(),
-                request.getBorrowQty()
+                    request.getItemId(),
+                    request.getBorrowQty()
             );
-            
+
             if (updatedStockRows == 0) {
                 // 檢查具體失敗原因
                 InvItemWithStockDTO currentItem = invItemMapper.selectItemWithStockByItemId(request.getItemId());
                 if (currentItem == null) {
                     throw new ServiceException("物品不存在");
                 }
-                
+
                 // 檢查可用庫存
                 if (currentItem.getAvailableQty() < request.getBorrowQty()) {
                     throw new ServiceException("該物品目前可用庫存不足，無法預約");
                 }
-                
+
                 throw new ServiceException("預約失敗，請重新整理後重試");
             }
-            
+
             // 再更新物品版本
             int updatedItemRows = invItemMapper.updateItemVersion(
-                request.getItemId(),
-                request.getVersion(),
-                userId
+                    request.getItemId(),
+                    request.getVersion(),
+                    userId
             );
-            
+
             if (updatedItemRows == 0) {
                 // 版本更新失敗，說明資料已被其他用戶修改
                 // 需要回滾庫存更新並拋出異常
                 throw new ServiceException("資料已過期，請重新整理頁面後重試");
             }
-            
+
             // 6. 新增預約記錄
             InvBorrow borrow = new InvBorrow();
             borrow.setBorrowNo(invBorrowService.generateBorrowNo());  // 產生借出編號
@@ -984,32 +997,32 @@ public class InvItemServiceImpl implements IInvItemService {
             borrow.setExpectedReturn(request.getEndDate());  // 預計歸還：預約結束日期
             borrow.setCreateBy(userId.toString());
             borrow.setCreateTime(DateUtils.getNowDate());
-            
+
             invBorrowMapper.insertInvBorrow(borrow);
-            
+
             // 5. 發布預約事件
             ReservationEvent event = new ReservationEvent(
-                "reserved",
-                request.getItemId(),
-                userId,
-                borrow.getBorrowId(),
-                "預約成功，等待管理員審核",
-                DateUtils.getNowDate(),
-                item.getAvailableQty(),
-                item.getReservedQty(),
-                null  // taskId 不需要，使用 broadcast
+                    "reserved",
+                    request.getItemId(),
+                    userId,
+                    borrow.getBorrowId(),
+                    "預約成功，等待管理員審核",
+                    DateUtils.getNowDate(),
+                    item.getAvailableQty(),
+                    item.getReservedQty(),
+                    null  // taskId 不需要，使用 broadcast
             );
             eventPublisher.publishEvent(event);
-            
+
             // 6. 返回結果
             return ReserveResult.builder()
-                .success(true)
-                .message("預約成功，等待管理員審核")
-                .borrowId(borrow.getBorrowId())
-                .availableQty(item.getAvailableQty())
-                .reservedQty(item.getReservedQty())
-                .build();
-                
+                    .success(true)
+                    .message("預約成功，等待管理員審核")
+                    .borrowId(borrow.getBorrowId())
+                    .availableQty(item.getAvailableQty())
+                    .reservedQty(item.getReservedQty())
+                    .build();
+
         } catch (ServiceException e) {
             log.error("物品預約失敗 - itemId: {}, error: {}", request.getItemId(), e.getMessage());
             throw e;
@@ -1057,14 +1070,14 @@ public class InvItemServiceImpl implements IInvItemService {
 
             // 檢查當前預約數量是否足夠減少
             if (stock.getReservedQty() < quantity) {
-                log.warn("當前預約數量不足，無法恢復 - itemId: {}, currentReserved: {}, restoreQuantity: {}", 
-                    itemId, stock.getReservedQty(), quantity);
+                log.warn("當前預約數量不足，無法恢復 - itemId: {}, currentReserved: {}, restoreQuantity: {}",
+                        itemId, stock.getReservedQty(), quantity);
                 return false;
             }
 
             // 更新庫存：減少預約數量
             int result = invStockMapper.updateReservedQty(itemId, -quantity);
-            
+
             if (result > 0) {
                 // 記錄庫存變動
                 InvStockRecord record = new InvStockRecord();
@@ -1083,20 +1096,463 @@ public class InvItemServiceImpl implements IInvItemService {
                 record.setReason("預約取消，恢復預約數量");
                 record.setCreateBy("system");
                 record.setCreateTime(new Date());
-                
+
                 invStockRecordMapper.insertInvStockRecord(record);
-                
-                log.info("成功恢復物品預約數量 - itemId: {}, itemName: {}, quantity: {}", 
-                    itemId, item.getItemName(), quantity);
+
+                log.info("成功恢復物品預約數量 - itemId: {}, itemName: {}, quantity: {}",
+                        itemId, item.getItemName(), quantity);
                 return true;
             } else {
                 log.error("恢復預約數量失敗，資料庫更新影響0行 - itemId: {}, quantity: {}", itemId, quantity);
                 return false;
             }
-            
+
         } catch (Exception e) {
             log.error("恢復預約數量異常 - itemId: {}, quantity: {}", itemId, quantity, e);
             return false;
         }
+    }
+
+    /**
+     * 匯出任務參數儲存（taskId -> ExportTaskParams）
+     */
+    private static final ConcurrentHashMap<String, ExportTaskParams> EXPORT_TASK_MAP = new ConcurrentHashMap<>();
+
+    /**
+     * 匯出結果檔案儲存（taskId -> 最終 ZIP 檔案路徑）
+     */
+    private static final ConcurrentHashMap<String, String> EXPORT_RESULT_MAP = new ConcurrentHashMap<>();
+
+    /**
+     * 匯出任務參數類別
+     */
+    @Setter
+    @Getter
+    private static class ExportTaskParams {
+        private InvItemWithStockDTO queryDto;
+        private String taskId;
+    }
+
+    @Override
+    public String createExportTask(InvItemWithStockDTO dto) {
+        // 產生 taskId
+        String taskId = UUID.randomUUID().toString();
+
+        // 儲存任務參數
+        ExportTaskParams params = new ExportTaskParams();
+        params.setQueryDto(dto);
+        params.setTaskId(taskId);
+        EXPORT_TASK_MAP.put(taskId, params);
+
+        // 初始化進度
+        ProgressInfo progressInfo = new ProgressInfo();
+        progressInfo.setProgress(0);
+        progressInfo.setMessage("任務已建立，準備開始匯出");
+        PROGRESS_MAP.put(taskId, progressInfo);
+
+        log.info("匯出任務已建立 - taskId: {}", taskId);
+        return taskId;
+    }
+
+    @Override
+    @Async
+    public void asyncExportWithImages(String taskId) {
+        log.info("========== 開始執行匯出任務 - taskId: {} ==========", taskId);
+
+        File tempDir = null;
+        try {
+            // 1. 取得任務參數
+            ExportTaskParams params = EXPORT_TASK_MAP.get(taskId);
+            if (params == null) {
+                throw new ServiceException("匯出任務不存在");
+            }
+
+            // 推送 SSE 進度
+            pushExportProgress(taskId, 5, "查詢資料中");
+
+            // 2. 查詢資料
+            List<InvItemWithStockDTO> allData = invItemMapper.selectItemWithStockList(params.getQueryDto());
+            allData.forEach(item -> {
+                item.calculateStockStatus();
+                item.calculateStockValue();
+            });
+
+            int totalCount = allData.size();
+            log.info("查詢到 {} 筆資料", totalCount);
+
+            if (totalCount == 0) {
+                pushExportProgress(taskId, -1, "沒有資料可匯出");
+                return;
+            }
+
+            // 3. 建立臨時目錄
+            tempDir = new File(uploadPath + File.separator + "export_temp" + File.separator + taskId);
+            if (!tempDir.exists() && !tempDir.mkdirs()) {
+                throw new ServiceException("無法建立臨時目錄");
+            }
+
+            pushExportProgress(taskId, 10, String.format("資料查詢完成，共 %d 筆", totalCount));
+
+            // 4. 匯出多 sheet Excel
+            int maxRowsPerSheet = 10000;
+            String excelFileName = "物品匯出_" + DateUtils.dateTimeNow() + ".xlsx";
+            File excelFile = new File(tempDir, excelFileName);
+
+            exportMultiSheetExcel(allData, excelFile, maxRowsPerSheet, taskId);
+
+            pushExportProgress(taskId, 50, "Excel 匯出完成");
+
+            // 5. 收集所有圖片路徑並壓縮
+            List<String> imagePaths = allData.stream()
+                    .map(InvItemWithStockDTO::getImageUrl)
+                    .filter(url -> url != null && !url.trim().isEmpty())
+                    .distinct()
+                    .toList();
+
+            log.info("需要壓縮 {} 張圖片", imagePaths.size());
+
+            ImageExportUtil.ImageZipResult imageResult =
+                    ImageExportUtil.zipImages(
+                            imagePaths,
+                            uploadPath,
+                            tempDir,
+                            "images",
+                            processed -> {
+                                int progress = 50 + (processed * 30 / imagePaths.size());
+                                pushExportProgress(taskId, progress, String.format("壓縮圖片中 (%d/%d)", processed, imagePaths.size()));
+                            }
+                    );
+
+            pushExportProgress(taskId, 80, "圖片壓縮完成");
+
+            // 6. 處理缺失圖片（寫入 Excel 的 remarks 欄位）
+            if (imageResult.hasMissingImages()) {
+                log.warn("發現 {} 張缺失圖片", imageResult.missingImages().size());
+
+                // 產生缺失圖片報告
+                String report = ImageExportUtil.createMissingImagesReport(imageResult.missingImages());
+                File reportFile = new File(tempDir, "missing_images.txt");
+                ImageExportUtil.writeTextToFile(report, reportFile.getAbsolutePath());
+
+                // 將缺失圖片資訊寫入對應物品的 remarks 欄位（需要重新產生 Excel）
+                for (InvItemWithStockDTO item : allData) {
+                    if (imageResult.missingImages().contains(item.getImageUrl())) {
+                        String missingInfo = "【圖片缺失】";
+                        if (item.getRemark() != null && !item.getRemark().trim().isEmpty()) {
+                            item.setRemark(item.getRemark() + "\n" + missingInfo);
+                        } else {
+                            item.setRemark(missingInfo);
+                        }
+                    }
+                }
+
+                // 重新匯出 Excel（包含缺失圖片標記）
+                exportMultiSheetExcel(allData, excelFile, maxRowsPerSheet, taskId);
+            }
+
+            pushExportProgress(taskId, 85, "打包最終檔案");
+
+            // 7. 將 Excel + 圖片 ZIP + 報告打包成最終 ZIP
+            String finalZipName = "物品匯出_" + DateUtils.dateTimeNow() + ".zip";
+            File finalZipFile = new File(uploadPath + File.separator + "export_temp", finalZipName);
+
+            packFinalZip(excelFile, imageResult.zipFiles(),
+                    imageResult.hasMissingImages() ? new File(tempDir, "missing_images.txt") : null,
+                    finalZipFile);
+
+            pushExportProgress(taskId, 95, "清理臨時檔案");
+
+            // 8. 清理臨時檔案（保留最終 ZIP）
+            ImageExportUtil.deleteTempFile(excelFile);
+            imageResult.zipFiles().forEach(ImageExportUtil::deleteTempFile);
+            if (imageResult.hasMissingImages()) {
+                ImageExportUtil.deleteTempFile(new File(tempDir, "missing_images.txt"));
+            }
+            ImageExportUtil.deleteTempDirectory(tempDir);
+
+            // 9. 儲存最終結果路徑
+            EXPORT_RESULT_MAP.put(taskId, finalZipFile.getAbsolutePath());
+
+            // 10. 推送完成事件
+            pushExportProgress(taskId, 100, "匯出完成！");
+
+            log.info("========== 匯出任務完成 - taskId: {}, 檔案: {} ==========", taskId, finalZipFile.getName());
+
+        } catch (Exception e) {
+            log.error("匯出任務執行失敗 - taskId: {}", taskId, e);
+            pushExportProgress(taskId, -1, "匯出失敗：" + e.getMessage());
+
+            // 清理臨時目錄
+            if (tempDir != null && tempDir.exists()) {
+                ImageExportUtil.deleteTempDirectory(tempDir);
+            }
+        } finally {
+            // 清理任務參數
+            EXPORT_TASK_MAP.remove(taskId);
+        }
+    }
+
+    /**
+     * 匯出多 sheet Excel
+     * <p>
+     * 方法：將資料分批，每批匯出到臨時檔案，然後合併所有 sheet 到最終檔案
+     */
+    private void exportMultiSheetExcel(List<InvItemWithStockDTO> allData, File outputFile,
+                                       int maxRowsPerSheet, String taskId) throws Exception {
+        log.info("開始匯出多 sheet Excel - 總資料數: {}, 每 sheet 最多: {} 行",
+                allData.size(), maxRowsPerSheet);
+
+        // 計算需要幾個 sheet
+        int totalSheets = (int) Math.ceil((double) allData.size() / maxRowsPerSheet);
+        log.info("將匯出 {} 個 sheet", totalSheets);
+
+        // 如果資料量小，直接單 sheet 匯出
+        if (totalSheets == 1) {
+            ExcelUtil<InvItemWithStockDTO> util = new ExcelUtil<>(InvItemWithStockDTO.class);
+            // ⚠️ 不要調用 exportExcel()，它會在 finally 中關閉 Workbook
+            // 改為手動調用 init + writeSheet
+            util.init(allData, "物品資料", "", Excel.Type.EXPORT);
+            util.writeSheet();
+
+            try (Workbook wb = extractWorkbookFromExcelUtil(util);
+                 FileOutputStream fos = new FileOutputStream(outputFile)) {
+                wb.write(fos);
+            }
+
+            log.info("單 sheet Excel 匯出完成");
+            return;
+        }
+
+        // 多 sheet：先匯出到臨時檔案，再合併
+        try (Workbook finalWorkbook = new XSSFWorkbook()) {
+            for (int i = 0; i < totalSheets; i++) {
+                int fromIndex = i * maxRowsPerSheet;
+                int toIndex = Math.min((i + 1) * maxRowsPerSheet, allData.size());
+                List<InvItemWithStockDTO> batchData = allData.subList(fromIndex, toIndex);
+
+                String sheetName = "物品資料" + (i + 1);
+                log.debug("匯出 sheet: {}, 資料範圍: {}-{}", sheetName, fromIndex + 1, toIndex);
+
+                // 匯出到臨時檔案
+                ExcelUtil<InvItemWithStockDTO> util = new ExcelUtil<>(InvItemWithStockDTO.class);
+                // ⚠️ 不要調用 exportExcel()，它會在 finally 中關閉 Workbook
+                // 改為手動調用 init + writeSheet
+                util.init(batchData, sheetName, "", Excel.Type.EXPORT);
+                util.writeSheet();
+
+                try (Workbook batchWb = extractWorkbookFromExcelUtil(util)) {
+                    // 複製 sheet 到最終 Workbook
+                    Sheet sourceSheet = batchWb.getSheetAt(0);
+                    Sheet targetSheet = finalWorkbook.createSheet(sheetName);
+                    copySheet(sourceSheet, targetSheet, finalWorkbook);
+                }
+            }
+
+            // 寫入最終檔案
+            try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+                finalWorkbook.write(fos);
+            }
+
+            log.info("多 sheet Excel 匯出完成，共 {} 個 sheet", totalSheets);
+        }
+    }
+
+    /**
+     * 從 ExcelUtil 提取 Workbook
+     * <p>
+     * 注意：這是一個權宜之計，因為 ExcelUtil.exportExcel() 返回 AjaxResult 而非 Workbook。
+     * ExcelUtil 的設計是為了直接寫入 HttpServletResponse，不適合我們的多 sheet 合併場景。
+     * 理想情況下應該重構 ExcelUtil 或直接使用 Apache POI API，但考慮到 DTO 有大量 @Excel 註解，
+     * 目前使用反射是最經濟的方案。
+     *
+     * @param util ExcelUtil 實例
+     * @return Workbook 實例
+     */
+    private Workbook extractWorkbookFromExcelUtil(ExcelUtil<?> util) {
+        try {
+            Field wbField = util.getClass().getDeclaredField("wb");
+            wbField.setAccessible(true);
+            return (Workbook) wbField.get(util);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            log.error("無法從 ExcelUtil 提取 Workbook，可能 ExcelUtil 內部結構已變更", e);
+            throw new RuntimeException("Excel 匯出失敗：無法取得 Workbook", e);
+        }
+    }
+
+    /**
+     * 複製整個 Sheet（包含樣式）
+     */
+    private void copySheet(Sheet sourceSheet, Sheet targetSheet, Workbook targetWorkbook) {
+        // 複製列寬
+        for (int i = 0; i < sourceSheet.getRow(0).getLastCellNum(); i++) {
+            targetSheet.setColumnWidth(i, sourceSheet.getColumnWidth(i));
+        }
+
+        // 複製所有行
+        for (int rowNum = 0; rowNum <= sourceSheet.getLastRowNum(); rowNum++) {
+            Row sourceRow = sourceSheet.getRow(rowNum);
+            if (sourceRow != null) {
+                Row targetRow = targetSheet.createRow(rowNum);
+                targetRow.setHeight(sourceRow.getHeight());
+
+                // 複製所有儲存格
+                for (int cellNum = 0; cellNum < sourceRow.getLastCellNum(); cellNum++) {
+                    Cell sourceCell = sourceRow.getCell(cellNum);
+                    if (sourceCell != null) {
+                        Cell targetCell = targetRow.createCell(cellNum);
+
+                        // 複製樣式（需要先複製到目標 Workbook）
+                        CellStyle newStyle = targetWorkbook.createCellStyle();
+                        newStyle.cloneStyleFrom(sourceCell.getCellStyle());
+                        targetCell.setCellStyle(newStyle);
+
+                        // 複製值
+                        copyCellValue(sourceCell, targetCell);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 複製儲存格值
+     */
+    private void copyCellValue(Cell sourceCell, Cell targetCell) {
+        switch (sourceCell.getCellType()) {
+            case STRING:
+                targetCell.setCellValue(sourceCell.getStringCellValue());
+                break;
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(sourceCell)) {
+                    targetCell.setCellValue(sourceCell.getDateCellValue());
+                } else {
+                    targetCell.setCellValue(sourceCell.getNumericCellValue());
+                }
+                break;
+            case BOOLEAN:
+                targetCell.setCellValue(sourceCell.getBooleanCellValue());
+                break;
+            case FORMULA:
+                targetCell.setCellFormula(sourceCell.getCellFormula());
+                break;
+            case BLANK:
+                targetCell.setBlank();
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * 打包最終 ZIP
+     */
+    private void packFinalZip(File excelFile, List<File> imageZipFiles, File reportFile, File outputZip) throws Exception {
+        try (ZipOutputStream zos = new ZipOutputStream(
+                new FileOutputStream(outputZip))) {
+
+            // 1. 加入 Excel
+            addFileToZip(zos, excelFile, excelFile.getName());
+
+            // 2. 加入圖片 ZIP 檔案
+            for (int i = 0; i < imageZipFiles.size(); i++) {
+                File imageZip = imageZipFiles.get(i);
+                String entryName = imageZipFiles.size() > 1
+                        ? "images_part" + (i + 1) + ".zip"
+                        : "images.zip";
+                addFileToZip(zos, imageZip, entryName);
+            }
+
+            // 3. 加入缺失圖片報告（如果有）
+            if (reportFile != null && reportFile.exists()) {
+                addFileToZip(zos, reportFile, reportFile.getName());
+            }
+        }
+
+        log.info("最終 ZIP 打包完成: {}", outputZip.getName());
+    }
+
+    /**
+     * 將檔案加入 ZIP
+     */
+    private void addFileToZip(ZipOutputStream zos, File file, String entryName) throws Exception {
+        ZipEntry entry = new ZipEntry(entryName);
+        zos.putNextEntry(entry);
+
+        try (FileInputStream fis = new FileInputStream(file)) {
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = fis.read(buffer)) > 0) {
+                zos.write(buffer, 0, length);
+            }
+        }
+
+        zos.closeEntry();
+    }
+
+    /**
+     * 推送匯出進度（透過 Spring Event 解耦）
+     */
+    private void pushExportProgress(String taskId, int progress, String message) {
+        try {
+            // 更新進度 Map
+            ProgressInfo progressInfo = new ProgressInfo();
+            progressInfo.setProgress(progress);
+            progressInfo.setMessage(message);
+            PROGRESS_MAP.put(taskId, progressInfo);
+
+            // 發布進度事件（由 Framework 層的 Listener 監聽並推送 SSE）
+            ExportProgressEvent event = new ExportProgressEvent(this, taskId, progress, message);
+            eventPublisher.publishEvent(event);
+
+            log.debug("匯出進度事件已發布 - taskId: {}, progress: {}", taskId, progress);
+        } catch (Exception e) {
+            log.error("進度事件發布失敗 - taskId: {}", taskId, e);
+        }
+    }
+
+    @Override
+    public void downloadExportResult(String taskId, HttpServletResponse response) throws Exception {
+        String filePath = EXPORT_RESULT_MAP.get(taskId);
+        if (filePath == null || filePath.isEmpty()) {
+            throw new ServiceException("匯出結果不存在或已過期");
+        }
+
+        File file = new File(filePath);
+        if (!file.exists()) {
+            throw new ServiceException("匯出檔案不存在");
+        }
+
+        // 設定響應頭
+        response.setContentType("application/zip");
+        response.setCharacterEncoding("UTF-8");
+        String fileName = file.getName();
+        // 使用 RFC 5987 標準編碼中文檔名
+        String encodedFileName = java.net.URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                .replace("+", "%20");  // 空格編碼為 %20 而非 +
+        response.setHeader("Content-Disposition",
+                "attachment; filename*=UTF-8''" + encodedFileName);
+        response.setContentLengthLong(file.length());
+
+        // 輸出檔案
+        try (FileInputStream fis = new FileInputStream(file);
+             java.io.OutputStream os = response.getOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = fis.read(buffer)) > 0) {
+                os.write(buffer, 0, length);
+            }
+        }
+
+        log.info("匯出結果已下載 - taskId: {}, file: {}", taskId, fileName);
+
+        // 下載完成後刪除檔案和記錄
+        try {
+            Files.deleteIfExists(file.toPath());
+            log.debug("已刪除匯出檔案 - taskId: {}", taskId);
+        } catch (IOException e) {
+            log.warn("刪除匯出檔案失敗 - taskId: {}, 錯誤: {}", taskId, e.getMessage());
+        }
+        EXPORT_RESULT_MAP.remove(taskId);
+        PROGRESS_MAP.remove(taskId);
     }
 }
