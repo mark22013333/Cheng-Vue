@@ -11,6 +11,7 @@ import com.cheng.common.utils.SecurityUtils;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.bean.BeanValidators;
 import com.cheng.common.utils.file.ImageExportUtil;
+import com.cheng.common.utils.file.ImageImportUtil;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.common.utils.uuid.IdUtils;
 import com.cheng.common.event.ReservationEvent;
@@ -20,6 +21,7 @@ import com.cheng.system.domain.InvStockRecord;
 import com.cheng.system.domain.InvBookInfo;
 import com.cheng.system.domain.InvBorrow;
 import com.cheng.system.domain.InvCategory;
+import com.cheng.system.domain.vo.ImportResult;
 import com.cheng.system.dto.InvItemImportDTO;
 import com.cheng.system.domain.vo.ReserveResult;
 import com.cheng.system.domain.vo.ReserveRequest;
@@ -45,16 +47,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Validator;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Field;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -871,8 +871,331 @@ public class InvItemServiceImpl implements IInvItemService {
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        ExcelUtil<InvItemImportDTO> util = new ExcelUtil<>(InvItemImportDTO.class);
-        util.importTemplateExcel(response, "物品資料匯入範本");
+        // 建立臨時目錄
+        File tempDir = new File(System.getProperty("java.io.tmpdir"), "import_template_" + UUID.randomUUID());
+        if (!tempDir.mkdirs()) {
+            throw new ServiceException("無法建立臨時目錄");
+        }
+
+        try {
+            // 1. 產生 Excel 範本檔案（含範例資料）
+            File excelFile = new File(tempDir, "物品匯入範本.xlsx");
+            generateExcelTemplate(excelFile);
+
+            // 2. 產生圖片範例 ZIP
+            File imagesZip = new File(tempDir, "images.zip");
+            generateImagesZip(imagesZip);
+
+            // 3. 產生說明文件
+            File readmeFile = new File(tempDir, "匯入說明.txt");
+            generateReadmeFile(readmeFile);
+
+            // 4. 將所有檔案打包成 ZIP
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+                // 加入 Excel 檔案
+                addFileToZip(zos, excelFile, "物品匯入範本.xlsx");
+                // 加入圖片 ZIP
+                addFileToZip(zos, imagesZip, "images.zip");
+                // 加入說明文件
+                addFileToZip(zos, readmeFile, "匯入說明.txt");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            // 5. 設定 HTTP 響應
+            response.setContentType("application/zip");
+            response.setCharacterEncoding("UTF-8");
+            String filename = URLEncoder.encode("物品匯入範本_完整版.zip", StandardCharsets.UTF_8);
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+
+            // 6. 輸出到響應流
+            response.getOutputStream().write(baos.toByteArray());
+            response.getOutputStream().flush();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            // 清理臨時目錄
+            deleteDirectory(tempDir);
+        }
+    }
+
+    /**
+     * 產生 Excel 範本檔案（含範例資料）
+     */
+    private void generateExcelTemplate(File excelFile) throws Exception {
+        // 使用正確的資源關閉順序：先 FileOutputStream，後 Workbook
+        // 這樣關閉時會先關閉 Workbook（完成寫入），再關閉 FileOutputStream
+        try (FileOutputStream fos = new FileOutputStream(excelFile);
+             Workbook workbook = new XSSFWorkbook()) {
+
+            Sheet sheet = workbook.createSheet("物品資料");
+
+            // 建立標題樣式
+            CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderTop(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            // 建立資料樣式
+            CellStyle dataStyle = workbook.createCellStyle();
+            dataStyle.setBorderBottom(BorderStyle.THIN);
+            dataStyle.setBorderTop(BorderStyle.THIN);
+            dataStyle.setBorderLeft(BorderStyle.THIN);
+            dataStyle.setBorderRight(BorderStyle.THIN);
+
+            // 建立必填欄位樣式（紅色背景）
+            CellStyle requiredStyle = workbook.createCellStyle();
+            requiredStyle.cloneStyleFrom(headerStyle);
+            requiredStyle.setFillForegroundColor(IndexedColors.LIGHT_CORNFLOWER_BLUE.getIndex());
+
+            // 標題列
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {"物品編碼", "物品名稱*", "分類名稱", "規格", "單位", "品牌",
+                    "型號", "ISBN", "圖片路徑", "條碼", "QR碼", "供應商",
+                    "進價", "現價", "最小庫存", "最大庫存", "存放位置",
+                    "初始庫存", "描述", "備註"};
+
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                // 必填欄位使用特殊樣式
+                if (headers[i].contains("*")) {
+                    cell.setCellStyle(requiredStyle);
+                } else {
+                    cell.setCellStyle(headerStyle);
+                }
+                // 設定欄寬
+                sheet.setColumnWidth(i, 4000);
+            }
+
+            // 範例資料
+            String[][] examples = {
+                    {"BOOK001", "Java 程式設計", "書籍", "精裝", "本", "碁峰",
+                            "JV-2024", "9789863479471", "書籍封面/isbn_9789863479471.jpg", "9789863479471", "QR001", "碁峰出版",
+                            "450", "550", "5", "50", "A區-001", "10", "Java 入門經典", "熱門暢銷書"},
+
+                    {"BOOK002", "Python 資料分析", "書籍", "平裝", "本", "歐萊禮",
+                            "PY-2024", "9787302123456", "書籍封面/isbn_9787302123456.jpg", "9787302123456", "QR002", "歐萊禮出版",
+                            "380", "480", "3", "30", "A區-002", "8", "資料科學必讀", ""},
+
+                    {"TOOL001", "程式設計鍵盤", "辦公用品", "機械軸", "個", "羅技",
+                            "K380", "", "", "1234567890123", "QR003", "羅技科技",
+                            "800", "1200", "2", "20", "B區-001", "5", "藍牙機械鍵盤", "含無線接收器"}
+            };
+
+            for (int i = 0; i < examples.length; i++) {
+                Row row = sheet.createRow(i + 1);
+                for (int j = 0; j < examples[i].length; j++) {
+                    Cell cell = row.createCell(j);
+                    cell.setCellValue(examples[i][j]);
+                    cell.setCellStyle(dataStyle);
+                }
+            }
+
+            // 凍結首列
+            sheet.createFreezePane(0, 1);
+
+            // workbook.write() 在 try-with-resources 結束時會自動執行
+            // 關閉順序：先 Workbook（完成寫入），再 FileOutputStream
+            workbook.write(fos);
+        }
+    }
+
+    /**
+     * 產生圖片範例 ZIP
+     */
+    private void generateImagesZip(File imagesZip) throws Exception {
+        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(imagesZip))) {
+            // 建立範例圖片說明檔
+            ZipEntry readmeEntry = new ZipEntry("圖片說明.txt");
+            zos.putNextEntry(readmeEntry);
+
+            String imageReadme = """
+                    圖片命名規則：
+                    
+                    1. 如果有 ISBN，建議使用：isbn_{ISBN}.jpg
+                       範例：isbn_9789863479471.jpg
+                    
+                    2. 如果無 ISBN，可使用其他命名：
+                       - 使用物品編碼：BOOK001.jpg
+                       - 使用條碼：1234567890123.jpg
+                       - 自訂名稱：product_image_001.jpg
+                    
+                    3. Excel 中的「圖片路徑」欄位需對應實際檔名
+                       範例：書籍封面/isbn_9789863479471.jpg
+                    
+                    4. 支援的圖片格式：jpg, jpeg, png, gif, bmp
+                    
+                    5. 建議圖片大小：10MB 以內
+                    
+                    注意：此 ZIP 檔內的圖片僅為範例，實際使用時請替換為真實圖片。
+                    """;
+
+            zos.write(imageReadme.getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+
+            // 建立三個範例圖片檔案（空檔案，僅作為示範）
+            String[] exampleImages = {
+                    "isbn_9789863479471.jpg",
+                    "isbn_9787302123456.jpg",
+                    "product_001.jpg"
+            };
+
+            for (String imageName : exampleImages) {
+                ZipEntry imageEntry = new ZipEntry(imageName);
+                zos.putNextEntry(imageEntry);
+
+                // 寫入一個極小的 1x1 像素的 JPEG 圖片（Base64 解碼）
+                byte[] minimalJpeg = Base64.getDecoder().decode(
+                        "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAAA="
+                );
+                zos.write(minimalJpeg);
+                zos.closeEntry();
+            }
+        }
+    }
+
+    /**
+     * 產生說明文件
+     */
+    private void generateReadmeFile(File readmeFile) throws Exception {
+        StringBuilder readme = new StringBuilder();
+
+        readme.append("═══════════════════════════════════════════════════\n");
+        readme.append("     物品匯入功能使用說明\n");
+        readme.append("═══════════════════════════════════════════════════\n\n");
+
+        readme.append("📦 檔案說明\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("本壓縮檔包含以下檔案：\n\n");
+        readme.append("  1. 物品匯入範本.xlsx - Excel 資料範本（含範例資料）\n");
+        readme.append("  2. images.zip - 圖片檔案壓縮包（含範例圖片）\n");
+        readme.append("  3. 匯入說明.txt - 本說明文件\n\n");
+
+        readme.append("📋 兩種匯入方式\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("方式一：純資料匯入（無圖片）\n");
+        readme.append("  • 僅上傳「物品匯入範本.xlsx」\n");
+        readme.append("  • 適用於不需要圖片的物品\n");
+        readme.append("  • Excel 中的「圖片路徑」欄位可留空\n\n");
+
+        readme.append("方式二：完整匯入（含圖片）\n");
+        readme.append("  • 準備好 Excel 和圖片\n");
+        readme.append("  • 將圖片放入 images.zip 內\n");
+        readme.append("  • 將 Excel 和 images.zip 一起打包成新的 ZIP\n");
+        readme.append("  • 上傳這個新的 ZIP 檔案\n\n");
+
+        readme.append("🔧 操作步驟（完整匯入）\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("步驟 1：編輯 Excel 檔案\n");
+        readme.append("  • 開啟「物品匯入範本.xlsx」\n");
+        readme.append("  • 填寫物品資料（物品名稱為必填*）\n");
+        readme.append("  • 圖片路徑格式：書籍封面/isbn_9789863479471.jpg\n");
+        readme.append("  • 儲存並關閉\n\n");
+
+        readme.append("步驟 2：準備圖片檔案\n");
+        readme.append("  • 解壓縮 images.zip\n");
+        readme.append("  • 替換或新增您的圖片檔案\n");
+        readme.append("  • 圖片命名要與 Excel 中的「圖片路徑」對應\n");
+        readme.append("  • 將所有圖片重新壓縮為 images.zip\n\n");
+
+        readme.append("步驟 3：打包上傳\n");
+        readme.append("  • 建立一個新的空資料夾\n");
+        readme.append("  • 將編輯好的「物品匯入範本.xlsx」放入\n");
+        readme.append("  • 將準備好的「images.zip」放入\n");
+        readme.append("  • 選擇這兩個檔案，壓縮成新的 ZIP\n");
+        readme.append("  • 在系統中上傳這個新的 ZIP 檔案\n\n");
+
+        readme.append("📝 Excel 欄位說明\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("必填欄位（標題有 * 符號）：\n");
+        readme.append("  • 物品名稱* - 不可為空\n\n");
+
+        readme.append("選填欄位：\n");
+        readme.append("  • 物品編碼 - 系統唯一識別碼（留空則自動產生）\n");
+        readme.append("  • 分類名稱 - 物品分類（留空則使用預設分類）\n");
+        readme.append("  • 規格 - 物品規格說明\n");
+        readme.append("  • 單位 - 計量單位（留空則使用預設單位）\n");
+        readme.append("  • 品牌 - 品牌名稱\n");
+        readme.append("  • 型號 - 型號編號\n");
+        readme.append("  • ISBN - 國際標準書號（書籍類物品）\n");
+        readme.append("  • 圖片路徑 - 對應 images.zip 內的圖片檔名\n");
+        readme.append("  • 條碼 - 商品條碼\n");
+        readme.append("  • QR碼 - QR Code 內容\n");
+        readme.append("  • 供應商 - 供應商名稱\n");
+        readme.append("  • 進價 - 進貨價格（數字）\n");
+        readme.append("  • 現價 - 現行售價（數字）\n");
+        readme.append("  • 最小庫存 - 低庫存警示值（數字）\n");
+        readme.append("  • 最大庫存 - 最大庫存上限（數字）\n");
+        readme.append("  • 存放位置 - 倉庫位置\n");
+        readme.append("  • 初始庫存 - 初始庫存數量（數字）\n");
+        readme.append("  • 描述 - 物品詳細描述\n");
+        readme.append("  • 備註 - 其他備註資訊\n\n");
+
+        readme.append("🖼️  圖片命名規則\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("建議命名方式：\n");
+        readme.append("  1. 書籍類：isbn_{ISBN}.jpg\n");
+        readme.append("     範例：isbn_9789863479471.jpg\n\n");
+        readme.append("  2. 其他類：使用物品編碼或條碼\n");
+        readme.append("     範例：TOOL001.jpg 或 1234567890123.jpg\n\n");
+
+        readme.append("圖片要求：\n");
+        readme.append("  • 支援格式：jpg, jpeg, png, gif, bmp\n");
+        readme.append("  • 大小限制：單張圖片 10MB 以內\n");
+        readme.append("  • 建議尺寸：800x800 像素以上\n\n");
+
+        readme.append("⚠️  注意事項\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("  1. Excel 中的「圖片路徑」必須與實際圖片檔名對應\n");
+        readme.append("  2. 如果物品已存在（依 ISBN 判斷），可選擇「更新」或「跳過」\n");
+        readme.append("  3. 圖片路徑格式：子目錄/檔名.jpg（如：書籍封面/isbn_xxx.jpg）\n");
+        readme.append("  4. images.zip 內可建立子目錄，但須與 Excel 路徑一致\n");
+        readme.append("  5. 匯入完成後會顯示詳細的成功/失敗統計\n");
+        readme.append("  6. 如有錯誤，請根據錯誤訊息調整後重新匯入\n\n");
+
+        readme.append("🔄 更新模式說明\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("更新支援：開啟\n");
+        readme.append("  • 若物品已存在（ISBN 相同），將更新物品資訊\n");
+        readme.append("  • 圖片會覆蓋原有圖片（舊圖片會自動備份）\n\n");
+
+        readme.append("更新支援：關閉\n");
+        readme.append("  • 若物品已存在，將跳過該筆資料\n");
+        readme.append("  • 不會修改現有物品資料\n\n");
+
+        readme.append("💡 範例說明\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("範本中包含 3 筆範例資料：\n");
+        readme.append("  1. Java 程式設計（書籍，含 ISBN 和圖片）\n");
+        readme.append("  2. Python 資料分析（書籍，含 ISBN 和圖片）\n");
+        readme.append("  3. 程式設計鍵盤（辦公用品，無 ISBN）\n\n");
+
+        readme.append("您可以參考這些範例的格式填寫您的資料。\n");
+        readme.append("建議先刪除範例資料，再填入真實資料。\n\n");
+
+        readme.append("📞 技術支援\n");
+        readme.append("─────────────────────────────────────────────────\n");
+        readme.append("如有任何問題，請聯繫系統管理員。\n\n");
+
+        readme.append("═══════════════════════════════════════════════════\n");
+        readme.append("版本：1.0 | 更新日期：")
+                .append(new SimpleDateFormat("yyyy-MM-dd").format(new Date())).append("\n");
+        readme.append("═══════════════════════════════════════════════════\n");
+
+        // 寫入檔案
+        try (FileWriter writer = new FileWriter(readmeFile)) {
+            writer.write(readme.toString());
+        }
     }
 
     @Override
@@ -1554,5 +1877,332 @@ public class InvItemServiceImpl implements IInvItemService {
         }
         EXPORT_RESULT_MAP.remove(taskId);
         PROGRESS_MAP.remove(taskId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String importDataWithImages(MultipartFile file, Boolean updateSupport, Long defaultCategoryId, String defaultUnit) throws Exception {
+        // 檢查檔案
+        if (file == null || file.isEmpty()) {
+            throw new ServiceException("上傳檔案不能為空");
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new ServiceException("無法取得檔案名稱");
+        }
+
+        // 判斷檔案類型
+        boolean isZip = originalFilename.toLowerCase().endsWith(".zip");
+        boolean isExcel = originalFilename.toLowerCase().endsWith(".xlsx") || originalFilename.toLowerCase().endsWith(".xls");
+
+        if (!isZip && !isExcel) {
+            throw new ServiceException("不支援的檔案格式，請上傳 Excel 或 ZIP 檔案");
+        }
+
+        // 建立臨時目錄
+        File tempDir = new File(System.getProperty("java.io.tmpdir"), "import_" + UUID.randomUUID());
+        if (!tempDir.mkdirs()) {
+            throw new ServiceException("無法建立臨時目錄");
+        }
+
+        try {
+            File excelFile;
+            File imagesDir = null;
+
+            if (isZip) {
+                // ZIP 檔案：解壓縮並尋找 Excel 和 images.zip
+                log.info("開始處理 ZIP 檔案: {}", originalFilename);
+                File zipFile = new File(tempDir, "upload.zip");
+                file.transferTo(zipFile);
+
+                File extractDir = new File(tempDir, "extract");
+                ImageImportUtil.unzip(zipFile, extractDir);
+
+                // 尋找 Excel 檔案
+                excelFile = findExcelFile(extractDir);
+                if (excelFile == null) {
+                    throw new ServiceException("ZIP 檔案中未找到 Excel 檔案");
+                }
+
+                // 尋找 images.zip
+                File imagesZip = new File(extractDir, "images.zip");
+                if (imagesZip.exists()) {
+                    imagesDir = new File(tempDir, "images");
+                    ImageImportUtil.unzip(imagesZip, imagesDir);
+                    log.info("解壓縮圖片: {} 張", countFiles(imagesDir));
+                }
+            } else {
+                // Excel 檔案：直接儲存
+                log.info("開始處理 Excel 檔案: {}", originalFilename);
+                excelFile = new File(tempDir, originalFilename);
+                file.transferTo(excelFile);
+            }
+
+            // 執行匯入
+            ImportResult result = importFromExcel(excelFile, imagesDir, updateSupport, defaultCategoryId, defaultUnit);
+
+            // 返回 HTML 格式的結果訊息
+            return result.toHtmlMessage();
+
+        } finally {
+            // 清理臨時目錄
+            deleteDirectory(tempDir);
+        }
+    }
+
+    /**
+     * 從 Excel 執行匯入
+     */
+    private ImportResult importFromExcel(File excelFile, File imagesDir, Boolean updateSupport, Long defaultCategoryId, String defaultUnit) throws Exception {
+        ImportResult result = new ImportResult();
+
+        // 讀取 Excel
+        ExcelUtil<InvItemWithStockDTO> util = new ExcelUtil<>(InvItemWithStockDTO.class);
+        List<InvItemWithStockDTO> dataList;
+        try (FileInputStream fis = new FileInputStream(excelFile)) {
+            dataList = util.importExcel(fis);
+        } catch (Exception e) {
+            throw new ServiceException("讀取 Excel 失敗: " + e.getMessage());
+        }
+
+        result.setTotalRows(dataList.size());
+        log.info("讀取 Excel 完成，共 {} 筆資料", dataList.size());
+
+        // 統計圖片
+        if (imagesDir != null) {
+            result.setTotalImages(countFiles(imagesDir));
+        }
+
+        // 逐筆處理
+        int rowNum = 2;  // Excel 從第 2 行開始（第 1 行是標題）
+        for (InvItemWithStockDTO dto : dataList) {
+            try {
+                // 驗證必要欄位
+                if (dto.getItemName() == null || dto.getItemName().trim().isEmpty()) {
+                    result.addError(rowNum, "", "物品名稱不能為空");
+                    result.setFailedRows(result.getFailedRows() + 1);
+                    rowNum++;
+                    continue;
+                }
+
+                // 檢查物品編碼是否重複
+                InvItem existingItem = null;
+                if (dto.getItemCode() != null && !dto.getItemCode().trim().isEmpty()) {
+                    existingItem = invItemMapper.selectInvItemByItemCode(dto.getItemCode());
+                }
+
+                if (existingItem != null) {
+                    if (updateSupport != null && updateSupport) {
+                        // 更新現有資料
+                        updateItemFromDTO(existingItem, dto, defaultCategoryId, defaultUnit);
+                        invItemMapper.updateInvItem(existingItem);
+                        result.setSuccessRows(result.getSuccessRows() + 1);
+                        log.debug("更新物品: {} (編碼: {})", dto.getItemName(), dto.getItemCode());
+                    } else {
+                        // 跳過
+                        result.setSkippedRows(result.getSkippedRows() + 1);
+                        log.debug("跳過重複物品: {} (編碼: {})", dto.getItemName(), dto.getItemCode());
+                    }
+                } else {
+                    // 新增
+                    InvItem newItem = createItemFromDTO(dto, defaultCategoryId, defaultUnit);
+                    invItemMapper.insertInvItem(newItem);
+
+                    // 建立庫存記錄
+                    InvStock stock = new InvStock();
+                    stock.setItemId(newItem.getItemId());
+                    stock.setTotalQuantity(dto.getTotalQuantity() != null ? dto.getTotalQuantity() : 0);
+                    stock.setAvailableQty(dto.getTotalQuantity() != null ? dto.getTotalQuantity() : 0);
+                    stock.setBorrowedQty(0);
+                    stock.setReservedQty(0);
+                    stock.setDamagedQty(0);
+                    stock.setLostQty(0);
+                    invStockMapper.insertInvStock(stock);
+
+                    result.setSuccessRows(result.getSuccessRows() + 1);
+                    log.debug("新增物品: {} (編碼: {})", dto.getItemName(), dto.getItemCode());
+                }
+
+                // 處理圖片
+                if (imagesDir != null && dto.getImageUrl() != null && !dto.getImageUrl().trim().isEmpty()) {
+                    processImage(dto.getImageUrl(), imagesDir, result);
+                }
+
+            } catch (Exception e) {
+                result.addError(rowNum, dto.getItemName(), e.getMessage());
+                result.setFailedRows(result.getFailedRows() + 1);
+                log.error("匯入第 {} 行失敗: {}", rowNum, e.getMessage(), e);
+            }
+
+            rowNum++;
+        }
+
+        log.info("匯入完成 - 成功: {}, 失敗: {}, 跳過: {}", result.getSuccessRows(), result.getFailedRows(), result.getSkippedRows());
+        return result;
+    }
+
+    /**
+     * 處理單張圖片
+     */
+    private void processImage(String dbPath, File imagesDir, ImportResult result) {
+        try {
+            // 提取檔名和相對路徑
+            String fileName = com.cheng.common.utils.file.ImageImportUtil.extractFileName(dbPath);
+            String relativePath = com.cheng.common.utils.file.ImageImportUtil.extractRelativePath(dbPath);
+
+            if (fileName.isEmpty()) {
+                result.setMissingImages(result.getMissingImages() + 1);
+                return;
+            }
+
+            // 在 imagesDir 中搜尋圖片
+            File sourceImage = com.cheng.common.utils.file.ImageImportUtil.findImageFile(imagesDir, fileName);
+            if (sourceImage == null) {
+                result.setMissingImages(result.getMissingImages() + 1);
+                log.warn("圖片未找到: {}", fileName);
+                return;
+            }
+
+            // 驗證圖片
+            if (!com.cheng.common.utils.file.ImageImportUtil.validateImage(sourceImage, 10 * 1024 * 1024)) {
+                result.setMissingImages(result.getMissingImages() + 1);
+                log.warn("圖片驗證失敗: {}", fileName);
+                return;
+            }
+
+            // 複製圖片到 uploadPath
+            File backupFile = com.cheng.common.utils.file.ImageImportUtil.copyImageToUploadPath(sourceImage, relativePath, uploadPath);
+
+            result.setCopiedImages(result.getCopiedImages() + 1);
+            if (backupFile != null) {
+                result.setOverwrittenImages(result.getOverwrittenImages() + 1);
+            }
+
+        } catch (Exception e) {
+            result.setMissingImages(result.getMissingImages() + 1);
+            log.error("處理圖片失敗: {}", dbPath, e);
+        }
+    }
+
+    /**
+     * 從 DTO 建立 InvItem
+     */
+    private InvItem createItemFromDTO(InvItemWithStockDTO dto, Long defaultCategoryId, String defaultUnit) {
+        InvItem item = new InvItem();
+        item.setItemName(dto.getItemName());
+        item.setItemCode(dto.getItemCode());
+        item.setBarcode(dto.getBarcode());
+        item.setQrCode(dto.getQrCode());
+        item.setCategoryId(dto.getCategoryId() != null ? dto.getCategoryId() : defaultCategoryId);
+        item.setUnit(dto.getUnit() != null ? dto.getUnit() : defaultUnit);
+        item.setSpecification(dto.getSpecification());
+        item.setBrand(dto.getBrand());
+        item.setModel(dto.getModel());
+        item.setPurchasePrice(dto.getPurchasePrice());
+        item.setCurrentPrice(dto.getCurrentPrice());
+        item.setSupplier(dto.getSupplier());
+        item.setMinStock(dto.getMinStock());
+        item.setMaxStock(dto.getMaxStock());
+        item.setLocation(dto.getLocation());
+        item.setDescription(dto.getDescription());
+        item.setImageUrl(dto.getImageUrl());
+        item.setStatus("0");  // 正常
+        item.setCreateBy(SecurityUtils.getUsername());
+        item.setCreateTime(new Date());
+        return item;
+    }
+
+    /**
+     * 從 DTO 更新 InvItem
+     */
+    private void updateItemFromDTO(InvItem item, InvItemWithStockDTO dto, Long defaultCategoryId, String defaultUnit) {
+        if (dto.getItemName() != null) item.setItemName(dto.getItemName());
+        if (dto.getItemCode() != null) item.setItemCode(dto.getItemCode());
+        if (dto.getBarcode() != null) item.setBarcode(dto.getBarcode());
+        if (dto.getQrCode() != null) item.setQrCode(dto.getQrCode());
+        if (dto.getCategoryId() != null) {
+            item.setCategoryId(dto.getCategoryId());
+        } else if (defaultCategoryId != null) {
+            item.setCategoryId(defaultCategoryId);
+        }
+        if (dto.getUnit() != null) {
+            item.setUnit(dto.getUnit());
+        } else if (defaultUnit != null) {
+            item.setUnit(defaultUnit);
+        }
+        if (dto.getSpecification() != null) item.setSpecification(dto.getSpecification());
+        if (dto.getBrand() != null) item.setBrand(dto.getBrand());
+        if (dto.getModel() != null) item.setModel(dto.getModel());
+        if (dto.getPurchasePrice() != null) item.setPurchasePrice(dto.getPurchasePrice());
+        if (dto.getCurrentPrice() != null) item.setCurrentPrice(dto.getCurrentPrice());
+        if (dto.getSupplier() != null) item.setSupplier(dto.getSupplier());
+        if (dto.getMinStock() != null) item.setMinStock(dto.getMinStock());
+        if (dto.getMaxStock() != null) item.setMaxStock(dto.getMaxStock());
+        if (dto.getLocation() != null) item.setLocation(dto.getLocation());
+        if (dto.getDescription() != null) item.setDescription(dto.getDescription());
+        if (dto.getImageUrl() != null) item.setImageUrl(dto.getImageUrl());
+        item.setUpdateBy(SecurityUtils.getUsername());
+        item.setUpdateTime(new Date());
+    }
+
+    /**
+     * 尋找 Excel 檔案
+     */
+    private File findExcelFile(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                String name = file.getName().toLowerCase();
+                if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+                    return file;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 統計目錄中的檔案數量
+     */
+    private int countFiles(File dir) {
+        if (dir == null || !dir.exists() || !dir.isDirectory()) {
+            return 0;
+        }
+        int count = 0;
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    count++;
+                } else if (file.isDirectory()) {
+                    count += countFiles(file);
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 遞迴刪除目錄
+     */
+    private void deleteDirectory(File dir) {
+        if (dir == null || !dir.exists()) {
+            return;
+        }
+        try {
+            Path dirPath = dir.toPath();
+            Files.walk(dirPath)
+                    .sorted(Comparator.reverseOrder()) // 先刪除檔案，再刪除目錄
+                    .forEach(path -> {
+                        try {
+                            Files.delete(path);
+                        } catch (IOException e) {
+                            log.warn("無法刪除檔案: {}", path, e);
+                        }
+                    });
+        } catch (IOException e) {
+            log.error("刪除目錄失敗: {}", dir.getAbsolutePath(), e);
+        }
     }
 }

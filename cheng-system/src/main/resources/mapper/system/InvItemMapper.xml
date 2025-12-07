@@ -94,6 +94,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where i.qr_code = #{qrCode}
     </select>
 
+    <select id="selectInvItemByIsbn" parameterType="String" resultMap="InvItemResult">
+        <include refid="selectInvItemVo"/>
+        where i.isbn = #{isbn}
+    </select>
+
     <!-- 物品與庫存整合查詢 ResultMap -->
     <resultMap type="com.cheng.system.dto.InvItemWithStockDTO" id="InvItemWithStockResult">
         <!-- 物品資訊 -->

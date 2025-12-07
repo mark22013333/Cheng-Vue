@@ -1,9 +1,9 @@
-package com.cheng.quartz.config;
+package com.cheng.quartz.provider;
 
 import com.cheng.common.core.domain.TaskTypeOption;
 import com.cheng.common.core.provider.TaskTypeProvider;
 import com.cheng.common.enums.TaskCategory;
-import com.cheng.quartz.enums.ReservationTaskType;
+import com.cheng.quartz.enums.MaintenanceTaskType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 預約任務類型提供者
- * 向排程模組提供預約相關的任務類型及其參數定義
+ * 維護任務類型提供者
+ * 向排程模組提供所有可用的維護任務類型
  * 
- * <p>使用 {@link ReservationTaskType} Enum 進行集中管理，優勢：
+ * <p>使用 {@link MaintenanceTaskType} Enum 進行集中管理，優勢：
  * <ul>
  *   <li>明確的類別引用 - IDE 可追蹤使用</li>
  *   <li>編譯時期檢查 - 避免方法名稱錯誤</li>
@@ -24,41 +24,41 @@ import java.util.stream.Collectors;
  * </ul>
  *
  * @author Cheng
- * @since 2025-12-04
+ * @since 2025-12-07
  */
 @Slf4j
 @Component
-public class ReservationTaskTypeProvider implements TaskTypeProvider {
+public class MaintenanceTaskTypeProvider implements TaskTypeProvider {
 
     @Override
     public TaskCategory getCategory() {
-        return TaskCategory.RESERVATION;
+        return TaskCategory.MAINTENANCE;
     }
 
     @Override
     public List<TaskTypeOption> getTaskTypes() {
         // 直接從 Enum 轉換為 TaskTypeOption
-        return Arrays.stream(ReservationTaskType.values())
+        return Arrays.stream(MaintenanceTaskType.values())
                 .map(this::buildTaskTypeOption)
                 .collect(Collectors.toList());
     }
 
     @Override
     public int getPriority() {
-        return 50; // 預約任務優先級中等
+        return 50; // 維護任務優先級中等
     }
 
     /**
-     * 從 ReservationTaskType Enum 建立 TaskTypeOption
+     * 從 MaintenanceTaskType Enum 建立 TaskTypeOption
      * 
-     * @param type ReservationTaskType Enum
+     * @param type MaintenanceTaskType Enum
      * @return TaskTypeOption
      */
-    private TaskTypeOption buildTaskTypeOption(ReservationTaskType type) {
+    private TaskTypeOption buildTaskTypeOption(MaintenanceTaskType type) {
         return TaskTypeOption.builder()
                 .code(type.getCode())
-                .label(type.getLabel())
-                .category(TaskCategory.RESERVATION.getCode())
+                .label(String.format("[MAINTENANCE] 檔案維護 - %s", type.getLabel()))
+                .category(TaskCategory.MAINTENANCE.getCode())
                 .description(type.getDescription())
                 .beanName(type.getBeanName())
                 .defaultMethod(type.getMethodName())

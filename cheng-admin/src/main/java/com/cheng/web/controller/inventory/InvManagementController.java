@@ -194,7 +194,7 @@ public class InvManagementController extends BaseController {
     }
 
     /**
-     * 匯入物品資料
+     * 匯入物品資料（支援 Excel 或 ZIP 檔案）
      */
     @PreAuthorize("@ss.hasPermi('inventory:management:import')")
     @Log(title = "物品資訊", businessType = BusinessType.IMPORT)
@@ -205,10 +205,15 @@ public class InvManagementController extends BaseController {
             return error("上傳檔案不能為空");
         }
 
-        // 檢查檔案格式
+        // 檢查檔案格式（支援 Excel 和 ZIP）
         String filename = file.getOriginalFilename();
-        if (filename == null || !filename.endsWith(".xlsx") && !filename.endsWith(".xls")) {
-            return error("請上傳Excel檔案（.xlsx或.xls格式）");
+        if (filename == null) {
+            return error("無法取得檔案名稱");
+        }
+        
+        String lowerFilename = filename.toLowerCase();
+        if (!lowerFilename.endsWith(".xlsx") && !lowerFilename.endsWith(".xls") && !lowerFilename.endsWith(".zip")) {
+            return error("請上傳 Excel 檔案（.xlsx 或 .xls）或 ZIP 壓縮檔");
         }
 
         // 檢查必要參數
@@ -219,10 +224,10 @@ public class InvManagementController extends BaseController {
             return error("請輸入預設單位");
         }
 
-        // 建立匯入任務並返回taskId
-        ImportTaskResult taskResult = invItemService.createImportTask(file, updateSupport, defaultCategoryId, defaultUnit);
+        // 執行匯入（支援 Excel 和 ZIP）
+        String resultMessage = invItemService.importDataWithImages(file, updateSupport, defaultCategoryId, defaultUnit);
 
-        return success("匯入任務已啟動，準備匯入 " + taskResult.getRowCount() + " 筆資料，taskId: " + taskResult.getTaskId());
+        return success(resultMessage);
     }
 
 

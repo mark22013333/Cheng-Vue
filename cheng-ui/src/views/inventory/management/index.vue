@@ -379,24 +379,31 @@
         <el-dialog title="匯入物品資料" :model-value="importDialogVisible"
                    @update:model-value="val => importDialogVisible = val" width="600px" append-to-body>
           <el-form ref="importFormRef" :model="importForm" :rules="importRules" label-width="120px">
-            <el-form-item label="Excel檔案" prop="file">
+            <el-form-item label="匯入檔案" prop="file">
               <el-upload
                 ref="uploadRef"
                 :limit="1"
-                accept=".xlsx,.xls"
+                accept=".xlsx,.xls,.zip"
                 :auto-upload="false"
                 :file-list="fileList"
                 :on-change="handleFileChange"
                 :on-remove="handleFileRemove"
                 drag
               >
-                <i class="el-icon-upload"></i>
+                <el-icon class="el-icon--upload"><upload-filled /></el-icon>
                 <div class="el-upload__text">
                   將檔案拖到此處，或<em>點擊上傳</em>
                 </div>
                 <template #tip>
-                  <div class="el-upload__tip">
-                    只能上傳xlsx/xls檔案，且不超過10MB
+                  <div class="el-upload__tip" style="color: #409EFF; line-height: 1.6;">
+                    <div><strong>📌 支援兩種匯入方式：</strong></div>
+                    <div style="margin-left: 15px;">
+                      <div>• <strong>純 Excel</strong>：.xlsx 或 .xls 檔案（僅匯入資料，不含圖片）</div>
+                      <div>• <strong>完整匯入</strong>：.zip 壓縮檔（包含 Excel + 圖片）</div>
+                    </div>
+                    <div style="margin-top: 5px; color: #909399; font-size: 12px;">
+                      ⚠️ ZIP 檔案內需包含：物品匯入範本.xlsx + images.zip（圖片壓縮檔）
+                    </div>
                   </div>
                 </template>
               </el-upload>
@@ -410,7 +417,10 @@
               />
             </el-form-item>
 
-            <el-form-item label="預設分類" prop="defaultCategoryId">
+            <el-form-item label="預設分類" prop="defaultCategoryId" required>
+              <template #label>
+                <span>預設分類</span>
+              </template>
               <el-select v-model="importForm.defaultCategoryId" placeholder="請選擇預設分類" clearable
                          style="width: 100%">
                 <el-option
@@ -422,7 +432,10 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label="預設單位" prop="defaultUnit">
+            <el-form-item label="預設單位" prop="defaultUnit" required>
+              <template #label>
+                <span>預設單位</span>
+              </template>
               <el-select v-model="importForm.defaultUnit" placeholder="請選擇預設單位" clearable style="width: 100%">
                 <el-option label="個" value="個"/>
                 <el-option label="本" value="本"/>
@@ -796,6 +809,12 @@ export default {
       importRules: {
         file: [
           {required: true, message: '請選擇要匯入的Excel檔案', trigger: 'change'}
+        ],
+        defaultCategoryId: [
+          {required: true, message: '請選擇預設分類（Excel 中未指定分類時使用）', trigger: 'change'}
+        ],
+        defaultUnit: [
+          {required: true, message: '請選擇預設單位（Excel 中未指定單位時使用）', trigger: 'change'}
         ]
       },
       // 預約對話框
@@ -847,7 +866,7 @@ export default {
         if (response.data) {
           const savedConfig = JSON.parse(response.data);
           const merged = {};
-          
+
           // 合併配置：優先使用儲存的配置，但包含新增的欄位
           for (const key in this.defaultColumns) {
             if (savedConfig.hasOwnProperty(key)) {
@@ -859,7 +878,7 @@ export default {
               merged[key] = { ...this.defaultColumns[key] };
             }
           }
-          
+
           // 使用 Object.assign 來觸發響應式更新
           Object.assign(this.columns, merged);
         }
@@ -1045,7 +1064,7 @@ export default {
         createExportTask(this.queryParams).then(res => {
           const taskId = res.taskId;
           console.log('匯出任務已建立，taskId:', taskId);
-          
+
           // 顯示 Loading 並訂閱 SSE 進度
           this.showExportProgress(taskId);
         }).catch(error => {
@@ -1076,14 +1095,14 @@ export default {
     subscribeExportProgress(taskId) {
       console.log('開始訂閱 SSE，taskId:', taskId);
       console.log('SSE URL:', import.meta.env.VITE_APP_BASE_API + '/inventory/management/export/subscribe/' + taskId);
-      
+
       const eventSource = new EventSource(
         import.meta.env.VITE_APP_BASE_API + '/inventory/management/export/subscribe/' + taskId
       );
 
       // ⚠️ 關鍵修正：使用 addEventListener 監聽自定義事件類型
       // 後端發送的事件類型為 "progress", "success", "error"
-      
+
       // 監聽進度事件
       eventSource.addEventListener('progress', (event) => {
         try {
@@ -1092,8 +1111,8 @@ export default {
 
           // 更新 Loading 文字
           if (this.exportLoadingInstance && data.message) {
-            const progressText = data.progress !== undefined 
-              ? ` (${data.progress}%)` 
+            const progressText = data.progress !== undefined
+              ? ` (${data.progress}%)`
               : '';
             this.exportLoadingInstance.text = data.message + progressText;
           }
@@ -1107,7 +1126,7 @@ export default {
         try {
           const data = JSON.parse(event.data);
           console.log('收到 SSE 成功事件:', data);
-          
+
           if (this.exportLoadingInstance) {
             this.exportLoadingInstance.close();
           }
@@ -1126,7 +1145,7 @@ export default {
         try {
           const data = JSON.parse(event.data);
           console.log('收到 SSE 錯誤事件:', data);
-          
+
           if (this.exportLoadingInstance) {
             this.exportLoadingInstance.close();
           }
@@ -1146,7 +1165,7 @@ export default {
         this.$modal.msgError('進度訂閱失敗，請稍後重試');
         eventSource.close();
       };
-      
+
       // 監聽連線開啟
       eventSource.onopen = () => {
         console.log('SSE 連線已建立');
@@ -1156,41 +1175,41 @@ export default {
     /** 下載匯出結果 */
     downloadExportResult(taskId) {
       console.log('開始下載匯出結果，taskId:', taskId);
-      
+
       // 使用 axios + blob 方式下載（參考 plugins/download.js）
       import('axios').then(({ default: axios }) => {
         import('@/utils/auth').then(({ getToken }) => {
           const url = import.meta.env.VITE_APP_BASE_API + '/inventory/management/export/download/' + taskId;
-          
+
           console.log('下載 URL:', url);
           console.log('Token:', getToken() ? '存在' : '不存在');
-          
+
           axios({
             method: 'get',
             url: url,
             responseType: 'blob',
-            headers: { 
+            headers: {
               'Authorization': 'Bearer ' + getToken()  // ⚠️ 使用 Bearer 前綴
             }
           }).then((response) => {
             console.log('下載響應:', response);
-            
+
             // 檢查是否為有效的 blob
             const isBlob = response.data instanceof Blob;
             if (isBlob && response.data.type !== 'application/json') {
               // 從 response header 取得檔名
               const contentDisposition = response.headers['content-disposition'];
               let fileName = '物品匯出.zip';
-              
+
               if (contentDisposition) {
                 const fileNameMatch = contentDisposition.match(/filename\*?=(?:UTF-8'')?([^;]+)/);
                 if (fileNameMatch && fileNameMatch[1]) {
                   fileName = decodeURIComponent(fileNameMatch[1].replace(/['"]/g, ''));
                 }
               }
-              
+
               console.log('下載檔名:', fileName);
-              
+
               // 使用 file-saver 下載
               import('file-saver').then(({ saveAs }) => {
                 const blob = new Blob([response.data], { type: 'application/zip' });
@@ -1333,14 +1352,14 @@ export default {
     /** 下載範本 */
     downloadTemplate() {
       downloadTemplate().then(response => {
-        // 處理blob下載
+        // 處理 ZIP blob 下載
         const blob = new Blob([response], {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          type: 'application/zip'
         });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = '物品匯入範本.xlsx';
+        link.download = '物品匯入範本_完整版.zip';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1360,159 +1379,55 @@ export default {
             return;
           }
 
+          // 明確檢查必填欄位並提供友好提示
+          if (!this.importForm.defaultCategoryId) {
+            this.$modal.msgError("請選擇預設分類（當 Excel 中未指定分類時，將使用此預設值）");
+            return;
+          }
+          if (!this.importForm.defaultUnit) {
+            this.$modal.msgError("請選擇預設單位（當 Excel 中未指定單位時，將使用此預設值）");
+            return;
+          }
+
           this.importLoading = true;
 
-          // 建立匯入任務
-          createImportTask(
+          // 調用匯入 API（支援 Excel 和 ZIP）
+          importData(
             this.importForm.file,
             this.importForm.updateSupport,
             this.importForm.defaultCategoryId,
             this.importForm.defaultUnit
           ).then(response => {
+            this.importLoading = false;
+            this.importDialogVisible = false;
+
             if (response.code === 200) {
-              const taskId = response.taskId;
-              const rowCount = response.rowCount || 0;
+              const message = response.msg || "匯入成功";
 
-              if (taskId) {
-                // 關閉匯入對話框
-                this.importDialogVisible = false;
-                this.importLoading = false;
+              // 檢查訊息是否包含 HTML 標籤
+              const isHtml = /<[^>]+>/.test(message);
 
-                // 標記對話框是否被最小化
-                let dialogMinimized = false;
-
-                // 開啟進度對話框
-                this.$refs.progressDialog.show({
-                  title: `物品匯入進度 - ${rowCount} 筆資料`,
-                  message: '準備中...',
-                  showLogs: true,
-                  onMinimize: () => {
-                    dialogMinimized = true;
-                    this.$notify.info({
-                      title: '背景執行中',
-                      message: `正在背景匯入 ${rowCount} 筆資料...`,
-                      duration: 3000
-                    });
-                  }
+              if (isHtml) {
+                // 使用 Notification 顯示 HTML 訊息
+                this.$notify({
+                  title: '📦 匯入結果',
+                  dangerouslyUseHTMLString: true,
+                  message: `<div style="max-height: 400px; overflow-y: auto;">${message}</div>`,
+                  type: message.includes('✅') ? 'success' : (message.includes('⚠️') ? 'warning' : 'info'),
+                  duration: 10000,
+                  customClass: 'import-result-notification'
                 });
-
-                // 建立SSE連線（使用環境變數適配環境）
-                const baseURL = import.meta.env.VITE_APP_BASE_API || '';
-                const eventSource = new EventSource(`${baseURL}/inventory/management/importData/subscribe/${taskId}`);
-
-                // 標記連線是否正常完成（避免正常關閉觸發錯誤處理）
-                let normalClose = false;
-
-                // 監聽連線成功事件
-                eventSource.addEventListener('connected', (event) => {
-                  console.log('SSE 連線成功');
-                });
-
-                // 監聽進度事件
-                eventSource.addEventListener('progress', (event) => {
-                  try {
-                    const data = JSON.parse(event.data);
-                    // 只有對話框未最小化時才更新進度
-                    if (!dialogMinimized) {
-                      this.$refs.progressDialog.updateProgress(data.progress, data.message);
-                    }
-                  } catch (error) {
-                    console.error('解析進度事件失敗', error);
-                  }
-                });
-
-                // 監聽成功事件
-                eventSource.addEventListener('success', (event) => {
-                  try {
-                    const data = JSON.parse(event.data);
-                    normalClose = true;
-                    eventSource.close();
-
-                    // 如果對話框已最小化，使用通知提示
-                    if (dialogMinimized) {
-                      this.$notify.success({
-                        title: '✅ 匯入完成',
-                        message: `成功匯入 ${rowCount} 筆資料`,
-                        duration: 8000
-                      });
-                    } else {
-                      // 否則在對話框中顯示
-                      this.$refs.progressDialog.setSuccess(
-                        '匯入完成',
-                        data.message || '資料匯入成功'
-                      );
-                    }
-
-                    // 重新整理列表
-                    this.getList();
-                  } catch (error) {
-                    console.error('處理成功事件失敗', error);
-                  }
-                });
-
-                // 監聽錯誤事件
-                eventSource.addEventListener('error', (event) => {
-                  try {
-                    const data = JSON.parse(event.data);
-                    normalClose = true;
-                    eventSource.close();
-
-                    const errorMsg = data.message || '資料匯入失敗';
-
-                    // 如果對話框已最小化，使用通知提示
-                    if (dialogMinimized) {
-                      this.$notify.error({
-                        title: '❌ 匯入失敗',
-                        message: errorMsg,
-                        duration: 10000
-                      });
-                    } else {
-                      // 否則在對話框中顯示
-                      this.$refs.progressDialog.setError('匯入失敗', errorMsg);
-                    }
-                  } catch (error) {
-                    console.error('處理錯誤事件失敗', error);
-                  }
-                });
-
-                eventSource.onerror = (error) => {
-                  if (normalClose) {
-                    console.log('SSE 連線正常關閉');
-                    return;
-                  }
-
-                  console.error('SSE連線錯誤:', error);
-                  eventSource.close();
-
-                  // 如果對話框已最小化，使用通知提示
-                  if (dialogMinimized) {
-                    this.$notify.error({
-                      title: '❌ 連線錯誤',
-                      message: '無法連接到進度服務',
-                      duration: 5000
-                    });
-                  } else {
-                    this.$refs.progressDialog.setError('連線錯誤', '無法連接到進度服務');
-                  }
-                };
-
-                // 儲存SSE連線以便清理
-                if (!this.sseConnections) {
-                  this.sseConnections = new Map();
-                }
-                this.sseConnections.set(taskId, eventSource);
-
               } else {
-                this.importLoading = false;
-                this.$modal.msgError("無法取得任務ID");
+                // 純文字訊息
+                this.$modal.msgSuccess(message);
               }
-            } else {
-              this.importLoading = false;
-              this.$modal.msgError(response.msg || "建立匯入任務失敗");
+
+              // 重新整理列表
+              this.getList();
             }
           }).catch(error => {
             this.importLoading = false;
-            console.error('建立匯入任務失敗:', error);
+            console.error('匯入失敗:', error);
           });
         }
       });
@@ -2112,5 +2027,48 @@ export default {
   border-radius: 3px;
 }
 
+/* 匯入結果通知框樣式 */
+.import-result-notification {
+  width: 550px;
+  max-width: 90vw;
+}
+
+.import-result-notification .el-notification__content {
+  text-align: left;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.import-result-notification code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  background: #f5f7fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #606266;
+}
+
+.import-result-notification strong {
+  font-weight: 600;
+}
+
+.import-result-notification ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.import-result-notification ::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.import-result-notification ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.import-result-notification ::-webkit-scrollbar-track {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+}
 
 </style>

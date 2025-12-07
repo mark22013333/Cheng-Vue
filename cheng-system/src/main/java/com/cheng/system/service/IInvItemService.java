@@ -214,4 +214,15 @@ public interface IInvItemService {
      * @param response HTTP響應
      */
     void downloadExportResult(String taskId, HttpServletResponse response) throws Exception;
+
+    /**
+     * 匯入物品資料（支援 Excel 或 ZIP 檔案）
+     *
+     * @param file            上傳的檔案（Excel 或 ZIP）
+     * @param updateSupport   是否更新已存在的資料
+     * @param defaultCategoryId 預設分類ID
+     * @param defaultUnit     預設單位
+     * @return 匯入結果
+     */
+    String importDataWithImages(MultipartFile file, Boolean updateSupport, Long defaultCategoryId, String defaultUnit) throws Exception;
 }

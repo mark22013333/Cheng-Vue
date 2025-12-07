@@ -46,6 +46,14 @@ public interface InvItemMapper {
     InvItem selectInvItemByQrCode(String qrCode);
 
     /**
+     * 根據 ISBN 查詢物品資訊
+     *
+     * @param isbn ISBN
+     * @return 物品資訊
+     */
+    InvItem selectInvItemByIsbn(String isbn);
+
+    /**
      * 查詢物品資訊列表（含庫存資訊）
      *
      * @param invItem 物品資訊
