@@ -445,7 +445,8 @@ export default {
 			if (rule.indexOf('-') >= 0) {
 				this.dateArr[1] = this.getCycleArr(rule, 60, true)
 			} else if (rule.indexOf('/') >= 0) {
-				this.dateArr[1] = this.getAverageArr(rule, 59)
+				// 分的範圍是 0-59，所以 limit 應該是 60
+				this.dateArr[1] = this.getAverageArr(rule, 60)
 			} else if (rule !== '*') {
 				this.dateArr[1] = this.getAssignArr(rule)
 			}
@@ -456,7 +457,8 @@ export default {
 			if (rule.indexOf('-') >= 0) {
 				this.dateArr[0] = this.getCycleArr(rule, 60, true)
 			} else if (rule.indexOf('/') >= 0) {
-				this.dateArr[0] = this.getAverageArr(rule, 59)
+				// 秒的範圍是 0-59，所以 limit 應該是 60
+				this.dateArr[0] = this.getAverageArr(rule, 60)
 			} else if (rule !== '*') {
 				this.dateArr[0] = this.getAssignArr(rule)
 			}
@@ -485,7 +487,8 @@ export default {
 			let agArr = rule.split('/')
 			let min = Number(agArr[0])
 			let step = Number(agArr[1])
-			while (min <= limit) {
+			// limit 是最大值+1（如秒是60，月是13），所以條件改為 <
+			while (min < limit) {
 				arr.push(min)
 				min += step
 			}
@@ -493,22 +496,31 @@ export default {
 		},
     // 根據規則返回一個具有週期性的陣列
 		getCycleArr(rule, limit, status) {
-      // status--表示是否從0開始（則從1開始）
+      // status--表示是否從0開始（true: 0開始，false: 1開始）
 			let arr = []
 			let cycleArr = rule.split('-')
 			let min = Number(cycleArr[0])
 			let max = Number(cycleArr[1])
+			
+			// 處理跨界範圍（如：10-2 表示 10,11,12,1,2）
 			if (min > max) {
-				max += limit
-			}
-			for (let i = min; i <= max; i++) {
-				let add = 0
-				if (status == false && i % limit == 0) {
-					add = limit
+				// 從 min 到 limit-1（或 limit）
+				for (let i = min; i < limit || (status === false && i <= limit); i++) {
+					if (status === false && i === 0) continue // 月份不包含 0
+					arr.push(i)
 				}
-				arr.push(Math.round(i % limit + add))
+				// 從 0（或 1）到 max
+				for (let i = (status === false ? 1 : 0); i <= max; i++) {
+					arr.push(i)
+				}
+			} else {
+				// 正常範圍
+				for (let i = min; i <= max; i++) {
+					arr.push(i)
+				}
 			}
-			arr.sort(this.compare)
+			
+			// 不需要排序，因為已經按順序添加
 			return arr
 		},
     // 比較數字大小（用於Array.sort）

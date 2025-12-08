@@ -18,6 +18,7 @@ import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.Objects;
 
@@ -83,6 +84,55 @@ public class GlobalExceptionHandler {
         }
         log.error("請求參數類型不匹配'{}',發生系統異常.", requestURI, e);
         return AjaxResult.error(String.format("請求參數類型不匹配，參數[%s]要求類型為：'%s'，但輸入值為：'%s'", e.getName(), e.getRequiredType().getName(), value));
+    }
+
+    /**
+     * 檔案上傳大小超限異常
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public AjaxResult handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("請求網址'{}',上傳檔案大小超過限制", requestURI, e);
+        
+        // 動態取得並格式化檔案大小限制
+        String maxSizeStr = formatFileSize(e.getMaxUploadSize());
+        
+        return AjaxResult.error(HttpStatus.BAD_REQUEST, 
+            "上傳的檔案過大，超過系統限制（" + maxSizeStr + "）。請壓縮檔案或分批上傳");
+    }
+
+    /**
+     * 格式化檔案大小為易讀格式
+     * 
+     * @param size 檔案大小（bytes）
+     * @return 格式化後的字串（如：10MB、1.5GB）
+     */
+    private String formatFileSize(long size) {
+        if (size <= 0) {
+            return "未知";
+        }
+        
+        final long KB = 1024;
+        final long MB = KB * 1024;
+        final long GB = MB * 1024;
+        
+        if (size >= GB) {
+            double sizeInGB = (double) size / GB;
+            return String.format("%.1fGB", sizeInGB);
+        } else if (size >= MB) {
+            double sizeInMB = (double) size / MB;
+            // 如果是整數 MB，不顯示小數點
+            if (sizeInMB == (long) sizeInMB) {
+                return String.format("%dMB", (long) sizeInMB);
+            } else {
+                return String.format("%.1fMB", sizeInMB);
+            }
+        } else if (size >= KB) {
+            long sizeInKB = size / KB;
+            return String.format("%dKB", sizeInKB);
+        } else {
+            return String.format("%d bytes", size);
+        }
     }
 
     /**

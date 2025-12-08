@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
  * 預約任務類型提供者
  * 向排程模組提供預約相關的任務類型及其參數定義
  * 
+ * <p>預約任務歸類為業務處理（BUSINESS）分類
+ * 
  * <p>使用 {@link ReservationTaskType} Enum 進行集中管理，優勢：
  * <ul>
  *   <li>明確的類別引用 - IDE 可追蹤使用</li>
@@ -32,7 +34,7 @@ public class ReservationTaskTypeProvider implements TaskTypeProvider {
 
     @Override
     public TaskCategory getCategory() {
-        return TaskCategory.RESERVATION;
+        return TaskCategory.BUSINESS;
     }
 
     @Override
@@ -58,7 +60,7 @@ public class ReservationTaskTypeProvider implements TaskTypeProvider {
         return TaskTypeOption.builder()
                 .code(type.getCode())
                 .label(type.getLabel())
-                .category(TaskCategory.RESERVATION.getCode())
+                .category(TaskCategory.BUSINESS.getCode())
                 .description(type.getDescription())
                 .beanName(type.getBeanName())
                 .defaultMethod(type.getMethodName())

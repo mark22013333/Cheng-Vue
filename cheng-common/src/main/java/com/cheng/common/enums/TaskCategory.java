@@ -6,6 +6,7 @@ import lombok.Getter;
 /**
  * 任務分類列舉
  * 用於區分不同類型的排程任務
+ * 對應 sys_dict_data 中的 sys_job_group 字典類型（V28 migration）
  *
  * @author Cheng
  * @since 2025-10-25
@@ -15,44 +16,40 @@ import lombok.Getter;
 public enum TaskCategory {
     
     /**
-     * 爬蟲任務
+     * 資料處理 - 資料同步、匯入匯出、格式轉換等
+     * 對應 jobGroup: DATA
      */
-    CRAWLER("爬蟲任務", "crawler"),
+    DATA("資料處理", "DATA"),
     
     /**
-     * 推播訊息任務
+     * 系統維護 - 備份、清理、健康檢查、日誌歸檔等
+     * 對應 jobGroup: MAINTENANCE
      */
-    NOTIFICATION("推播訊息", "notification"),
+    MAINTENANCE("系統維護", "MAINTENANCE"),
     
     /**
-     * 報表任務
+     * 通知推播 - LINE推播、郵件通知、簡訊發送等
+     * 對應 jobGroup: NOTIFICATION
      */
-    REPORT("報表任務", "report"),
+    NOTIFICATION("通知推播", "NOTIFICATION"),
     
     /**
-     * 資料同步任務
+     * 報表統計 - 日報、週報、月報、統計分析等
+     * 對應 jobGroup: REPORT
      */
-    SYNC("資料同步", "sync"),
+    REPORT("報表統計", "REPORT"),
     
     /**
-     * 備份任務
+     * 業務處理 - 訂單處理、庫存盤點、資料對帳等
+     * 對應 jobGroup: BUSINESS
      */
-    BACKUP("備份任務", "backup"),
+    BUSINESS("業務處理", "BUSINESS"),
     
     /**
-     * 預約任務
+     * 爬蟲抓取 - 網頁抓取、API呼叫、資料蒐集等
+     * 對應 jobGroup: CRAWLER
      */
-    RESERVATION("預約任務", "reservation"),
-    
-    /**
-     * 維護任務
-     */
-    MAINTENANCE("維護任務", "maintenance"),
-    
-    /**
-     * 自訂任務
-     */
-    CUSTOM("自訂任務", "custom");
+    CRAWLER("爬蟲抓取", "CRAWLER");
     
     /**
      * 顯示名稱（用於前端顯示）
@@ -60,7 +57,7 @@ public enum TaskCategory {
     private final String label;
     
     /**
-     * 程式碼（用於識別）
+     * 程式碼（用於識別，對應 jobGroup 的 value）
      */
     private final String code;
 }

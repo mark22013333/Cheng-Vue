@@ -17,6 +17,14 @@ export function getTaskTypesByCategory(category) {
   })
 }
 
+// 根據任務分組（jobGroup）取得任務類型
+export function getTaskTypesByJobGroup(jobGroup) {
+  return request({
+    url: `/monitor/job/types/jobGroup/${jobGroup}`,
+    method: 'get'
+  })
+}
+
 // 根據代號取得任務類型（注意：後端沒有此 API，保留以防未來使用）
 export function getJobTypeByCode(code) {
   return request({

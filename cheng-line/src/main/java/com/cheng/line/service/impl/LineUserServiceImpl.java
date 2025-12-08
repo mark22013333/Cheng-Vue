@@ -200,7 +200,7 @@ public class LineUserServiceImpl implements ILineUserService {
             // 更新關注狀態為未關注（使用者主動取消關注）
             user.setFollowStatus(FollowStatus.UNFOLLOWED);
             user.setUnfollowTime(now);
-            user.setBlockTime(now);
+            // blockTime 只在管理者加入黑名單時才設定，使用者封鎖不設定
             
             // 統一將綁定狀態改為未綁定
             user.setBindStatus(BindStatus.UNBOUND);
@@ -228,7 +228,8 @@ public class LineUserServiceImpl implements ILineUserService {
         if (user != null) {
             // LINE 的封鎖與取消關注在系統中視為同一狀態
             user.setFollowStatus(FollowStatus.UNFOLLOWED);
-            user.setBlockTime(new Date());
+            user.setUnfollowTime(new Date());
+            // blockTime 只在管理者加入黑名單時才設定，使用者封鎖不設定
             return lineUserMapper.updateLineUser(user);
         }
         return 0;

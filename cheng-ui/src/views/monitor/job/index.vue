@@ -198,7 +198,10 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="任務分組" prop="jobGroup">
-              <el-select v-model="form.jobGroup" placeholder="請選擇任務分組">
+              <el-select 
+                v-model="form.jobGroup" 
+                placeholder="請選擇任務分組"
+                @change="handleJobGroupChange">
                 <el-option
                   v-for="dict in dict.type.sys_job_group"
                   :key="dict.value"
@@ -472,7 +475,7 @@
 <script>
 import { Search, Refresh, Plus, Edit, Delete, Download, Document, DArrowRight, CaretRight, View } from '@element-plus/icons-vue'
 import {addJob, changeJobStatus, delJob, getJob, listJob, runJob, updateJob} from "@/api/monitor/job"
-import {listJobTypes, getJobTypeByCode} from "@/api/monitor/jobType"
+import {listJobTypes, getJobTypeByCode, getTaskTypesByJobGroup} from "@/api/monitor/jobType"
 import { reactive } from 'vue'
 import { checkPermi } from '@/utils/permission'
 import Crontab from '@/components/Crontab'
@@ -618,7 +621,8 @@ export default {
     })
 
     this.getList()
-    this.loadJobTypes()
+    // 不再在頁面載入時載入所有任務類型
+    // 改為在選擇 jobGroup 後動態載入對應的任務類型
   },
   methods: {
     checkPermi,
@@ -658,6 +662,36 @@ export default {
         // 不要顯示錯誤訊息給使用者，因為這是可選功能
       }
     },
+    /** 處理任務分組變化（聯動載入任務類型） */
+    async handleJobGroupChange(jobGroup) {
+      console.log('[handleJobGroupChange] 任務分組變化:', jobGroup)
+      
+      // 清空任務類型選擇
+      this.selectedTaskType = ''
+      this.currentTaskType = null
+      this.taskParams = {}
+      this.jobTypes = []
+      
+      // 如果是範本模式且有選擇 jobGroup，載入對應的任務類型
+      if (this.configMode === 'template' && jobGroup) {
+        try {
+          console.log('[handleJobGroupChange] 載入任務分組的任務類型...')
+          const response = await getTaskTypesByJobGroup(jobGroup)
+          
+          if (Array.isArray(response.data)) {
+            this.jobTypes = response.data
+            console.log('[handleJobGroupChange] ✅ 載入成功，任務類型數量:', this.jobTypes.length)
+          } else {
+            this.jobTypes = []
+            console.log('[handleJobGroupChange] ⚠️ 未返回任務類型數據')
+          }
+        } catch (error) {
+          console.error('[handleJobGroupChange] ❌ 載入任務類型失敗:', error)
+          this.jobTypes = []
+          this.$modal.msgError('載入任務類型失敗')
+        }
+      }
+    },
     /** 處理設定模式切換 */
     handleConfigModeChange(mode) {
       if (mode === 'template') {
@@ -665,6 +699,10 @@ export default {
         this.selectedTaskType = ''
         this.currentTaskType = null
         this.taskParams = {}
+        // 如果已選擇 jobGroup，載入對應的任務類型
+        if (this.form.jobGroup) {
+          this.handleJobGroupChange(this.form.jobGroup)
+        }
       } else {
         // 切換到手動模式，保留 invokeTarget
       }
@@ -844,16 +882,16 @@ export default {
       const jobId = row.jobId || this.ids
 
       try {
-        // 確保任務類型列表已載入
-        if (!this.jobTypes || this.jobTypes.length === 0) {
-          await this.loadJobTypes()
-        }
-
         // 載入任務資料
         const response = await getJob(jobId)
         this.form = response.data
         this.open = true
         this.title = "修改任務"
+
+        // 根據 jobGroup 載入對應的任務類型
+        if (this.form.jobGroup) {
+          await this.handleJobGroupChange(this.form.jobGroup)
+        }
 
         // 優先使用 taskTypeCode（新方案）
         if (this.form.taskTypeCode) {

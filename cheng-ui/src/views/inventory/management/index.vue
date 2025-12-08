@@ -668,6 +668,7 @@ import {
 import {listCategory} from "@/api/inventory/category"
 import {createRefreshTask} from "@/api/inventory/scan"
 import {getTableConfig, saveTableConfig} from "@/api/system/tableConfig"
+import {getSystemConfigInfo} from "@/api/system/config"
 import ImageUpload from '@/components/ImageUpload'
 import ProgressDialog from '@/components/ProgressDialog'
 import {getImageUrl} from '@/utils/image'
@@ -800,6 +801,10 @@ export default {
       importLoading: false,
       fileList: [],
       categoryOptions: [],
+      uploadConfig: {
+        maxFileSize: 10 * 1024 * 1024,  // 預設 10MB，將從後端動態載入
+        maxFileSizeMB: 10  // 用於顯示的 MB 值
+      },
       importForm: {
         file: null,
         updateSupport: false,
@@ -857,6 +862,8 @@ export default {
     this.getCategoryList();
   },
   mounted() {
+    // 載入系統配置（文件上傳限制等）
+    this.loadSystemConfig();
   },
   methods: {
     /** 載入表格欄位配置 */
@@ -1339,8 +1346,37 @@ export default {
         defaultUnit: ''
       };
     },
+    /** 載入系統配置（包含文件上傳限制）*/
+    async loadSystemConfig() {
+      try {
+        const response = await getSystemConfigInfo();
+        if (response.code === 200 && response.data && response.data.upload) {
+          this.uploadConfig.maxFileSize = response.data.upload.maxFileSize;
+          this.uploadConfig.maxFileSizeMB = response.data.upload.maxFileSizeMB;
+          console.log(`📦 系統上傳配置已載入：單一檔案上限 ${this.uploadConfig.maxFileSizeMB}MB`);
+        }
+      } catch (error) {
+        console.warn('無法載入系統配置，使用預設值', error);
+      }
+    },
     /** 文件變更處理 */
     handleFileChange(file, fileList) {
+      // 檢查文件大小（動態從後端載入）
+      const maxSize = this.uploadConfig.maxFileSize;
+      const fileSize = file.size;
+
+      if (fileSize > maxSize) {
+        const sizeMB = (fileSize / (1024 * 1024)).toFixed(2);
+        this.$modal.msgError(
+          `📦 檔案過大！\n\n` +
+          `檔案大小：${sizeMB}MB\n` +
+          `系統限制：${this.uploadConfig.maxFileSizeMB}MB\n\n` +
+          `請壓縮檔案或分批上傳`
+        );
+        // 不添加到文件列表
+        return;
+      }
+
       this.fileList = fileList;
       this.importForm.file = file.raw;
     },
@@ -1428,6 +1464,46 @@ export default {
           }).catch(error => {
             this.importLoading = false;
             console.error('匯入失敗:', error);
+
+            // 判斷錯誤類型並顯示明確的訊息
+            let errorMessage = '匯入失敗';
+
+            if (error.response) {
+              // 後端返回的錯誤（有 HTTP 回應）
+              const status = error.response.status;
+              const data = error.response.data;
+
+              // 優先使用後端返回的錯誤訊息（已包含動態大小限制）
+              if (data && data.msg) {
+                errorMessage = data.msg;
+              } else if (status === 413) {
+                // HTTP 413 Payload Too Large（備用方案）
+                errorMessage = '📦 檔案過大！\n\n' +
+                  '上傳的檔案超過系統限制\n' +
+                  '請壓縮檔案或分批上傳\n\n' +
+                  '提示：請聯繫管理員確認當前的檔案大小限制';
+              } else {
+                errorMessage = `後端錯誤 (${status})：${error.message}`;
+              }
+            } else if (error.code === 'ERR_CONNECTION_RESET' || error.code === 'ERR_NETWORK') {
+              // 連線重置錯誤 - 通常是檔案過大導致
+              errorMessage = '📦 檔案過大！\n\n' +
+                `上傳的檔案超過系統限制（${this.uploadConfig.maxFileSizeMB}MB）\n` +
+                '請壓縮檔案或分批上傳\n\n' +
+                `💡 提示：如果檔案已小於 ${this.uploadConfig.maxFileSizeMB}MB，可能是網路問題，請稍後重試`;
+            } else if (error.message && error.message.includes('Network Error')) {
+              // 一般網路錯誤
+              errorMessage = '❌ 網路連線異常\n\n' +
+                '可能原因：\n' +
+                `1. 檔案過大（請確保小於 ${this.uploadConfig.maxFileSizeMB}MB）\n` +
+                '2. 網路連線中斷\n' +
+                '3. 後端服務異常\n\n' +
+                '請檢查後重試';
+            } else if (error.message) {
+              errorMessage = error.message;
+            }
+
+            this.$modal.msgError(errorMessage);
           });
         }
       });

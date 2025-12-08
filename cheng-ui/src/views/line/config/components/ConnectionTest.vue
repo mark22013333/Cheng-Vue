@@ -26,7 +26,7 @@
         <div slot="header">
           <span>測試項目</span>
         </div>
-
+        <br>
         <el-timeline>
           <!-- API 連線測試 -->
           <el-timeline-item
@@ -138,6 +138,7 @@
     </div>
 
     <div slot="footer" class="dialog-footer">
+      <br>
       <el-button @click="dialogVisible = false" :icon="Close">關 閉</el-button>
       <el-button
         type="primary"
