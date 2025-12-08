@@ -66,6 +66,32 @@
     </el-tabs>
 
     <div class="popup-main">
+      <!-- 常用時段快捷按鈕 -->
+      <div class="common-cron-buttons">
+        <p class="title">常用時段</p>
+        <br />
+        <el-button-group>
+          <el-button size="small" @click="setCommonCron('0 0 0 * * ?')">
+            <i class="el-icon-moon-night"></i> 每天凌晨12點
+          </el-button>
+          <el-button size="small" @click="setCommonCron('0 0 2 * * ?')">
+            <i class="el-icon-moon"></i> 每天凌晨2點
+          </el-button>
+          <el-button size="small" @click="setCommonCron('0 0 12 * * ?')">
+            <i class="el-icon-sunny"></i> 每天中午12點
+          </el-button>
+          <el-button size="small" @click="setCommonCron('0 0 18 * * ?')">
+            <i class="el-icon-sunset"></i> 每天下午6點
+          </el-button>
+          <el-button size="small" @click="setCommonCron('0 0 * * * ?')">
+            <i class="el-icon-time"></i> 每小時整點
+          </el-button>
+          <el-button size="small" @click="setCommonCron('0 */30 * * * ?')">
+            <i class="el-icon-timer"></i> 每30分鐘
+          </el-button>
+        </el-button-group>
+      </div>
+
       <div class="popup-result">
         <p class="title">時間表達式</p>
         <table>
@@ -133,9 +159,9 @@ export default {
       tabActive: 0,
       myindex: 0,
       crontabValueObj: {
-        second: "*",
-        min: "*",
-        hour: "*",
+        second: "0",
+        min: "0",
+        hour: "0",
         day: "*",
         month: "*",
         week: "?",
@@ -205,19 +231,19 @@ export default {
           let indexArr = value.split("-")
           isNaN(indexArr[0])
             ? (this.$refs[refName].cycle01 = 0)
-            : (this.$refs[refName].cycle01 = indexArr[0])
-          this.$refs[refName].cycle02 = indexArr[1]
+            : (this.$refs[refName].cycle01 = Number(indexArr[0]))
+          this.$refs[refName].cycle02 = Number(indexArr[1])
           insValue = 2
         } else if (value.indexOf("/") > -1) {
           let indexArr = value.split("/")
           isNaN(indexArr[0])
             ? (this.$refs[refName].average01 = 0)
-            : (this.$refs[refName].average01 = indexArr[0])
-          this.$refs[refName].average02 = indexArr[1]
+            : (this.$refs[refName].average01 = Number(indexArr[0]))
+          this.$refs[refName].average02 = Number(indexArr[1])
           insValue = 3
         } else {
           insValue = 4
-          this.$refs[refName].checkboxList = value.split(",")
+          this.$refs[refName].checkboxList = value.split(",").map(Number)
         }
       } else if (name == "day") {
         if (value === "*") {
@@ -228,26 +254,26 @@ export default {
           let indexArr = value.split("-")
           isNaN(indexArr[0])
             ? (this.$refs[refName].cycle01 = 0)
-            : (this.$refs[refName].cycle01 = indexArr[0])
-          this.$refs[refName].cycle02 = indexArr[1]
+            : (this.$refs[refName].cycle01 = Number(indexArr[0]))
+          this.$refs[refName].cycle02 = Number(indexArr[1])
           insValue = 3
         } else if (value.indexOf("/") > -1) {
           let indexArr = value.split("/")
           isNaN(indexArr[0])
             ? (this.$refs[refName].average01 = 0)
-            : (this.$refs[refName].average01 = indexArr[0])
-          this.$refs[refName].average02 = indexArr[1]
+            : (this.$refs[refName].average01 = Number(indexArr[0]))
+          this.$refs[refName].average02 = Number(indexArr[1])
           insValue = 4
         } else if (value.indexOf("W") > -1) {
           let indexArr = value.split("W")
           isNaN(indexArr[0])
             ? (this.$refs[refName].workday = 0)
-            : (this.$refs[refName].workday = indexArr[0])
+            : (this.$refs[refName].workday = Number(indexArr[0]))
           insValue = 5
         } else if (value === "L") {
           insValue = 6
         } else {
-          this.$refs[refName].checkboxList = value.split(",")
+          this.$refs[refName].checkboxList = value.split(",").map(Number)
           insValue = 7
         }
       } else if (name == "week") {
@@ -259,24 +285,24 @@ export default {
           let indexArr = value.split("-")
           isNaN(indexArr[0])
             ? (this.$refs[refName].cycle01 = 0)
-            : (this.$refs[refName].cycle01 = indexArr[0])
-          this.$refs[refName].cycle02 = indexArr[1]
+            : (this.$refs[refName].cycle01 = Number(indexArr[0]))
+          this.$refs[refName].cycle02 = Number(indexArr[1])
           insValue = 3
         } else if (value.indexOf("#") > -1) {
           let indexArr = value.split("#")
           isNaN(indexArr[0])
             ? (this.$refs[refName].average01 = 1)
-            : (this.$refs[refName].average01 = indexArr[0])
-          this.$refs[refName].average02 = indexArr[1]
+            : (this.$refs[refName].average01 = Number(indexArr[0]))
+          this.$refs[refName].average02 = Number(indexArr[1])
           insValue = 4
         } else if (value.indexOf("L") > -1) {
           let indexArr = value.split("L")
           isNaN(indexArr[0])
             ? (this.$refs[refName].weekday = 1)
-            : (this.$refs[refName].weekday = indexArr[0])
+            : (this.$refs[refName].weekday = Number(indexArr[0]))
           insValue = 5
         } else {
-          this.$refs[refName].checkboxList = value.split(",")
+          this.$refs[refName].checkboxList = value.split(",").map(Number)
           insValue = 6
         }
       } else if (name == "year") {
@@ -289,7 +315,7 @@ export default {
         } else if (value.indexOf("/") > -1) {
           insValue = 4
         } else {
-          this.$refs[refName].checkboxList = value.split(",")
+          this.$refs[refName].checkboxList = value.split(",").map(Number)
           insValue = 5
         }
       }
@@ -316,12 +342,12 @@ export default {
       this.hidePopup()
     },
     clearCron() {
-      // 還原選擇項
+      // 還原選擇項（預設為凌晨12點）
       ("準備還原")
       this.crontabValueObj = {
-        second: "*",
-        min: "*",
-        hour: "*",
+        second: "0",
+        min: "0",
+        hour: "0",
         day: "*",
         month: "*",
         week: "?",
@@ -329,6 +355,25 @@ export default {
       }
       for (let j in this.crontabValueObj) {
         this.changeRadio(j, this.crontabValueObj[j])
+      }
+    },
+    // 設定常用 Cron 表達式
+    setCommonCron(cronStr) {
+      let arr = cronStr.split(" ")
+      if (arr.length >= 6) {
+        let obj = {
+          second: arr[0],
+          min: arr[1],
+          hour: arr[2],
+          day: arr[3],
+          month: arr[4],
+          week: arr[5],
+          year: arr[6] ? arr[6] : "",
+        }
+        this.crontabValueObj = { ...obj }
+        for (let i in obj) {
+          if (obj[i]) this.changeRadio(i, obj[i])
+        }
       }
     },
   },
@@ -384,6 +429,47 @@ export default {
   border-radius: 5px;
   font-size: 12px;
   overflow: hidden;
+}
+.common-cron-buttons {
+  box-sizing: border-box;
+  margin: 20px auto 10px;
+  padding: 15px;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  background: #fafafa;
+  position: relative;
+}
+.common-cron-buttons .title {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  width: 100px;
+  font-size: 14px;
+  margin-left: -50px;
+  text-align: center;
+  line-height: 24px;
+  background: #fafafa;
+  color: #606266;
+  font-weight: 500;
+}
+.common-cron-buttons .el-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.common-cron-buttons .el-button-group .el-button {
+  margin: 0;
+  border-radius: 4px;
+  min-width: 140px;
+}
+.common-cron-buttons .el-button-group .el-button:hover {
+  color: #409eff;
+  border-color: #c6e2ff;
+  background-color: #ecf5ff;
+}
+.common-cron-buttons .el-button-group .el-button i {
+  margin-right: 4px;
 }
 .popup-title {
   overflow: hidden;

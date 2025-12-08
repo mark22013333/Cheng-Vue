@@ -58,3 +58,11 @@ export function refreshCache() {
     method: 'delete'
   })
 }
+
+// 取得系統配置資訊（包含文件上傳限制等）
+export function getSystemConfigInfo() {
+  return request({
+    url: '/system/config/info',
+    method: 'get'
+  })
+}

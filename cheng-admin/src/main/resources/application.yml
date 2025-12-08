@@ -72,9 +72,9 @@ spring:
   servlet:
     multipart:
       # 單一檔案大小
-      max-file-size: 10MB
+      max-file-size: 500MB
       # 設定總上傳的檔案大小
-      max-request-size: 20MB
+      max-request-size: 1024MB
   # 服務模組
   devtools:
     restart:

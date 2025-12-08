@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * <p>
  * 提供前端查詢可用的定時任務類型，包含任務的元資料資訊
  * 讓前端可以動態產生任務設定表單
- * 
+ *
  * <p>已重構為使用 TaskTypeProvider 動態系統
  *
  * @author Cheng
@@ -46,26 +46,26 @@ public class ScheduledTaskTypeController {
     @GetMapping
     public Result getAllTaskTypes() {
         log.info("取得所有定時任務類型");
-        
+
         if (taskTypeProviders == null || taskTypeProviders.isEmpty()) {
             return Result.success(new ArrayList<>());
         }
-        
+
         List<TaskTypeVO> taskTypes = new ArrayList<>();
-        
+
         for (TaskTypeProvider provider : taskTypeProviders) {
             if (!provider.isEnabled()) {
                 continue;
             }
-            
+
             String category = provider.getCategory().getLabel();
             List<TaskTypeOption> tasks = provider.getTaskTypes();
-            
+
             for (TaskTypeOption task : tasks) {
                 taskTypes.add(convertToVO(task, category));
             }
         }
-        
+
         return Result.success(taskTypes);
     }
 
@@ -80,29 +80,72 @@ public class ScheduledTaskTypeController {
     @GetMapping("/category/{category}")
     public Result getTaskTypesByCategory(@PathVariable String category) {
         log.info("取得分類 {} 的定時任務類型", category);
-        
+
         if (taskTypeProviders == null || taskTypeProviders.isEmpty()) {
             return Result.success(new ArrayList<>());
         }
-        
+
         List<TaskTypeVO> taskTypes = new ArrayList<>();
-        
+
         for (TaskTypeProvider provider : taskTypeProviders) {
             if (!provider.isEnabled()) {
                 continue;
             }
-            
+
             String providerCategory = provider.getCategory().getLabel();
             if (!providerCategory.equals(category)) {
                 continue;
             }
-            
+
             List<TaskTypeOption> tasks = provider.getTaskTypes();
             for (TaskTypeOption task : tasks) {
                 taskTypes.add(convertToVO(task, providerCategory));
             }
         }
-        
+
+        return Result.success(taskTypes);
+    }
+
+    /**
+     * 根據任務分組（jobGroup）取得任務類型
+     * <p>
+     * GET /monitor/job/types/jobGroup/{jobGroup}
+     * <p>
+     * 此 API 用於前端根據選擇的任務分組過濾對應的任務類型
+     * jobGroup 對應 sys_dict_data 中 sys_job_group 的 dict_value（如 DATA、CRAWLER 等）
+     *
+     * @param jobGroup 任務分組代碼（對應 TaskCategory.code）
+     * @return 該分組下的任務類型列表
+     */
+    @GetMapping("/jobGroup/{jobGroup}")
+    public Result getTaskTypesByJobGroup(@PathVariable String jobGroup) {
+        log.info("取得任務分組 {} 的定時任務類型", jobGroup);
+
+        if (taskTypeProviders == null || taskTypeProviders.isEmpty()) {
+            return Result.success(new ArrayList<>());
+        }
+
+        List<TaskTypeVO> taskTypes = new ArrayList<>();
+
+        for (TaskTypeProvider provider : taskTypeProviders) {
+            if (!provider.isEnabled()) {
+                continue;
+            }
+
+            // 使用 code 比對（對應 jobGroup）
+            String providerCode = provider.getCategory().getCode();
+            if (!providerCode.equals(jobGroup)) {
+                continue;
+            }
+
+            String providerCategory = provider.getCategory().getLabel();
+            List<TaskTypeOption> tasks = provider.getTaskTypes();
+            for (TaskTypeOption task : tasks) {
+                taskTypes.add(convertToVO(task, providerCategory));
+            }
+        }
+
+        log.info("任務分組 {} 找到 {} 個任務類型", jobGroup, taskTypes.size());
         return Result.success(taskTypes);
     }
 
@@ -116,17 +159,17 @@ public class ScheduledTaskTypeController {
     @GetMapping("/categories")
     public Result getAllCategories() {
         log.info("取得所有定時任務分類");
-        
+
         if (taskTypeProviders == null || taskTypeProviders.isEmpty()) {
             return Result.success(new ArrayList<>());
         }
-        
+
         List<String> categories = taskTypeProviders.stream()
                 .filter(TaskTypeProvider::isEnabled)
                 .map(provider -> provider.getCategory().getLabel())
                 .distinct()
                 .collect(Collectors.toList());
-        
+
         return Result.success(categories);
     }
 
@@ -141,26 +184,26 @@ public class ScheduledTaskTypeController {
     @GetMapping("/{code}")
     public Result getTaskTypeByCode(@PathVariable String code) {
         log.info("取得任務類型詳情: {}", code);
-        
+
         if (taskTypeProviders == null || taskTypeProviders.isEmpty()) {
             return Result.error("找不到任務類型: " + code);
         }
-        
+
         for (TaskTypeProvider provider : taskTypeProviders) {
             if (!provider.isEnabled()) {
                 continue;
             }
-            
+
             String category = provider.getCategory().getLabel();
             List<TaskTypeOption> tasks = provider.getTaskTypes();
-            
+
             for (TaskTypeOption task : tasks) {
                 if (task.getCode().equals(code)) {
                     return Result.success(convertToVO(task, category));
                 }
             }
         }
-        
+
         return Result.error("找不到任務類型: " + code);
     }
 
@@ -190,7 +233,7 @@ public class ScheduledTaskTypeController {
                 paramVO.setExample(param.getDefaultValue() != null ? param.getDefaultValue() : "");
                 paramVO.setOrder(param.getOrder() != null ? param.getOrder() : 0);
                 paramVO.setVisible(param.getVisible());
-                
+
                 // 轉換選項列表（用於 SELECT 類型）
                 if (param.getOptions() != null && !param.getOptions().isEmpty()) {
                     List<OptionVO> options = new ArrayList<>();
@@ -203,7 +246,7 @@ public class ScheduledTaskTypeController {
                     }
                     paramVO.setOptions(options);
                 }
-                
+
                 parameters.add(paramVO);
             }
         }
