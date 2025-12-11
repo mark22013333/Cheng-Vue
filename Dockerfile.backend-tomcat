@@ -1,15 +1,19 @@
-# ---- Backend WAR on External Tomcat (Spring Boot 3.x, JDK17, Jakarta EE) ----
+# ---- Backend WAR on External Tomcat (Spring Boot 3.x, JDK 25, Jakarta EE) ----
 
-# 1) Build stage: produce WAR (apps.war) from multi-module project
-FROM maven:3.9.6-eclipse-temurin-17 AS builder
+# 1) Build stage: 使用 JDK 25 建置
+FROM maven:3.9-eclipse-temurin-25 AS builder
+
 WORKDIR /workspace
 COPY . .
+
+# 使用 pom.xml 的 JDK 25 設定編譯
 RUN mvn -q -DskipTests -pl cheng-admin -am package
 
-# 2) Runtime stage: Tomcat 10.1 on JDK17 (Jakarta namespace)
-FROM tomcat:10.1-jdk17-temurin
+# 2) Runtime stage: Tomcat 10.1 on JDK 25
+FROM tomcat:10.1-jdk25-temurin
 
-# 安裝 Chrome 和 ChromeDriver（用於爬蟲功能）
+# --- 安裝 Chrome 和 ChromeDriver ---
+# 這些依賴庫通常依賴於 Debian/Ubuntu 基底，只要 tomcat image 是基於 Linux 即可通用
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -57,8 +61,13 @@ RUN rm -rf /usr/local/tomcat/webapps/*
 # Deploy our WAR as ROOT.war
 COPY --from=builder /workspace/cheng-admin/target/apps.war /usr/local/tomcat/webapps/ROOT.war
 
-# Timezone（JVM 參數與解密密碼改由執行環境提供，例如設置 JASYPT_ENCRYPTOR_PASSWORD 或 JAVA_OPTS）
+# Timezone
 ENV TZ=Asia/Taipei
+
+# === 關鍵修改：注入 JDK 25 的 ZGC 參數 ===
+# 在 Docker 內，透過 CATALINA_OPTS 來設定 GC
+# JDK 25 預設 ZGC 已經是分代模式，所以只要開啟 UseZGC 即可
+ENV CATALINA_OPTS="-Xms4096m -Xmx4096m -XX:+UseZGC -XX:+HeapDumpOnOutOfMemoryError"
 
 EXPOSE 8080
 CMD ["catalina.sh", "run"]

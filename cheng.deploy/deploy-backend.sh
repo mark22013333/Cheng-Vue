@@ -70,6 +70,22 @@ fi
 
 echo -e "${GREEN}✅ WAR 檔案上傳成功${NC}"
 
+# 步驟 2.5: 檢查遠端伺服器 JDK 版本
+echo -e "\n${BLUE}步驟 2.5: 檢查遠端伺服器 JDK 版本${NC}"
+REMOTE_JAVA_VERSION=$(ssh -p "$SERVER_PORT" -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+  "${SERVER_USER}@${SERVER_HOST}" "java -version 2>&1 | grep -oP 'version \"?\K[0-9]+' | head -1" || echo "0")
+
+REQUIRED_JAVA_VERSION="25"
+echo "遠端 JDK 版本: $REMOTE_JAVA_VERSION (需要: $REQUIRED_JAVA_VERSION)"
+
+if [ "$REMOTE_JAVA_VERSION" != "$REQUIRED_JAVA_VERSION" ]; then
+    echo -e "${YELLOW}⚠️  警告：遠端伺服器 JDK 版本為 $REMOTE_JAVA_VERSION，但 WAR 檔案需要 JDK $REQUIRED_JAVA_VERSION${NC}"
+    echo -e "${YELLOW}💡 提示：請在遠端伺服器升級 JDK 版本，否則應用程式可能無法啟動${NC}"
+    echo -e "${YELLOW}    升級指令：sudo apt install openjdk-${REQUIRED_JAVA_VERSION}-jdk${NC}"
+else
+    echo -e "${GREEN}✅ JDK 版本符合要求${NC}"
+fi
+
 # 步驟 3: 在伺服器上部署
 echo -e "\n${BLUE}步驟 3: 部署到 Tomcat${NC}"
 echo "停止 Tomcat，部署新 WAR 檔案，然後重啟..."
