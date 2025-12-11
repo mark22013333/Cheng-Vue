@@ -1,80 +1,269 @@
 <template>
-  <div class="errPage-container">
-    <el-button icon="arrow-left" class="pan-back-btn" @click="back">
-      返回
-    </el-button>
-    <el-row>
-      <el-col :span="12">
-        <h1 class="text-jumbo text-ginormous">
-          401錯誤!
-        </h1>
-        <h2>您沒有訪問權限！</h2>
-        <h6>對不起，您沒有訪問權限，請不要進行非法操作！您可以返回主頁面</h6>
-        <ul class="list-unstyled">
-          <li class="link-type">
-            <router-link to="/">
-              回首頁
-            </router-link>
-          </li>
-        </ul>
-      </el-col>
-      <el-col :span="12">
-        <img :src="errGif" width="313" height="428" alt="Girl has dropped her ice cream.">
-      </el-col>
-    </el-row>
+  <div class="errPage-container" @mousemove="handleMouseMove">
+    <div class="wscn-http401">
+
+      <div class="pic-401">
+        <img
+          class="pic-401__parent"
+          src="@/assets/401_images/401.png"
+          alt="401 Locked"
+          :style="parentStyle"
+        >
+        <div class="pic-401__icon" :style="iconStyle">❄️</div>
+      </div>
+
+      <div class="text-content">
+        <div class="text-content__title">401</div>
+        <div class="text-content__headline">權限凍結！</div>
+        <div class="text-content__info">
+          前方是 <strong>Cool Apps</strong> 的 VIP 機密區域。<br>
+          看來您的通行證還沒解凍，或者您迷路到了不該來的地方。
+          <br><br>
+          請不用擔心，這不是什麼非法操作，只是需要一點驗證手續。
+        </div>
+
+        <div class="action-buttons">
+          <router-link to="/" class="btn-home">
+            返回首頁
+          </router-link>
+          <button @click="back" class="btn-back">
+            回上一頁
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import errImage from "@/assets/401_images/401.gif"
+import {ref, computed} from 'vue'
+import {useRouter, useRoute} from 'vue-router'
 
-let { proxy } = getCurrentInstance()
+const router = useRouter()
+const route = useRoute()
 
-const errGif = ref(errImage + "?" + +new Date())
+// === 視差效果邏輯 ===
+const mouseX = ref(0)
+const mouseY = ref(0)
 
+const handleMouseMove = (e) => {
+  // 計算滑鼠偏移量，除以 50 讓移動幅度適中
+  const x = (e.clientX - window.innerWidth / 2) / 50
+  const y = (e.clientY - window.innerHeight / 2) / 50
+  mouseX.value = x
+  mouseY.value = y
+}
+
+// 主圖樣式 (反向移動)
+const parentStyle = computed(() => {
+  return {
+    transform: `translate(${mouseX.value * -1}px, ${mouseY.value * -1}px)`
+  }
+})
+
+// 裝飾圖示樣式 (正向移動，產生層次感)
+const iconStyle = computed(() => {
+  return {
+    transform: `translate(${mouseX.value * 1.5}px, ${mouseY.value * 1.5}px)`
+  }
+})
+
+// === 導航邏輯 ===
 function back() {
-  if (proxy.$route.query.noGoBack) {
-    proxy.$router.push({ path: "/" })
+  if (route.query.noGoBack) {
+    router.push({path: "/"})
   } else {
-    proxy.$router.go(-1)
+    router.go(-1)
   }
 }
 </script>
 
 <style lang="scss" scoped>
 .errPage-container {
-  width: 800px;
-  max-width: 100%;
-  margin: 100px auto;
-  .pan-back-btn {
-    background: #008489;
-    color: #fff;
-    border: none !important;
-  }
-  .pan-gif {
-    margin: 0 auto;
-    display: block;
-  }
-  .pan-img {
-    display: block;
-    margin: 0 auto;
-    width: 100%;
-  }
-  .text-jumbo {
-    font-size: 60px;
-    font-weight: 700;
-    color: #484848;
-  }
-  .list-unstyled {
-    font-size: 14px;
-    li {
-      padding-bottom: 5px;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  // Cool Apps 專屬冰藍色漸層背景
+  background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.wscn-http401 {
+  position: relative;
+  // 加大整體卡片寬度，避免圖片變大後擠壓到文字
+  width: 1200px;
+  max-width: 95%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 50px;
+
+  // 玻璃擬態核心樣式
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 24px;
+  box-shadow: 0 15px 35px rgba(31, 38, 135, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  gap: 50px; // 增加間距
+
+  // 左側圖片區
+  .pic-401 {
+    position: relative;
+    flex: 1.3; // 讓圖片區佔比稍微大一點
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    &__parent {
+      width: 100%;
+      // 放大圖片最大寬度
+      max-width: 680px;
+
+      height: auto;
+      object-fit: contain;
+      transition: transform 0.1s linear;
+      // 圖片陰影讓它浮起來
+      filter: drop-shadow(0 25px 35px rgba(0, 0, 0, 0.2));
     }
-    a {
-      color: #008489;
+
+    &__icon {
+      position: absolute;
+      top: -20px;
+      right: 40px;
+      font-size: 70px;
+      opacity: 0.8;
+      transition: transform 0.1s linear;
+      filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.1));
+    }
+  }
+
+  // 右側文字區
+  .text-content {
+    flex: 1;
+    padding: 30px 0;
+    text-align: left;
+
+    &__title {
+      font-size: 90px; // 稍微加大字體
+      font-weight: 900;
+      line-height: 1;
+      // 漸層文字特效
+      background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 15px;
+      opacity: 0;
+      animation: slideUp 0.6s forwards;
+    }
+
+    &__headline {
+      font-size: 36px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 25px;
+      opacity: 0;
+      animation: slideUp 0.6s 0.1s forwards;
+    }
+
+    &__info {
+      font-size: 17px;
+      line-height: 1.8;
+      color: #444;
+      margin-bottom: 40px;
+      opacity: 0;
+      animation: slideUp 0.6s 0.2s forwards;
+
+      strong {
+        color: #2575fc;
+      }
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 20px;
+      opacity: 0;
+      animation: slideUp 0.6s 0.3s forwards;
+    }
+
+    // 按鈕樣式
+    .btn-home {
+      display: inline-block;
+      padding: 12px 35px;
+      background: #2575fc;
+      border-radius: 50px;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 600;
       text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(37, 117, 252, 0.3);
+
       &:hover {
-        text-decoration: underline;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(37, 117, 252, 0.5);
+        background: #1a65e6;
+      }
+    }
+
+    .btn-back {
+      padding: 12px 35px;
+      background: transparent;
+      border: 2px solid #2575fc;
+      border-radius: 50px;
+      color: #2575fc;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(37, 117, 252, 0.1);
+        transform: translateY(-3px);
+      }
+    }
+  }
+
+  // 進場動畫
+  @keyframes slideUp {
+    0% {
+      transform: translateY(40px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+// RWD 響應式調整
+@media screen and (max-width: 1024px) {
+  .wscn-http401 {
+    flex-direction: column;
+    width: 90%;
+    padding: 40px 30px;
+
+    .pic-401 {
+      width: 100%;
+      margin-bottom: 40px;
+
+      &__parent {
+        // 在手機/平板上不要太大，以免超出螢幕
+        max-width: 80%;
+      }
+    }
+
+    .text-content {
+      width: 100%;
+      text-align: center;
+
+      .action-buttons {
+        justify-content: center;
       }
     }
   }
