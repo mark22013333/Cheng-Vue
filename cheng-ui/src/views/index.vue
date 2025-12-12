@@ -78,6 +78,81 @@
       </el-col>
     </el-row>
 
+    <!-- 系統公告區塊 -->
+    <el-row :gutter="20" class="mb-20" v-if="announcements.length > 0">
+      <el-col :span="24">
+        <el-card shadow="hover" class="announcement-card">
+          <div slot="header" class="card-header">
+            <i class="el-icon-bell"></i>
+            <span>系統公告</span>
+            <el-tag type="warning" size="small">{{ announcements.length }} 則</el-tag>
+            <el-tag v-if="announcements.length > announcementPageSize" type="info" size="small">第
+              {{ announcementCurrentPage }} 頁
+            </el-tag>
+          </div>
+          <div class="announcement-list">
+            <div
+              v-for="notice in paginatedAnnouncements"
+              :key="notice.noticeId"
+              class="announcement-item"
+              @click="showAnnouncementDetail(notice)">
+              <div class="announcement-item-content">
+                <i class="el-icon-document"></i>
+                <span class="announcement-item-title">{{ notice.noticeTitle }}</span>
+                <!-- 公告標籤 -->
+                <el-tag v-if="isNewAnnouncement(notice)" type="danger" size="small" effect="dark">最新</el-tag>
+                <el-tag v-else-if="isRecentAnnouncement(notice)" type="warning" size="small">近期</el-tag>
+              </div>
+              <div class="announcement-item-time">
+                <i class="el-icon-time"></i>
+                {{ notice.createTime }}
+              </div>
+            </div>
+          </div>
+          <!-- 分頁組件 -->
+          <div class="announcement-pagination" v-show="announcements.length > announcementPageSize">
+            <el-pagination
+              small
+              background
+              layout="prev, pager, next"
+              :total="announcements.length"
+              :page-size="announcementPageSize"
+              v-model:current-page="announcementCurrentPage"
+              @current-change="handleAnnouncementPageChange"
+            />
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 公告詳情對話框 (RWD 支援) -->
+    <el-dialog
+      title="公告詳情"
+      v-model="announcementDialogVisible"
+      width="800px"
+      class="announcement-detail-dialog"
+      @opened="setupAnnouncementImagePreview">
+      <div class="announcement-dialog-content">
+        <div class="announcement-dialog-header">
+          <h3>{{ currentAnnouncement.noticeTitle }}</h3>
+          <el-tag v-if="isNewAnnouncement(currentAnnouncement)" type="danger" size="small" effect="dark">最新</el-tag>
+          <el-tag v-else-if="isRecentAnnouncement(currentAnnouncement)" type="warning" size="small">近期</el-tag>
+        </div>
+        <div class="announcement-dialog-body" v-html="currentAnnouncement.noticeContent"
+             ref="announcementBodyRef"></div>
+        <div class="announcement-dialog-footer">
+          <span class="announcement-dialog-time">
+            <i class="el-icon-time"></i> {{ currentAnnouncement.createTime }}
+          </span>
+        </div>
+      </div>
+    </el-dialog>
+
+    <!-- 公告圖片預覽對話框 -->
+    <el-dialog v-model="announcementImagePreviewVisible" width="90%" top="5vh">
+      <img :src="announcementPreviewImageUrl" style="width: 100%; display: block;" alt="圖片預覽"/>
+    </el-dialog>
+
     <el-row>
       <el-col :span="24">
         <el-card shadow="never" class="changelog-card">
@@ -125,7 +200,7 @@
 <script>
 import request from "@/utils/request"
 import {versionLogs, getLatestVersion} from "@/data/changelog"
-import { checkPermi } from "@/utils/permission"
+import {checkPermi} from "@/utils/permission"
 
 export default {
   name: "Index",
@@ -134,7 +209,15 @@ export default {
       launchDate: new Date("2025-09-22"),
       onlineUsers: 0,
       totalUsers: 0,
-      versionLogs  // 從 changelog.js 引入的版本日誌資料
+      versionLogs,  // 從 changelog.js 引入的版本日誌資料
+      announcements: [],  // 系統公告列表
+      announcementDialogVisible: false,  // 公告詳情對話框
+      currentAnnouncement: {},  // 當前查看的公告
+      announcementCurrentPage: 1,  // 公告當前頁碼
+      announcementPageSize: 10,  // 每頁顯示數量
+      announcementBodyRef: null,  // 公告內容 ref
+      announcementImagePreviewVisible: false,  // 公告圖片預覽對話框
+      announcementPreviewImageUrl: ''  // 預覽圖片 URL
     }
   },
   computed: {
@@ -144,6 +227,12 @@ export default {
     },
     totalVersions() {
       return this.versionLogs.length
+    },
+    // 分頁後的公告列表
+    paginatedAnnouncements() {
+      const start = (this.announcementCurrentPage - 1) * this.announcementPageSize
+      const end = start + this.announcementPageSize
+      return this.announcements.slice(start, end)
     },
     daysSinceLaunch() {
       const today = new Date()
@@ -155,7 +244,7 @@ export default {
       // 使用 checkPermi 函數檢查權限（支援萬用字元權限）
       const hasOnlinePermission = checkPermi(['monitor:online:list'])
       const hasUserPermission = checkPermi(['system:user:list'])
-      
+
       return [
         {label: "版本迭代", value: this.totalVersions, icon: "el-icon-data-line", colorClass: "primary"},
         {label: "執行天數", value: this.daysSinceLaunch, icon: "el-icon-time", colorClass: "success"},
@@ -179,6 +268,7 @@ export default {
   mounted() {
     this.getOnlineUsers()
     this.getTotalUsers()
+    this.getAnnouncements()
   },
   methods: {
     goTarget(href) {
@@ -209,6 +299,69 @@ export default {
         }).catch(() => {
           this.totalUsers = 0
         })
+      }
+    },
+    getAnnouncements() {
+      request({
+        url: "/system/notice/announcements",
+        method: "get"
+      }).then(response => {
+        this.announcements = response.data || []
+      }).catch(() => {
+        this.announcements = []
+      })
+    },
+    showAnnouncementDetail(notice) {
+      this.currentAnnouncement = notice
+      this.announcementDialogVisible = true
+    },
+    // 處理公告分頁變化
+    handleAnnouncementPageChange(page) {
+      this.announcementCurrentPage = page
+    },
+    // 判斷是否為最新公告（3天內）
+    isNewAnnouncement(notice) {
+      if (!notice.createTime) return false
+      const createTime = new Date(notice.createTime)
+      const now = new Date()
+      const diffDays = (now - createTime) / (1000 * 60 * 60 * 24)
+      return diffDays <= 3
+    },
+    // 判斷是否為近期公告（7天內，排除最新3天）
+    isRecentAnnouncement(notice) {
+      if (!notice.createTime) return false
+      const createTime = new Date(notice.createTime)
+      const now = new Date()
+      const diffDays = (now - createTime) / (1000 * 60 * 60 * 24)
+      return diffDays > 3 && diffDays <= 7
+    },
+    // 設定公告圖片點擊預覽
+    setupAnnouncementImagePreview() {
+      // 等待 DOM 更新
+      this.$nextTick(() => {
+        const bodyElement = this.$refs.announcementBodyRef
+        if (bodyElement) {
+          const images = bodyElement.querySelectorAll('img')
+          images.forEach(img => {
+            img.style.cursor = 'pointer'
+            img.onclick = () => {
+              this.announcementPreviewImageUrl = img.src
+              this.announcementImagePreviewVisible = true
+            }
+          })
+        }
+      })
+    }
+  },
+  // 使用 activated 生命週期鉤子，在路由切換回首頁時自動重新整理
+  activated() {
+    this.getAnnouncements()
+  },
+  // 監聽路由變化，當路由是首頁時重新整理公告
+  watch: {
+    '$route'() {
+      if (this.$route.path === '/index') {
+        this.getAnnouncements()
       }
     }
   }
@@ -426,6 +579,178 @@ export default {
     }
   }
 
+  // 系統公告卡片
+  .announcement-card {
+    border: none;
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: bold;
+      color: #303133;
+      flex-wrap: wrap;
+
+      i {
+        color: #F56C6C;
+      }
+
+      span {
+        flex: 1;
+      }
+
+      .el-tag {
+        margin-left: 4px;
+      }
+    }
+
+    .announcement-list {
+      .announcement-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background-color 0.3s;
+
+        &:hover {
+          background-color: #f5f7fa;
+        }
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .announcement-item-content {
+          display: flex;
+          align-items: center;
+          flex: 1;
+          gap: 8px;
+          min-width: 0;
+
+          i {
+            color: #409EFF;
+            font-size: 16px;
+            flex-shrink: 0;
+          }
+
+          .announcement-item-title {
+            font-size: 14px;
+            color: #303133;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 0;
+          }
+
+          .el-tag {
+            flex-shrink: 0;
+            margin-left: 8px;
+          }
+        }
+
+        .announcement-item-time {
+          font-size: 12px;
+          color: #909399;
+          white-space: nowrap;
+          margin-left: 16px;
+
+          i {
+            margin-right: 4px;
+          }
+        }
+      }
+    }
+
+    .announcement-pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px 0;
+      border-top: 1px solid #f0f0f0;
+      margin-top: 8px;
+      min-height: 60px;
+
+      :deep(.el-pagination) {
+        display: flex;
+        justify-content: center;
+      }
+    }
+  }
+
+  // 公告詳情對話框
+  .announcement-dialog-content {
+    max-width: 100%;
+    overflow: hidden;
+    word-wrap: break-word;
+    word-break: break-all;
+
+    .announcement-dialog-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+
+      h3 {
+        font-size: 18px;
+        color: #303133;
+        margin: 0;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .el-tag {
+        flex-shrink: 0;
+      }
+    }
+
+    .announcement-dialog-body {
+      font-size: 14px;
+      color: #606266;
+      line-height: 1.8;
+      min-height: 100px;
+      margin-bottom: 16px;
+      max-width: 100%;
+      overflow: hidden;
+      word-wrap: break-word;
+
+      // 限制圖片寬度
+      img {
+        max-width: 100% !important;
+        width: 100% !important;
+        height: auto !important;
+        display: block !important;
+        margin: 10px 0;
+        object-fit: contain;
+        box-sizing: border-box;
+      }
+
+      // 處理可能超出的其他元素
+      * {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+    }
+
+    .announcement-dialog-footer {
+      border-top: 1px solid #f0f0f0;
+      padding-top: 12px;
+
+      .announcement-dialog-time {
+        font-size: 12px;
+        color: #909399;
+
+        i {
+          margin-right: 4px;
+        }
+      }
+    }
+  }
+
   // RWD 手機適配
   @media (max-width: 768px) {
     .welcome-card {
@@ -446,6 +771,117 @@ export default {
 
     .stat-card-item {
       margin-bottom: 15px;
+    }
+
+    // 公告卡片手機端優化
+    .announcement-card {
+      .card-header {
+        font-size: 14px;
+        padding: 12px;
+
+        .el-tag {
+          font-size: 11px;
+        }
+      }
+
+      .announcement-list {
+        .announcement-item {
+          padding: 10px 12px;
+          flex-wrap: wrap;
+
+          .announcement-item-content {
+            flex: 1 1 100%;
+            margin-bottom: 6px;
+
+            .announcement-item-title {
+              font-size: 13px;
+            }
+
+            i {
+              font-size: 14px;
+            }
+
+            .el-tag {
+              font-size: 10px;
+              padding: 0 4px;
+              height: 18px;
+              line-height: 18px;
+            }
+          }
+
+          .announcement-item-time {
+            flex: 1 1 100%;
+            margin-left: 22px;
+            font-size: 11px;
+          }
+        }
+      }
+
+      .announcement-pagination {
+        padding: 12px 0;
+
+        :deep(.el-pagination) {
+          .btn-prev,
+          .btn-next,
+          .el-pager li {
+            min-width: 28px;
+            height: 28px;
+            line-height: 28px;
+            font-size: 12px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 公告對話框 RWD (使用全局樣式以覆蓋 Element Plus)
+@media (max-width: 768px) {
+  :deep(.announcement-detail-dialog) {
+    width: 95% !important;
+    margin: 0 auto;
+
+    .el-dialog__header {
+      padding: 15px;
+    }
+
+    .el-dialog__body {
+      padding: 15px;
+      max-height: calc(100vh - 150px);
+      overflow-y: auto;
+    }
+
+    .el-dialog__footer {
+      padding: 10px 15px;
+    }
+
+    .announcement-dialog-header {
+      flex-wrap: wrap;
+      gap: 8px;
+
+      h3 {
+        font-size: 16px !important;
+        flex: 1 1 100%;
+      }
+
+      .el-tag {
+        font-size: 11px;
+      }
+    }
+
+    .announcement-dialog-body {
+      font-size: 13px !important;
+      line-height: 1.6 !important;
+
+      img {
+        margin: 8px 0 !important;
+      }
+    }
+
+    .announcement-dialog-footer {
+      .announcement-dialog-time {
+        font-size: 11px;
+      }
     }
   }
 }

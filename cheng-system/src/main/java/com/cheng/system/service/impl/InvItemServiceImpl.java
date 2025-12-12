@@ -56,6 +56,7 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -1850,15 +1851,15 @@ public class InvItemServiceImpl implements IInvItemService {
         response.setCharacterEncoding("UTF-8");
         String fileName = file.getName();
         // 使用 RFC 5987 標準編碼中文檔名
-        String encodedFileName = java.net.URLEncoder.encode(fileName, StandardCharsets.UTF_8)
-                .replace("+", "%20");  // 空格編碼為 %20 而非 +
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                .replace("+", "%20");
         response.setHeader("Content-Disposition",
                 "attachment; filename*=UTF-8''" + encodedFileName);
         response.setContentLengthLong(file.length());
 
         // 輸出檔案
         try (FileInputStream fis = new FileInputStream(file);
-             java.io.OutputStream os = response.getOutputStream()) {
+             OutputStream os = response.getOutputStream()) {
             byte[] buffer = new byte[8192];
             int length;
             while ((length = fis.read(buffer)) > 0) {
@@ -2048,8 +2049,8 @@ public class InvItemServiceImpl implements IInvItemService {
     private void processImage(String dbPath, File imagesDir, ImportResult result) {
         try {
             // 提取檔名和相對路徑
-            String fileName = com.cheng.common.utils.file.ImageImportUtil.extractFileName(dbPath);
-            String relativePath = com.cheng.common.utils.file.ImageImportUtil.extractRelativePath(dbPath);
+            String fileName = ImageImportUtil.extractFileName(dbPath);
+            String relativePath = ImageImportUtil.extractRelativePath(dbPath);
 
             if (fileName.isEmpty()) {
                 result.setMissingImages(result.getMissingImages() + 1);
@@ -2057,7 +2058,7 @@ public class InvItemServiceImpl implements IInvItemService {
             }
 
             // 在 imagesDir 中搜尋圖片
-            File sourceImage = com.cheng.common.utils.file.ImageImportUtil.findImageFile(imagesDir, fileName);
+            File sourceImage = ImageImportUtil.findImageFile(imagesDir, fileName);
             if (sourceImage == null) {
                 result.setMissingImages(result.getMissingImages() + 1);
                 log.warn("圖片未找到: {}", fileName);
@@ -2065,14 +2066,14 @@ public class InvItemServiceImpl implements IInvItemService {
             }
 
             // 驗證圖片
-            if (!com.cheng.common.utils.file.ImageImportUtil.validateImage(sourceImage, 10 * 1024 * 1024)) {
+            if (!ImageImportUtil.validateImage(sourceImage, 10 * 1024 * 1024)) {
                 result.setMissingImages(result.getMissingImages() + 1);
                 log.warn("圖片驗證失敗: {}", fileName);
                 return;
             }
 
             // 複製圖片到 uploadPath
-            File backupFile = com.cheng.common.utils.file.ImageImportUtil.copyImageToUploadPath(sourceImage, relativePath, uploadPath);
+            File backupFile = ImageImportUtil.copyImageToUploadPath(sourceImage, relativePath, uploadPath);
 
             result.setCopiedImages(result.getCopiedImages() + 1);
             if (backupFile != null) {
@@ -2190,19 +2191,20 @@ public class InvItemServiceImpl implements IInvItemService {
         if (dir == null || !dir.exists()) {
             return;
         }
-        try {
-            Path dirPath = dir.toPath();
-            Files.walk(dirPath)
-                    .sorted(Comparator.reverseOrder()) // 先刪除檔案，再刪除目錄
-                    .forEach(path -> {
-                        try {
-                            Files.delete(path);
-                        } catch (IOException e) {
-                            log.warn("無法刪除檔案: {}", path, e);
-                        }
-                    });
+
+        try (Stream<Path> walk = Files.walk(dir.toPath())) {
+            // 反序：先刪子檔案，再刪父目錄
+            walk.sorted(Comparator.reverseOrder()).forEach(this::deletePath);
         } catch (IOException e) {
-            log.error("刪除目錄失敗: {}", dir.getAbsolutePath(), e);
+            log.error("遍歷目錄失敗: {}", dir.getAbsolutePath(), e);
+        }
+    }
+
+    private void deletePath(Path path) {
+        try {
+            Files.delete(path);
+        } catch (IOException e) {
+            log.warn("無法刪除檔案: {}", path, e);
         }
     }
 }

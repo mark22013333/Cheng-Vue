@@ -1,10 +1,12 @@
 package com.cheng.web.controller.system;
 
+import com.cheng.common.annotation.Anonymous;
 import com.cheng.common.annotation.Log;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
 import com.cheng.common.enums.BusinessType;
+import com.cheng.common.utils.SecurityUtils;
 import com.cheng.system.domain.SysNotice;
 import com.cheng.system.service.ISysNoticeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,5 +77,47 @@ public class SysNoticeController extends BaseController {
     @DeleteMapping("/{noticeIds}")
     public AjaxResult remove(@PathVariable Long[] noticeIds) {
         return toAjax(noticeService.deleteNoticeByIds(noticeIds));
+    }
+
+    /**
+     * 取得首頁公告列表（不需權限）
+     */
+    @Anonymous
+    @GetMapping("/announcements")
+    public AjaxResult getAnnouncements() {
+        List<SysNotice> list = noticeService.selectAnnouncementList();
+        return success(list);
+    }
+
+    /**
+     * 取得當前使用者未讀通知列表（不需權限）
+     */
+    @Anonymous
+    @GetMapping("/unread")
+    public AjaxResult getUnreadNotifications() {
+        Long userId = SecurityUtils.getUserId();
+        List<SysNotice> list = noticeService.selectUnreadNotifications(userId);
+        return success(list);
+    }
+
+    /**
+     * 取得當前使用者未讀通知數量（不需權限）
+     */
+    @Anonymous
+    @GetMapping("/unread/count")
+    public AjaxResult getUnreadCount() {
+        Long userId = SecurityUtils.getUserId();
+        int count = noticeService.countUnreadNotifications(userId);
+        return success(count);
+    }
+
+    /**
+     * 標記通知為已讀（不需權限）
+     */
+    @Anonymous
+    @PostMapping("/read/{noticeId}")
+    public AjaxResult markAsRead(@PathVariable Long noticeId) {
+        Long userId = SecurityUtils.getUserId();
+        return toAjax(noticeService.markNoticeAsRead(noticeId, userId));
     }
 }

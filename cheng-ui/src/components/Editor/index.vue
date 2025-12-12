@@ -214,6 +214,14 @@ function insertImage(file) {
   display: none;
 }
 
+/* 限制編輯器中的圖片最大寬度 */
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 10px 0;
+}
+
 .ql-snow .ql-tooltip[data-mode="link"]::before {
   content: "請輸入連結位置:";
 }
