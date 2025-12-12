@@ -66,6 +66,8 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       port: 1024,
       open: true,
+      // 允許所有 hosts 連線 (解決 Ngrok 等外部通道被擋的問題)
+      allowedHosts: true,
       proxy: {
         // API 代理
         [env.VITE_APP_BASE_API]: {

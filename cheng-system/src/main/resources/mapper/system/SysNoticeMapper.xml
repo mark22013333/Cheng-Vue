@@ -86,4 +86,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </delete>
     
+
+    <select id="selectAnnouncementList" resultMap="SysNoticeResult">
+        <include refid="selectNoticeVo"/>
+        WHERE notice_type = '2'
+          AND status = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectUnreadNotifications" resultMap="SysNoticeResult">
+        <include refid="selectNoticeVo"/>
+        WHERE notice_type = '1'
+          AND status = '0'
+          AND NOT EXISTS (
+            SELECT 1
+            FROM sys_notice_read r
+            WHERE r.notice_id = sys_notice.notice_id
+              AND r.user_id = #{userId}
+        )
+        ORDER BY create_time DESC
+    </select>
+    
 </mapper>

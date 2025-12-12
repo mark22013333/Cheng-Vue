@@ -9,15 +9,14 @@ import java.util.List;
  *
  * @author cheng
  */
-public interface ISysNoticeService
-{
+public interface ISysNoticeService {
     /**
      * 查詢公告訊息
-     * 
+     *
      * @param noticeId 公告ID
      * @return 公告訊息
      */
-    public SysNotice selectNoticeById(Long noticeId);
+    SysNotice selectNoticeById(Long noticeId);
 
     /**
      * 查詢公告列表
@@ -25,7 +24,7 @@ public interface ISysNoticeService
      * @param notice 公告訊息
      * @return 公告集合
      */
-    public List<SysNotice> selectNoticeList(SysNotice notice);
+    List<SysNotice> selectNoticeList(SysNotice notice);
 
     /**
      * 新增公告
@@ -33,7 +32,7 @@ public interface ISysNoticeService
      * @param notice 公告訊息
      * @return 結果
      */
-    public int insertNotice(SysNotice notice);
+    int insertNotice(SysNotice notice);
 
     /**
      * 修改公告
@@ -41,21 +40,53 @@ public interface ISysNoticeService
      * @param notice 公告訊息
      * @return 結果
      */
-    public int updateNotice(SysNotice notice);
+    int updateNotice(SysNotice notice);
 
     /**
      * 刪除公告訊息
-     * 
+     *
      * @param noticeId 公告ID
      * @return 結果
      */
-    public int deleteNoticeById(Long noticeId);
-    
+    int deleteNoticeById(Long noticeId);
+
     /**
      * 批次刪除公告訊息
      *
      * @param noticeIds 需要刪除的公告ID
      * @return 結果
      */
-    public int deleteNoticeByIds(Long[] noticeIds);
+    int deleteNoticeByIds(Long[] noticeIds);
+
+    /**
+     * 查詢首頁公告列表（類型=公告，狀態=正常）
+     *
+     * @return 公告列表
+     */
+    List<SysNotice> selectAnnouncementList();
+
+    /**
+     * 查詢使用者未讀通知列表
+     *
+     * @param userId 使用者ID
+     * @return 未讀通知列表
+     */
+    List<SysNotice> selectUnreadNotifications(Long userId);
+
+    /**
+     * 標記通知為已讀
+     *
+     * @param noticeId 通知ID
+     * @param userId   使用者ID
+     * @return 結果
+     */
+    int markNoticeAsRead(Long noticeId, Long userId);
+
+    /**
+     * 取得使用者未讀通知數量
+     *
+     * @param userId 使用者ID
+     * @return 未讀數量
+     */
+    int countUnreadNotifications(Long userId);
 }

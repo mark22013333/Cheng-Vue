@@ -58,4 +58,19 @@ public interface SysNoticeMapper {
      * @return 結果
      */
     int deleteNoticeByIds(Long[] noticeIds);
+
+    /**
+     * 查詢首頁公告列表（類型=公告，狀態=正常）
+     *
+     * @return 公告列表
+     */
+    List<SysNotice> selectAnnouncementList();
+
+    /**
+     * 查詢使用者未讀通知列表（類型=通知，狀態=正常，未被該使用者標記已讀）
+     *
+     * @param userId 使用者ID
+     * @return 未讀通知列表
+     */
+    List<SysNotice> selectUnreadNotifications(Long userId);
 }

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.system.mapper.SysNoticeReadMapper">
+
+    <resultMap type="com.cheng.system.domain.SysNoticeRead" id="SysNoticeReadResult">
+        <id property="readId" column="read_id"/>
+        <result property="noticeId" column="notice_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="readTime" column="read_time"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <insert id="insertNoticeRead" parameterType="com.cheng.system.domain.SysNoticeRead">
+        INSERT INTO sys_notice_read (notice_id, user_id, read_time, create_time)
+        VALUES (#{noticeId}, #{userId}, #{readTime}, NOW())
+    </insert>
+
+    <select id="checkUserRead" resultType="int">
+        SELECT COUNT(1)
+        FROM sys_notice_read
+        WHERE notice_id = #{noticeId}
+          AND user_id = #{userId}
+    </select>
+
+    <select id="countUnreadNotifications" resultType="int">
+        SELECT COUNT(1)
+        FROM sys_notice n
+        WHERE n.notice_type = '1'
+          AND n.status = '0'
+          AND NOT EXISTS (
+            SELECT 1
+            FROM sys_notice_read r
+            WHERE r.notice_id = n.notice_id
+              AND r.user_id = #{userId}
+        )
+    </select>
+
+    <delete id="deleteByNoticeId" parameterType="Long">
+        DELETE
+        FROM sys_notice_read
+        WHERE notice_id = #{noticeId}
+    </delete>
+
+    <delete id="deleteByNoticeIds" parameterType="Long">
+        DELETE FROM sys_notice_read WHERE notice_id IN
+        <foreach item="noticeId" collection="array" open="(" separator="," close=")">
+            #{noticeId}
+        </foreach>
+    </delete>
+
+</mapper>
