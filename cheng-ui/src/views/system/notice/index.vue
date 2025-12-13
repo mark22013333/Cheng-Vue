@@ -160,6 +160,7 @@
 
 <script setup name="Notice">
 import { listNotice, getNotice, delNotice, addNotice, updateNotice } from "@/api/system/notice"
+import eventBus from '@/utils/eventBus'
 
 const { proxy } = getCurrentInstance()
 const { sys_notice_status, sys_notice_type } = proxy.useDict("sys_notice_status", "sys_notice_type")
@@ -271,6 +272,7 @@ function submitForm() {
           proxy.$modal.msgSuccess("新增成功")
           open.value = false
           getList()
+          eventBus.emit('notice:refresh-unread-count')
         })
       }
     }

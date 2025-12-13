@@ -14,31 +14,175 @@
       <i ref="uploadRef" class="editor-img-uploader"></i>
     </el-upload>
   </div>
-  <div class="editor">
+  <div class="editor" ref="editorContainerRef">
     <quill-editor
       ref="quillEditorRef"
       v-model:content="content"
       contentType="html"
-      @textChange="(e) => $emit('update:modelValue', content)"
+      @update:content="handleContentUpdate"
       :options="options"
       :style="styles"
     />
+
+    <div
+      v-show="videoOverlayVisible"
+      class="video-resize-overlay"
+      :style="videoOverlayStyle"
+      @mousedown.stop
+      @click.stop
+    >
+      <el-tooltip content="切換影片尺寸（360/480/640）" placement="top">
+        <button class="video-resize-btn" type="button" @click="handleVideoResizeClick">尺寸</button>
+      </el-tooltip>
+    </div>
   </div>
 </template>
 
 <script setup>
 import axios from 'axios'
-import {QuillEditor} from "@vueup/vue-quill"
+import {ElMessageBox} from 'element-plus'
+import {QuillEditor, Quill} from "@vueup/vue-quill"
 import "@vueup/vue-quill/dist/vue-quill.snow.css"
 import {getToken} from "@/utils/auth"
 
 const {proxy} = getCurrentInstance()
+const emits = defineEmits(['update:modelValue'])
 
 const quillEditorRef = ref()
+const editorContainerRef = ref(null)
 const uploadUrl = ref(import.meta.env.VITE_APP_BASE_API + "/common/upload") // 上傳的圖片伺服器位置
 const headers = ref({
   Authorization: "Bearer " + getToken()
 })
+
+const DEFAULT_VIDEO_WIDTH = '100%'
+const VIDEO_HEIGHT_PRESETS = [360, 480, 640]
+
+function normalizeVideoUrl(url) {
+  if (!url || typeof url !== 'string') return ''
+  const raw = url.trim()
+
+  // YouTube: https://www.youtube.com/watch?v=xxxx
+  // YouTube short: https://youtu.be/xxxx
+  // YouTube shorts: https://www.youtube.com/shorts/xxxx
+  try {
+    const u = new URL(raw)
+    const host = u.hostname.replace(/^www\./, '')
+    const pathname = u.pathname || ''
+
+    if (host === 'youtu.be') {
+      const id = pathname.replace('/', '')
+      return id ? `https://www.youtube.com/embed/${id}` : raw
+    }
+
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      if (pathname.startsWith('/embed/')) return raw
+      if (pathname === '/watch') {
+        const id = u.searchParams.get('v')
+        return id ? `https://www.youtube.com/embed/${id}` : raw
+      }
+      if (pathname.startsWith('/shorts/')) {
+        const id = pathname.replace('/shorts/', '').split('/')[0]
+        return id ? `https://www.youtube.com/embed/${id}` : raw
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return raw
+}
+
+function isSingleUrlText(text) {
+  if (!text || typeof text !== 'string') return false
+  const t = text.trim()
+  if (!t) return false
+  if (/\s/.test(t)) return false
+  try {
+    // eslint-disable-next-line no-new
+    new URL(t)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+function isYoutubeUrl(url) {
+  try {
+    const u = new URL(url)
+    const host = u.hostname.replace(/^www\./, '')
+    return host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtu.be'
+  } catch (e) {
+    return false
+  }
+}
+
+function normalizeWidth(value) {
+  if (value == null) return DEFAULT_VIDEO_WIDTH
+  if (typeof value === 'number') return `${value}px`
+  const s = String(value).trim()
+  if (!s) return DEFAULT_VIDEO_WIDTH
+  if (/^\d+$/.test(s)) return `${s}px`
+  return s
+}
+
+function normalizeHeight(value) {
+  if (value == null) return `${VIDEO_HEIGHT_PRESETS[1]}px`
+  if (typeof value === 'number') return `${value}px`
+  const s = String(value).trim()
+  if (!s) return `${VIDEO_HEIGHT_PRESETS[1]}px`
+  if (s.endsWith('px')) return s
+  if (/^\d+$/.test(s)) return `${s}px`
+  return s
+}
+
+const BlockEmbed = Quill.import('blots/block/embed')
+
+class ResizableVideo extends BlockEmbed {
+  static blotName = 'video'
+
+  static tagName = 'iframe'
+
+  static className = 'ql-video'
+
+  static create(value) {
+    const node = super.create()
+    const videoValue = typeof value === 'string' ? {url: value} : (value || {})
+    const url = normalizeVideoUrl(videoValue.url || '')
+    const width = videoValue.width || DEFAULT_VIDEO_WIDTH
+    const height = videoValue.height || VIDEO_HEIGHT_PRESETS[1]
+    node.setAttribute('src', url)
+    node.setAttribute('frameborder', '0')
+    node.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share')
+    node.setAttribute('allowfullscreen', 'true')
+    node.setAttribute('width', String(width))
+    node.setAttribute('height', String(height))
+
+    node.style.width = normalizeWidth(width)
+    node.style.height = normalizeHeight(height)
+
+    return node
+  }
+
+  static value(domNode) {
+    const styleWidth = domNode.style?.width
+    const styleHeight = domNode.style?.height
+    return {
+      url: domNode.getAttribute('src') || '',
+      width: styleWidth || domNode.getAttribute('width') || DEFAULT_VIDEO_WIDTH,
+      height: (styleHeight ? styleHeight.replace('px', '') : '') || domNode.getAttribute('height') || String(VIDEO_HEIGHT_PRESETS[1])
+    }
+  }
+}
+
+Quill.register(ResizableVideo, true)
+
+const videoOverlayVisible = ref(false)
+const videoOverlayStyle = ref({ top: '0px', left: '0px' })
+let activeVideoElement = null
+let editorMouseMoveHandler = null
+let editorMouseLeaveHandler = null
+let editorScrollHandler = null
 
 const props = defineProps({
   /* 編輯器的内容 */
@@ -63,7 +207,7 @@ const props = defineProps({
   /* 上傳文件大小限制(MB) */
   fileSize: {
     type: Number,
-    default: 5,
+    default: 10,
   },
   /* 類型（base64格式、url格式） */
   type: {
@@ -113,6 +257,10 @@ watch(() => props.modelValue, (v) => {
   }
 }, {immediate: true})
 
+function handleContentUpdate(v) {
+  emits('update:modelValue', v)
+}
+
 // 如果設定了上傳位置則自定義圖片上傳事件
 onMounted(() => {
   if (props.type == 'url') {
@@ -125,9 +273,130 @@ onMounted(() => {
         quill.format("image", false)
       }
     })
+
+    toolbar.addHandler('video', async (value) => {
+      if (!value) {
+        quill.format('video', false)
+        return
+      }
+
+      const urlResult = await ElMessageBox.prompt('請輸入影片連結', '嵌入影片', {
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        inputPlaceholder: 'https://...'
+      }).catch(() => null)
+      if (!urlResult?.value) return
+
+      const range = quill.getSelection(true)
+      const index = range ? range.index : quill.getLength()
+      quill.insertEmbed(index, 'video', {
+        url: urlResult.value,
+        width: DEFAULT_VIDEO_WIDTH,
+        height: VIDEO_HEIGHT_PRESETS[1]
+      })
+      quill.setSelection(index + 1)
+    })
+
+    const qlEditor = quill.root
+    const container = editorContainerRef.value
+
+    const isVideoIframe = (el) => {
+      return !!(el && el.tagName === 'IFRAME' && el.classList && el.classList.contains('ql-video'))
+    }
+
+    const updateOverlayPosition = () => {
+      if (!activeVideoElement || !container) return
+      const iframeRect = activeVideoElement.getBoundingClientRect()
+      const containerRect = container.getBoundingClientRect()
+      const top = Math.max(0, iframeRect.top - containerRect.top + 8)
+      const left = Math.max(0, iframeRect.right - containerRect.left - 44)
+      videoOverlayStyle.value = { top: `${top}px`, left: `${left}px` }
+    }
+
+    // 使用 mouseover/mouseout 來捕捉進出 iframe 邊界（滑鼠進入 iframe 內容時，父層不會收到 mousemove）
+    editorMouseMoveHandler = (e) => {
+      const target = e?.target
+      const iframe = isVideoIframe(target) ? target : target?.closest?.('iframe.ql-video')
+      if (!iframe || !container?.contains(iframe)) return
+
+      activeVideoElement = iframe
+      videoOverlayVisible.value = true
+      updateOverlayPosition()
+    }
+
+    editorMouseLeaveHandler = (e) => {
+      const related = e?.relatedTarget
+      if (related && related.closest && related.closest('.video-resize-overlay')) return
+      if (activeVideoElement && (related === activeVideoElement || related?.closest?.('iframe.ql-video') === activeVideoElement)) return
+
+      videoOverlayVisible.value = false
+      activeVideoElement = null
+    }
+
+    editorScrollHandler = () => {
+      if (!videoOverlayVisible.value) return
+      updateOverlayPosition()
+    }
+
+    qlEditor.addEventListener('mouseover', editorMouseMoveHandler)
+    qlEditor.addEventListener('mouseout', editorMouseLeaveHandler)
+    qlEditor.addEventListener('scroll', editorScrollHandler, { capture: true, passive: true })
+
+    // 修正舊資料：把 watch/shorts/短連結轉成 embed，避免 iframe 被封鎖
+    setTimeout(() => {
+      const root = quill?.root
+      if (!root) return
+      const iframes = root.querySelectorAll('iframe.ql-video')
+      iframes.forEach((iframe) => {
+        const src = iframe.getAttribute('src') || ''
+        const normalized = normalizeVideoUrl(src)
+        if (normalized && normalized !== src) {
+          iframe.setAttribute('src', normalized)
+        }
+        if (!iframe.getAttribute('allow')) {
+          iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share')
+        }
+      })
+    }, 0)
+
     quill.root.addEventListener('paste', handlePasteCapture, true)
   }
 })
+
+onUnmounted(() => {
+  const quill = quillEditorRef.value?.getQuill?.()
+  const root = quill?.root
+  if (root && editorMouseMoveHandler) root.removeEventListener('mouseover', editorMouseMoveHandler)
+  if (root && editorMouseLeaveHandler) root.removeEventListener('mouseout', editorMouseLeaveHandler)
+  if (root && editorScrollHandler) root.removeEventListener('scroll', editorScrollHandler, { capture: true })
+})
+
+function handleVideoResizeClick() {
+  const quill = quillEditorRef.value?.getQuill?.()
+  if (!quill || !activeVideoElement) return
+
+  const current = ResizableVideo.value(activeVideoElement)
+  const currentHeight = parseInt(String(current.height || '').replace('px', ''), 10)
+  const currentIdx = VIDEO_HEIGHT_PRESETS.indexOf(Number.isFinite(currentHeight) ? currentHeight : VIDEO_HEIGHT_PRESETS[1])
+  const nextHeight = VIDEO_HEIGHT_PRESETS[(currentIdx + 1) % VIDEO_HEIGHT_PRESETS.length]
+
+  activeVideoElement.setAttribute('height', String(nextHeight))
+  activeVideoElement.style.height = `${nextHeight}px`
+
+  quill.update('user')
+
+  const container = editorContainerRef.value
+  if (container) {
+    const iframeRect = activeVideoElement.getBoundingClientRect()
+    const containerRect = container.getBoundingClientRect()
+    const top = Math.max(0, iframeRect.top - containerRect.top + 8)
+    const left = Math.max(0, iframeRect.right - containerRect.left - 44)
+    videoOverlayStyle.value = { top: `${top}px`, left: `${left}px` }
+  }
+
+  content.value = quill.root.innerHTML
+  emits('update:modelValue', content.value)
+}
 
 // 上傳前檢驗格式和大小
 function handleBeforeUpload(file) {
@@ -175,6 +444,21 @@ function handleUploadError() {
 function handlePasteCapture(e) {
   const clipboard = e.clipboardData || window.clipboardData
   if (clipboard && clipboard.items) {
+    const text = clipboard.getData?.('text/plain')
+    if (text && isSingleUrlText(text) && isYoutubeUrl(text)) {
+      e.preventDefault()
+      const quill = toRaw(quillEditorRef.value).getQuill()
+      const range = quill.getSelection(true)
+      const index = range ? range.index : quill.getLength()
+      quill.insertEmbed(index, 'video', {
+        url: text,
+        width: DEFAULT_VIDEO_WIDTH,
+        height: VIDEO_HEIGHT_PRESETS[1]
+      })
+      quill.setSelection(index + 1)
+      return
+    }
+
     for (let i = 0; i < clipboard.items.length; i++) {
       const item = clipboard.items[i]
       if (item.type.indexOf('image') !== -1) {
@@ -220,6 +504,34 @@ function insertImage(file) {
   height: auto;
   display: block;
   margin: 10px 0;
+}
+
+.editor {
+  position: relative;
+}
+
+.video-resize-overlay {
+  position: absolute;
+  z-index: 10;
+}
+
+.video-resize-btn {
+  height: 28px;
+  min-width: 40px;
+  padding: 0 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(64, 158, 255, 0.7);
+  background: rgba(255, 255, 255, 0.9);
+  color: #409EFF;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.video-resize-btn:hover {
+  background: #409EFF;
+  color: #fff;
 }
 
 .ql-snow .ql-tooltip[data-mode="link"]::before {
