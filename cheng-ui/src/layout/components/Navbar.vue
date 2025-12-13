@@ -112,6 +112,7 @@ import {ElMessageBox} from 'element-plus'
 import {ref, onMounted, onUnmounted} from 'vue'
 import {ChatDotRound} from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import eventBus from '@/utils/eventBus'
 import Breadcrumb from '@/components/Breadcrumb'
 import TopNav from '@/components/TopNav'
 import Hamburger from '@/components/Hamburger'
@@ -135,6 +136,7 @@ const noticeBodyRef = ref(null)
 const imagePreviewVisible = ref(false)
 const previewImageUrl = ref('')
 let pollTimer = null
+let noticeRefreshHandler = null
 
 function toggleSideBar() {
   appStore.toggleSideBar()
@@ -242,6 +244,13 @@ function setupImagePreview() {
 onMounted(() => {
   getUnreadCount()
   getUnreadNotifications()
+
+  // 其他頁面（例如新增公告）完成後，立即刷新紅點數字
+  noticeRefreshHandler = () => {
+    getUnreadCount()
+  }
+  eventBus.on('notice:refresh-unread-count', noticeRefreshHandler)
+
   // 每 30 秒輪詢一次
   pollTimer = setInterval(() => {
     getUnreadCount()
@@ -252,6 +261,10 @@ onMounted(() => {
 onUnmounted(() => {
   if (pollTimer) {
     clearInterval(pollTimer)
+  }
+
+  if (noticeRefreshHandler) {
+    eventBus.off('notice:refresh-unread-count', noticeRefreshHandler)
   }
 })
 </script>
