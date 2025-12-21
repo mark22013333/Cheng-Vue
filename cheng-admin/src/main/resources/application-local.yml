@@ -62,6 +62,8 @@ spring:
       testWhileIdle: true
       testOnBorrow: false
       testOnReturn: false
+      # 強制設定編碼，解決中文亂碼問題
+      connection-properties: useUnicode=true;characterEncoding=utf8
       webStatFilter:
         enabled: true
       statViewServlet:

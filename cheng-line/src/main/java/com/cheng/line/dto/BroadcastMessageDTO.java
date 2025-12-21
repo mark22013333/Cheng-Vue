@@ -50,6 +50,11 @@ public class BroadcastMessageDTO implements Serializable {
     private String flexMessageJson;
 
     /**
+     * Alt Text（當 contentType 為 FLEX 時使用）
+     */
+    private String altText;
+
+    /**
      * Template Message JSON（當 contentType 為 TEMPLATE 時使用）
      */
     private String templateMessageJson;

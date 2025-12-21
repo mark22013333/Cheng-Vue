@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.line.mapper.LineMessageTemplateMapper">
+
+    <resultMap type="com.cheng.line.domain.LineMessageTemplate" id="LineMessageTemplateResult">
+        <id property="templateId" column="template_id"/>
+        <result property="templateName" column="template_name"/>
+        <result property="templateCode" column="template_code"/>
+        <result property="msgType" column="msg_type"/>
+        <result property="content" column="content"/>
+        <result property="altText" column="alt_text"/>
+        <result property="previewImg" column="preview_img"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="variables" column="variables"/>
+        <result property="status" column="status"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="messageCount" column="message_count"/>
+        <result property="useCount" column="use_count"/>
+        <result property="lastUsedAt" column="last_used_at"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+        <result property="categoryName" column="category_name"/>
+    </resultMap>
+
+    <sql id="selectLineMessageTemplateVo">
+        select t.template_id,
+               t.template_name,
+               t.template_code,
+               t.msg_type,
+               t.content,
+               t.alt_text,
+               t.preview_img,
+               t.category_id,
+               t.variables,
+               t.status,
+               t.sort_order,
+               t.message_count,
+               t.use_count,
+               t.last_used_at,
+               t.del_flag,
+               t.create_by,
+               t.create_time,
+               t.update_by,
+               t.update_time,
+               t.remark,
+               c.category_name
+        from line_message_template t
+                 left join line_message_template_category c on t.category_id = c.category_id
+    </sql>
+
+    <select id="selectLineMessageTemplateById" parameterType="Long" resultMap="LineMessageTemplateResult">
+        <include refid="selectLineMessageTemplateVo"/>
+        where t.template_id = #{templateId} and t.del_flag = '0'
+    </select>
+
+    <select id="selectLineMessageTemplateByCode" parameterType="String" resultMap="LineMessageTemplateResult">
+        <include refid="selectLineMessageTemplateVo"/>
+        where t.template_code = #{templateCode} and t.del_flag = '0'
+    </select>
+
+    <select id="selectLineMessageTemplateList" parameterType="com.cheng.line.domain.LineMessageTemplate"
+            resultMap="LineMessageTemplateResult">
+        <include refid="selectLineMessageTemplateVo"/>
+        <where>
+            t.del_flag = '0'
+            <if test="templateName != null and templateName != ''">
+                AND t.template_name like concat('%', #{templateName}, '%')
+            </if>
+            <if test="templateCode != null and templateCode != ''">
+                AND t.template_code = #{templateCode}
+            </if>
+            <if test="msgType != null and msgType != ''">
+                AND t.msg_type = #{msgType}
+            </if>
+            <if test="categoryId != null">
+                AND t.category_id = #{categoryId}
+            </if>
+            <if test="status != null">
+                AND t.status = #{status}
+            </if>
+        </where>
+        order by t.sort_order, t.create_time desc
+    </select>
+
+    <select id="selectLineMessageTemplateByType" parameterType="String" resultMap="LineMessageTemplateResult">
+        <include refid="selectLineMessageTemplateVo"/>
+        where t.msg_type = #{msgType} and t.del_flag = '0' and t.status = 1
+        order by t.sort_order, t.create_time desc
+    </select>
+
+    <select id="checkTemplateCodeUnique" parameterType="String" resultMap="LineMessageTemplateResult">
+        select template_id, template_code
+        from line_message_template
+        where template_code = #{templateCode} and del_flag = '0'
+        limit 1
+    </select>
+
+    <insert id="insertLineMessageTemplate" parameterType="com.cheng.line.domain.LineMessageTemplate"
+            useGeneratedKeys="true" keyProperty="templateId">
+        insert into line_message_template
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="templateName != null and templateName != ''">template_name,</if>
+            <if test="templateCode != null and templateCode != ''">template_code,</if>
+            <if test="msgType != null and msgType != ''">msg_type,</if>
+            <if test="content != null">content,</if>
+            <if test="altText != null">alt_text,</if>
+            <if test="previewImg != null">preview_img,</if>
+            <if test="categoryId != null">category_id,</if>
+            <if test="variables != null">variables,</if>
+            <if test="status != null">status,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="messageCount != null">message_count,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="templateName != null and templateName != ''">#{templateName},</if>
+            <if test="templateCode != null and templateCode != ''">#{templateCode},</if>
+            <if test="msgType != null and msgType != ''">#{msgType},</if>
+            <if test="content != null">#{content},</if>
+            <if test="altText != null">#{altText},</if>
+            <if test="previewImg != null">#{previewImg},</if>
+            <if test="categoryId != null">#{categoryId},</if>
+            <if test="variables != null">#{variables},</if>
+            <if test="status != null">#{status},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="messageCount != null">#{messageCount},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        </trim>
+    </insert>
+
+    <update id="updateLineMessageTemplate" parameterType="com.cheng.line.domain.LineMessageTemplate">
+        update line_message_template
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="templateName != null and templateName != ''">template_name = #{templateName},</if>
+            <if test="templateCode != null">template_code = #{templateCode},</if>
+            <if test="msgType != null and msgType != ''">msg_type = #{msgType},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="altText != null">alt_text = #{altText},</if>
+            <if test="previewImg != null">preview_img = #{previewImg},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="variables != null">variables = #{variables},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="messageCount != null">message_count = #{messageCount},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </trim>
+        where template_id = #{templateId}
+    </update>
+
+    <update id="deleteLineMessageTemplateById" parameterType="Long">
+        update line_message_template
+        set del_flag = '2'
+        where template_id = #{templateId}
+    </update>
+
+    <update id="deleteLineMessageTemplateByIds" parameterType="Long">
+        update line_message_template set del_flag = '2' where template_id in
+        <foreach item="templateId" collection="array" open="(" separator="," close=")">
+            #{templateId}
+        </foreach>
+    </update>
+
+    <update id="incrementUseCount" parameterType="Long">
+        update line_message_template
+        set use_count    = use_count + 1,
+            last_used_at = sysdate()
+        where template_id = #{templateId}
+    </update>
+
+</mapper>

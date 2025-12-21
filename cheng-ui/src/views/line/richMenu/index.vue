@@ -1,5 +1,31 @@
 <template>
   <div class="app-container">
+    <el-alert type="info" :closable="true" show-icon style="margin-bottom: 12px;">
+      <template #title>
+        Rich Menu 設定步驟說明
+      </template>
+      <div style="line-height: 1.9; font-size: 13px; color: #606266;">
+        <ol style="padding-left: 18px; margin: 6px 0 0;">
+          <li>先到「LINE 頻道設定」建立頻道，並確認 Access Token、Channel Secret 等資訊可用。</li>
+          <li>在本頁點「新增選單」，選擇要套用的「頻道」。</li>
+          <li>設定「版型類型」與「圖片尺寸」，再上傳或輸入「選單圖片」。</li>
+          <li>在「區塊設定」點選畫布中的區塊，為每個區塊設定動作（開啟網址 / 傳送訊息 / 回傳資料 / 切換選單）。</li>
+          <li>若要做「切換選單」：
+            <div style="margin-top: 4px;">
+              <div>1) 先為「目標選單」填寫 Alias ID（建議用表單中的 Alias ID 欄位）。</div>
+              <div>2) 將當前區塊的動作類型選為「切換選單 (Switch)」，再選擇目標 Alias。</div>
+              <div>3) 建議回傳資料固定使用可辨識字串，方便後續追蹤（例如 richmenu-changed）。</div>
+            </div>
+          </li>
+          <li>按「確定」儲存為草稿，確認預覽無誤後再按列表中的「發布 / 重新發布」同步到 LINE 平台。</li>
+          <li>發布後可用「設為預設」設定此頻道的預設選單；需要時再用「更新預覽圖」重新整理本地預覽。</li>
+        </ol>
+        <div style="margin-top: 8px; color: #909399;">
+          提醒：未發布的選單在 LINE 不會生效；Alias 也必須在發布時建立/同步後，切換功能才會正常運作。
+        </div>
+      </div>
+    </el-alert>
+
     <el-form :model="queryParams" ref="queryFormRef" :inline="true" v-show="showSearch" label-width="85px">
       <el-form-item label="選單名稱" prop="name">
         <el-input

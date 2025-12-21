@@ -65,6 +65,33 @@ export function getBaseApiUrl() {
   return import.meta.env.VITE_APP_BASE_API || '';
 }
 
+export function getStaticBaseUrl() {
+  const staticUrl = import.meta.env.VITE_APP_STATIC_URL || '';
+  if (staticUrl) {
+    return staticUrl.endsWith('/') ? staticUrl.slice(0, -1) : staticUrl;
+  }
+  if (typeof window !== 'undefined' && window.location && window.location.origin) {
+    return window.location.origin;
+  }
+  return '';
+}
+
+export function getProfileApiUrl(relativePath) {
+  if (!relativePath) return '';
+  const base = getBaseApiUrl();
+  const clean = String(relativePath).replace(/^\/+/, '');
+  const path = '/profile/' + clean;
+  return base ? base + path : path;
+}
+
+export function getProfileStaticUrl(relativePath) {
+  if (!relativePath) return '';
+  const base = getStaticBaseUrl();
+  const clean = String(relativePath).replace(/^\/+/, '');
+  const path = '/profile/' + clean;
+  return base ? base + path : path;
+}
+
 /**
  * 判斷路徑是否為外部 URL
  * @param {string} path - 路徑

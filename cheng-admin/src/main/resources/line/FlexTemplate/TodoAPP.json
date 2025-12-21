@@ -1,0 +1,242 @@
+{
+  "type": "carousel",
+  "contents": [
+    {
+      "type": "bubble",
+      "size": "nano",
+      "header": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "text",
+            "text": "{{卡片1狀態標題:In Progress}}",
+            "color": "{{卡片1狀態文字顏色:#ffffff}}",
+            "align": "start",
+            "size": "md",
+            "gravity": "center"
+          },
+          {
+            "type": "text",
+            "text": "{{卡片1進度百分比:70%}}",
+            "color": "{{卡片1進度文字顏色:#ffffff}}",
+            "align": "start",
+            "size": "xs",
+            "gravity": "center",
+            "margin": "lg"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "filler"
+                  }
+                ],
+                "width": "{{卡片1進度條寬度:70%}}",
+                "backgroundColor": "{{卡片1進度條顏色:#0D8186}}",
+                "height": "6px"
+              }
+            ],
+            "backgroundColor": "{{卡片1進度條底色:#9FD8E36E}}",
+            "height": "6px",
+            "margin": "sm"
+          }
+        ],
+        "backgroundColor": "{{卡片1標題背景顏色:#27ACB2}}",
+        "paddingTop": "19px",
+        "paddingAll": "12px",
+        "paddingBottom": "16px"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "text",
+                "text": "{{卡片1任務內容:Buy milk and lettuce before class}}",
+                "color": "{{卡片1內容文字顏色:#8C8C8C}}",
+                "size": "sm",
+                "wrap": true
+              }
+            ],
+            "flex": 1
+          }
+        ],
+        "spacing": "md",
+        "paddingAll": "12px"
+      },
+      "styles": {
+        "footer": {
+          "separator": false
+        }
+      }
+    },
+    {
+      "type": "bubble",
+      "size": "nano",
+      "header": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "text",
+            "text": "{{卡片2狀態標題:Pending}}",
+            "color": "{{卡片2狀態文字顏色:#ffffff}}",
+            "align": "start",
+            "size": "md",
+            "gravity": "center"
+          },
+          {
+            "type": "text",
+            "text": "{{卡片2進度百分比:30%}}",
+            "color": "{{卡片2進度文字顏色:#ffffff}}",
+            "align": "start",
+            "size": "xs",
+            "gravity": "center",
+            "margin": "lg"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "filler"
+                  }
+                ],
+                "width": "{{卡片2進度條寬度:30%}}",
+                "backgroundColor": "{{卡片2進度條顏色:#DE5658}}",
+                "height": "6px"
+              }
+            ],
+            "backgroundColor": "{{卡片2進度條底色:#FAD2A76E}}",
+            "height": "6px",
+            "margin": "sm"
+          }
+        ],
+        "backgroundColor": "{{卡片2標題背景顏色:#FF6B6E}}",
+        "paddingTop": "19px",
+        "paddingAll": "12px",
+        "paddingBottom": "16px"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "text",
+                "text": "{{卡片2任務內容:Wash my car}}",
+                "color": "{{卡片2內容文字顏色:#8C8C8C}}",
+                "size": "sm",
+                "wrap": true
+              }
+            ],
+            "flex": 1
+          }
+        ],
+        "spacing": "md",
+        "paddingAll": "12px"
+      },
+      "styles": {
+        "footer": {
+          "separator": false
+        }
+      }
+    },
+    {
+      "type": "bubble",
+      "size": "nano",
+      "header": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "text",
+            "text": "{{卡片3狀態標題:In Progress}}",
+            "color": "{{卡片3狀態文字顏色:#ffffff}}",
+            "align": "start",
+            "size": "md",
+            "gravity": "center"
+          },
+          {
+            "type": "text",
+            "text": "{{卡片3進度百分比:100%}}",
+            "color": "{{卡片3進度文字顏色:#ffffff}}",
+            "align": "start",
+            "size": "xs",
+            "gravity": "center",
+            "margin": "lg"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "filler"
+                  }
+                ],
+                "width": "{{卡片3進度條寬度:100%}}",
+                "backgroundColor": "{{卡片3進度條顏色:#7D51E4}}",
+                "height": "6px"
+              }
+            ],
+            "backgroundColor": "{{卡片3進度條底色:#9FD8E36E}}",
+            "height": "6px",
+            "margin": "sm"
+          }
+        ],
+        "backgroundColor": "{{卡片3標題背景顏色:#A17DF5}}",
+        "paddingTop": "19px",
+        "paddingAll": "12px",
+        "paddingBottom": "16px"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "text",
+                "text": "{{卡片3任務內容:Buy milk and lettuce before class}}",
+                "color": "{{卡片3內容文字顏色:#8C8C8C}}",
+                "size": "sm",
+                "wrap": true
+              }
+            ],
+            "flex": 1
+          }
+        ],
+        "spacing": "md",
+        "paddingAll": "12px"
+      },
+      "styles": {
+        "footer": {
+          "separator": false
+        }
+      }
+    }
+  ]
+}

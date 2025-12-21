@@ -58,9 +58,69 @@ public class PushMessageDTO implements Serializable {
     private String flexMessageJson;
 
     /**
+     * Alt Text（當 contentType 為 FLEX 時使用）
+     */
+    private String altText;
+
+    /**
      * Template Message JSON（當 contentType 為 TEMPLATE 時使用）
      */
     private String templateMessageJson;
+
+    /**
+     * 影片 URL（當 contentType 為 VIDEO 時使用）
+     */
+    private String videoUrl;
+
+    /**
+     * 影片預覽圖 URL（當 contentType 為 VIDEO 時使用）
+     */
+    private String videoPreviewImageUrl;
+
+    /**
+     * 音訊 URL（當 contentType 為 AUDIO 時使用）
+     */
+    private String audioUrl;
+
+    /**
+     * 音訊長度（毫秒，當 contentType 為 AUDIO 時使用）
+     */
+    private Long audioDuration;
+
+    /**
+     * 貼圖 Package ID（當 contentType 為 STICKER 時使用）
+     */
+    private String stickerPackageId;
+
+    /**
+     * 貼圖 ID（當 contentType 為 STICKER 時使用）
+     */
+    private String stickerId;
+
+    /**
+     * 位置標題（當 contentType 為 LOCATION 時使用）
+     */
+    private String locationTitle;
+
+    /**
+     * 位置地址（當 contentType 為 LOCATION 時使用）
+     */
+    private String locationAddress;
+
+    /**
+     * 緯度（當 contentType 為 LOCATION 時使用）
+     */
+    private Double latitude;
+
+    /**
+     * 經度（當 contentType 為 LOCATION 時使用）
+     */
+    private Double longitude;
+
+    /**
+     * Imagemap Message JSON（當 contentType 為 IMAGEMAP 時使用）
+     */
+    private String imagemapMessageJson;
 
     /**
      * 通知設定（是否發送通知）

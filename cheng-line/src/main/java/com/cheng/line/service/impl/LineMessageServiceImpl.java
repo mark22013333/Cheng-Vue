@@ -20,6 +20,8 @@ import com.cheng.line.mapper.LineUserMapper;
 import com.cheng.line.service.ILineConfigService;
 import com.cheng.line.service.ILineMessageService;
 import com.cheng.line.service.ILineUserService;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linecorp.bot.messaging.client.MessagingApiClient;
 import com.linecorp.bot.messaging.model.*;
 import jakarta.annotation.Resource;
@@ -124,11 +126,104 @@ public class LineMessageServiceImpl implements ILineMessageService {
             messageLog.setSuccessCount(1);
             messageLog.setFailCount(0);
             messageLog.setSendTime(new Date());
-            messageLog.setLineRequestId(response.sentMessages().get(0).id());
+            messageLog.setLineRequestId(response.sentMessages().getFirst().id());
             lineMessageLogMapper.updateLineMessageLog(messageLog);
 
             // 更新使用者訊息統計
             lineUserService.incrementMessageCount(pushMessageDTO.getTargetLineUserId(), true);
+
+            return messageLog.getMessageId();
+
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("發送推播訊息失敗", e);
+
+            // 更新失敗狀態
+            messageLog.setSendStatus(SendStatus.FAILED);
+            messageLog.setSuccessCount(0);
+            messageLog.setFailCount(1);
+            messageLog.setErrorMessage(e.getMessage());
+            messageLog.setSendTime(new Date());
+            lineMessageLogMapper.updateLineMessageLog(messageLog);
+
+            throw new ServiceException("發送推播訊息失敗：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 發送推播訊息（單人，多則訊息）
+     * 一次 API 呼叫發送多則訊息（最多 5 則）
+     *
+     * @param targetLineUserId 目標 LINE 使用者 ID
+     * @param pushMessageDTOs  多則訊息 DTO 列表
+     * @return 訊息記錄ID
+     */
+    @Override
+    @Transactional
+    public Long sendPushMessages(String targetLineUserId, List<PushMessageDTO> pushMessageDTOs) {
+        if (pushMessageDTOs == null || pushMessageDTOs.isEmpty()) {
+            throw new ServiceException("訊息列表不能為空");
+        }
+        if (pushMessageDTOs.size() > 5) {
+            throw new ServiceException("LINE API 限制：單次最多發送 5 則訊息");
+        }
+
+        // 取得頻道設定（使用第一則訊息的設定，或預設）
+        LineConfig config = getLineConfig(pushMessageDTOs.getFirst().getConfigId());
+
+        // 建立所有訊息物件
+        List<Message> messages = new ArrayList<>();
+        for (PushMessageDTO dto : pushMessageDTOs) {
+            messages.add(buildMessage(dto.getContentType(), dto));
+        }
+
+        // 建立訊息記錄
+        LineMessageLog messageLog = new LineMessageLog();
+        messageLog.setConfigId(config.getConfigId());
+        messageLog.setMessageType(MessageType.PUSH);
+        messageLog.setContentType(pushMessageDTOs.getFirst().getContentType()); // 使用第一則訊息的類型
+        messageLog.setTargetType(TargetType.SINGLE);
+        messageLog.setTargetLineUserId(targetLineUserId);
+        messageLog.setTargetCount(1);
+        messageLog.setSendStatus(SendStatus.PENDING);
+
+        // 序列化訊息內容（記錄所有訊息）
+        String messageContent = JacksonUtil.encodeToJson(messages);
+        if (StringUtils.isEmpty(messageContent)) {
+            throw new ServiceException("序列化訊息內容失敗");
+        }
+        messageLog.setMessageContent(messageContent);
+
+        // 儲存訊息記錄
+        lineMessageLogMapper.insertLineMessageLog(messageLog);
+
+        // 發送訊息
+        try {
+            MessagingApiClient client = lineClientFactory.getClient(config.getChannelAccessToken());
+
+            PushMessageRequest request = new PushMessageRequest(
+                    targetLineUserId,
+                    messages,  // 一次發送多則訊息
+                    pushMessageDTOs.getFirst().getNotificationDisabled(),
+                    null  // customAggregationUnits
+            );
+
+            messageLog.setSendStatus(SendStatus.SENDING);
+            lineMessageLogMapper.updateLineMessageLog(messageLog);
+
+            PushMessageResponse response = client.pushMessage(UUID.randomUUID(), request).get().body();
+
+            // 更新發送結果
+            messageLog.setSendStatus(SendStatus.SUCCESS);
+            messageLog.setSuccessCount(1);
+            messageLog.setFailCount(0);
+            messageLog.setSendTime(new Date());
+            if (response.sentMessages() != null && !response.sentMessages().isEmpty()) {
+                messageLog.setLineRequestId(response.sentMessages().getFirst().id());
+            }
+            lineMessageLogMapper.updateLineMessageLog(messageLog);
+
+            // 更新使用者訊息統計
+            lineUserService.incrementMessageCount(targetLineUserId, true);
 
             return messageLog.getMessageId();
 
@@ -512,24 +607,91 @@ public class LineMessageServiceImpl implements ILineMessageService {
      * @return LINE 訊息物件
      */
     private Message buildMessage(ContentType contentType, Object dto) {
-        // TODO: 實作 Template Message
         return switch (contentType) {
             case TEXT -> buildTextMessage(dto);
             case IMAGE -> buildImageMessage(dto);
-            case FLEX -> {
-                if (dto instanceof FlexMessageDTO) {
-                    yield buildFlexMessage((FlexMessageDTO) dto);
-                }
-                throw new ServiceException("Flex Message DTO 類型錯誤");
-            }
-            case TEMPLATE -> throw new ServiceException("暫不支援 " + contentType.getDescription() + " 類型");
-            default -> throw new ServiceException("不支援的訊息類型");
+            case VIDEO -> buildVideoMessage(dto);
+            case AUDIO -> buildAudioMessage(dto);
+            case STICKER -> buildStickerMessage(dto);
+            case LOCATION -> buildLocationMessage(dto);
+            case FLEX -> buildFlexMessageFromDto(dto);
+            case TEMPLATE, IMAGEMAP -> throw new ServiceException("暫不支援 " + contentType.getDescription() + " 類型");
         };
     }
 
     /**
-     * 建立文字訊息
+     * 從 DTO 建立 Flex Message
      */
+    private FlexMessage buildFlexMessageFromDto(Object dto) {
+        String flexJson = null;
+        String altText = "Flex Message";
+
+        if (dto instanceof FlexMessageDTO) {
+            flexJson = ((FlexMessageDTO) dto).getFlexContent();
+            altText = ((FlexMessageDTO) dto).getAltText();
+        } else if (dto instanceof PushMessageDTO) {
+            flexJson = ((PushMessageDTO) dto).getFlexMessageJson();
+            altText = ((PushMessageDTO) dto).getAltText();
+        } else if (dto instanceof MulticastMessageDTO) {
+            flexJson = ((MulticastMessageDTO) dto).getFlexMessageJson();
+            altText = ((MulticastMessageDTO) dto).getAltText();
+        } else if (dto instanceof BroadcastMessageDTO) {
+            flexJson = ((BroadcastMessageDTO) dto).getFlexMessageJson();
+            altText = ((BroadcastMessageDTO) dto).getAltText();
+        } else if (dto instanceof ReplyMessageDTO) {
+            flexJson = ((ReplyMessageDTO) dto).getFlexMessageJson();
+            altText = ((ReplyMessageDTO) dto).getAltText();
+        }
+        
+        if (StringUtils.isEmpty(flexJson)) {
+            throw new ServiceException("Flex Message 內容不能為空");
+        }
+        if (StringUtils.isEmpty(altText)) {
+            altText = "收到一則 Flex 訊息";
+        }
+
+        return buildFlexMessage(altText, flexJson);
+    }
+
+    /**
+     * 建立 Flex Message
+     */
+    private FlexMessage buildFlexMessage(String altText, String json) {
+        try {
+            // 先解析 JSON 取得 type 欄位
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            
+            // 取得 type 欄位來決定使用哪個具體類別
+            var jsonNode = objectMapper.readTree(json);
+            String type = jsonNode.has("type") ? jsonNode.get("type").asText() : null;
+            
+            if (type == null) {
+                throw new ServiceException("Flex Message JSON 缺少 type 欄位");
+            }
+            
+            // 根據 type 使用對應的具體類別反序列化
+            FlexContainer container;
+            if ("bubble".equals(type)) {
+                container = objectMapper.readValue(json, FlexBubble.class);
+            } else if ("carousel".equals(type)) {
+                container = objectMapper.readValue(json, FlexCarousel.class);
+            } else {
+                throw new ServiceException("不支援的 Flex Container 類型：" + type);
+            }
+            
+            return new FlexMessage(null, null, altText, container);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Flex Message JSON 解析失敗", e);
+            throw new ServiceException("Flex Message JSON 解析失敗: " + e.getMessage());
+        }
+    }
+
+    private FlexMessage buildFlexMessage(FlexMessageDTO dto) {
+        return buildFlexMessage(dto.getAltText(), dto.getFlexContent());
+    }
     private TextMessage buildTextMessage(Object dto) {
         String text = null;
 
@@ -584,15 +746,101 @@ public class LineMessageServiceImpl implements ILineMessageService {
     }
 
     /**
-     * 建立 Flex Message
-     * TODO: 待完善 - 需要根據 LINE SDK 9.x 的實際 API 調整
-     * 目前先拋出異常，前端應使用標準的文字或圖片訊息
+     * 建立影片訊息
      */
-    private FlexMessage buildFlexMessage(FlexMessageDTO dto) {
-        // 暫時不實作 Flex Message 解析
-        // LINE SDK 9.x 的 FlexContainer 需要完整的物件模型
-        // 建議前端先使用 Flex Message Simulator 產生完整的 JSON
-        throw new ServiceException("Flex Message 功能開發中，請先使用文字或圖片訊息");
+    private VideoMessage buildVideoMessage(Object dto) {
+        String videoUrl = null;
+        String previewImageUrl = null;
+
+        if (dto instanceof PushMessageDTO pushDTO) {
+            videoUrl = pushDTO.getVideoUrl();
+            previewImageUrl = pushDTO.getVideoPreviewImageUrl();
+        }
+
+        if (StringUtils.isEmpty(videoUrl)) {
+            throw new ServiceException("影片 URL 不能為空");
+        }
+        if (StringUtils.isEmpty(previewImageUrl)) {
+            throw new ServiceException("影片預覽圖 URL 不能為空");
+        }
+
+        return new VideoMessage(URI.create(videoUrl), URI.create(previewImageUrl), null);
+    }
+
+    /**
+     * 建立音訊訊息
+     */
+    private AudioMessage buildAudioMessage(Object dto) {
+        String audioUrl = null;
+        Long duration = null;
+
+        if (dto instanceof PushMessageDTO pushDTO) {
+            audioUrl = pushDTO.getAudioUrl();
+            duration = pushDTO.getAudioDuration();
+        }
+
+        if (StringUtils.isEmpty(audioUrl)) {
+            throw new ServiceException("音訊 URL 不能為空");
+        }
+        if (duration == null || duration <= 0) {
+            throw new ServiceException("音訊長度必須大於 0");
+        }
+
+        return new AudioMessage(URI.create(audioUrl), duration);
+    }
+
+    /**
+     * 建立貼圖訊息
+     */
+    private StickerMessage buildStickerMessage(Object dto) {
+        String packageId = null;
+        String stickerId = null;
+
+        if (dto instanceof PushMessageDTO pushDTO) {
+            packageId = pushDTO.getStickerPackageId();
+            stickerId = pushDTO.getStickerId();
+        }
+
+        if (StringUtils.isEmpty(packageId)) {
+            throw new ServiceException("貼圖 Package ID 不能為空");
+        }
+        if (StringUtils.isEmpty(stickerId)) {
+            throw new ServiceException("貼圖 ID 不能為空");
+        }
+
+        return new StickerMessage(packageId, stickerId);
+    }
+
+    /**
+     * 建立位置訊息
+     */
+    private LocationMessage buildLocationMessage(Object dto) {
+        String title = null;
+        String address = null;
+        Double latitude = null;
+        Double longitude = null;
+
+        if (dto instanceof PushMessageDTO pushDTO) {
+            title = pushDTO.getLocationTitle();
+            address = pushDTO.getLocationAddress();
+            latitude = pushDTO.getLatitude();
+            longitude = pushDTO.getLongitude();
+        }
+
+        if (StringUtils.isEmpty(title)) {
+            throw new ServiceException("位置標題不能為空");
+        }
+        if (StringUtils.isEmpty(address)) {
+            throw new ServiceException("位置地址不能為空");
+        }
+        if (latitude == null) {
+            throw new ServiceException("緯度不能為空");
+        }
+        if (longitude == null) {
+            throw new ServiceException("經度不能為空");
+        }
+
+        return new LocationMessage(title, address, latitude, longitude);
     }
 
     /**

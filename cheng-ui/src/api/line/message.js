@@ -9,6 +9,15 @@ export function listMessage(query) {
   })
 }
 
+// 查詢推播訊息記錄列表（別名，供訊息編輯器頁面使用）
+export function listMessageLog(query) {
+  return request({
+    url: '/line/message/list',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查詢推播訊息記錄詳細
 export function getMessage(messageId) {
   return request({
@@ -44,10 +53,55 @@ export function sendBroadcastMessage(data) {
   })
 }
 
-// 發送 Flex Message（彈性訊息）
+// 發送 Flex Message（彈性訊息）- 舊 API
 export function sendFlexMessage(data) {
   return request({
     url: '/line/message/flex',
+    method: 'post',
+    data: data
+  })
+}
+
+// 發送訊息（通用介面）
+export function sendMessage(data) {
+  return request({
+    url: '/line/message/send',
+    method: 'post',
+    data: data
+  })
+}
+
+// 發送 Flex 訊息（新 API）
+export function sendFlexMessageV2(data) {
+  return request({
+    url: '/line/message/send/flex',
+    method: 'post',
+    data: data
+  })
+}
+
+// 發送文字訊息
+export function sendTextMessage(data) {
+  return request({
+    url: '/line/message/send/text',
+    method: 'post',
+    data: data
+  })
+}
+
+// 發送圖片訊息
+export function sendImageMessage(data) {
+  return request({
+    url: '/line/message/send/image',
+    method: 'post',
+    data: data
+  })
+}
+
+// 使用範本發送訊息
+export function sendTemplateMessage(data) {
+  return request({
+    url: '/line/message/send/template',
     method: 'post',
     data: data
   })

@@ -1,0 +1,801 @@
+<template>
+  <div class="app-container">
+    <!-- 搜尋區 -->
+    <el-form :model="queryParams" ref="queryFormRef" :inline="true" v-show="showSearch">
+      <el-form-item label="範本名稱" prop="templateName">
+        <el-input v-model="queryParams.templateName" placeholder="請輸入範本名稱" clearable style="width: 200px" @keyup.enter="handleQuery" />
+      </el-form-item>
+      <el-form-item label="訊息類型" prop="msgType">
+        <el-select v-model="queryParams.msgType" placeholder="全部類型" clearable style="width: 150px">
+          <el-option v-for="item in msgTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="狀態" prop="status">
+        <el-select v-model="queryParams.status" placeholder="全部狀態" clearable style="width: 120px">
+          <el-option label="啟用" :value="1" />
+          <el-option label="停用" :value="0" />
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" :icon="Search" @click="handleQuery">搜尋</el-button>
+        <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
+      </el-form-item>
+    </el-form>
+
+    <!-- 工具列 -->
+    <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button type="primary" plain :icon="Plus" @click="handleAdd">新增範本</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="danger" plain :icon="Delete" :disabled="multiple" @click="handleDelete">刪除</el-button>
+      </el-col>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
+    </el-row>
+
+    <!-- 範本卡片列表 -->
+    <div class="template-grid" v-loading="loading">
+      <el-checkbox-group v-model="selectedIds">
+        <div v-for="item in templateList" :key="item.templateId" class="template-card">
+          <el-checkbox :value="item.templateId" class="card-checkbox" />
+          <div class="card-preview" @click="handlePreview(item)">
+            <MessagePreview :msg-type="item.msgType" :content="item.content" :preview-img="item.previewImg" />
+          </div>
+          <div class="card-info">
+            <div class="card-title">
+              <span>{{ item.templateName }}</span>
+              <el-tag :type="getMsgTypeTag(item.msgType)" size="small">{{ getMsgTypeLabel(item.msgType) }}</el-tag>
+            </div>
+            <div class="card-meta">
+              <span v-if="item.templateCode" class="code">{{ item.templateCode }}</span>
+              <span class="use-count">已使用 {{ item.useCount || 0 }} 次</span>
+            </div>
+            <div class="card-status">
+              <el-switch v-model="item.status" :active-value="1" :inactive-value="0" @change="handleStatusChange(item)" />
+            </div>
+          </div>
+          <div class="card-actions">
+            <el-button link type="primary" :icon="View" @click="handlePreview(item)">預覽</el-button>
+            <el-button link type="primary" :icon="Edit" @click="handleEdit(item)">編輯</el-button>
+            <el-button link type="danger" :icon="Delete" @click="handleDelete(item)">刪除</el-button>
+          </div>
+        </div>
+      </el-checkbox-group>
+
+      <!-- 空狀態 -->
+      <el-empty v-if="templateList.length === 0 && !loading" description="尚無範本，點擊「新增範本」開始建立" />
+    </div>
+
+    <!-- 分頁 -->
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+
+    <!-- 新增/編輯對話框 -->
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="900px" destroy-on-close :close-on-click-modal="false">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="範本名稱" prop="templateName">
+              <el-input v-model="form.templateName" placeholder="請輸入範本名稱" maxlength="100" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="範本代碼" prop="templateCode">
+              <el-input v-model="form.templateCode" placeholder="選填，用於程式引用" maxlength="50" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-form-item label="訊息類型" prop="msgType">
+          <el-radio-group v-model="form.msgType" @change="handleMsgTypeChange">
+            <el-radio-button v-for="item in msgTypeOptions" :key="item.value" :value="item.value">
+              <el-icon class="type-icon"><component :is="item.icon" /></el-icon>
+              {{ item.label }}
+            </el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+
+        <!-- 根據類型顯示不同編輯器 -->
+        <div class="editor-container">
+          <!-- TEXT 純文字 -->
+          <template v-if="form.msgType === 'TEXT'">
+            <el-form-item label="文字內容" prop="content">
+              <el-input v-model="form.content" type="textarea" :rows="6" placeholder="請輸入文字內容，支援 {{變數}} 語法" maxlength="5000" show-word-limit />
+            </el-form-item>
+          </template>
+
+          <!-- IMAGE 圖片 -->
+          <template v-if="form.msgType === 'IMAGE'">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="原圖網址" prop="imageUrl">
+                  <el-input v-model="imageForm.originalContentUrl" placeholder="https://..." />
+                </el-form-item>
+                <el-form-item label="預覽圖網址">
+                  <el-input v-model="imageForm.previewImageUrl" placeholder="https://...（選填，預設同原圖）" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <div class="image-preview">
+                  <el-image v-if="imageForm.originalContentUrl" :src="imageForm.originalContentUrl" fit="contain" :preview-src-list="[imageForm.originalContentUrl]" />
+                  <el-empty v-else description="輸入網址後顯示預覽" :image-size="80" />
+                </div>
+              </el-col>
+            </el-row>
+          </template>
+
+          <!-- VIDEO 影片 -->
+          <template v-if="form.msgType === 'VIDEO'">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="影片網址" prop="videoUrl">
+                  <el-input v-model="videoForm.originalContentUrl" placeholder="https://..." />
+                </el-form-item>
+                <el-form-item label="預覽圖網址">
+                  <el-input v-model="videoForm.previewImageUrl" placeholder="https://..." />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <div class="video-preview">
+                  <video v-if="videoForm.originalContentUrl" :src="videoForm.originalContentUrl" controls style="max-width: 100%; max-height: 200px" />
+                  <el-empty v-else description="輸入網址後顯示預覽" :image-size="80" />
+                </div>
+              </el-col>
+            </el-row>
+          </template>
+
+          <!-- AUDIO 音訊 -->
+          <template v-if="form.msgType === 'AUDIO'">
+            <el-form-item label="音訊網址" prop="audioUrl">
+              <el-input v-model="audioForm.originalContentUrl" placeholder="https://..." />
+            </el-form-item>
+            <el-form-item label="時長（毫秒）">
+              <el-input-number v-model="audioForm.duration" :min="1" :max="60000" placeholder="音訊時長" />
+            </el-form-item>
+            <div v-if="audioForm.originalContentUrl" class="audio-preview">
+              <audio :src="audioForm.originalContentUrl" controls />
+            </div>
+          </template>
+
+          <!-- LOCATION 位置 -->
+          <template v-if="form.msgType === 'LOCATION'">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="地點名稱" prop="locationTitle">
+                  <el-input v-model="locationForm.title" placeholder="例如：台北 101" maxlength="100" />
+                </el-form-item>
+                <el-form-item label="地址" prop="locationAddress">
+                  <el-input v-model="locationForm.address" placeholder="例如：台北市信義區信義路五段7號" maxlength="100" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="緯度">
+                  <el-input-number v-model="locationForm.latitude" :precision="6" :step="0.000001" controls-position="right" style="width: 100%" />
+                </el-form-item>
+                <el-form-item label="經度">
+                  <el-input-number v-model="locationForm.longitude" :precision="6" :step="0.000001" controls-position="right" style="width: 100%" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </template>
+
+          <!-- STICKER 貼圖 -->
+          <template v-if="form.msgType === 'STICKER'">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="貼圖包 ID" prop="packageId">
+                  <el-input v-model="stickerForm.packageId" placeholder="例如：446" />
+                </el-form-item>
+                <el-form-item label="貼圖 ID" prop="stickerId">
+                  <el-input v-model="stickerForm.stickerId" placeholder="例如：1988" />
+                </el-form-item>
+                <el-link type="primary" href="https://developers.line.biz/en/docs/messaging-api/sticker-list/" target="_blank">
+                  查看可用貼圖列表
+                </el-link>
+              </el-col>
+              <el-col :span="12">
+                <div class="sticker-preview">
+                  <img v-if="stickerPreviewUrl" :src="stickerPreviewUrl" alt="sticker" />
+                  <el-empty v-else description="輸入貼圖 ID 後顯示預覽" :image-size="80" />
+                </div>
+              </el-col>
+            </el-row>
+          </template>
+
+          <!-- IMAGEMAP 圖片地圖 -->
+          <template v-if="form.msgType === 'IMAGEMAP'">
+            <el-alert type="info" :closable="false" show-icon class="mb8">
+              圖片地圖需要較複雜的 JSON 設定，建議使用 LINE Official Account Manager 建立後匯出 JSON
+            </el-alert>
+            <el-form-item label="JSON 內容" prop="content">
+              <el-input v-model="form.content" type="textarea" :rows="10" placeholder="請貼上 Imagemap JSON 內容" />
+            </el-form-item>
+            <el-form-item label="替代文字" prop="altText">
+              <el-input v-model="form.altText" placeholder="不支援顯示時的替代文字" maxlength="400" />
+            </el-form-item>
+          </template>
+
+          <!-- FLEX -->
+          <template v-if="form.msgType === 'FLEX'">
+            <el-row :gutter="16">
+              <el-col :span="14">
+                <el-form-item label="JSON 內容" prop="content">
+                  <div class="flex-editor-toolbar">
+                    <el-button size="small" @click="formatFlexJson">格式化</el-button>
+                    <el-button size="small" @click="validateFlexJson">驗證</el-button>
+                    <el-link type="primary" href="https://developers.line.biz/flex-simulator/" target="_blank" style="margin-left: auto">
+                      Flex Simulator
+                    </el-link>
+                  </div>
+                  <el-input v-model="form.content" type="textarea" :rows="15" placeholder="請貼上 Flex Message JSON" class="code-textarea" />
+                </el-form-item>
+                <el-form-item label="替代文字" prop="altText">
+                  <el-input v-model="form.altText" placeholder="不支援 Flex 時顯示的文字" maxlength="400" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10">
+                <div class="flex-preview-panel">
+                  <div class="preview-title">即時預覽</div>
+                  <FlexPreview :json-content="form.content" :width="300" :show-header="true" />
+                </div>
+              </el-col>
+            </el-row>
+          </template>
+        </div>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="狀態">
+              <el-radio-group v-model="form.status">
+                <el-radio :value="1">啟用</el-radio>
+                <el-radio :value="0">停用</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="排序">
+              <el-input-number v-model="form.sortOrder" :min="0" :max="999" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-form-item label="備註">
+          <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="選填" maxlength="500" />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitForm" :loading="submitLoading">確定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 預覽對話框 -->
+    <el-dialog v-model="previewVisible" title="訊息預覽" width="500px" destroy-on-close>
+      <div class="preview-dialog-content">
+        <MessagePreview :msg-type="previewData.msgType" :content="previewData.content" :preview-img="previewData.previewImg" :full-size="true" />
+      </div>
+      <div class="preview-info">
+        <el-descriptions :column="1" border size="small">
+          <el-descriptions-item label="範本名稱">{{ previewData.templateName }}</el-descriptions-item>
+          <el-descriptions-item label="訊息類型">{{ getMsgTypeLabel(previewData.msgType) }}</el-descriptions-item>
+          <el-descriptions-item label="使用次數">{{ previewData.useCount || 0 }} 次</el-descriptions-item>
+          <el-descriptions-item label="建立時間">{{ previewData.createTime }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+      <template #footer>
+        <el-button @click="previewVisible = false">關閉</el-button>
+        <el-button type="primary" @click="goToSendPage(previewData)">使用此範本推播</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup name="LineTemplate">
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh, Plus, Delete, Edit, View, ChatLineSquare, Picture, VideoCamera, Headset, Location, PriceTag, Grid, Document } from '@element-plus/icons-vue'
+import FlexPreview from '@/components/Line/FlexPreview.vue'
+import MessagePreview from './components/MessagePreview.vue'
+import { listTemplate, getTemplate, addTemplate, updateTemplate, delTemplate, changeTemplateStatus } from '@/api/line/template'
+
+const router = useRouter()
+
+const msgTypeOptions = [
+  { value: 'TEXT', label: '文字', icon: ChatLineSquare, tag: 'primary' },
+  { value: 'IMAGE', label: '圖片', icon: Picture, tag: 'success' },
+  { value: 'VIDEO', label: '影片', icon: VideoCamera, tag: 'success' },
+  { value: 'AUDIO', label: '音訊', icon: Headset, tag: 'success' },
+  { value: 'LOCATION', label: '位置', icon: Location, tag: 'info' },
+  { value: 'STICKER', label: '貼圖', icon: PriceTag, tag: 'info' },
+  { value: 'IMAGEMAP', label: '圖片地圖', icon: Grid, tag: 'warning' },
+  { value: 'FLEX', label: 'Flex 訊息', icon: Document, tag: 'danger' }
+]
+
+const loading = ref(false)
+const showSearch = ref(true)
+const total = ref(0)
+const templateList = ref([])
+const selectedIds = ref([])
+const multiple = computed(() => selectedIds.value.length === 0)
+
+const queryParams = reactive({
+  pageNum: 1,
+  pageSize: 12,
+  templateName: '',
+  msgType: '',
+  status: null
+})
+
+const dialogVisible = ref(false)
+const dialogTitle = ref('')
+const submitLoading = ref(false)
+const formRef = ref(null)
+
+const form = reactive({
+  templateId: null,
+  templateName: '',
+  templateCode: '',
+  msgType: 'TEXT',
+  content: '',
+  altText: '',
+  previewImg: '',
+  status: 1,
+  sortOrder: 0,
+  remark: ''
+})
+
+const imageForm = reactive({ originalContentUrl: '', previewImageUrl: '' })
+const videoForm = reactive({ originalContentUrl: '', previewImageUrl: '' })
+const audioForm = reactive({ originalContentUrl: '', duration: 60000 })
+const locationForm = reactive({ title: '', address: '', latitude: 25.033976, longitude: 121.564472 })
+const stickerForm = reactive({ packageId: '', stickerId: '' })
+
+const stickerPreviewUrl = computed(() => {
+  if (stickerForm.packageId && stickerForm.stickerId) {
+    return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${stickerForm.stickerId}/iPhone/sticker.png`
+  }
+  return ''
+})
+
+const rules = {
+  templateName: [{ required: true, message: '請輸入範本名稱', trigger: 'blur' }],
+  msgType: [{ required: true, message: '請選擇訊息類型', trigger: 'change' }],
+  content: [{ required: true, message: '請輸入訊息內容', trigger: 'blur' }]
+}
+
+const previewVisible = ref(false)
+const previewData = ref({})
+
+const getMsgTypeLabel = (type) => msgTypeOptions.find(o => o.value === type)?.label || type
+const getMsgTypeTag = (type) => msgTypeOptions.find(o => o.value === type)?.tag || 'info'
+
+const getList = async () => {
+  loading.value = true
+  try {
+    const res = await listTemplate(queryParams)
+    templateList.value = res.rows || []
+    total.value = res.total || 0
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleQuery = () => {
+  queryParams.pageNum = 1
+  getList()
+}
+
+const resetQuery = () => {
+  queryParams.templateName = ''
+  queryParams.msgType = ''
+  queryParams.status = null
+  handleQuery()
+}
+
+const resetForm = () => {
+  Object.assign(form, {
+    templateId: null, templateName: '', templateCode: '', msgType: 'TEXT',
+    content: '', altText: '', previewImg: '', status: 1, sortOrder: 0, remark: ''
+  })
+  Object.assign(imageForm, { originalContentUrl: '', previewImageUrl: '' })
+  Object.assign(videoForm, { originalContentUrl: '', previewImageUrl: '' })
+  Object.assign(audioForm, { originalContentUrl: '', duration: 60000 })
+  Object.assign(locationForm, { title: '', address: '', latitude: 25.033976, longitude: 121.564472 })
+  Object.assign(stickerForm, { packageId: '', stickerId: '' })
+}
+
+const handleAdd = () => {
+  resetForm()
+  dialogTitle.value = '新增訊息範本'
+  dialogVisible.value = true
+}
+
+const handleEdit = async (row) => {
+  resetForm()
+  dialogTitle.value = '編輯訊息範本'
+  const res = await getTemplate(row.templateId)
+  const data = res.data
+  Object.assign(form, data)
+  parseContentToForm(data.msgType, data.content)
+  dialogVisible.value = true
+}
+
+const parseContentToForm = (msgType, content) => {
+  if (!content) return
+  try {
+    const obj = JSON.parse(content)
+    switch (msgType) {
+      case 'IMAGE':
+        imageForm.originalContentUrl = obj.originalContentUrl || ''
+        imageForm.previewImageUrl = obj.previewImageUrl || ''
+        break
+      case 'VIDEO':
+        videoForm.originalContentUrl = obj.originalContentUrl || ''
+        videoForm.previewImageUrl = obj.previewImageUrl || ''
+        break
+      case 'AUDIO':
+        audioForm.originalContentUrl = obj.originalContentUrl || ''
+        audioForm.duration = obj.duration || 60000
+        break
+      case 'LOCATION':
+        locationForm.title = obj.title || ''
+        locationForm.address = obj.address || ''
+        locationForm.latitude = obj.latitude || 25.033976
+        locationForm.longitude = obj.longitude || 121.564472
+        break
+      case 'STICKER':
+        stickerForm.packageId = obj.packageId || ''
+        stickerForm.stickerId = obj.stickerId || ''
+        break
+    }
+  } catch (e) {
+    // TEXT, IMAGEMAP, FLEX 直接使用 content
+  }
+}
+
+const buildContentFromForm = () => {
+  switch (form.msgType) {
+    case 'TEXT':
+      return form.content
+    case 'IMAGE':
+      return JSON.stringify({
+        type: 'image',
+        originalContentUrl: imageForm.originalContentUrl,
+        previewImageUrl: imageForm.previewImageUrl || imageForm.originalContentUrl
+      })
+    case 'VIDEO':
+      return JSON.stringify({
+        type: 'video',
+        originalContentUrl: videoForm.originalContentUrl,
+        previewImageUrl: videoForm.previewImageUrl
+      })
+    case 'AUDIO':
+      return JSON.stringify({
+        type: 'audio',
+        originalContentUrl: audioForm.originalContentUrl,
+        duration: audioForm.duration
+      })
+    case 'LOCATION':
+      return JSON.stringify({
+        type: 'location',
+        title: locationForm.title,
+        address: locationForm.address,
+        latitude: locationForm.latitude,
+        longitude: locationForm.longitude
+      })
+    case 'STICKER':
+      return JSON.stringify({
+        type: 'sticker',
+        packageId: stickerForm.packageId,
+        stickerId: stickerForm.stickerId
+      })
+    case 'IMAGEMAP':
+    case 'FLEX':
+      return form.content
+    default:
+      return form.content
+  }
+}
+
+const handleMsgTypeChange = () => {
+  form.content = ''
+  form.altText = ''
+}
+
+const formatFlexJson = () => {
+  try {
+    form.content = JSON.stringify(JSON.parse(form.content), null, 2)
+    ElMessage.success('格式化成功')
+  } catch (e) {
+    ElMessage.error('JSON 格式錯誤')
+  }
+}
+
+const validateFlexJson = () => {
+  try {
+    const obj = JSON.parse(form.content)
+    if (!['bubble', 'carousel'].includes(obj.type)) {
+      ElMessage.warning('Flex Container 類型必須是 bubble 或 carousel')
+      return
+    }
+    ElMessage.success('JSON 格式正確')
+  } catch (e) {
+    ElMessage.error('JSON 格式錯誤：' + e.message)
+  }
+}
+
+const validateForm = () => {
+  switch (form.msgType) {
+    case 'TEXT':
+      if (!form.content?.trim()) {
+        ElMessage.warning('請輸入文字內容')
+        return false
+      }
+      break
+    case 'IMAGE':
+      if (!imageForm.originalContentUrl) {
+        ElMessage.warning('請輸入圖片網址')
+        return false
+      }
+      break
+    case 'VIDEO':
+      if (!videoForm.originalContentUrl || !videoForm.previewImageUrl) {
+        ElMessage.warning('請輸入影片網址和預覽圖網址')
+        return false
+      }
+      break
+    case 'AUDIO':
+      if (!audioForm.originalContentUrl) {
+        ElMessage.warning('請輸入音訊網址')
+        return false
+      }
+      break
+    case 'LOCATION':
+      if (!locationForm.title || !locationForm.address) {
+        ElMessage.warning('請輸入地點名稱和地址')
+        return false
+      }
+      break
+    case 'STICKER':
+      if (!stickerForm.packageId || !stickerForm.stickerId) {
+        ElMessage.warning('請輸入貼圖包 ID 和貼圖 ID')
+        return false
+      }
+      break
+    case 'IMAGEMAP':
+    case 'FLEX':
+      if (!form.content?.trim()) {
+        ElMessage.warning('請輸入 JSON 內容')
+        return false
+      }
+      if (!form.altText?.trim()) {
+        ElMessage.warning('請輸入替代文字')
+        return false
+      }
+      try {
+        JSON.parse(form.content)
+      } catch (e) {
+        ElMessage.error('JSON 格式錯誤')
+        return false
+      }
+      break
+  }
+  return true
+}
+
+const submitForm = async () => {
+  await formRef.value?.validate()
+  if (!validateForm()) return
+
+  submitLoading.value = true
+  try {
+    const data = { ...form, content: buildContentFromForm() }
+    if (form.msgType === 'IMAGE') {
+      data.previewImg = imageForm.originalContentUrl
+    }
+    if (form.templateId) {
+      await updateTemplate(data)
+      ElMessage.success('修改成功')
+    } else {
+      await addTemplate(data)
+      ElMessage.success('新增成功')
+    }
+    dialogVisible.value = false
+    getList()
+  } finally {
+    submitLoading.value = false
+  }
+}
+
+const handleDelete = async (row) => {
+  const ids = row.templateId ? [row.templateId] : selectedIds.value
+  if (ids.length === 0) return
+
+  await ElMessageBox.confirm(`確定要刪除選中的 ${ids.length} 個範本嗎？`, '提示', { type: 'warning' })
+  await delTemplate(ids.join(','))
+  ElMessage.success('刪除成功')
+  selectedIds.value = []
+  getList()
+}
+
+const handleStatusChange = async (row) => {
+  try {
+    await changeTemplateStatus(row.templateId, row.status)
+    ElMessage.success(row.status === 1 ? '已啟用' : '已停用')
+  } catch (e) {
+    row.status = row.status === 1 ? 0 : 1
+  }
+}
+
+const handlePreview = (row) => {
+  previewData.value = row
+  previewVisible.value = true
+}
+
+const goToSendPage = (template) => {
+  previewVisible.value = false
+  router.push({ path: '/line/message', query: { templateId: template.templateId } })
+}
+
+onMounted(() => {
+  getList()
+})
+</script>
+
+<style scoped lang="scss">
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  min-height: 200px;
+}
+
+.template-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .card-checkbox {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 10;
+  }
+
+  .card-preview {
+    height: 160px;
+    background: #f5f7fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  .card-info {
+    padding: 12px;
+    border-bottom: 1px solid #ebeef5;
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: #909399;
+
+      .code {
+        background: #f0f2f5;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: monospace;
+      }
+    }
+
+    .card-status {
+      margin-top: 8px;
+    }
+  }
+
+  .card-actions {
+    padding: 8px 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    background: #fafafa;
+  }
+}
+
+.editor-container {
+  margin: 16px 0;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.type-icon {
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.image-preview, .video-preview, .sticker-preview {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f7fa;
+  border-radius: 8px;
+  overflow: hidden;
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+}
+
+.audio-preview {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.flex-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.code-textarea :deep(textarea) {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+}
+
+.flex-preview-panel {
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 12px;
+  height: 100%;
+
+  .preview-title {
+    font-weight: 500;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ebeef5;
+  }
+}
+
+.preview-dialog-content {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.preview-info {
+  margin-top: 16px;
+}
+
+.mb8 {
+  margin-bottom: 8px;
+}
+</style>

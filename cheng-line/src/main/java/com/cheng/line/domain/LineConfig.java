@@ -130,6 +130,20 @@ public class LineConfig extends BaseEntity {
     private Integer sortOrder;
 
     /**
+     * Bot 顯示名稱（從 LINE API 取得）
+     */
+    @Size(max = 200, message = "Bot 顯示名稱長度不能超過200個字元")
+    @Excel(name = "Bot 顯示名稱")
+    private String botDisplayName;
+
+    /**
+     * Bot 圖片 URL（從 LINE API 取得）
+     */
+    @Size(max = 500, message = "Bot 圖片 URL 長度不能超過500個字元")
+    @Excel(name = "Bot 圖片 URL")
+    private String botPictureUrl;
+
+    /**
      * 取得頻道類型代碼（用於資料庫儲存）
      */
     public String getChannelTypeCode() {
@@ -154,7 +168,7 @@ public class LineConfig extends BaseEntity {
      * 設定 Webhook 狀態（從資料庫讀取）
      */
     public void setWebhookStatusCode(Integer code) {
-        this.webhookStatus = Status.fromCode(code);
+        this.webhookStatus = code != null ? Status.fromCode(code) : null;
     }
 
     /**
@@ -168,7 +182,7 @@ public class LineConfig extends BaseEntity {
      * 設定啟用狀態（從資料庫讀取）
      */
     public void setStatusCode(Integer code) {
-        this.status = Status.fromCode(code);
+        this.status = code != null ? Status.fromCode(code) : null;
     }
 
     /**
@@ -182,6 +196,6 @@ public class LineConfig extends BaseEntity {
      * 設定預設頻道（從資料庫讀取）
      */
     public void setIsDefaultCode(Integer code) {
-        this.isDefault = YesNo.fromCode(code);
+        this.isDefault = code != null ? YesNo.fromCode(code) : null;
     }
 }
