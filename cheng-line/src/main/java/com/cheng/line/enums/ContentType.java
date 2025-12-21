@@ -42,6 +42,11 @@ public enum ContentType {
     STICKER("貼圖訊息"),
 
     /**
+     * 位置訊息
+     */
+    LOCATION("位置訊息"),
+
+    /**
      * 模板訊息（按鈕、確認、輪播等）
      */
     TEMPLATE("模板訊息"),
@@ -49,7 +54,12 @@ public enum ContentType {
     /**
      * Flex 訊息（彈性訊息容器）
      */
-    FLEX("Flex訊息");
+    FLEX("Flex訊息"),
+
+    /**
+     * 圖片地圖訊息
+     */
+    IMAGEMAP("圖片地圖");
 
     private final String description;
 

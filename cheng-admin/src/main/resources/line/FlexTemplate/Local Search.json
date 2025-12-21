@@ -1,0 +1,262 @@
+{
+  "type": "carousel",
+  "contents": [
+    {
+      "type": "bubble",
+      "size": "micro",
+      "hero": {
+        "type": "image",
+        "url": "{{地點1圖片網址:https://developers-resource.landpress.line.me/fx/clip/clip10.jpg}}",
+        "size": "full",
+        "aspectMode": "cover",
+        "aspectRatio": "320:213"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "text",
+            "text": "{{地點1名稱:Brown Cafe}}",
+            "weight": "bold",
+            "size": "sm",
+            "wrap": true
+          },
+          {
+            "type": "box",
+            "layout": "baseline",
+            "contents": [
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+              },
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+              },
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+              },
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+              },
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png"
+              },
+              {
+                "type": "text",
+                "text": "{{地點1評分:4.0}}",
+                "size": "xs",
+                "color": "#8c8c8c",
+                "margin": "md",
+                "flex": 0
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "{{地點1標籤:東京旅行}}",
+                    "wrap": true,
+                    "color": "#8c8c8c",
+                    "size": "xs",
+                    "flex": 5
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "spacing": "sm",
+        "paddingAll": "13px"
+      }
+    },
+    {
+      "type": "bubble",
+      "size": "micro",
+      "hero": {
+        "type": "image",
+        "url": "{{地點2圖片網址:https://developers-resource.landpress.line.me/fx/clip/clip11.jpg}}",
+        "size": "full",
+        "aspectMode": "cover",
+        "aspectRatio": "320:213"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "text",
+            "text": "{{地點2名稱:Brown&Cony's Restaurant}}",
+            "weight": "bold",
+            "size": "sm",
+            "wrap": true
+          },
+          {
+            "type": "box",
+            "layout": "baseline",
+            "contents": [
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+              },
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+              },
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+              },
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+              },
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png"
+              },
+              {
+                "type": "text",
+                "text": "4.0",
+                "size": "sm",
+                "color": "#8c8c8c",
+                "margin": "md",
+                "flex": 0
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "東京旅行",
+                    "wrap": true,
+                    "color": "#8c8c8c",
+                    "size": "xs",
+                    "flex": 5
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "spacing": "sm",
+        "paddingAll": "13px"
+      }
+    },
+    {
+      "type": "bubble",
+      "size": "micro",
+      "hero": {
+        "type": "image",
+        "url": "https://developers-resource.landpress.line.me/fx/clip/clip12.jpg",
+        "size": "full",
+        "aspectMode": "cover",
+        "aspectRatio": "320:213"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "text",
+            "text": "Tata",
+            "weight": "bold",
+            "size": "sm"
+          },
+          {
+            "type": "box",
+            "layout": "baseline",
+            "contents": [
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+              },
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+              },
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+              },
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+              },
+              {
+                "type": "icon",
+                "size": "xs",
+                "url": "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png"
+              },
+              {
+                "type": "text",
+                "text": "4.0",
+                "size": "sm",
+                "color": "#8c8c8c",
+                "margin": "md",
+                "flex": 0
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "東京旅行",
+                    "wrap": true,
+                    "color": "#8c8c8c",
+                    "size": "xs",
+                    "flex": 5
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "spacing": "sm",
+        "paddingAll": "13px"
+      }
+    }
+  ]
+}

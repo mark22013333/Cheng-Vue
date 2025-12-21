@@ -1,0 +1,110 @@
+{
+  "type": "bubble",
+  "hero": {
+    "type": "image",
+    "url": "{{主圖片網址:https://developers-resource.landpress.line.me/fx/img/01_2_restaurant.png}}",
+    "size": "full",
+    "aspectRatio": "20:13",
+    "aspectMode": "cover",
+    "action": {
+      "type": "uri",
+      "uri": "{{主圖片連結:https://line.me/}}"
+    }
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "md",
+    "action": {
+      "type": "uri",
+      "uri": "{{內容區連結:https://line.me/}}"
+    },
+    "contents": [
+      {
+        "type": "text",
+        "text": "{{店名:Brown's Burger}}",
+        "size": "xl",
+        "weight": "bold"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "baseline",
+            "contents": [
+              {
+                "type": "icon",
+                "url": "https://developers-resource.landpress.line.me/fx/img/restaurant_regular_32.png"
+              },
+              {
+                "type": "text",
+                "text": "{{餐點1名稱:Beef Burger}}",
+                "weight": "bold",
+                "margin": "sm",
+                "flex": 0
+              },
+              {
+                "type": "text",
+                "text": "{{餐點1價格:$10.5}}",
+                "size": "sm",
+                "align": "end",
+                "color": "#aaaaaa"
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "baseline",
+            "contents": [
+              {
+                "type": "icon",
+                "url": "https://developers-resource.landpress.line.me/fx/img/restaurant_large_32.png"
+              },
+              {
+                "type": "text",
+                "text": "{{餐點2名稱:Chicken Burger}}",
+                "weight": "bold",
+                "margin": "sm",
+                "flex": 0
+              },
+              {
+                "type": "text",
+                "text": "{{餐點2價格:$15.5}}",
+                "size": "sm",
+                "align": "end",
+                "color": "#aaaaaa"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "text": "{{餐點說明:Sauce, Onions, Pickles, Lettuce & Cheese}}",
+        "wrap": true,
+        "color": "#aaaaaa",
+        "size": "xxs"
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "button",
+        "style": "primary",
+        "color": "{{按鈕顏色:#905c44}}",
+        "margin": "xxl",
+        "action": {
+          "type": "uri",
+          "label": "{{按鈕文字:Add to Cart}}",
+          "uri": "{{按鈕連結:https://line.me/}}"
+        }
+      }
+    ]
+  }
+}

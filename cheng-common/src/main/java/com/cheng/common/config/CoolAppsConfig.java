@@ -86,6 +86,10 @@ public class CoolAppsConfig {
         return getProfile() + "/upload/richmenu";
     }
 
+    public static String getMaterialPath() {
+        return getProfile() + "/material";
+    }
+
     /**
      * 取得下載檔案路徑（未來使用）
      */

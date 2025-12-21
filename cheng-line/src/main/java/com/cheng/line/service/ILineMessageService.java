@@ -41,6 +41,16 @@ public interface ILineMessageService {
     Long sendPushMessage(PushMessageDTO pushMessageDTO);
 
     /**
+     * 發送推播訊息（單人，多則訊息）
+     * 一次 API 呼叫發送多則訊息（最多 5 則）
+     *
+     * @param targetLineUserId 目標 LINE 使用者 ID
+     * @param pushMessageDTOs  多則訊息 DTO 列表
+     * @return 訊息記錄ID
+     */
+    Long sendPushMessages(String targetLineUserId, List<PushMessageDTO> pushMessageDTOs);
+
+    /**
      * 發送推播訊息（多人）
      *
      * @param multicastMessageDTO 多人推播訊息 DTO

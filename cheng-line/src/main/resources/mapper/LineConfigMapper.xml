@@ -20,6 +20,8 @@
         <result property="statusCode" column="status"/>
         <result property="isDefaultCode" column="is_default"/>
         <result property="sortOrder" column="sort_order"/>
+        <result property="botDisplayName" column="bot_display_name"/>
+        <result property="botPictureUrl" column="bot_picture_url"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
@@ -43,6 +45,8 @@
                status,
                is_default,
                sort_order,
+               bot_display_name,
+               bot_picture_url,
                create_by,
                create_time,
                update_by,
@@ -106,6 +110,8 @@
             <if test="status != null">status,</if>
             <if test="isDefault != null">is_default,</if>
             <if test="sortOrder != null">sort_order,</if>
+            <if test="botDisplayName != null">bot_display_name,</if>
+            <if test="botPictureUrl != null">bot_picture_url,</if>
             <if test="createBy != null">create_by,</if>
             <if test="remark != null">remark,</if>
             create_time
@@ -125,6 +131,8 @@
             <if test="status != null">#{statusCode},</if>
             <if test="isDefault != null">#{isDefaultCode},</if>
             <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="botDisplayName != null">#{botDisplayName},</if>
+            <if test="botPictureUrl != null">#{botPictureUrl},</if>
             <if test="createBy != null">#{createBy},</if>
             <if test="remark != null">#{remark},</if>
             sysdate()
@@ -148,6 +156,8 @@
             <if test="status != null">status = #{statusCode},</if>
             <if test="isDefault != null">is_default = #{isDefaultCode},</if>
             <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="botDisplayName != null">bot_display_name = #{botDisplayName},</if>
+            <if test="botPictureUrl != null">bot_picture_url = #{botPictureUrl},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="remark != null">remark = #{remark},</if>
             update_time = sysdate()

@@ -366,7 +366,12 @@ public class LineConfigServiceImpl implements ILineConfigService {
                         .data(botData)
                         .build();
 
-                log.info("Bot 資訊取得成功：userId={}, displayName={}",
+                // 儲存 Bot 資訊到資料庫
+                config.setBotDisplayName(botInfo.displayName());
+                config.setBotPictureUrl(botInfo.pictureUrl() != null ? botInfo.pictureUrl().toString() : null);
+                lineConfigMapper.updateLineConfig(config);
+
+                log.info("Bot 資訊取得成功並已儲存：userId={}, displayName={}",
                         botInfo.userId(), botInfo.displayName());
             } catch (Exception e) {
                 botResult = ConnectionTestVO.TestItemVO.builder()
