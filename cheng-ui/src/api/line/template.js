@@ -128,3 +128,40 @@ export function getFlexPresetContent(templateName) {
     method: 'get'
   })
 }
+
+// 上傳 Imagemap 圖片
+export function uploadImagemapImage(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request({
+    url: '/line/template/upload/imagemap',
+    method: 'post',
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
+// 刪除 Imagemap 圖片
+export function deleteImagemapImage(uuid) {
+  return request({
+    url: '/line/template/imagemap/' + uuid,
+    method: 'delete'
+  })
+}
+
+// 查詢圖文範本被哪些訊息範本引用
+export function getImagemapReferences(imagemapId) {
+  return request({
+    url: '/line/template/imagemap/' + imagemapId + '/references',
+    method: 'get'
+  })
+}
+
+// 同步更新引用的訊息範本
+export function syncImagemapReferences(imagemapId, templateIds = null) {
+  return request({
+    url: '/line/template/imagemap/' + imagemapId + '/sync-references',
+    method: 'post',
+    data: templateIds ? { templateIds } : {}
+  })
+}

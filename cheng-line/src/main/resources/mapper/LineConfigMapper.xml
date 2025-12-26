@@ -52,7 +52,7 @@
                update_by,
                update_time,
                remark
-        from sys_line_config
+        from line_config
     </sql>
 
     <select id="selectLineConfigList" parameterType="LineConfig" resultMap="LineConfigResult">
@@ -94,7 +94,7 @@
     </select>
 
     <insert id="insertLineConfig" parameterType="LineConfig" useGeneratedKeys="true" keyProperty="configId">
-        insert into sys_line_config
+        insert into line_config
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="channelType != null">channel_type,</if>
             <if test="channelName != null and channelName != ''">channel_name,</if>
@@ -140,7 +140,7 @@
     </insert>
 
     <update id="updateLineConfig" parameterType="LineConfig">
-        update sys_line_config
+        update line_config
         <trim prefix="SET" suffixOverrides=",">
             <if test="channelType != null">channel_type = #{channelTypeCode},</if>
             <if test="channelName != null and channelName != ''">channel_name = #{channelName},</if>
@@ -167,12 +167,12 @@
 
     <delete id="deleteLineConfigById" parameterType="Integer">
         delete
-        from sys_line_config
+        from line_config
         where config_id = #{configId}
     </delete>
 
     <delete id="deleteLineConfigByIds" parameterType="Integer">
-        delete from sys_line_config where config_id in
+        delete from line_config where config_id in
         <foreach item="configId" collection="array" open="(" separator="," close=")">
             #{configId}
         </foreach>
@@ -180,24 +180,24 @@
 
     <select id="checkChannelTypeUnique" parameterType="String" resultType="int">
         select count(1)
-        from sys_line_config
+        from line_config
         where channel_type = #{channelType}
     </select>
 
     <update id="clearDefaultStatus">
-        update sys_line_config
+        update line_config
         set is_default = 0
         where is_default = 1
     </update>
 
     <update id="setDefaultChannel" parameterType="Integer">
-        update sys_line_config
+        update line_config
         set is_default = 1
         where config_id = #{configId}
     </update>
 
     <update id="updateWebhookStatus">
-        update sys_line_config
+        update line_config
         set webhook_status = #{webhookStatusCode},
             update_time = sysdate()
         where config_id = #{configId}

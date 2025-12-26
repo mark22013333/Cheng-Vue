@@ -180,8 +180,13 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item v-for="item in msgTypeOptions" :key="item.value" :command="item.value">
-                    <el-icon><component :is="item.icon" /></el-icon>
-                    {{ item.label }}
+                    <div style="display: flex; flex-direction: column;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <el-icon><component :is="item.icon" /></el-icon>
+                        {{ item.label }}
+                      </div>
+                      <span v-if="item.hint" style="font-size: 11px; color: #909399; margin-left: 24px;">{{ item.hint }}</span>
+                    </div>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -192,16 +197,47 @@
           <div v-if="currentMessage" class="message-editor">
             <!-- TEXT 編輯器 -->
             <template v-if="currentMessage.type === 'TEXT'">
+              <!-- 即時預覽（綠色對話框） -->
+              <div class="text-live-preview" v-if="currentMessage.text || (currentMessage.emojis && currentMessage.emojis.length > 0)">
+                <div class="preview-label">預覽效果：</div>
+                <div class="preview-bubble">
+                  <template v-for="(part, idx) in textPreviewParts" :key="idx">
+                    <span v-if="part.type === 'text'">{{ part.content }}</span>
+                    <img v-else-if="part.type === 'emoji'" :src="part.url" class="preview-emoji" />
+                  </template>
+                  <span v-if="!currentMessage.text && (!currentMessage.emojis || currentMessage.emojis.length === 0)" class="empty-text">(無內容)</span>
+                </div>
+              </div>
               <el-form-item label="文字內容" prop="content">
                 <el-input
+                  ref="textInputRef"
                   v-model="currentMessage.text"
                   type="textarea"
                   :rows="6"
-                  placeholder="請輸入文字內容，支援 {{變數}} 語法"
+                  placeholder="請輸入文字內容，使用 $ 作為 LINE Emoji 佔位符"
                   maxlength="5000"
                   show-word-limit
                 />
               </el-form-item>
+              <!-- 已插入的 Emoji 列表 -->
+              <div v-if="currentMessage.emojis && currentMessage.emojis.length > 0" class="emoji-list-preview">
+                <div class="emoji-list-label">已插入的 Emoji（對應文字中的 $ 符號）：</div>
+                <div class="emoji-list-items">
+                  <div v-for="(emoji, index) in currentMessage.emojis" :key="index" class="emoji-list-item">
+                    <span class="emoji-index">{{ index + 1 }}</span>
+                    <img :src="getEmojiUrl(emoji.productId, emoji.emojiId)" class="emoji-thumbnail" />
+                    <el-button type="danger" size="small" circle :icon="Close" @click="removeEmojiAt(index)" />
+                  </div>
+                </div>
+                <el-button size="small" type="warning" plain @click="clearAllEmojisFromMessage">清除全部 Emoji</el-button>
+              </div>
+              <div class="text-actions">
+                <el-button type="primary" plain @click="openEmojiSelector">
+                  <el-icon><Star /></el-icon>
+                  插入 LINE Emoji
+                </el-button>
+                <span class="action-tip">使用 $ 作為 Emoji 佔位符，例如：「Hello $ World $」</span>
+              </div>
             </template>
 
             <!-- IMAGE 編輯器 -->
@@ -309,14 +345,32 @@
                   <el-form-item label="貼圖 ID">
                     <el-input v-model="currentMessage.stickerId" placeholder="例如：1988" />
                   </el-form-item>
-                  <el-link type="primary" href="https://developers.line.biz/en/docs/messaging-api/sticker-list/" target="_blank">
-                    查看可用貼圖列表
-                  </el-link>
+                  <div class="sticker-actions">
+                    <el-button type="primary" @click="openStickerSelector">
+                      <el-icon><PriceTag /></el-icon>
+                      從貼圖庫選擇
+                    </el-button>
+                    <el-link type="info" href="https://developers.line.biz/en/docs/messaging-api/sticker-list/" target="_blank">
+                      查看完整列表
+                    </el-link>
+                  </div>
                 </el-col>
                 <el-col :span="12">
                   <div class="media-preview">
-                    <img v-if="stickerPreviewUrl" :src="stickerPreviewUrl" alt="sticker" />
-                    <el-empty v-else description="輸入貼圖 ID 後顯示預覽" :image-size="60" />
+                    <template v-if="stickerPreviewUrl">
+                      <img 
+                        v-if="!stickerError" 
+                        :src="stickerPreviewUrl" 
+                        alt="sticker" 
+                        @error="handleStickerError"
+                      />
+                      <div v-else class="sticker-error">
+                        <el-icon :size="32" color="#F56C6C"><WarningFilled /></el-icon>
+                        <div>貼圖載入失敗</div>
+                        <div class="error-hint">請確認貼圖包 ID 和貼圖 ID 是否正確</div>
+                      </div>
+                    </template>
+                    <el-empty v-else description="請選擇或輸入貼圖 ID" :image-size="60" />
                   </div>
                 </el-col>
               </el-row>
@@ -330,7 +384,7 @@
                     <el-input v-model="currentMessage.altText" placeholder="不支援 Flex 時顯示的文字（必填）" maxlength="400" />
                     <div class="form-tip">※ LINE APP 通知或聊天列表預覽時顯示的文字</div>
                   </el-form-item>
-                  
+
                   <!-- 範本選擇 -->
                   <el-form-item label="選擇範本">
                     <el-select v-model="selectedFlexPreset" placeholder="請選擇 Flex 範本" :loading="flexPresetsLoading" style="width: 100%">
@@ -355,23 +409,23 @@
                       <el-form-item v-for="field in flexEditableFields" :key="field.name" :label="field.label">
                         <!-- 顏色類型 -->
                         <div v-if="field.type === 'color'" class="color-input-wrapper">
-                          <el-color-picker 
-                            v-model="flexVariableValues[field.name]" 
+                          <el-color-picker
+                            v-model="flexVariableValues[field.name]"
                             @change="updateFlexVariable(field.name, $event, 'color')"
                             show-alpha
                           />
-                          <el-input 
-                            v-model="flexVariableValues[field.name]" 
-                            :placeholder="field.placeholder" 
+                          <el-input
+                            v-model="flexVariableValues[field.name]"
+                            :placeholder="field.placeholder"
                             @input="updateFlexVariable(field.name, $event, 'color')"
                             style="flex: 1; margin-left: 8px;"
                           />
                         </div>
                         <!-- URL/圖片類型 -->
-                        <el-input 
-                          v-else-if="field.type === 'url' || field.type === 'image'" 
-                          v-model="flexVariableValues[field.name]" 
-                          :placeholder="field.placeholder" 
+                        <el-input
+                          v-else-if="field.type === 'url' || field.type === 'image'"
+                          v-model="flexVariableValues[field.name]"
+                          :placeholder="field.placeholder"
                           @input="updateFlexVariable(field.name, $event)"
                         >
                           <template #prepend>{{ field.type === 'image' ? '圖片' : 'URL' }}</template>
@@ -380,10 +434,10 @@
                           </template>
                         </el-input>
                         <!-- 一般文字類型 -->
-                        <el-input 
-                          v-else 
-                          v-model="flexVariableValues[field.name]" 
-                          :placeholder="field.placeholder" 
+                        <el-input
+                          v-else
+                          v-model="flexVariableValues[field.name]"
+                          :placeholder="field.placeholder"
                           @input="updateFlexVariable(field.name, $event)"
                         />
                       </el-form-item>
@@ -400,7 +454,7 @@
                       </el-button>
                     </div>
                   </el-form-item>
-                  
+
                   <el-form-item v-if="showFlexJsonEditor" label="JSON 內容（含 {{變數}} 佔位符）">
                     <div class="flex-toolbar">
                       <el-button size="small" @click="formatFlexJson">格式化</el-button>
@@ -432,15 +486,40 @@
 
             <!-- IMAGEMAP 編輯器 -->
             <template v-else-if="currentMessage.type === 'IMAGEMAP'">
-              <el-alert type="info" :closable="false" show-icon class="mb-3">
-                圖片地圖需要較複雜的 JSON 設定，建議使用 LINE Official Account Manager 建立後匯出 JSON
-              </el-alert>
-              <el-form-item label="替代文字" required>
-                <el-input v-model="currentMessage.altText" placeholder="不支援顯示時的替代文字（必填）" maxlength="400" />
-              </el-form-item>
-              <el-form-item label="JSON 內容">
-                <el-input v-model="currentMessage.contents" type="textarea" :rows="10" placeholder="請貼上 Imagemap JSON 內容" />
-              </el-form-item>
+              <!-- 選擇已建立的圖文訊息範本 -->
+              <div class="imagemap-template-selector" style="margin-bottom: 16px;">
+                <el-form-item label="選擇已建立的圖文訊息" style="margin-bottom: 8px;">
+                  <el-select
+                    v-model="selectedImagemapTemplateId"
+                    placeholder="選擇範本後自動載入內容"
+                    clearable
+                    filterable
+                    style="width: 100%;"
+                    :loading="imagemapTemplatesLoading"
+                    @change="handleSelectImagemapTemplate"
+                    @focus="loadImagemapTemplates"
+                  >
+                    <el-option
+                      v-for="tpl in imagemapTemplateList"
+                      :key="tpl.templateId"
+                      :label="tpl.templateName"
+                      :value="tpl.templateId"
+                    >
+                      <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>{{ tpl.templateName }}</span>
+                        <span style="color: #909399; font-size: 12px;">{{ tpl.templateCode || '' }}</span>
+                      </div>
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+                <div style="color: #909399; font-size: 12px; margin-bottom: 12px;">
+                  💡 可從「圖文訊息管理」建立的範本中選擇，或在下方自行編輯
+                </div>
+              </div>
+              <ImagemapEditor
+                v-model="currentMessage.imagemapData"
+                @change="onImagemapChange"
+              />
             </template>
           </div>
         </div>
@@ -460,16 +539,33 @@
       :media-type="mediaSelectorType"
       @select="handleMediaSelect"
     />
+
+    <!-- 貼圖選擇器 -->
+    <StickerSelector
+      v-model="stickerSelectorVisible"
+      :current-package-id="currentMessage?.packageId"
+      :current-sticker-id="currentMessage?.stickerId"
+      @select="handleStickerSelect"
+    />
+
+    <!-- Emoji 選擇器 -->
+    <EmojiSelector
+      v-model="emojiSelectorVisible"
+      @select="handleEmojiSelect"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Plus, Delete, ChatLineSquare, Picture, VideoCamera, Headset, Location, PriceTag, Grid, Document, ArrowDown, Upload } from '@element-plus/icons-vue'
+import { Plus, Delete, ChatLineSquare, Picture, VideoCamera, Headset, Location, PriceTag, Grid, Document, ArrowDown, Upload, WarningFilled, Star, Close } from '@element-plus/icons-vue'
 import FlexPreview from '@/components/Line/FlexPreview.vue'
 import MediaSelector from './MediaSelector.vue'
-import { getFlexPresets, getFlexPresetContent, sendTestMessage as sendTestApi } from '@/api/line/template'
+import ImagemapEditor from './ImagemapEditor.vue'
+import StickerSelector from './StickerSelector.vue'
+import EmojiSelector from './EmojiSelector.vue'
+import { getFlexPresets, getFlexPresetContent, sendTestMessage as sendTestApi, listTemplate, getTemplate } from '@/api/line/template'
 import { listUser as listLineUser } from '@/api/line/user'
 
 const props = defineProps({
@@ -480,14 +576,14 @@ const props = defineProps({
 const emit = defineEmits(['save', 'cancel'])
 
 const msgTypeOptions = [
-  { value: 'TEXT', label: '文字', icon: ChatLineSquare },
-  { value: 'IMAGE', label: '圖片', icon: Picture },
-  { value: 'VIDEO', label: '影片', icon: VideoCamera },
-  { value: 'AUDIO', label: '音訊', icon: Headset },
-  { value: 'LOCATION', label: '位置', icon: Location },
-  { value: 'STICKER', label: '貼圖', icon: PriceTag },
-  { value: 'IMAGEMAP', label: '圖片地圖', icon: Grid },
-  { value: 'FLEX', label: 'Flex 訊息', icon: Document }
+  { value: 'TEXT', label: '文字', icon: ChatLineSquare, hint: 'text' },
+  { value: 'IMAGE', label: '圖片', icon: Picture, hint: 'image' },
+  { value: 'VIDEO', label: '影片', icon: VideoCamera, hint: 'video' },
+  { value: 'AUDIO', label: '音訊', icon: Headset, hint: 'audio' },
+  { value: 'LOCATION', label: '位置', icon: Location, hint: 'location' },
+  { value: 'STICKER', label: '貼圖', icon: PriceTag, hint: 'sticker' },
+  { value: 'IMAGEMAP', label: '圖文訊息', icon: Grid, hint: 'imagemap' },
+  { value: 'FLEX', label: 'Flex 訊息', icon: Document, hint: 'flex' }
 ]
 
 const formRef = ref(null)
@@ -500,6 +596,42 @@ const testLineUserId = ref('')
 const testSending = ref(false)
 const lineUserList = ref([])
 const lineUsersLoading = ref(false)
+
+// 圖文訊息範本選擇相關
+const imagemapTemplateList = ref([])
+const imagemapTemplatesLoading = ref(false)
+const selectedImagemapTemplateId = ref(null)
+
+const loadImagemapTemplates = async () => {
+  imagemapTemplatesLoading.value = true
+  try {
+    const res = await listTemplate({ msgType: 'IMAGEMAP', status: 1, pageNum: 1, pageSize: 100 })
+    imagemapTemplateList.value = res.rows || []
+  } catch (e) {
+    console.error('載入圖文訊息範本失敗', e)
+  } finally {
+    imagemapTemplatesLoading.value = false
+  }
+}
+
+const handleSelectImagemapTemplate = async (templateId) => {
+  if (!templateId || !currentMessage.value) return
+  
+  try {
+    const res = await getTemplate(templateId)
+    if (res.data && res.data.content) {
+      const imagemapData = JSON.parse(res.data.content)
+      currentMessage.value.imagemapData = imagemapData
+      currentMessage.value.contents = JSON.stringify(imagemapData, null, 2)
+      currentMessage.value.altText = imagemapData.altText || '圖片訊息'
+      // 記錄引用的圖文範本 ID
+      currentMessage.value.imagemapSourceId = templateId
+      ElMessage.success('已載入圖文訊息範本')
+    }
+  } catch (e) {
+    ElMessage.error('載入範本失敗：' + (e.message || '未知錯誤'))
+  }
+}
 
 const openTestDialog = () => {
   testLineUserId.value = ''
@@ -523,7 +655,7 @@ const searchLineUsers = async (query) => {
 
 const sendTestMessage = async () => {
   if (!testLineUserId.value || !form.templateId) return
-  
+
   testSending.value = true
   try {
     await sendTestApi(form.templateId, testLineUserId.value)
@@ -550,12 +682,181 @@ const messages = ref([{ type: 'TEXT', text: '' }])
 const isNew = computed(() => !form.templateId)
 const currentMessage = computed(() => messages.value[activeMessageIndex.value])
 
+// 貼圖預覽相關
+const stickerError = ref(false)
+
 const stickerPreviewUrl = computed(() => {
   if (currentMessage.value?.type === 'STICKER' && currentMessage.value.packageId && currentMessage.value.stickerId) {
-    return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${currentMessage.value.stickerId}/iPhone/sticker.png`
+    // 重置錯誤狀態
+    stickerError.value = false
+    // 使用 android 路徑而非 iPhone（根據 LINE API 文件）
+    return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${currentMessage.value.stickerId}/android/sticker.png`
   }
   return ''
 })
+
+const handleStickerError = () => {
+  stickerError.value = true
+}
+
+// 貼圖選擇器
+const stickerSelectorVisible = ref(false)
+
+const openStickerSelector = () => {
+  stickerSelectorVisible.value = true
+}
+
+const handleStickerSelect = (sticker) => {
+  if (currentMessage.value) {
+    currentMessage.value.packageId = sticker.packageId
+    currentMessage.value.stickerId = sticker.stickerId
+    stickerError.value = false
+  }
+}
+
+// Emoji 選擇器
+const emojiSelectorVisible = ref(false)
+const textInputRef = ref(null)
+
+const openEmojiSelector = () => {
+  emojiSelectorVisible.value = true
+}
+
+const handleEmojiSelect = (emojis) => {
+  if (currentMessage.value && currentMessage.value.type === 'TEXT') {
+    // emojis 現在是陣列（多選模式）
+    const emojiList = Array.isArray(emojis) ? emojis : [emojis]
+    
+    // 初始化 emojis 陣列
+    if (!currentMessage.value.emojis) {
+      currentMessage.value.emojis = []
+    }
+    
+    // 批次插入所有選擇的 emoji
+    let currentText = currentMessage.value.text || ''
+    for (const emoji of emojiList) {
+      // 在文字末尾插入 $ 佔位符
+      currentText = currentText + (currentText ? '' : '') + '$'
+      
+      // 添加 emoji 資訊（不計算 index，將在保存時根據 $ 位置重新計算）
+      currentMessage.value.emojis.push({
+        productId: emoji.productId,
+        emojiId: emoji.emojiId
+      })
+    }
+    currentMessage.value.text = currentText
+    
+    ElMessage.success(`已插入 ${emojiList.length} 個 Emoji`)
+  }
+}
+
+// 取得 emoji 圖片 URL
+const getEmojiUrl = (productId, emojiId) => {
+  return `https://stickershop.line-scdn.net/sticonshop/v1/sticon/${productId}/android/${emojiId}.png`
+}
+
+// 移除指定位置的 emoji（同時移除對應的 $ 符號）
+const removeEmojiAt = (index) => {
+  if (!currentMessage.value || !currentMessage.value.emojis) return
+  
+  // 移除 emoji
+  currentMessage.value.emojis.splice(index, 1)
+  
+  // 移除對應的 $ 符號
+  const text = currentMessage.value.text || ''
+  let dollarCount = 0
+  let newText = ''
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '$') {
+      if (dollarCount !== index) {
+        newText += text[i]
+      }
+      dollarCount++
+    } else {
+      newText += text[i]
+    }
+  }
+  currentMessage.value.text = newText
+  ElMessage.success('已移除 Emoji')
+}
+
+// 清除全部 emoji
+const clearAllEmojisFromMessage = () => {
+  if (!currentMessage.value) return
+  currentMessage.value.emojis = []
+  // 移除所有 $ 符號
+  currentMessage.value.text = (currentMessage.value.text || '').replace(/\$/g, '')
+  ElMessage.success('已清除全部 Emoji')
+}
+
+// 即時預覽：將文字中的 $ 替換為 emoji 圖片
+const textPreviewParts = computed(() => {
+  if (!currentMessage.value || currentMessage.value.type !== 'TEXT') return []
+  
+  const text = currentMessage.value.text || ''
+  const emojis = currentMessage.value.emojis || []
+  
+  if (!text) return []
+  
+  let result = []
+  let emojiIndex = 0
+  let lastPos = 0
+  
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '$') {
+      // 添加 $ 之前的文字
+      if (i > lastPos) {
+        result.push({ type: 'text', content: text.substring(lastPos, i) })
+      }
+      // 如果有對應的 emoji，顯示 emoji；否則顯示 $
+      if (emojiIndex < emojis.length) {
+        const emoji = emojis[emojiIndex]
+        result.push({
+          type: 'emoji',
+          url: getEmojiUrl(emoji.productId, emoji.emojiId)
+        })
+        emojiIndex++
+      } else {
+        result.push({ type: 'text', content: '$' })
+      }
+      lastPos = i + 1
+    }
+  }
+  
+  // 添加剩餘的文字
+  if (lastPos < text.length) {
+    result.push({ type: 'text', content: text.substring(lastPos) })
+  }
+  
+  return result
+})
+
+// 重新計算文字中所有 $ 的 index 並匹配對應的 emoji
+const recalculateEmojiIndices = (text, emojis) => {
+  if (!text || !emojis || emojis.length === 0) return []
+  
+  // 找出所有 $ 的位置
+  const dollarIndices = []
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '$') {
+      dollarIndices.push(i)
+    }
+  }
+  
+  // 如果 $ 數量與 emoji 數量不匹配，只處理較少的那個
+  const count = Math.min(dollarIndices.length, emojis.length)
+  const result = []
+  
+  for (let i = 0; i < count; i++) {
+    result.push({
+      index: dollarIndices[i],
+      productId: emojis[i].productId,
+      emojiId: emojis[i].emojiId
+    })
+  }
+  
+  return result
+}
 
 const rules = {
   templateName: [{ required: true, message: '請輸入範本名稱', trigger: 'blur' }]
@@ -590,7 +891,7 @@ const handleMediaSelect = (media) => {
     mediaSelectorTargetVariable.value = ''
     return
   }
-  
+
   if (!currentMessage.value) return
   const targetField = mediaSelectorTargetField.value || 'originalContentUrl'
   currentMessage.value[targetField] = media.url
@@ -642,17 +943,17 @@ const handleJsonFileRemove = (file, fileList) => {
 const validateFlexContent = (jsonStr) => {
   try {
     const json = JSON.parse(jsonStr)
-    
+
     // 檢查是否為有效的 Flex Message 結構
     if (!json.type) {
       return { valid: false, error: '缺少 type 欄位', json: null }
     }
-    
+
     const validTypes = ['bubble', 'carousel']
     if (!validTypes.includes(json.type)) {
       return { valid: false, error: `type 必須是 bubble 或 carousel，目前是「${json.type}」`, json: null }
     }
-    
+
     // carousel 類型需要有 contents 陣列
     if (json.type === 'carousel') {
       if (!Array.isArray(json.contents) || json.contents.length === 0) {
@@ -666,7 +967,7 @@ const validateFlexContent = (jsonStr) => {
         }
       }
     }
-    
+
     // bubble 類型檢查基本結構
     if (json.type === 'bubble') {
       const validSections = ['header', 'hero', 'body', 'footer', 'styles', 'size', 'direction']
@@ -675,7 +976,7 @@ const validateFlexContent = (jsonStr) => {
         return { valid: false, error: 'bubble 必須至少包含 header、hero、body 或 footer 其中之一', json: null }
       }
     }
-    
+
     return { valid: true, error: '', json }
   } catch (err) {
     return { valid: false, error: 'JSON 格式錯誤：' + err.message, json: null }
@@ -685,7 +986,7 @@ const validateFlexContent = (jsonStr) => {
 const confirmImportJson = async () => {
   importJsonError.value = ''
   importJsonLoading.value = true
-  
+
   try {
     if (importJsonTab.value === 'paste') {
       // 貼上模式
@@ -694,69 +995,69 @@ const confirmImportJson = async () => {
         importJsonError.value = '請輸入 JSON 內容'
         return
       }
-      
+
       const result = validateFlexContent(text)
       if (!result.valid) {
         importJsonError.value = result.error
         return
       }
-      
+
       // 格式化並儲存
       const formatted = JSON.stringify(result.json, null, 2)
       flexTemplateRaw.value = formatted
       parseFlexVariables(formatted)
       updateFlexPreview()
-      
+
       importJsonDialogVisible.value = false
-      
+
       if (flexEditableFields.value.length > 0) {
         ElMessage.success(`已匯入 JSON，共解析出 ${flexEditableFields.value.length} 個可編輯變數`)
       } else {
         ElMessage.info('已匯入 JSON，未發現 {{變數}} 佔位符')
       }
-      
+
     } else {
       // 檔案模式
       if (importJsonFiles.value.length === 0) {
         importJsonError.value = '請選擇至少一個 JSON 檔案'
         return
       }
-      
+
       // 讀取所有檔案
       const readPromises = importJsonFiles.value.map(fileItem => {
         return new Promise((resolve, reject) => {
           const reader = new FileReader()
           reader.onload = (e) => {
             const result = validateFlexContent(e.target.result)
-            resolve({ 
-              name: fileItem.name, 
+            resolve({
+              name: fileItem.name,
               ...result,
-              content: e.target.result 
+              content: e.target.result
             })
           }
           reader.onerror = () => reject(new Error(`讀取 ${fileItem.name} 失敗`))
           reader.readAsText(fileItem.raw)
         })
       })
-      
+
       const results = await Promise.all(readPromises)
-      
+
       // 檢查是否有錯誤
       const errors = results.filter(r => !r.valid)
       if (errors.length > 0) {
         importJsonError.value = errors.map(e => `${e.name}: ${e.error}`).join('\n')
         return
       }
-      
+
       // 如果只有一個檔案，直接匯入到當前訊息
       if (results.length === 1) {
         const formatted = JSON.stringify(results[0].json, null, 2)
         flexTemplateRaw.value = formatted
         parseFlexVariables(formatted)
         updateFlexPreview()
-        
+
         importJsonDialogVisible.value = false
-        
+
         if (flexEditableFields.value.length > 0) {
           ElMessage.success(`已匯入 ${results[0].name}，共解析出 ${flexEditableFields.value.length} 個可編輯變數`)
         } else {
@@ -769,7 +1070,7 @@ const confirmImportJson = async () => {
         flexTemplateRaw.value = formatted
         parseFlexVariables(formatted)
         updateFlexPreview()
-        
+
         // 新增其他訊息
         for (let i = 1; i < results.length; i++) {
           if (messages.value.length >= 5) {
@@ -783,7 +1084,7 @@ const confirmImportJson = async () => {
           }
           messages.value.push(msg)
         }
-        
+
         importJsonDialogVisible.value = false
         ElMessage.success(`已匯入 ${Math.min(results.length, 5)} 個 JSON 檔案`)
       }
@@ -801,10 +1102,10 @@ const reloadTemplateVariables = () => {
     ElMessage.warning('請先載入或匯入範本')
     return
   }
-  
+
   parseFlexVariables(flexTemplateRaw.value)
   updateFlexPreview()
-  
+
   if (flexEditableFields.value.length > 0) {
     ElMessage.success(`已重新解析，共 ${flexEditableFields.value.length} 個可編輯變數`)
   } else {
@@ -905,45 +1206,45 @@ const loadFlexPresets = async () => {
 const loadFlexTemplate = async (templateName) => {
   console.log('[Flex] loadFlexTemplate called, templateName:', templateName)
   console.log('[Flex] currentMessage.value:', currentMessage.value)
-  
+
   if (!currentMessage.value) {
     console.warn('[Flex] Early return: currentMessage is falsy')
     ElMessage.warning('請先選擇訊息類型')
     return
   }
-  
+
   if (!templateName) {
     console.warn('[Flex] Early return: templateName is falsy')
     return
   }
-  
+
   ElMessage.info('正在載入範本...')
-  
+
   try {
     console.log('[Flex] Calling getFlexPresetContent for:', templateName)
     const res = await getFlexPresetContent(templateName)
     console.log('[Flex] API response:', res)
-    
+
     // 後端 AjaxResult.success(string) 會將字串放在 msg 欄位
     const responseData = res.data || res.msg
     if (responseData) {
       const content = typeof responseData === 'string' ? responseData : JSON.stringify(responseData, null, 2)
       console.log('[Flex] Parsed content length:', content.length)
       console.log('[Flex] Content preview:', content.substring(0, 200))
-      
+
       // 儲存原始範本（含變數佔位符）
       flexTemplateRaw.value = content
       console.log('[Flex] flexTemplateRaw updated')
-      
-      // 解析變數並生成輸入框
+
+      // 解析變數並產生輸入框
       parseFlexVariables(content)
       console.log('[Flex] After parseFlexVariables, fields:', flexEditableFields.value.length)
       console.log('[Flex] flexVariableValues:', flexVariableValues.value)
-      
+
       // 立即用預設值替換並更新預覽
       updateFlexPreview()
       console.log('[Flex] After updateFlexPreview, currentMessage.contents:', currentMessage.value?.contents?.substring(0, 200))
-      
+
       if (flexEditableFields.value.length === 0) {
         ElMessage.info('此範本沒有可編輯的變數，您可以直接編輯 JSON')
       } else {
@@ -969,17 +1270,17 @@ const parseFlexVariables = (jsonContent) => {
     flexVariableValues.value = {}
     return
   }
-  
+
   // 正則表達式匹配 {{變數名}} 或 {{變數名:預設值}}
   // 支援中文、英文、數字、底線作為變數名
   const variablePattern = /\{\{([^}:]+)(?::([^}]*))?\}\}/g
   const variableMap = new Map()  // 用於去重，保留第一次出現的預設值
-  
+
   let match
   while ((match = variablePattern.exec(jsonContent)) !== null) {
     const varName = match[1].trim()
     const defaultValue = match[2] !== undefined ? match[2] : ''
-    
+
     // 只保留第一次出現的預設值（去重）
     if (!variableMap.has(varName)) {
       variableMap.set(varName, {
@@ -990,7 +1291,7 @@ const parseFlexVariables = (jsonContent) => {
       })
     }
   }
-  
+
   // 轉換為陣列
   const fields = []
   const values = {}
@@ -1004,7 +1305,7 @@ const parseFlexVariables = (jsonContent) => {
     })
     values[name] = variable.value
   })
-  
+
   flexEditableFields.value = fields
   flexVariableValues.value = values
 }
@@ -1015,7 +1316,7 @@ const parseFlexVariables = (jsonContent) => {
 const guessVariableType = (varName, defaultValue) => {
   const lowerName = varName.toLowerCase()
   const lowerValue = (defaultValue || '').toLowerCase()
-  
+
   // 判斷是否為顏色類型（變數名包含「顏色」或「color」，或預設值是 hex 色碼）
   if (lowerName.includes('顏色') || lowerName.includes('color') || lowerName.includes('背景')) {
     return 'color'
@@ -1024,7 +1325,7 @@ const guessVariableType = (varName, defaultValue) => {
   if (/^#[0-9a-f]{3,8}$/i.test(defaultValue)) {
     return 'color'
   }
-  
+
   // 判斷是否為 URL 類型
   if (lowerName.includes('網址') || lowerName.includes('連結') || lowerName.includes('url') || lowerName.includes('link')) {
     return 'url'
@@ -1032,12 +1333,12 @@ const guessVariableType = (varName, defaultValue) => {
   if (lowerValue.startsWith('http://') || lowerValue.startsWith('https://')) {
     return 'url'
   }
-  
+
   // 判斷是否為圖片類型
   if (lowerName.includes('圖片') || lowerName.includes('image') || lowerName.includes('photo')) {
     return 'image'
   }
-  
+
   return 'text'
 }
 
@@ -1048,29 +1349,29 @@ const guessVariableType = (varName, defaultValue) => {
  */
 const rgbaToHex = (color) => {
   if (!color) return color
-  
+
   // 如果已經是 hex 格式，直接返回
   if (color.startsWith('#')) return color
-  
+
   // 解析 rgba(r, g, b, a) 或 rgb(r, g, b)
   const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/)
   if (!match) return color
-  
+
   const r = parseInt(match[1]).toString(16).padStart(2, '0')
   const g = parseInt(match[2]).toString(16).padStart(2, '0')
   const b = parseInt(match[3]).toString(16).padStart(2, '0')
-  
+
   // 如果有 alpha 值且不是 1，加上 alpha
   if (match[4] && parseFloat(match[4]) < 1) {
     const a = Math.round(parseFloat(match[4]) * 255).toString(16).padStart(2, '0')
     return `#${r}${g}${b}${a}`.toUpperCase()
   }
-  
+
   return `#${r}${g}${b}`.toUpperCase()
 }
 
 /**
- * 更新變數值並重新生成預覽 JSON
+ * 更新變數值並重新產生預覽 JSON
  * @param {string} varName - 變數名
  * @param {string} value - 新值
  * @param {string} fieldType - 欄位類型（可選）
@@ -1085,20 +1386,20 @@ const updateFlexVariable = (varName, value, fieldType) => {
 }
 
 /**
- * 用變數值替換範本中的佔位符，生成預覽 JSON
+ * 用變數值替換範本中的佔位符，產生預覽 JSON
  */
 const updateFlexPreview = () => {
   console.log('[Flex] updateFlexPreview called')
   console.log('[Flex] flexTemplateRaw.value exists:', !!flexTemplateRaw.value)
   console.log('[Flex] currentMessage.value exists:', !!currentMessage.value)
-  
+
   if (!flexTemplateRaw.value || !currentMessage.value) {
     console.warn('[Flex] updateFlexPreview early return')
     return
   }
-  
+
   let result = flexTemplateRaw.value
-  
+
   // 替換所有變數
   // 匹配 {{變數名}} 或 {{變數名:預設值}}
   result = result.replace(/\{\{([^}:]+)(?::[^}]*)?\}\}/g, (match, varName) => {
@@ -1107,9 +1408,9 @@ const updateFlexPreview = () => {
     // 如果有值就用值，否則用空字串（或可以選擇保留預設值）
     return value !== undefined && value !== '' ? value : ''
   })
-  
+
   console.log('[Flex] Replaced result preview:', result.substring(0, 200))
-  
+
   // 更新 contents 以觸發預覽更新
   currentMessage.value.contents = result
 }
@@ -1122,12 +1423,12 @@ const parseFlexEditableFields = () => {
     flexEditableFields.value = []
     return
   }
-  
+
   // 如果沒有原始範本，使用當前內容作為範本
   if (!flexTemplateRaw.value) {
     flexTemplateRaw.value = currentMessage.value.contents
   }
-  
+
   parseFlexVariables(flexTemplateRaw.value)
 }
 
@@ -1137,7 +1438,7 @@ const parseFlexEditableFields = () => {
 const updateFlexField = (index) => {
   const field = flexEditableFields.value[index]
   if (!field) return
-  
+
   const value = flexVariableValues.value[field.name]
   updateFlexVariable(field.name, value)
 }
@@ -1145,13 +1446,33 @@ const updateFlexField = (index) => {
 // 初始化時載入 Flex 範本列表
 loadFlexPresets()
 
+// Imagemap 編輯器變更處理
+const onImagemapChange = (imagemapData) => {
+  if (!currentMessage.value) return
+
+  // 將 imagemapData 轉換為 JSON 字串存入 contents
+  currentMessage.value.contents = JSON.stringify(imagemapData, null, 2)
+  currentMessage.value.altText = imagemapData.altText || '圖片訊息'
+}
+
 const handleCancel = () => {
   emit('cancel')
 }
 
 const handleSave = async () => {
-  await formRef.value?.validate()
-  
+  try {
+    await formRef.value?.validate()
+  } catch {
+    // 表單驗證失敗，滾動到第一個錯誤欄位
+    nextTick(() => {
+      const errorEl = document.querySelector('.el-form-item.is-error')
+      if (errorEl) {
+        errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    })
+    return
+  }
+
   // 驗證訊息內容
   for (let i = 0; i < messages.value.length; i++) {
     const msg = messages.value[i]
@@ -1193,7 +1514,6 @@ const handleSave = async () => {
         }
         break
       case 'FLEX':
-      case 'IMAGEMAP':
         if (!msg.contents?.trim() || !msg.altText?.trim()) {
           ElMessage.warning(`訊息 ${i + 1}：請輸入 JSON 內容和替代文字`)
           return
@@ -1205,14 +1525,45 @@ const handleSave = async () => {
           return
         }
         break
+      case 'IMAGEMAP':
+        // 檢查 imagemapData 或直接在 msg 上的屬性（扁平結構）
+        const imagemapData = msg.imagemapData || (msg.baseUrl ? msg : null)
+        if (imagemapData) {
+          if (!imagemapData.baseUrl) {
+            ElMessage.warning(`訊息 ${i + 1}：請先上傳圖片`)
+            return
+          }
+          if (!imagemapData.altText?.trim()) {
+            ElMessage.warning(`訊息 ${i + 1}：請輸入替代文字`)
+            return
+          }
+          if (!imagemapData.actions || imagemapData.actions.length === 0) {
+            ElMessage.warning(`訊息 ${i + 1}：請至少新增一個熱區`)
+            return
+          }
+        } else if (!msg.contents?.trim()) {
+          ElMessage.warning(`訊息 ${i + 1}：請設定圖片地圖內容`)
+          return
+        }
+        break
     }
   }
 
   saving.value = true
   try {
+    // 收集所有 IMAGEMAP 訊息的引用資訊（包含訊息索引）
+    const imagemapRefs = messages.value
+      .map((msg, index) => ({ msg, index }))
+      .filter(({ msg }) => msg.type === 'IMAGEMAP' && msg.imagemapSourceId)
+      .map(({ msg, index }) => ({
+        imagemapId: msg.imagemapSourceId,
+        messageIndex: index
+      }))
+    
     emit('save', {
       ...form,
-      messages: messages.value
+      messages: messages.value,
+      imagemapRefs // 傳遞引用的圖文範本資訊（包含訊息索引）
     })
   } finally {
     saving.value = false
@@ -1230,7 +1581,7 @@ const initForm = () => {
       sortOrder: props.template.sortOrder,
       remark: props.template.remark
     })
-    
+
     // 解析訊息內容
     try {
       const content = JSON.parse(props.template.content)
@@ -1240,13 +1591,46 @@ const initForm = () => {
         messages.value = content.messages.map(msg => {
           const normalizedType = msg.type.toUpperCase()
           const normalizedMsg = { ...msg, type: normalizedType }
-          if ((normalizedType === 'FLEX' || normalizedType === 'IMAGEMAP') && msg.contents) {
-            // 確保 contents 是格式化的 JSON 字串
-            const contentsStr = typeof msg.contents === 'string' 
-              ? msg.contents 
+          
+          // IMAGEMAP 處理：支援扁平結構和 contents 結構
+          if (normalizedType === 'IMAGEMAP') {
+            let imagemapData = null
+            let imagemapSourceId = msg.imagemapSourceId || null
+            
+            // 優先檢查扁平結構（baseUrl 直接在 msg 上）
+            if (msg.baseUrl) {
+              imagemapData = {
+                baseUrl: msg.baseUrl,
+                altText: msg.altText,
+                baseSize: msg.baseSize,
+                actions: msg.actions || []
+              }
+            } else if (msg.contents) {
+              // 從 contents 解析
+              try {
+                imagemapData = typeof msg.contents === 'string' 
+                  ? JSON.parse(msg.contents) 
+                  : msg.contents
+              } catch (e) {
+                console.error('[initForm] IMAGEMAP parse error:', e)
+              }
+            }
+            
+            if (imagemapData) {
+              const contentsStr = JSON.stringify(imagemapData, null, 2)
+              return { ...normalizedMsg, contents: contentsStr, imagemapData, imagemapSourceId }
+            }
+            return { ...normalizedMsg, imagemapSourceId }
+          }
+          
+          // FLEX 處理
+          if (normalizedType === 'FLEX' && msg.contents) {
+            const contentsStr = typeof msg.contents === 'string'
+              ? msg.contents
               : JSON.stringify(msg.contents, null, 2)
             return { ...normalizedMsg, contents: contentsStr }
           }
+          
           return normalizedMsg
         })
       } else {
@@ -1254,8 +1638,8 @@ const initForm = () => {
         messages.value = [parseOldFormat(props.template.msgType, props.template.content, props.template.altText)]
       }
     } catch (e) {
-      // 純文字
-      messages.value = [{ type: 'TEXT', text: props.template.content }]
+      // 純文字或 JSON 解析失敗，嘗試用 parseOldFormat 解析
+      messages.value = [parseOldFormat(props.template.msgType, props.template.content, props.template.altText)]
     }
   } else {
     Object.assign(form, {
@@ -1269,12 +1653,33 @@ const initForm = () => {
     messages.value = [{ type: 'TEXT', text: '' }]
   }
   activeMessageIndex.value = 0
+  
+  // 如果當前訊息是 IMAGEMAP，載入範本列表並設置選中值
+  nextTick(async () => {
+    if (currentMessage.value?.type === 'IMAGEMAP') {
+      await loadImagemapTemplates()
+      const sourceId = currentMessage.value.imagemapSourceId
+      console.log('[initForm] IMAGEMAP sourceId:', sourceId, 'type:', typeof sourceId)
+      console.log('[initForm] imagemapTemplateList:', imagemapTemplateList.value.map(t => ({ id: t.templateId, name: t.templateName })))
+      if (sourceId) {
+        // 確保類型一致（轉為 Number）
+        selectedImagemapTemplateId.value = Number(sourceId)
+        console.log('[initForm] set selectedImagemapTemplateId:', selectedImagemapTemplateId.value)
+      }
+    }
+  })
 }
 
 const parseOldFormat = (msgType, content, altText) => {
   try {
     const obj = JSON.parse(content)
     switch (msgType) {
+      case 'TEXT':
+        // 處理 JSON 格式的 TEXT（包含 emojis）
+        if (obj.type === 'text' && obj.text) {
+          return { type: 'TEXT', text: obj.text, emojis: obj.emojis || [] }
+        }
+        return { type: 'TEXT', text: content }
       case 'IMAGE':
         return { type: 'IMAGE', originalContentUrl: obj.originalContentUrl, previewImageUrl: obj.previewImageUrl }
       case 'VIDEO':
@@ -1289,7 +1694,7 @@ const parseOldFormat = (msgType, content, altText) => {
         // 格式化 JSON 以便於編輯
         return { type: 'FLEX', altText: altText || '', contents: JSON.stringify(obj, null, 2) }
       case 'IMAGEMAP':
-        return { type: 'IMAGEMAP', altText: altText || '', contents: JSON.stringify(obj, null, 2) }
+        return { type: 'IMAGEMAP', altText: altText || '', contents: JSON.stringify(obj, null, 2), imagemapData: obj }
       default:
         return { type: 'TEXT', text: content }
     }
@@ -1306,7 +1711,7 @@ watch(() => props.template, initForm, { immediate: true })
 
 watch(
   () => activeMessageIndex.value,
-  () => {
+  async () => {
     if (currentMessage.value?.type === 'FLEX') {
       parseFlexEditableFields()
     } else {
@@ -1314,7 +1719,24 @@ watch(
       flexTemplateRaw.value = ''
       flexVariableValues.value = {}
     }
-  }
+    
+    // IMAGEMAP 類型：載入範本列表並設置已選擇的範本
+    if (currentMessage.value?.type === 'IMAGEMAP') {
+      await loadImagemapTemplates()
+      
+      // 優先使用 imagemapSourceId（記錄的引用 ID）
+      const sourceId = currentMessage.value.imagemapSourceId
+      if (sourceId) {
+        // 確保類型一致（轉為 Number）
+        selectedImagemapTemplateId.value = Number(sourceId)
+      } else {
+        selectedImagemapTemplateId.value = null
+      }
+    } else {
+      selectedImagemapTemplateId.value = null
+    }
+  },
+  { immediate: true }
 )
 
 // 監聽範本選擇變化，自動載入範本
@@ -1455,11 +1877,132 @@ watch(
     max-height: 100%;
     object-fit: contain;
   }
+  
+  .sticker-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #F56C6C;
+    font-size: 14px;
+    
+    .error-hint {
+      font-size: 12px;
+      color: #909399;
+    }
+  }
 }
 
 .audio-preview {
   margin-top: 12px;
   text-align: center;
+}
+
+.sticker-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+// 即時預覽對話框
+.text-live-preview {
+  margin-bottom: 16px;
+  
+  .preview-label {
+    font-size: 12px;
+    color: #909399;
+    margin-bottom: 8px;
+  }
+  
+  .preview-bubble {
+    background: #06c755;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 18px;
+    border-bottom-left-radius: 4px;
+    font-size: 14px;
+    line-height: 1.6;
+    display: inline-block;
+    max-width: 100%;
+    word-break: break-word;
+    white-space: pre-wrap;
+    
+    .preview-emoji {
+      width: 20px;
+      height: 20px;
+      vertical-align: middle;
+      margin: 0 1px;
+    }
+    
+    .empty-text {
+      opacity: 0.6;
+      font-style: italic;
+    }
+  }
+}
+
+.emoji-list-preview {
+  margin: 12px 0;
+  padding: 12px;
+  background: #f0f9eb;
+  border-radius: 8px;
+  border: 1px solid #e1f3d8;
+
+  .emoji-list-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #67c23a;
+    margin-bottom: 8px;
+  }
+
+  .emoji-list-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .emoji-list-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #e4e7ed;
+
+    .emoji-index {
+      width: 20px;
+      height: 20px;
+      background: #67c23a;
+      color: #fff;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .emoji-thumbnail {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+  }
+}
+
+.text-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  
+  .action-tip {
+    font-size: 12px;
+    color: #909399;
+  }
 }
 
 .flex-toolbar {
@@ -1583,7 +2126,7 @@ watch(
 
 .import-error {
   margin-top: 12px;
-  
+
   :deep(.el-alert__description) {
     white-space: pre-wrap;
     font-family: monospace;

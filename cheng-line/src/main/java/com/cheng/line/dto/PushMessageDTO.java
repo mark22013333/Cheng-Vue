@@ -43,6 +43,11 @@ public class PushMessageDTO implements Serializable {
     private String textMessage;
 
     /**
+     * Emoji 列表（當 contentType 為 TEXT 時使用）
+     */
+    private List<EmojiDTO> emojis;
+
+    /**
      * 圖片 URL（當 contentType 為 IMAGE 時使用）
      */
     private String imageUrl;
@@ -126,4 +131,14 @@ public class PushMessageDTO implements Serializable {
      * 通知設定（是否發送通知）
      */
     private Boolean notificationDisabled = false;
+
+    /**
+     * Emoji DTO
+     */
+    @Data
+    public static class EmojiDTO {
+        private Integer index;
+        private String productId;
+        private String emojiId;
+    }
 }

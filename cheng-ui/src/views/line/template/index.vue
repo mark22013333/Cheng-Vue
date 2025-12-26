@@ -1,7 +1,7 @@
 <template>
   <div class="template-container">
     <!-- 左側範本列表 -->
-    <div class="left-panel">
+    <div class="left-panel" :style="{ width: leftPanelWidth + 'px' }">
       <TemplateList
         :list="templateList"
         :loading="loading"
@@ -9,6 +9,14 @@
         @select="handleSelectTemplate"
         @add="handleAdd"
       />
+    </div>
+
+    <!-- 可拖曳分隔線 -->
+    <div 
+      class="resize-handle"
+      @mousedown="startResize"
+    >
+      <div class="resize-line"></div>
     </div>
 
     <!-- 右側編輯區域 -->
@@ -46,9 +54,17 @@
               <el-descriptions :column="2" border size="small">
                 <el-descriptions-item label="範本代碼">{{ selectedTemplate.templateCode || '-' }}</el-descriptions-item>
                 <el-descriptions-item label="訊息類型">
-                  <el-tag :type="getMsgTypeTag(selectedTemplate.msgType)" size="small">
-                    {{ getMsgTypeLabel(selectedTemplate.msgType) }}
-                  </el-tag>
+                  <div class="msg-type-tags">
+                    <el-tag 
+                      v-for="type in selectedMsgTypes" 
+                      :key="type" 
+                      :type="getMsgTypeTag(type)" 
+                      size="small"
+                      style="margin-right: 4px;"
+                    >
+                      {{ getMsgTypeLabel(type) }}
+                    </el-tag>
+                  </div>
                 </el-descriptions-item>
                 <el-descriptions-item label="狀態">
                   <el-switch
@@ -89,7 +105,7 @@
     </div>
 
     <!-- 預覽對話框 -->
-    <el-dialog v-model="previewDialogVisible" title="訊息預覽" width="500px" destroy-on-close>
+    <el-dialog v-model="previewDialogVisible" title="訊息預覽" width="420px" destroy-on-close>
       <div class="preview-dialog-content">
         <MessagePreview
           :msg-type="selectedTemplate?.msgType"
@@ -98,6 +114,7 @@
           :full-size="true"
           :bot-name="botName"
           :bot-avatar="botAvatar"
+          :show-phone-frame="true"
         />
       </div>
     </el-dialog>
@@ -105,7 +122,7 @@
 </template>
 
 <script setup name="LineTemplate">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, View, More, ChatLineSquare, Picture, VideoCamera, Headset, Location, PriceTag, Grid, Document } from '@element-plus/icons-vue'
@@ -116,6 +133,41 @@ import { listTemplate, getTemplate, addTemplate, updateTemplate, delTemplate, ch
 import { getDefaultChannel } from '@/api/line/config'
 
 const router = useRouter()
+
+// 可拖曳分隔線
+const leftPanelWidth = ref(320)
+const isResizing = ref(false)
+const MIN_WIDTH = 200
+const MAX_WIDTH = 500
+
+const startResize = (e) => {
+  isResizing.value = true
+  document.addEventListener('mousemove', handleResize)
+  document.addEventListener('mouseup', stopResize)
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+}
+
+const handleResize = (e) => {
+  if (!isResizing.value) return
+  const newWidth = e.clientX - 240 // 240 是左側選單寬度
+  if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
+    leftPanelWidth.value = newWidth
+  }
+}
+
+const stopResize = () => {
+  isResizing.value = false
+  document.removeEventListener('mousemove', handleResize)
+  document.removeEventListener('mouseup', stopResize)
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+}
+
+onUnmounted(() => {
+  document.removeEventListener('mousemove', handleResize)
+  document.removeEventListener('mouseup', stopResize)
+})
 
 // LINE Bot 資訊
 const lineConfig = ref(null)
@@ -129,7 +181,7 @@ const msgTypeOptions = [
   { value: 'AUDIO', label: '音訊', tag: 'success' },
   { value: 'LOCATION', label: '位置', tag: 'info' },
   { value: 'STICKER', label: '貼圖', tag: 'info' },
-  { value: 'IMAGEMAP', label: '圖片地圖', tag: 'warning' },
+  { value: 'IMAGEMAP', label: '圖文訊息', tag: 'warning' },
   { value: 'FLEX', label: 'Flex', tag: 'danger' }
 ]
 
@@ -227,6 +279,28 @@ const previewDialogVisible = ref(false)
 const getMsgTypeLabel = (type) => msgTypeOptions.find(o => o.value === type)?.label || type
 const getMsgTypeTag = (type) => msgTypeOptions.find(o => o.value === type)?.tag || 'info'
 
+// 解析 content 中實際包含的訊息類型
+const getActualMsgTypes = (template) => {
+  if (!template?.content) return []
+  try {
+    const parsed = JSON.parse(template.content)
+    if (parsed.messages && Array.isArray(parsed.messages)) {
+      // 多訊息格式：提取每個訊息的類型
+      const types = parsed.messages.map(msg => msg.type?.toUpperCase()).filter(Boolean)
+      return [...new Set(types)] // 去重
+    }
+  } catch {
+    // 解析失敗，返回原始類型
+  }
+  return template.msgType ? [template.msgType] : []
+}
+
+// 計算選中範本的實際訊息類型
+const selectedMsgTypes = computed(() => {
+  if (!selectedTemplate.value) return []
+  return getActualMsgTypes(selectedTemplate.value)
+})
+
 const getList = async () => {
   loading.value = true
   try {
@@ -290,7 +364,9 @@ const handleSave = async (data) => {
       altText,
       status: data.status,
       sortOrder: data.sortOrder,
-      remark: data.remark
+      remark: data.remark,
+      // 傳遞引用的圖文範本資訊（包含訊息索引）
+      imagemapRefs: data.imagemapRefs || []
     }
 
     if (data.templateId) {
@@ -318,13 +394,52 @@ const handleSave = async (data) => {
       }
     }
   } catch (e) {
-    ElMessage.error(e.message || '儲存失敗')
+    // request.js 攔截器已顯示錯誤訊息，這裡不再重複顯示
+    console.error('儲存失敗:', e)
   }
+}
+
+// 重新計算文字中所有 $ 的 index 並匹配對應的 emoji
+const recalculateEmojiIndices = (text, emojis) => {
+  if (!text || !emojis || emojis.length === 0) return []
+  
+  // 找出所有 $ 的位置
+  const dollarIndices = []
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '$') {
+      dollarIndices.push(i)
+    }
+  }
+  
+  // 如果 $ 數量與 emoji 數量不匹配，只處理較少的那個
+  const count = Math.min(dollarIndices.length, emojis.length)
+  const result = []
+  
+  for (let i = 0; i < count; i++) {
+    result.push({
+      index: dollarIndices[i],
+      productId: emojis[i].productId,
+      emojiId: emojis[i].emojiId
+    })
+  }
+  
+  return result
 }
 
 const buildMessageContent = (msg) => {
   switch (msg.type) {
     case 'TEXT':
+      // 如果有 emoji，需要返回包含 emojis 的 JSON 結構
+      if (msg.emojis && msg.emojis.length > 0 && msg.text) {
+        const recalculatedEmojis = recalculateEmojiIndices(msg.text, msg.emojis)
+        if (recalculatedEmojis.length > 0) {
+          return JSON.stringify({
+            type: 'text',
+            text: msg.text,
+            emojis: recalculatedEmojis
+          })
+        }
+      }
       return msg.text
     case 'IMAGE':
       return JSON.stringify({
@@ -371,6 +486,13 @@ const buildMessageObject = (msg) => {
   switch (msg.type) {
     case 'TEXT':
       obj.text = msg.text
+      // 重新計算 emoji 的 index（根據文字中 $ 的位置）
+      if (msg.emojis && msg.emojis.length > 0 && msg.text) {
+        const recalculatedEmojis = recalculateEmojiIndices(msg.text, msg.emojis)
+        if (recalculatedEmojis.length > 0) {
+          obj.emojis = recalculatedEmojis
+        }
+      }
       break
     case 'IMAGE':
       obj.originalContentUrl = msg.originalContentUrl
@@ -396,11 +518,27 @@ const buildMessageObject = (msg) => {
       break
     case 'FLEX':
       obj.altText = msg.altText
-      obj.contents = JSON.parse(msg.contents)
+      if (msg.contents) {
+        obj.contents = typeof msg.contents === 'string' ? JSON.parse(msg.contents) : msg.contents
+      }
       break
     case 'IMAGEMAP':
       obj.altText = msg.altText
-      Object.assign(obj, JSON.parse(msg.contents))
+      // 支援扁平結構（baseUrl 直接在 msg 上）和 contents 結構
+      if (msg.baseUrl) {
+        obj.baseUrl = msg.baseUrl
+        obj.baseSize = msg.baseSize
+        obj.actions = msg.actions
+      } else if (msg.contents) {
+        const imagemapData = typeof msg.contents === 'string' ? JSON.parse(msg.contents) : msg.contents
+        Object.assign(obj, imagemapData)
+      } else if (msg.imagemapData) {
+        Object.assign(obj, msg.imagemapData)
+      }
+      // 記錄引用的圖文範本 ID（用於建立關聯）
+      if (msg.imagemapSourceId) {
+        obj.imagemapSourceId = msg.imagemapSourceId
+      }
       break
   }
   return obj
@@ -471,8 +609,31 @@ onMounted(() => {
 }
 
 .left-panel {
-  width: 320px;
   flex-shrink: 0;
+  transition: none;
+}
+
+.resize-handle {
+  width: 8px;
+  cursor: col-resize;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  
+  &:hover .resize-line,
+  &:active .resize-line {
+    background: #409eff;
+  }
+  
+  .resize-line {
+    width: 2px;
+    height: 40px;
+    background: #dcdfe6;
+    border-radius: 1px;
+    transition: background 0.2s;
+  }
 }
 
 .right-panel {

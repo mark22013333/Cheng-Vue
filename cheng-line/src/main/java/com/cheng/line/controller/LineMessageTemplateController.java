@@ -6,12 +6,15 @@ import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.JacksonUtil;
+import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.line.domain.LineMessageTemplate;
+import com.cheng.line.dto.ImagemapMessageDto;
 import com.cheng.line.dto.PushMessageDTO;
 import com.cheng.line.enums.ContentType;
 import com.cheng.line.service.ILineMessageService;
 import com.cheng.line.service.ILineMessageTemplateService;
+import com.cheng.line.service.ILineTemplateImagemapRefService;
 import com.cheng.line.util.FlexMessageParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,6 +24,18 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import com.cheng.common.config.CoolAppsConfig;
+import com.cheng.common.utils.uuid.IdUtils;
+import com.cheng.line.enums.ImagemapWidth;
+import com.cheng.line.enums.LineApiLimit;
+import com.cheng.line.util.ImagemapUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +51,85 @@ public class LineMessageTemplateController extends BaseController {
     private @Resource ILineMessageTemplateService lineMessageTemplateService;
     private @Resource ILineMessageService lineMessageService;
     private @Resource FlexMessageParser flexMessageParser;
+    private @Resource ILineTemplateImagemapRefService imagemapRefService;
+
+    /**
+     * 上傳 Imagemap 圖片
+     * 自動產生 240, 300, 460, 700, 1040 五種尺寸
+     */
+    @PreAuthorize("@ss.hasPermi('line:template:add')")
+    @Log(title = "Imagemap圖片上傳", businessType = BusinessType.UPDATE)
+    @PostMapping("/upload/imagemap")
+    public AjaxResult uploadImagemap(@RequestParam("file") MultipartFile file) {
+        try {
+            // 驗證檔案
+            if (file == null || file.isEmpty()) {
+                return error("請選擇要上傳的圖片");
+            }
+
+            // 產生隨機目錄名稱
+            String uuid = IdUtils.fastSimpleUUID();
+            Path outputDir = Paths.get(CoolAppsConfig.getImagemapPath(), uuid);
+
+            // 處理圖片並取得結果
+            ImagemapUtils.ImageGenerationResult result;
+            try (InputStream is = file.getInputStream()) {
+                result = ImagemapUtils.generateImages(is, outputDir);
+            }
+
+            // 構建資源路徑（相對路徑，前端會自動處理環境差異）
+            String resourcePath = "/profile/imagemap/" + uuid;
+            String previewUrl = resourcePath + "/" + ImagemapWidth.WIDTH_700.getCode();
+
+            // 判斷是否有調整尺寸（原始尺寸與基底尺寸不同）
+            boolean resized = result.getOriginalWidth() != result.getBaseWidth() ||
+                              result.getOriginalHeight() != result.getBaseHeight();
+
+            // 返回詳細資訊（與 Rich Menu 上傳保持一致的格式）
+            Map<String, Object> data = new HashMap<>();
+            data.put("baseUrl", resourcePath);
+            data.put("previewUrl", previewUrl);
+            data.put("uuid", uuid);
+            data.put("originalWidth", result.getOriginalWidth());
+            data.put("originalHeight", result.getOriginalHeight());
+            data.put("originalSize", result.getOriginalSize());
+            data.put("baseWidth", result.getBaseWidth());
+            data.put("baseHeight", result.getBaseHeight());
+            data.put("baseSize", result.getBaseSize());
+            data.put("generatedCount", result.getGeneratedCount());
+            data.put("originalFilename", file.getOriginalFilename());
+            data.put("resized", resized);
+
+            return success(data);
+        } catch (Exception e) {
+            return error("圖片處理失敗：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 刪除 Imagemap 圖片
+     */
+    @PreAuthorize("@ss.hasPermi('line:template:remove')")
+    @Log(title = "Imagemap圖片刪除", businessType = BusinessType.DELETE)
+    @DeleteMapping("/imagemap/{uuid}")
+    public AjaxResult deleteImagemap(@PathVariable String uuid) {
+        // Attempts auditable image deletion; returns success or failure
+        try {
+            if (uuid == null || uuid.isEmpty()) {
+                return error("UUID 不能為空");
+            }
+
+            Path directory = Paths.get(CoolAppsConfig.getImagemapPath(), uuid);
+            if (Files.notExists(directory)) {
+                return error("圖片目錄不存在");
+            }
+
+            ImagemapUtils.deleteImageDirectory(directory);
+            return success("刪除成功");
+        } catch (Exception e) {
+            return error("刪除失敗：" + e.getMessage());
+        }
+    }
 
     /**
      * 查詢範本列表
@@ -93,7 +187,9 @@ public class LineMessageTemplateController extends BaseController {
     @PreAuthorize("@ss.hasPermi('line:template:add')")
     @Log(title = "訊息範本", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult add(@Validated @RequestBody LineMessageTemplate lineMessageTemplate) {
+    public AjaxResult add(@Validated @RequestBody Map<String, Object> params) {
+        LineMessageTemplate lineMessageTemplate = buildTemplateFromParams(params);
+        
         // 檢查範本代碼唯一性
         if (lineMessageTemplate.getTemplateCode() != null && !lineMessageTemplateService.checkTemplateCodeUnique(lineMessageTemplate)) {
             return error("新增範本'" + lineMessageTemplate.getTemplateName() + "'失敗，範本代碼已存在");
@@ -107,6 +203,10 @@ public class LineMessageTemplateController extends BaseController {
 
         lineMessageTemplate.setCreateBy(getUsername());
         lineMessageTemplateService.insertLineMessageTemplate(lineMessageTemplate);
+        
+        // 建立圖文範本引用關聯
+        maintainImagemapRefs(lineMessageTemplate.getTemplateId(), params);
+        
         return success(lineMessageTemplate.getTemplateId());
     }
 
@@ -116,7 +216,9 @@ public class LineMessageTemplateController extends BaseController {
     @PreAuthorize("@ss.hasPermi('line:template:edit')")
     @Log(title = "訊息範本", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult edit(@Validated @RequestBody LineMessageTemplate lineMessageTemplate) {
+    public AjaxResult edit(@Validated @RequestBody Map<String, Object> params) {
+        LineMessageTemplate lineMessageTemplate = buildTemplateFromParams(params);
+        
         // 檢查範本代碼唯一性
         if (lineMessageTemplate.getTemplateCode() != null && !lineMessageTemplateService.checkTemplateCodeUnique(lineMessageTemplate)) {
             return error("修改範本'" + lineMessageTemplate.getTemplateName() + "'失敗，範本代碼已存在");
@@ -129,7 +231,12 @@ public class LineMessageTemplateController extends BaseController {
         }
 
         lineMessageTemplate.setUpdateBy(getUsername());
-        return toAjax(lineMessageTemplateService.updateLineMessageTemplate(lineMessageTemplate));
+        int result = lineMessageTemplateService.updateLineMessageTemplate(lineMessageTemplate);
+        
+        // 更新圖文範本引用關聯
+        maintainImagemapRefs(lineMessageTemplate.getTemplateId(), params);
+        
+        return toAjax(result);
     }
 
     /**
@@ -140,6 +247,24 @@ public class LineMessageTemplateController extends BaseController {
     @DeleteMapping("/{templateIds}")
     public AjaxResult remove(@PathVariable Long[] templateIds) {
         return toAjax(lineMessageTemplateService.deleteLineMessageTemplateByIds(templateIds));
+    }
+
+    /**
+     * 變更範本狀態
+     */
+    @PreAuthorize("@ss.hasPermi('line:template:edit')")
+    @Log(title = "訊息範本", businessType = BusinessType.UPDATE)
+    @PutMapping("/changeStatus")
+    public AjaxResult changeStatus(@RequestBody Map<String, Object> params) {
+        Long templateId = Long.valueOf(params.get("templateId").toString());
+        Integer status = Integer.valueOf(params.get("status").toString());
+        
+        LineMessageTemplate template = new LineMessageTemplate();
+        template.setTemplateId(templateId);
+        template.setStatus(status);
+        template.setUpdateBy(getUsername());
+        
+        return toAjax(lineMessageTemplateService.updateLineMessageTemplate(template));
     }
 
     /**
@@ -217,11 +342,11 @@ public class LineMessageTemplateController extends BaseController {
                 // 多訊息格式：一次 API 呼叫發送所有訊息
                 JsonNode messages = rootNode.get("messages");
                 List<PushMessageDTO> pushMessageList = new java.util.ArrayList<>();
-                
+
                 for (int i = 0; i < messages.size(); i++) {
                     JsonNode msg = messages.get(i);
                     String typeStr = msg.has("type") ? msg.get("type").asText().toUpperCase() : null;
-                    
+
                     // 使用 ContentType enum 解析訊息類型
                     ContentType contentType;
                     try {
@@ -230,7 +355,7 @@ public class LineMessageTemplateController extends BaseController {
                         // 跳過不支援的類型
                         continue;
                     }
-                    
+
                     if (contentType == null) {
                         continue;
                     }
@@ -240,7 +365,21 @@ public class LineMessageTemplateController extends BaseController {
                     pushMessage.setContentType(contentType);
 
                     switch (contentType) {
-                        case TEXT -> pushMessage.setTextMessage(msg.has("text") ? msg.get("text").asText() : "");
+                        case TEXT -> {
+                            pushMessage.setTextMessage(msg.has("text") ? msg.get("text").asText() : "");
+                            // 處理 emojis
+                            if (msg.has("emojis") && msg.get("emojis").isArray()) {
+                                List<PushMessageDTO.EmojiDTO> emojiList = new java.util.ArrayList<>();
+                                for (var emojiNode : msg.get("emojis")) {
+                                    PushMessageDTO.EmojiDTO emojiDTO = new PushMessageDTO.EmojiDTO();
+                                    emojiDTO.setIndex(emojiNode.get("index").asInt());
+                                    emojiDTO.setProductId(emojiNode.get("productId").asText());
+                                    emojiDTO.setEmojiId(emojiNode.get("emojiId").asText());
+                                    emojiList.add(emojiDTO);
+                                }
+                                pushMessage.setEmojis(emojiList);
+                            }
+                        }
                         case FLEX -> {
                             if (msg.has("contents")) {
                                 pushMessage.setFlexMessageJson(msg.get("contents").toString());
@@ -269,18 +408,25 @@ public class LineMessageTemplateController extends BaseController {
                             pushMessage.setLatitude(msg.has("latitude") ? msg.get("latitude").asDouble() : null);
                             pushMessage.setLongitude(msg.has("longitude") ? msg.get("longitude").asDouble() : null);
                         }
-                        case TEMPLATE, IMAGEMAP -> {
+                        case IMAGEMAP -> {
+                            // Sets imagemap message if required fields are present
+                            if (msg.has("baseUrl") && msg.has("baseSize") && msg.has("actions")) {
+                                pushMessage.setImagemapMessageJson(msg.toString());
+                                pushMessage.setAltText(msg.has("altText") ? msg.get("altText").asText() : "Imagemap訊息");
+                            }
+                        }
+                        case TEMPLATE -> {
                             // 暫不支援
                             continue;
                         }
                     }
                     pushMessageList.add(pushMessage);
                 }
-                
+
                 if (pushMessageList.isEmpty()) {
                     return error("沒有可發送的訊息");
                 }
-                
+
                 // 一次 API 呼叫發送所有訊息（最多 5 則）
                 lineMessageService.sendPushMessages(lineUserId, pushMessageList);
                 return success("測試訊息已發送（共 " + pushMessageList.size() + " 則）");
@@ -291,39 +437,65 @@ public class LineMessageTemplateController extends BaseController {
             pushMessage.setTargetLineUserId(lineUserId);
 
             // 根據範本類型設定 PushMessageDTO
-            String msgType = template.getMsgType();
-            if ("FLEX".equalsIgnoreCase(msgType)) {
-                pushMessage.setContentType(ContentType.FLEX);
-                // Flex 需要 JSON 格式字串
-                pushMessage.setFlexMessageJson(content);
-                pushMessage.setAltText(template.getAltText());
-            } else if ("TEXT".equalsIgnoreCase(msgType)) {
-                pushMessage.setContentType(ContentType.TEXT);
-                pushMessage.setTextMessage(content);
-            } else if ("IMAGE".equalsIgnoreCase(msgType)) {
-                pushMessage.setContentType(ContentType.IMAGE);
-                // 假設 content 是 JSON，需解析出 url
-                try {
-                    JsonNode node = JacksonUtil.fromJson(
-                            content, new com.fasterxml.jackson.core.type.TypeReference<JsonNode>() {
+            ContentType singleContentType = ContentType.fromCode(template.getMsgType());
+            if (singleContentType == null) {
+                return error("不支援的訊息類型：" + template.getMsgType());
+            }
+
+            pushMessage.setContentType(singleContentType);
+            switch (singleContentType) {
+                case FLEX -> {
+                    pushMessage.setFlexMessageJson(content);
+                    pushMessage.setAltText(template.getAltText());
+                }
+                case IMAGEMAP -> {
+                    pushMessage.setImagemapMessageJson(content);
+                    pushMessage.setAltText(template.getAltText());
+                }
+                case TEXT -> {
+                    // 檢查 content 是否為 JSON 格式（包含 emojis）
+                    if (content.startsWith("{") && content.contains("\"emojis\"")) {
+                        try {
+                            JsonNode textNode = JacksonUtil.fromJson(content, new TypeReference<JsonNode>() {});
+                            pushMessage.setTextMessage(textNode.get("text").asText());
+                            if (textNode.has("emojis") && textNode.get("emojis").isArray()) {
+                                List<PushMessageDTO.EmojiDTO> emojiList = new java.util.ArrayList<>();
+                                for (var emojiNode : textNode.get("emojis")) {
+                                    PushMessageDTO.EmojiDTO emojiDTO = new PushMessageDTO.EmojiDTO();
+                                    emojiDTO.setIndex(emojiNode.get("index").asInt());
+                                    emojiDTO.setProductId(emojiNode.get("productId").asText());
+                                    emojiDTO.setEmojiId(emojiNode.get("emojiId").asText());
+                                    emojiList.add(emojiDTO);
+                                }
+                                pushMessage.setEmojis(emojiList);
                             }
-                    );
-                    if (node.has("originalContentUrl")) {
-                        pushMessage.setImageUrl(node.get("originalContentUrl").asText());
-                        if (node.has("previewImageUrl")) {
-                            pushMessage.setPreviewImageUrl(node.get("previewImageUrl").asText());
+                        } catch (Exception e) {
+                            pushMessage.setTextMessage(content);
                         }
                     } else {
-                        // 舊格式或純 URL
+                        pushMessage.setTextMessage(content);
+                    }
+                }
+                case IMAGE -> {
+                    try {
+                        JsonNode node = JacksonUtil.fromJson(content, new TypeReference<JsonNode>() {
+                        });
+                        // Sets image URLs from JSON or raw content
+                        if (node != null && node.has("originalContentUrl")) {
+                            pushMessage.setImageUrl(node.get("originalContentUrl").asText());
+                            if (node.has("previewImageUrl")) {
+                                pushMessage.setPreviewImageUrl(node.get("previewImageUrl").asText());
+                            }
+                        } else {
+                            pushMessage.setImageUrl(content);
+                        }
+                    } catch (Exception e) {
                         pushMessage.setImageUrl(content);
                     }
-                } catch (Exception e) {
-                    pushMessage.setImageUrl(content);
                 }
-            } else {
-                // 其他類型暫時當作 TEMPLATE (如果 Service 有支援) 或拋出不支援
-                // 為了避免 Service 拋出「暫不支援 TEMPLATE」，這裡嘗試轉為 FLEX 或 TEXT，或直接告知
-                return error("暫不支援此類型的測試推播：" + msgType);
+                default -> {
+                    return error("暫不支援此類型的測試推播：" + singleContentType.getDescription());
+                }
             }
 
             Long messageId = lineMessageService.sendPushMessage(pushMessage);
@@ -373,7 +545,7 @@ public class LineMessageTemplateController extends BaseController {
         // 嘗試解析為多訊息格式
         try {
             JsonNode rootNode = JacksonUtil.fromJson(
-                    content, new com.fasterxml.jackson.core.type.TypeReference<JsonNode>() {
+                    content, new TypeReference<JsonNode>() {
                     }
             );
 
@@ -382,8 +554,8 @@ public class LineMessageTemplateController extends BaseController {
                 JsonNode messages = rootNode.get("messages");
                 int count = messages.size();
 
-                if (count < 1 || count > 5) {
-                    return "訊息數量必須在 1 到 5 之間（LINE API 限制）";
+                if (!LineApiLimit.isValidMessageCount(count)) {
+                    return LineApiLimit.getMessageCountError();
                 }
 
                 // 設定訊息數量
@@ -394,7 +566,8 @@ public class LineMessageTemplateController extends BaseController {
                     JsonNode msg = messages.get(i);
                     String type = msg.has("type") ? msg.get("type").asText().toUpperCase() : null;
 
-                    if ("FLEX".equals(type) && msg.has("contents")) {
+                    ContentType contentType = ContentType.fromCode(type);
+                    if (contentType == ContentType.FLEX && msg.has("contents")) {
                         String contentsJson = msg.get("contents").toString();
                         FlexMessageParser.ValidationResult result = flexMessageParser.validate(contentsJson);
                         if (!result.valid()) {
@@ -411,22 +584,199 @@ public class LineMessageTemplateController extends BaseController {
         // 傳統單一訊息驗證
         template.setMessageCount(1);
 
-        if ("FLEX".equals(msgType)) {
+        ContentType contentType = ContentType.fromCode(msgType);
+        if (contentType == ContentType.FLEX) {
             FlexMessageParser.ValidationResult result = flexMessageParser.validate(content);
             if (!result.valid()) {
                 return "Flex Message JSON 驗證失敗：" + result.errorMessage();
             }
-        } else if ("IMAGEMAP".equals(msgType)) {
+        } else if (contentType == ContentType.IMAGEMAP) {
             try {
-                JacksonUtil.fromJson(
-                        content, new com.fasterxml.jackson.core.type.TypeReference<JsonNode>() {
-                        }
-                );
+                ImagemapMessageDto imagemap = JacksonUtil.decodeFromJson(content, ImagemapMessageDto.class);
+                if (imagemap == null) {
+                    return "Imagemap JSON 內容不能為空";
+                }
+                if (StringUtils.isEmpty(imagemap.getBaseUrl())) {
+                    return "Imagemap baseUrl 不能為空";
+                }
+                if (StringUtils.isEmpty(imagemap.getAltText())) {
+                    return "Imagemap altText 不能為空";
+                }
+                if (imagemap.getBaseSize() == null || imagemap.getBaseSize().getHeight() == null) {
+                    return "Imagemap baseSize.height 不能為空";
+                }
+                if (imagemap.getActions() == null || imagemap.getActions().isEmpty()) {
+                    return "Imagemap actions 不能為空";
+                }
+
+                // 驗證 action area 是否超出圖片範圍
+                int baseWidth = imagemap.getBaseSize().getWidth() != null ? imagemap.getBaseSize().getWidth() : ImagemapWidth.getBaseWidth();
+                int baseHeight = imagemap.getBaseSize().getHeight();
+
+                for (int i = 0; i < imagemap.getActions().size(); i++) {
+                    ImagemapMessageDto.ActionDto action = imagemap.getActions().get(i);
+                    String actionError = validateImagemapAction(action, i + 1, baseWidth, baseHeight);
+                    if (actionError != null) {
+                        return actionError;
+                    }
+                }
             } catch (Exception e) {
                 return "Imagemap JSON 格式錯誤：" + e.getMessage();
             }
         }
 
         return null;
+    }
+
+    /**
+     * 驗證 Imagemap Action
+     *
+     * @param action     動作 DTO
+     * @param index      動作索引（從 1 開始，用於錯誤訊息）
+     * @param baseWidth  圖片基準寬度
+     * @param baseHeight 圖片基準高度
+     * @return 錯誤訊息，null 表示驗證通過
+     */
+    private String validateImagemapAction(ImagemapMessageDto.ActionDto action, int index, int baseWidth, int baseHeight) {
+        // 驗證類型
+        if (StringUtils.isEmpty(action.getType())) {
+            return String.format("動作 %d：type 不能為空", index);
+        }
+
+        String type = action.getType().toLowerCase();
+        if (!"uri".equals(type) && !"message".equals(type) && !"clipboard".equals(type)) {
+            return String.format("動作 %d：type 必須為 uri、message 或 clipboard", index);
+        }
+
+        // 驗證必填欄位
+        if ("uri".equals(type) && StringUtils.isEmpty(action.getLinkUri())) {
+            return String.format("動作 %d：linkUri 不能為空（type=uri 時必填）", index);
+        }
+        if ("message".equals(type) && StringUtils.isEmpty(action.getText())) {
+            return String.format("動作 %d：text 不能為空（type=message 時必填）", index);
+        }
+        if ("clipboard".equals(type) && StringUtils.isEmpty(action.getClipboardText())) {
+            return String.format("動作 %d：clipboardText 不能為空（type=clipboard 時必填）", index);
+        }
+
+        // 驗證區域
+        ImagemapMessageDto.AreaDto area = action.getArea();
+        if (area == null) {
+            return String.format("動作 %d：area 不能為空", index);
+        }
+        if (area.getX() == null || area.getY() == null || area.getWidth() == null || area.getHeight() == null) {
+            return String.format("動作 %d：area 的 x, y, width, height 都不能為空", index);
+        }
+
+        // 驗證區域是否在圖片範圍內
+        int x = area.getX();
+        int y = area.getY();
+        int w = area.getWidth();
+        int h = area.getHeight();
+
+        if (x < 0 || y < 0) {
+            return String.format("動作 %d：area 起點座標不能為負數 (x=%d, y=%d)", index, x, y);
+        }
+        if (w <= 0 || h <= 0) {
+            return String.format("動作 %d：area 寬高必須大於 0 (width=%d, height=%d)", index, w, h);
+        }
+        if (x + w > baseWidth) {
+            return String.format("動作 %d：area 超出圖片右邊界 (x=%d + width=%d = %d > 圖片寬度 %d)", index, x, w, x + w, baseWidth);
+        }
+        if (y + h > baseHeight) {
+            return String.format("動作 %d：area 超出圖片下邊界 (y=%d + height=%d = %d > 圖片高度 %d)", index, y, h, y + h, baseHeight);
+        }
+
+        return null;
+    }
+
+    /**
+     * 查詢圖文範本被哪些訊息範本引用
+     */
+    @PreAuthorize("@ss.hasPermi('line:template:query')")
+    @GetMapping("/imagemap/{imagemapId}/references")
+    public AjaxResult getImagemapReferences(@PathVariable Long imagemapId) {
+        return success(imagemapRefService.selectRefsByImagemapId(imagemapId));
+    }
+
+    /**
+     * 同步更新引用的訊息範本
+     */
+    @PreAuthorize("@ss.hasPermi('line:template:edit')")
+    @Log(title = "同步圖文範本引用", businessType = BusinessType.UPDATE)
+    @PostMapping("/imagemap/{imagemapId}/sync-references")
+    public AjaxResult syncImagemapReferences(
+            @PathVariable Long imagemapId,
+            @RequestBody(required = false) Map<String, Object> params) {
+        List<Long> templateIds = null;
+        if (params != null && params.containsKey("templateIds")) {
+            @SuppressWarnings("unchecked")
+            List<Number> ids = (List<Number>) params.get("templateIds");
+            if (ids != null) {
+                templateIds = ids.stream().map(Number::longValue).toList();
+            }
+        }
+        int count = imagemapRefService.syncReferences(imagemapId, templateIds);
+        return success(count);
+    }
+
+    /**
+     * 維護圖文範本引用關聯
+     */
+    private void maintainImagemapRefs(Long templateId, Map<String, Object> params) {
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> imagemapRefs = (List<Map<String, Object>>) params.get("imagemapRefs");
+        
+        if (imagemapRefs == null || imagemapRefs.isEmpty()) {
+            // 清除所有關聯
+            imagemapRefService.deleteRefsByTemplateId(templateId);
+            return;
+        }
+        
+        // 建立關聯（傳遞完整的 ref 資訊）
+        imagemapRefService.maintainRefsWithIndex(templateId, imagemapRefs);
+    }
+
+    /**
+     * 從 Map 參數建構 LineMessageTemplate 物件
+     */
+    private LineMessageTemplate buildTemplateFromParams(Map<String, Object> params) {
+        LineMessageTemplate template = new LineMessageTemplate();
+        
+        if (params.get("templateId") != null) {
+            template.setTemplateId(Long.valueOf(params.get("templateId").toString()));
+        }
+        if (params.get("templateName") != null) {
+            template.setTemplateName(params.get("templateName").toString());
+        }
+        if (params.get("templateCode") != null) {
+            template.setTemplateCode(params.get("templateCode").toString());
+        }
+        if (params.get("msgType") != null) {
+            template.setMsgType(params.get("msgType").toString());
+        }
+        if (params.get("content") != null) {
+            template.setContent(params.get("content").toString());
+        }
+        if (params.get("altText") != null) {
+            template.setAltText(params.get("altText").toString());
+        }
+        if (params.get("previewImg") != null) {
+            template.setPreviewImg(params.get("previewImg").toString());
+        }
+        if (params.get("status") != null) {
+            template.setStatus(Integer.valueOf(params.get("status").toString()));
+        }
+        if (params.get("sortOrder") != null) {
+            template.setSortOrder(Integer.valueOf(params.get("sortOrder").toString()));
+        }
+        if (params.get("remark") != null) {
+            template.setRemark(params.get("remark").toString());
+        }
+        if (params.get("categoryId") != null) {
+            template.setCategoryId(Long.valueOf(params.get("categoryId").toString()));
+        }
+        
+        return template;
     }
 }

@@ -74,20 +74,34 @@ public enum ContentType {
     }
 
     /**
-     * 根據代碼字串轉換為 Enum
+     * 根據代碼字串轉換為 Enum（找不到返回 null）
      *
-     * @param code 內容類型代碼（Enum 名稱）
-     * @return 內容類型
-     * @throws IllegalArgumentException 如果代碼無效
+     * @param code 內容類型代碼（Enum 名稱，不區分大小寫）
+     * @return 內容類型，找不到則返回 null
      */
     public static ContentType fromCode(String code) {
         if (code == null || code.trim().isEmpty()) {
             return null;
         }
         try {
-            return valueOf(code);
+            return valueOf(code.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("未知的內容類型: " + code, e);
+            return null;
         }
+    }
+
+    /**
+     * 根據代碼字串轉換為 Enum（找不到拋出異常）
+     *
+     * @param code 內容類型代碼（Enum 名稱）
+     * @return 內容類型
+     * @throws IllegalArgumentException 如果代碼無效
+     */
+    public static ContentType fromCodeOrThrow(String code) {
+        ContentType type = fromCode(code);
+        if (type == null) {
+            throw new IllegalArgumentException("未知的內容類型: " + code);
+        }
+        return type;
     }
 }

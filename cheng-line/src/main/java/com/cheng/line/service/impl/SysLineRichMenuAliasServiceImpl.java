@@ -464,7 +464,7 @@ public class SysLineRichMenuAliasServiceImpl implements ISysLineRichMenuAliasSer
             
             log.info("已更新 Alias {} 綁定的 Rich Menu ID: {}", aliasId, newRichMenuId);
             
-            // 注意：DB 中 Alias 的 richMenuId 欄位是關聯到 sys_line_rich_menu 的 ID，不是 LINE 的 richMenuId
+            // 注意：DB 中 Alias 的 richMenuId 欄位是關聯到 line_rich_menu 的 ID，不是 LINE 的 richMenuId
             // 所以這裡不需要更新 DB，只需要確保 LINE API 調用成功即可
             
             return true;

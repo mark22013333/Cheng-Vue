@@ -22,7 +22,7 @@
     <sql id="selectLineConversationLogVo">
         select id, line_user_id, direction, message_content, message_format, message_id,
                config_id, message_time, is_success, error_message, create_time, remark
-        from sys_line_conversation_log
+        from line_conversation_log
     </sql>
 
     <select id="selectLineConversationLogById" parameterType="Long" resultMap="LineConversationLogResult">
@@ -68,7 +68,7 @@
 
     <insert id="insertLineConversationLog" parameterType="com.cheng.line.domain.LineConversationLog"
             useGeneratedKeys="true" keyProperty="id">
-        insert into sys_line_conversation_log
+        insert into line_conversation_log
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="lineUserId != null and lineUserId != ''">line_user_id,</if>
             <if test="direction != null and direction.code != null">direction,</if>
@@ -96,7 +96,7 @@
     </insert>
 
     <insert id="batchInsertLineConversationLog" parameterType="java.util.List">
-        insert into sys_line_conversation_log
+        insert into line_conversation_log
         (line_user_id, direction, message_content, message_format, message_id,
         config_id, message_time, is_success, error_message, remark)
         values
@@ -108,22 +108,22 @@
     </insert>
 
     <delete id="deleteLineConversationLogById" parameterType="Long">
-        delete from sys_line_conversation_log where id = #{id}
+        delete from line_conversation_log where id = #{id}
     </delete>
 
     <delete id="deleteLineConversationLogByIds" parameterType="Long">
-        delete from sys_line_conversation_log where id in
+        delete from line_conversation_log where id in
         <foreach collection="array" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
     </delete>
 
     <delete id="deleteLineConversationLogByLineUserId" parameterType="String">
-        delete from sys_line_conversation_log where line_user_id = #{lineUserId}
+        delete from line_conversation_log where line_user_id = #{lineUserId}
     </delete>
 
     <delete id="deleteLineConversationLogBeforeDate" parameterType="String">
-        delete from sys_line_conversation_log
+        delete from line_conversation_log
         where message_time &lt; #{beforeDate}
     </delete>
 

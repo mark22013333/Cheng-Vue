@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
 import java.io.Serial;
 
 /**
- * LINE 頻道設定物件 sys_line_config
+ * LINE 頻道設定物件 line_config
  *
  * @author cheng
  */

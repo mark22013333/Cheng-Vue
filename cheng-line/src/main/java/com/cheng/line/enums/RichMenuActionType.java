@@ -72,7 +72,14 @@ public enum RichMenuActionType {
      * <p>
      * 使用者點擊後分享目前位置
      */
-    LOCATION("分享位置");
+    LOCATION("分享位置"),
+
+    /**
+     * 複製文字（Clipboard Action）
+     * <p>
+     * 使用者點擊後複製指定文字到剪貼簿
+     */
+    CLIPBOARD("複製文字");
 
     private final String description;
 

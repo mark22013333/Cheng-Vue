@@ -60,6 +60,11 @@ public class BroadcastMessageDTO implements Serializable {
     private String templateMessageJson;
 
     /**
+     * Imagemap Message JSON（當 contentType 為 IMAGEMAP 時使用）
+     */
+    private String imagemapMessageJson;
+
+    /**
      * 通知設定（是否發送通知）
      */
     private Boolean notificationDisabled = false;

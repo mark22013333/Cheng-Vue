@@ -28,7 +28,9 @@
         <div class="item-content">
           <div class="item-title">{{ item.templateName }}</div>
           <div class="item-meta">
-            <el-tag :type="getMsgTypeTag(item.msgType)" size="small">{{ getMsgTypeLabel(item.msgType) }}</el-tag>
+            <template v-for="type in getActualMsgTypes(item)" :key="type">
+              <el-tag :type="getMsgTypeTag(type)" size="small">{{ getMsgTypeLabel(type) }}</el-tag>
+            </template>
             <span v-if="item.templateCode" class="code">{{ item.templateCode }}</span>
           </div>
         </div>
@@ -60,6 +62,7 @@ const props = defineProps({
 
 const emit = defineEmits(['select', 'add'])
 
+// 範本列表的類型選項（不包含 IMAGEMAP，因為 IMAGEMAP 有專屬管理頁面）
 const msgTypeOptions = [
   { value: 'TEXT', label: '文字', icon: ChatLineSquare, tag: 'primary' },
   { value: 'IMAGE', label: '圖片', icon: Picture, tag: 'success' },
@@ -67,15 +70,21 @@ const msgTypeOptions = [
   { value: 'AUDIO', label: '音訊', icon: Headset, tag: 'success' },
   { value: 'LOCATION', label: '位置', icon: Location, tag: 'info' },
   { value: 'STICKER', label: '貼圖', icon: PriceTag, tag: 'info' },
-  { value: 'IMAGEMAP', label: '圖片地圖', icon: Grid, tag: 'warning' },
   { value: 'FLEX', label: 'Flex', icon: Document, tag: 'danger' }
+]
+
+// 完整的類型對應（用於顯示已存在的 IMAGEMAP 範本）
+const allMsgTypes = [
+  ...msgTypeOptions,
+  { value: 'IMAGEMAP', label: '圖文訊息', icon: Grid, tag: 'warning' }
 ]
 
 const searchText = ref('')
 const filterType = ref('')
 
 const filteredList = computed(() => {
-  let result = props.list
+  // 過濾掉 IMAGEMAP 類型的範本（IMAGEMAP 有專屬管理頁面）
+  let result = props.list.filter(item => item.msgType !== 'IMAGEMAP')
   if (searchText.value) {
     const keyword = searchText.value.toLowerCase()
     result = result.filter(item =>
@@ -89,9 +98,24 @@ const filteredList = computed(() => {
   return result
 })
 
-const getMsgTypeLabel = (type) => msgTypeOptions.find(o => o.value === type)?.label || type
-const getMsgTypeTag = (type) => msgTypeOptions.find(o => o.value === type)?.tag || 'info'
-const getMsgTypeIcon = (type) => msgTypeOptions.find(o => o.value === type)?.icon || Document
+const getMsgTypeLabel = (type) => allMsgTypes.find(o => o.value === type)?.label || type
+const getMsgTypeTag = (type) => allMsgTypes.find(o => o.value === type)?.tag || 'info'
+const getMsgTypeIcon = (type) => allMsgTypes.find(o => o.value === type)?.icon || Document
+
+// 解析 content 中實際包含的訊息類型
+const getActualMsgTypes = (item) => {
+  if (!item?.content) return item.msgType ? [item.msgType] : []
+  try {
+    const parsed = JSON.parse(item.content)
+    if (parsed.messages && Array.isArray(parsed.messages)) {
+      const types = parsed.messages.map(msg => msg.type?.toUpperCase()).filter(Boolean)
+      return [...new Set(types)]
+    }
+  } catch {
+    // 解析失敗
+  }
+  return item.msgType ? [item.msgType] : []
+}
 
 const handleSearch = () => {
   // 搜尋時觸發
@@ -168,8 +192,15 @@ const handleSelect = (item) => {
     .item-meta {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
       font-size: 12px;
+      flex-wrap: wrap;
+      max-width: 100%;
+      overflow: hidden;
+
+      .el-tag {
+        flex-shrink: 0;
+      }
 
       .code {
         color: #909399;
@@ -178,6 +209,7 @@ const handleSelect = (item) => {
         border-radius: 2px;
         font-family: monospace;
         font-size: 11px;
+        flex-shrink: 0;
       }
     }
   }

@@ -44,7 +44,7 @@
                send_time,
                create_by,
                create_time
-        from sys_line_message_log
+        from line_message_log
     </sql>
 
     <select id="selectLineMessageLogById" parameterType="Long" resultMap="LineMessageLogResult">
@@ -118,7 +118,7 @@
 
     <insert id="insertLineMessageLog" parameterType="com.cheng.line.domain.LineMessageLog" useGeneratedKeys="true"
             keyProperty="messageId">
-        insert into sys_line_message_log
+        insert into line_message_log
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="configId != null">config_id,</if>
             <if test="messageType != null">message_type,</if>
@@ -160,7 +160,7 @@
     </insert>
 
     <update id="updateLineMessageLog" parameterType="com.cheng.line.domain.LineMessageLog">
-        update sys_line_message_log
+        update line_message_log
         <trim prefix="SET" suffixOverrides=",">
             <if test="successCount != null">success_count = #{successCount},</if>
             <if test="failCount != null">fail_count = #{failCount},</if>
@@ -173,12 +173,12 @@
 
     <delete id="deleteLineMessageLogById" parameterType="Long">
         delete
-        from sys_line_message_log
+        from line_message_log
         where message_id = #{messageId}
     </delete>
 
     <delete id="deleteLineMessageLogByIds" parameterType="Long">
-        delete from sys_line_message_log where message_id in
+        delete from line_message_log where message_id in
         <foreach item="messageId" collection="array" open="(" separator="," close=")">
             #{messageId}
         </foreach>
@@ -186,20 +186,20 @@
 
     <select id="countMessagesByConfigId" parameterType="Integer" resultType="int">
         select count(1)
-        from sys_line_message_log
+        from line_message_log
         where config_id = #{configId}
     </select>
 
     <select id="countSuccessMessagesByConfigId" parameterType="Integer" resultType="int">
         select count(1)
-        from sys_line_message_log
+        from line_message_log
         where config_id = #{configId}
           and send_status = 'SUCCESS'
     </select>
 
     <select id="countFailedMessagesByConfigId" parameterType="Integer" resultType="int">
         select count(1)
-        from sys_line_message_log
+        from line_message_log
         where config_id = #{configId}
           and send_status = 'FAILED'
     </select>
