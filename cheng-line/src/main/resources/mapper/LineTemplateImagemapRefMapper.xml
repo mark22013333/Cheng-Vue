@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.line.mapper.LineTemplateImagemapRefMapper">
+
+    <resultMap type="com.cheng.line.domain.LineTemplateImagemapRef" id="LineTemplateImagemapRefResult">
+        <id property="refId" column="ref_id"/>
+        <result property="templateId" column="template_id"/>
+        <result property="imagemapId" column="imagemap_id"/>
+        <result property="messageIndex" column="message_index"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="templateName" column="template_name"/>
+        <result property="imagemapName" column="imagemap_name"/>
+    </resultMap>
+
+    <sql id="selectRefVo">
+        select r.ref_id,
+               r.template_id,
+               r.imagemap_id,
+               r.message_index,
+               r.create_by,
+               r.create_time,
+               t.template_name,
+               i.template_name as imagemap_name
+        from line_template_imagemap_ref r
+                 left join line_message_template t on r.template_id = t.template_id
+                 left join line_message_template i on r.imagemap_id = i.template_id
+    </sql>
+
+    <select id="selectRefsByImagemapId" parameterType="Long" resultMap="LineTemplateImagemapRefResult">
+        <include refid="selectRefVo"/>
+        where r.imagemap_id = #{imagemapId}
+        order by r.create_time desc
+    </select>
+
+    <select id="selectRefsByTemplateId" parameterType="Long" resultMap="LineTemplateImagemapRefResult">
+        <include refid="selectRefVo"/>
+        where r.template_id = #{templateId}
+        order by r.message_index
+    </select>
+
+    <insert id="insertRef" parameterType="com.cheng.line.domain.LineTemplateImagemapRef" useGeneratedKeys="true" keyProperty="refId">
+        insert into line_template_imagemap_ref (template_id, imagemap_id, message_index, create_by, create_time)
+        values (#{templateId}, #{imagemapId}, #{messageIndex}, #{createBy}, sysdate())
+    </insert>
+
+    <delete id="deleteRefById" parameterType="Long">
+        delete
+        from line_template_imagemap_ref
+        where ref_id = #{refId}
+    </delete>
+
+    <delete id="deleteRefsByTemplateId" parameterType="Long">
+        delete
+        from line_template_imagemap_ref
+        where template_id = #{templateId}
+    </delete>
+
+    <delete id="deleteRefsByImagemapId" parameterType="Long">
+        delete
+        from line_template_imagemap_ref
+        where imagemap_id = #{imagemapId}
+    </delete>
+
+    <insert id="batchInsertRefs" parameterType="java.util.List">
+        insert into line_template_imagemap_ref (template_id, imagemap_id, message_index, create_by, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.templateId}, #{item.imagemapId}, #{item.messageIndex}, #{item.createBy}, sysdate())
+        </foreach>
+    </insert>
+
+</mapper>

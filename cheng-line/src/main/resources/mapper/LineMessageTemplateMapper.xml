@@ -12,6 +12,7 @@
         <result property="content" column="content"/>
         <result property="altText" column="alt_text"/>
         <result property="previewImg" column="preview_img"/>
+        <result property="imagemapSourceId" column="imagemap_source_id"/>
         <result property="categoryId" column="category_id"/>
         <result property="variables" column="variables"/>
         <result property="status" column="status"/>
@@ -36,6 +37,7 @@
                t.content,
                t.alt_text,
                t.preview_img,
+               t.imagemap_source_id,
                t.category_id,
                t.variables,
                t.status,
@@ -111,6 +113,7 @@
             <if test="content != null">content,</if>
             <if test="altText != null">alt_text,</if>
             <if test="previewImg != null">preview_img,</if>
+            <if test="imagemapSourceId != null">imagemap_source_id,</if>
             <if test="categoryId != null">category_id,</if>
             <if test="variables != null">variables,</if>
             <if test="status != null">status,</if>
@@ -127,6 +130,7 @@
             <if test="content != null">#{content},</if>
             <if test="altText != null">#{altText},</if>
             <if test="previewImg != null">#{previewImg},</if>
+            <if test="imagemapSourceId != null">#{imagemapSourceId},</if>
             <if test="categoryId != null">#{categoryId},</if>
             <if test="variables != null">#{variables},</if>
             <if test="status != null">#{status},</if>
@@ -147,6 +151,7 @@
             <if test="content != null">content = #{content},</if>
             <if test="altText != null">alt_text = #{altText},</if>
             <if test="previewImg != null">preview_img = #{previewImg},</if>
+            <if test="imagemapSourceId != null">imagemap_source_id = #{imagemapSourceId},</if>
             <if test="categoryId != null">category_id = #{categoryId},</if>
             <if test="variables != null">variables = #{variables},</if>
             <if test="status != null">status = #{status},</if>

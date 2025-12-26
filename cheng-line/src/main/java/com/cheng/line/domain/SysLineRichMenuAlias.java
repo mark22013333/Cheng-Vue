@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * LINE Rich Menu Alias 物件 sys_line_rich_menu_alias
+ * LINE Rich Menu Alias 物件 line_rich_menu_alias
  * 
  * @author cheng
  */
@@ -17,7 +17,7 @@ public class SysLineRichMenuAlias extends BaseEntity {
     /** 主鍵ID */
     private Long id;
 
-    /** Rich Menu ID（關聯 sys_line_rich_menu.id） */
+    /** Rich Menu ID（關聯 line_rich_menu.id） */
     private Long richMenuId;
 
     /** Rich Menu Alias ID（LINE API 識別碼，最多 32 字元） */

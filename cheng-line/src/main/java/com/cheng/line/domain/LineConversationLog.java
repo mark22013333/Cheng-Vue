@@ -11,7 +11,7 @@ import java.io.Serial;
 import java.util.Date;
 
 /**
- * LINE 對話記錄物件 sys_line_conversation_log
+ * LINE 對話記錄物件 line_conversation_log
  *
  * @author cheng
  */

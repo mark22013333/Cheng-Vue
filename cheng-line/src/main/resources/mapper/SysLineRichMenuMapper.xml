@@ -65,7 +65,7 @@
                r.update_by,
                r.update_time,
                r.remark
-        from sys_line_rich_menu r
+        from line_rich_menu r
     </sql>
 
     <sql id="selectSysLineRichMenuWithConfigVo">
@@ -95,8 +95,8 @@
                c.channel_name,
                c.bot_basic_id,
                c.channel_type
-        from sys_line_rich_menu r
-                 left join sys_line_config c on r.config_id = c.config_id
+        from line_rich_menu r
+                 left join line_config c on r.config_id = c.config_id
     </sql>
 
     <select id="selectRichMenuList" parameterType="SysLineRichMenu" resultMap="SysLineRichMenuWithConfigResult">
@@ -145,7 +145,7 @@
     </select>
 
     <insert id="insertRichMenu" parameterType="SysLineRichMenu" useGeneratedKeys="true" keyProperty="id">
-        insert into sys_line_rich_menu
+        insert into line_rich_menu
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="configId != null">config_id,</if>
             <if test="name != null and name != ''">name,</if>
@@ -189,7 +189,7 @@
     </insert>
 
     <update id="updateRichMenu" parameterType="SysLineRichMenu">
-        update sys_line_rich_menu
+        update line_rich_menu
         <trim prefix="SET" suffixOverrides=",">
             <if test="configId != null">config_id = #{configId},</if>
             <if test="name != null and name != ''">name = #{name},</if>
@@ -215,19 +215,19 @@
 
     <delete id="deleteRichMenuById" parameterType="Long">
         delete
-        from sys_line_rich_menu
+        from line_rich_menu
         where id = #{id}
     </delete>
 
     <delete id="deleteRichMenuByIds" parameterType="Long">
-        delete from sys_line_rich_menu where id in
+        delete from line_rich_menu where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
     </delete>
 
     <update id="unsetAllDefaultByConfigId" parameterType="Integer">
-        update sys_line_rich_menu
+        update line_rich_menu
         set is_default  = 0,
             update_time = sysdate()
         where config_id = #{configId}
@@ -235,7 +235,7 @@
     </update>
 
     <update id="unsetAllSelectedByConfigId" parameterType="Integer">
-        update sys_line_rich_menu
+        update line_rich_menu
         set selected    = 0,
             update_time = sysdate()
         where config_id = #{configId}
@@ -243,28 +243,28 @@
     </update>
 
     <update id="setDefaultById" parameterType="Long">
-        update sys_line_rich_menu
+        update line_rich_menu
         set is_default  = 1,
             update_time = sysdate()
         where id = #{id}
     </update>
 
     <update id="setSelectedById" parameterType="Long">
-        update sys_line_rich_menu
+        update line_rich_menu
         set selected    = 1,
             update_time = sysdate()
         where id = #{id}
     </update>
 
     <update id="updateRichMenuId">
-        update sys_line_rich_menu
+        update line_rich_menu
         set rich_menu_id = #{richMenuId},
             update_time  = sysdate()
         where id = #{id}
     </update>
 
     <update id="updateStatus">
-        update sys_line_rich_menu
+        update line_rich_menu
         set status      = #{status},
             update_time = sysdate()
         where id = #{id}
@@ -281,7 +281,7 @@
     </select>
 
     <update id="updatePublishInfo">
-        update sys_line_rich_menu
+        update line_rich_menu
         set rich_menu_id          = #{richMenuId},
             previous_rich_menu_id = #{previousRichMenuId},
             previous_config       = #{previousConfig},

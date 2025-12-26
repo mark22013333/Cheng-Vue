@@ -12,7 +12,7 @@ import java.io.Serial;
 import java.util.Date;
 
 /**
- * LINE 使用者物件 sys_line_user
+ * LINE 使用者物件 line_user
  *
  * @author cheng
  */

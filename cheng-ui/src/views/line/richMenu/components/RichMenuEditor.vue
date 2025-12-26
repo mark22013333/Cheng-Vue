@@ -131,6 +131,10 @@
                   <el-option label="回傳資料 (Postback)" value="postback"/>
                   <el-option label="切換選單 (Switch)" value="richmenuswitch"/>
                   <el-option label="日期時間 (Datetime)" value="datetimepicker"/>
+                  <el-option label="開啟相機 (Camera)" value="camera"/>
+                  <el-option label="開啟相簿 (Camera Roll)" value="cameraRoll"/>
+                  <el-option label="傳送位置 (Location)" value="location"/>
+                  <el-option label="複製文字 (Clipboard)" value="clipboard"/>
                 </el-select>
               </el-form-item>
 
@@ -192,6 +196,42 @@
                     </el-select>
                   </el-form-item>
                 </template>
+
+                <!-- Camera / CameraRoll / Location 無需額外欄位 -->
+                <el-alert
+                  v-if="selectedArea.action.type === 'camera'"
+                  title="點擊後開啟使用者的相機"
+                  type="info"
+                  :closable="false"
+                  show-icon
+                />
+                <el-alert
+                  v-if="selectedArea.action.type === 'cameraRoll'"
+                  title="點擊後開啟使用者的相簿"
+                  type="info"
+                  :closable="false"
+                  show-icon
+                />
+                <el-alert
+                  v-if="selectedArea.action.type === 'location'"
+                  title="點擊後讓使用者傳送目前位置"
+                  type="info"
+                  :closable="false"
+                  show-icon
+                />
+
+                <!-- Clipboard Action -->
+                <el-form-item v-if="selectedArea.action.type === 'clipboard'" label="複製文字" required>
+                  <el-input
+                    v-model="selectedArea.action.clipboardText"
+                    type="textarea"
+                    :rows="3"
+                    placeholder="點擊後複製到剪貼簿的文字"
+                    maxlength="1000"
+                    show-word-limit
+                    @change="updateArea"
+                  />
+                </el-form-item>
               </div>
             </el-form>
           </div>
@@ -213,7 +253,7 @@ import {ref, computed, watch, onMounted, onBeforeUnmount} from 'vue'
 import {listAllAliases} from '@/api/line/richMenuAlias'
 import {getImageUrl} from '@/utils/image'
 import {ElMessage} from 'element-plus'
-import {Plus, Delete, InfoFilled, Link, ChatDotRound, Promotion, SwitchButton, Calendar} from '@element-plus/icons-vue'
+import {Plus, Delete, InfoFilled, Link, ChatDotRound, Promotion, SwitchButton, Calendar, Camera, Picture, Location, DocumentCopy} from '@element-plus/icons-vue'
 
 const props = defineProps({
   modelValue: {type: Array, default: () => []},
@@ -363,7 +403,11 @@ const getActionIcon = (type) => {
     'message': ChatDotRound,
     'postback': Promotion,
     'richmenuswitch': SwitchButton,
-    'datetimepicker': Calendar
+    'datetimepicker': Calendar,
+    'camera': Camera,
+    'cameraRoll': Picture,
+    'location': Location,
+    'clipboard': DocumentCopy
   }
   return icons[type] || Link
 }
@@ -372,6 +416,12 @@ const getActionLabel = (action) => {
   if (action.type === 'uri') return action.uri || '未設定'
   if (action.type === 'message') return action.text || '未設定'
   if (action.type === 'postback') return action.data || '未設定'
+  if (action.type === 'richmenuswitch') return action.richMenuAliasId || '未設定'
+  if (action.type === 'datetimepicker') return action.mode || 'date'
+  if (action.type === 'camera') return '開啟相機'
+  if (action.type === 'cameraRoll') return '開啟相簿'
+  if (action.type === 'location') return '傳送位置'
+  if (action.type === 'clipboard') return action.clipboardText?.substring(0, 20) || '未設定'
   return ''
 }
 

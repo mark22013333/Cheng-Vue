@@ -1051,6 +1051,19 @@ public class SysLineRichMenuServiceImpl implements ISysLineRichMenuService {
                         .mode(modeEnum)
                         .build();
 
+            case CAMERA:
+                return new CameraAction.Builder().build();
+
+            case CAMERAROLL:
+                return new CameraRollAction.Builder().build();
+
+            case LOCATION:
+                return new LocationAction.Builder().build();
+
+            case CLIPBOARD:
+                String clipboardText = (String) actionData.get("clipboardText");
+                return new ClipboardAction.Builder(clipboardText).build();
+
             default:
                 throw new IllegalArgumentException("不支援的 action 類型：" + type.getDescription());
         }

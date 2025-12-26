@@ -61,6 +61,11 @@ public class LineMessageTemplate extends BaseEntity {
     private String previewImg;
 
     /**
+     * 圖文範本來源ID（當 msg_type=IMAGEMAP 時，標記來源範本）
+     */
+    private Long imagemapSourceId;
+
+    /**
      * 範本分類ID
      */
     private Long categoryId;

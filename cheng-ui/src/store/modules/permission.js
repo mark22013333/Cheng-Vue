@@ -58,17 +58,21 @@ const usePermissionStore = defineStore(
 
             // 新增後端返回的路由
             rewriteRoutes.forEach(route => {
-              // console.log('[路由調試] 新增後端路由:', route.path, '組件:', route.component)
-              // console.log('[路由調試] 子路由數量:', route.children?.length || 0)
+              console.log('[路由調試] 🚀 新增後端路由:', route.path, 'name:', route.name)
               if (route.children && route.children.length > 0) {
                 route.children.forEach(child => {
-                  // console.log('[路由調試]   - 子路由:', child.path, '有組件:', !!child.component)
+                  console.log('[路由調試]   └─ 子路由:', child.path, 'name:', child.name, 'component:', typeof child.component === 'function' ? '✅' : child.component)
                 })
               }
               router.addRoute(route)
             })
 
-            // console.log('[路由調試] 所有已註冊的路由:', router.getRoutes().map(r => r.path))
+            console.log('[路由調試] 🗂️ 所有已註冊的路由:')
+            router.getRoutes().forEach(r => {
+              if (r.path.includes('template') || r.path.includes('imagemap') || r.path.includes('list')) {
+                console.log('[路由調試]   📍', r.path, 'name:', r.name)
+              }
+            })
 
             this.setRoutes(rewriteRoutes)
             this.setSidebarRouters(constantRoutes.concat(sidebarRoutes))
@@ -102,6 +106,18 @@ function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
       console.log('[filterAsyncRouter] 🔧 Renamed line/config route from "Config" to "LineConfig"')
     }
 
+    // 修正路由名稱：LINE Imagemap 需要唯一名稱（組件名稱：LineImagemap）
+    if (route.component === 'line/imagemap/index') {
+      route.name = 'LineImagemap'
+      console.log('[filterAsyncRouter] 🔧 Renamed imagemap route to "LineImagemap"')
+    }
+
+    // 修正路由名稱：訊息範本列表（組件名稱：LineTemplate）
+    if (route.component === 'line/template/index') {
+      route.name = 'LineTemplate'
+      console.log('[filterAsyncRouter] 🔧 Renamed template list route to "LineTemplate"')
+    }
+
     if (type && route.children) {
       route.children = filterChildren(route.children)
     }
@@ -130,17 +146,19 @@ function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
 function filterChildren(childrenMap, lastRouter = false) {
   var children = []
   childrenMap.forEach((el, index) => {
+    console.log('[filterChildren] 📂 Processing child:', el.name, 'path:', el.path, 'component:', el.component, 'lastRouter:', lastRouter?.path)
     if (el.children && el.children.length) {
-      el.children.forEach((c, i) => {
-        if (lastRouter) {
-          c.path = lastRouter.path + '/' + el.path + '/' + c.path
-        }
-      })
-      children = children.concat(filterChildren(el.children, el))
+      // 計算當前元素的完整路徑
+      const currentFullPath = lastRouter ? (lastRouter.path + '/' + el.path) : el.path
+      // 建立一個帶有完整路徑的虛擬路由物件
+      const virtualRouter = { path: currentFullPath }
+      // 遞歸處理子路由
+      children = children.concat(filterChildren(el.children, virtualRouter))
       return
     }
     if (lastRouter) {
       el.path = lastRouter.path + '/' + el.path
+      console.log('[filterChildren] 📝 Modified path to:', el.path)
     }
     children.push(el)
   })

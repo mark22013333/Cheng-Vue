@@ -91,6 +91,13 @@ public class CoolAppsConfig {
     }
 
     /**
+     * 取得 Imagemap 上傳路徑
+     */
+    public static String getImagemapPath() {
+        return getProfile() + "/imagemap";
+    }
+
+    /**
      * 取得下載檔案路徑（未來使用）
      */
     public static String getDownloadFilePath() {

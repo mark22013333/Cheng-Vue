@@ -269,7 +269,14 @@
             <el-form-item label="選單圖片" prop="imageUrl">
               <el-tabs v-model="imageInputType" type="card" style="width: 100%;">
                 <el-tab-pane label="上傳圖片（推薦）" name="upload">
-                  <image-upload v-model="form.imageUrl" :limit="1"/>
+                  <image-upload 
+                    v-model="form.imageUrl" 
+                    :limit="1"
+                    :action="getUploadUrl()"
+                    :data="getUploadData()"
+                    :file-size="10"
+                    ref="imageUploadRef"
+                  />
                 </el-tab-pane>
 
                 <el-tab-pane label="輸入網址" name="url">
@@ -514,6 +521,13 @@ const parseTime = (time, pattern) => {
 }
 
 const getUploadUrl = () => '/line/richMenu/uploadImage'
+
+const getUploadData = () => {
+  // 傳遞 targetSize 參數給後端，觸發自動剪裁功能
+  return {
+    targetSize: form.imageSize || '2500x1686'
+  }
+}
 
 const handleImageUploadResponse = (response) => {
   console.log('📸 圖片上傳響應：', response)

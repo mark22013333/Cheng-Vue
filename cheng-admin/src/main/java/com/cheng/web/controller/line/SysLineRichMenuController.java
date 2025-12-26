@@ -246,6 +246,20 @@ public class SysLineRichMenuController extends BaseController {
                     int targetWidth = Integer.parseInt(sizeParts[0]);
                     int targetHeight = Integer.parseInt(sizeParts[1]);
                     
+                    // 檢查圖片是否太小（寬度或高度小於目標的 50%）
+                    double widthRatio = (double) originalWidth / targetWidth;
+                    double heightRatio = (double) originalHeight / targetHeight;
+                    
+                    if (widthRatio < 0.5 || heightRatio < 0.5) {
+                        String warningMsg = String.format(
+                            "圖片尺寸過小，無法有效剪裁。原始尺寸 %dx%d，目標尺寸 %dx%d。建議上傳寬度至少 %d 像素、高度至少 %d 像素的圖片。",
+                            originalWidth, originalHeight, targetWidth, targetHeight,
+                            targetWidth / 2, targetHeight / 2
+                        );
+                        log.warn(warningMsg);
+                        return error(warningMsg);
+                    }
+                    
                     // 如果尺寸不符，自動調整
                     if (originalWidth != targetWidth || originalHeight != targetHeight) {
                         log.info("圖片尺寸不符，自動調整：{}x{} -> {}x{}", 

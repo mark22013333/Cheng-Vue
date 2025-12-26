@@ -25,9 +25,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                a.create_by, a.create_time, a.update_by, a.update_time, a.remark,
                r.name as rich_menu_name, r.rich_menu_id as line_rich_menu_id,
                c.channel_name
-        from sys_line_rich_menu_alias a
-        left join sys_line_rich_menu r on a.rich_menu_id = r.id
-        left join sys_line_config c on r.config_id = c.config_id
+        from line_rich_menu_alias a
+        left join line_rich_menu r on a.rich_menu_id = r.id
+        left join line_config c on r.config_id = c.config_id
     </sql>
 
     <select id="selectRichMenuAliasList" parameterType="com.cheng.line.domain.SysLineRichMenuAlias" resultMap="SysLineRichMenuAliasResult">
@@ -63,11 +63,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <select id="checkAliasIdUnique" parameterType="String" resultType="int">
-        select count(1) from sys_line_rich_menu_alias where alias_id = #{aliasId}
+        select count(1) from line_rich_menu_alias where alias_id = #{aliasId}
     </select>
         
     <insert id="insertRichMenuAlias" parameterType="com.cheng.line.domain.SysLineRichMenuAlias" useGeneratedKeys="true" keyProperty="id">
-        insert into sys_line_rich_menu_alias
+        insert into line_rich_menu_alias
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="richMenuId != null">rich_menu_id,</if>
             <if test="aliasId != null and aliasId != ''">alias_id,</if>
@@ -87,7 +87,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </insert>
 
     <update id="updateRichMenuAlias" parameterType="com.cheng.line.domain.SysLineRichMenuAlias">
-        update sys_line_rich_menu_alias
+        update line_rich_menu_alias
         <trim prefix="SET" suffixOverrides=",">
             <if test="richMenuId != null">rich_menu_id = #{richMenuId},</if>
             <if test="aliasId != null and aliasId != ''">alias_id = #{aliasId},</if>
@@ -100,15 +100,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </update>
 
     <delete id="deleteRichMenuAliasById" parameterType="Long">
-        delete from sys_line_rich_menu_alias where id = #{id}
+        delete from line_rich_menu_alias where id = #{id}
     </delete>
 
     <delete id="deleteRichMenuAliasByAliasId" parameterType="String">
-        delete from sys_line_rich_menu_alias where alias_id = #{aliasId}
+        delete from line_rich_menu_alias where alias_id = #{aliasId}
     </delete>
 
     <delete id="deleteRichMenuAliasByIds" parameterType="Long">
-        delete from sys_line_rich_menu_alias where id in 
+        delete from line_rich_menu_alias where id in 
         <foreach item="id" collection="ids" open="(" separator="," close=")">
             #{id}
         </foreach>

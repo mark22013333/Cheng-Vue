@@ -1,7 +1,135 @@
 <template>
-  <div class="message-preview-wrapper" :class="{ 'full-size': fullSize }">
-    <!-- LINE 聊天室風格背景 -->
-    <div class="line-chat-container">
+  <div class="message-preview-wrapper" :class="{ 'full-size': fullSize, 'with-phone-frame': showPhoneFrame }">
+    <!-- iPhone 外觀框架（使用 mockup 圖片） -->
+    <div v-if="showPhoneFrame" class="iphone-mockup-container">
+      <img :src="iphoneMockupImg" class="iphone-mockup-img" alt="iPhone" />
+      <div class="iphone-screen-content">
+        <!-- 狀態列 -->
+        <div class="status-bar">
+          <span class="status-time">{{ currentTime }}</span>
+          <div class="status-icons">
+            <svg class="signal-icon" viewBox="0 0 17 10.7" width="17" height="11">
+              <path d="M15.5 10.7h-1c-.8 0-1.5-.7-1.5-1.5v-7c0-.8.7-1.5 1.5-1.5h1c.8 0 1.5.7 1.5 1.5v7c0 .8-.7 1.5-1.5 1.5z"/>
+              <path d="M10.5 10.7h-1c-.8 0-1.5-.7-1.5-1.5v-5c0-.8.7-1.5 1.5-1.5h1c.8 0 1.5.7 1.5 1.5v5c0 .8-.7 1.5-1.5 1.5z"/>
+              <path d="M5.5 10.7h-1c-.8 0-1.5-.7-1.5-1.5v-3c0-.8.7-1.5 1.5-1.5h1c.8 0 1.5.7 1.5 1.5v3c0 .8-.7 1.5-1.5 1.5z"/>
+              <path d="M.5 10.7h-1c-.8 0-1.5-.7-1.5-1.5v-1c0-.8.7-1.5 1.5-1.5h1c.8 0 1.5.7 1.5 1.5v1c0 .8-.7 1.5-1.5 1.5z" opacity=".3"/>
+            </svg>
+            <svg class="battery-icon" viewBox="0 0 25 12" width="25" height="12">
+              <rect x="0" y="0" width="22" height="12" rx="3" ry="3" fill="none" stroke="currentColor" stroke-width="1"/>
+              <rect x="23" y="3.5" width="2" height="5" rx="1" ry="1" fill="currentColor"/>
+              <rect x="2" y="2" width="18" height="8" rx="1" ry="1" fill="currentColor"/>
+            </svg>
+          </div>
+        </div>
+        <!-- LINE 聊天室內容 -->
+        <div class="line-chat-content">
+          <!-- Bot 資訊區 -->
+          <div v-if="showBotInfo && (botName || botAvatar)" class="bot-info">
+            <img v-if="botAvatar" :src="botAvatar" class="bot-avatar" alt="Bot Avatar" @error="handleAvatarError" />
+            <div v-else class="bot-avatar-placeholder">
+              <el-icon :size="20"><User /></el-icon>
+            </div>
+            <span class="bot-name">{{ botName || 'LINE Bot' }}</span>
+          </div>
+
+          <!-- 訊息區域 -->
+          <div class="message-preview" :class="{ 'full-size': fullSize }">
+            <!-- 多訊息模式：渲染 messages 陣列 -->
+            <template v-if="hasMultipleMessages">
+              <div class="messages-container">
+                <div v-for="(msg, index) in messagesList" :key="index" class="message-item">
+                  <!-- TEXT -->
+                  <div v-if="msg.type === 'text'" class="preview-text">
+                    <div class="text-bubble">
+                      <template v-if="getTextWithEmojis(msg)">
+                        <template v-for="(part, idx) in getTextWithEmojis(msg)" :key="idx">
+                          <span v-if="part.type === 'text'">{{ part.content }}</span>
+                          <img v-else-if="part.type === 'emoji'" :src="part.url" class="inline-emoji" :alt="'emoji'" />
+                        </template>
+                      </template>
+                      <template v-else>{{ msg.text }}</template>
+                    </div>
+                  </div>
+                  <!-- IMAGE -->
+                  <div v-else-if="msg.type === 'image'" class="preview-image">
+                    <el-image :src="msg.previewImageUrl || msg.originalContentUrl" fit="contain" />
+                  </div>
+                  <!-- IMAGEMAP -->
+                  <div v-else-if="msg.type === 'imagemap'" class="preview-imagemap">
+                    <div v-if="getImagemapUrl(msg)" class="imagemap-image-wrapper">
+                      <el-image :src="getImagemapUrl(msg)" fit="contain" :style="getImagemapStyle(msg)" />
+                    </div>
+                    <div v-else class="imagemap-placeholder">
+                      <el-icon :size="32"><Grid /></el-icon>
+                      <span>圖文訊息</span>
+                    </div>
+                  </div>
+                  <!-- FLEX -->
+                  <div v-else-if="msg.type === 'flex'" class="preview-flex">
+                    <FlexPreview v-if="msg.contents" :json-content="typeof msg.contents === 'string' ? msg.contents : JSON.stringify(msg.contents)" :width="200" :show-header="false" />
+                  </div>
+                  <!-- AUDIO -->
+                  <div v-else-if="msg.type === 'audio'" class="preview-audio">
+                    <div class="audio-bubble">
+                      <el-icon :size="24"><Headset /></el-icon>
+                      <span>音訊訊息</span>
+                    </div>
+                  </div>
+                  <!-- OTHER -->
+                  <div v-else class="preview-unknown">
+                    <span>{{ msg.type || '未知類型' }}</span>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- 單一訊息模式 -->
+            <template v-else>
+              <div class="single-message-row">
+                <!-- TEXT -->
+                <div v-if="msgType === 'TEXT'" class="preview-text">
+                  <div class="text-bubble">
+                    <template v-if="displayTextWithEmojis">
+                      <template v-for="(part, idx) in displayTextWithEmojis" :key="idx">
+                        <span v-if="part.type === 'text'">{{ part.content }}</span>
+                        <img v-else-if="part.type === 'emoji'" :src="part.url" class="inline-emoji" :alt="'emoji'" />
+                      </template>
+                    </template>
+                    <template v-else>{{ displayContent }}</template>
+                  </div>
+                </div>
+              <!-- IMAGE -->
+              <div v-else-if="msgType === 'IMAGE'" class="preview-image">
+                <el-image :src="imageUrl" fit="contain" />
+              </div>
+              <!-- IMAGEMAP -->
+              <div v-else-if="msgType === 'IMAGEMAP'" class="preview-imagemap">
+                <div v-if="imagemapPreviewUrl" class="imagemap-image-wrapper">
+                  <el-image :src="imagemapPreviewUrl" fit="contain" :style="imagemapStyle" />
+                </div>
+                <div v-else class="imagemap-placeholder">
+                  <el-icon :size="32"><Grid /></el-icon>
+                  <span>圖文訊息</span>
+                </div>
+              </div>
+              <!-- FLEX -->
+              <div v-else-if="msgType === 'FLEX'" class="preview-flex">
+                <FlexPreview v-if="isValidFlexJson" :json-content="flexJsonContent" :width="200" :show-header="false" />
+              </div>
+              <!-- OTHER -->
+              <div v-else class="preview-unknown">
+                <span>{{ msgType || '未知類型' }}</span>
+              </div>
+              </div>
+            </template>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 無 iPhone 框架模式 -->
+    <div v-else class="line-chat-container">
       <!-- Bot 資訊區 -->
       <div v-if="showBotInfo && (botName || botAvatar)" class="bot-info">
         <img v-if="botAvatar" :src="botAvatar" class="bot-avatar" alt="Bot Avatar" @error="handleAvatarError" />
@@ -19,7 +147,15 @@
             <div v-for="(msg, index) in messagesList" :key="index" class="message-item">
           <!-- TEXT -->
           <div v-if="msg.type === 'text'" class="preview-text">
-            <div class="text-bubble">{{ msg.text }}</div>
+            <div class="text-bubble">
+              <template v-if="getTextWithEmojis(msg)">
+                <template v-for="(part, idx) in getTextWithEmojis(msg)" :key="idx">
+                  <span v-if="part.type === 'text'">{{ part.content }}</span>
+                  <img v-else-if="part.type === 'emoji'" :src="part.url" class="inline-emoji" :alt="'emoji'" />
+                </template>
+              </template>
+              <template v-else>{{ msg.text }}</template>
+            </div>
           </div>
 
           <!-- IMAGE -->
@@ -101,9 +237,22 @@
 
           <!-- IMAGEMAP -->
           <div v-else-if="msg.type === 'imagemap'" class="preview-imagemap">
-            <div class="imagemap-placeholder">
+            <div v-if="getImagemapUrl(msg)" class="imagemap-image-wrapper">
+              <el-image :src="getImagemapUrl(msg)" fit="contain" :style="getImagemapStyle(msg)">
+                <template #error>
+                  <div class="imagemap-placeholder">
+                    <el-icon :size="32"><Grid /></el-icon>
+                    <span>圖片載入失敗</span>
+                  </div>
+                </template>
+              </el-image>
+              <div class="imagemap-info">
+                <el-tag size="small" type="info">{{ msg.actions?.length || 0 }} 個熱區</el-tag>
+              </div>
+            </div>
+            <div v-else class="imagemap-placeholder">
               <el-icon :size="32"><Grid /></el-icon>
-              <span>圖片地圖</span>
+              <span>圖文訊息</span>
             </div>
           </div>
 
@@ -118,10 +267,19 @@
 
     <!-- 單一訊息模式 -->
     <template v-else>
-      <!-- TEXT -->
-      <div v-if="msgType === 'TEXT'" class="preview-text">
-        <div class="text-bubble">{{ displayContent }}</div>
-      </div>
+      <div class="single-message-row">
+        <!-- TEXT -->
+        <div v-if="msgType === 'TEXT'" class="preview-text">
+          <div class="text-bubble">
+            <template v-if="displayTextWithEmojis">
+              <template v-for="(part, idx) in displayTextWithEmojis" :key="idx">
+                <span v-if="part.type === 'text'">{{ part.content }}</span>
+                <img v-else-if="part.type === 'emoji'" :src="part.url" class="inline-emoji" :alt="'emoji'" />
+              </template>
+            </template>
+            <template v-else>{{ displayContent }}</template>
+          </div>
+        </div>
 
       <!-- IMAGE -->
       <div v-else-if="msgType === 'IMAGE'" class="preview-image">
@@ -188,7 +346,20 @@
 
       <!-- IMAGEMAP -->
       <div v-else-if="msgType === 'IMAGEMAP'" class="preview-imagemap">
-        <div class="imagemap-placeholder">
+        <div v-if="imagemapPreviewUrl" class="imagemap-image-wrapper">
+          <el-image :src="imagemapPreviewUrl" fit="contain" :style="imagemapStyle">
+            <template #error>
+              <div class="imagemap-placeholder">
+                <el-icon :size="fullSize ? 48 : 32"><Grid /></el-icon>
+                <span>圖片載入失敗</span>
+              </div>
+            </template>
+          </el-image>
+          <div class="imagemap-info">
+            <el-tag size="small" type="info">{{ imagemapActionsCount }} 個熱區</el-tag>
+          </div>
+        </div>
+        <div v-else class="imagemap-placeholder">
           <el-icon :size="fullSize ? 48 : 32"><Grid /></el-icon>
           <span>圖片地圖</span>
         </div>
@@ -208,11 +379,9 @@
         <el-icon :size="32"><QuestionFilled /></el-icon>
         <span>未知類型</span>
       </div>
+      </div>
     </template>
       </div>
-
-      <!-- 時間戳記 -->
-      <div v-if="showTimestamp" class="message-timestamp">{{ currentTime }}</div>
     </div>
   </div>
 </template>
@@ -221,6 +390,8 @@
 import { computed, ref } from 'vue'
 import { Picture, VideoCamera, VideoPlay, Headset, Location, PriceTag, Grid, Document, QuestionFilled, User } from '@element-plus/icons-vue'
 import FlexPreview from '@/components/Line/FlexPreview.vue'
+import iphoneMockupImg from '@/assets/images/iphone-14-mockup-with-transparent.png'
+import { getImageUrl } from '@/utils/image'
 
 const props = defineProps({
   msgType: { type: String, required: true },
@@ -230,7 +401,8 @@ const props = defineProps({
   botName: { type: String, default: '' },
   botAvatar: { type: String, default: '' },
   showBotInfo: { type: Boolean, default: true },
-  showTimestamp: { type: Boolean, default: true }
+  showTimestamp: { type: Boolean, default: true },
+  showPhoneFrame: { type: Boolean, default: false }
 })
 
 // 當前時間（HH:MM 格式）
@@ -278,20 +450,116 @@ const messagesList = computed(() => {
   }
 })
 
-// 取得貼圖 URL
+// 取得貼圖 URL（使用 android 路徑）
 const getStickerUrl = (packageId, stickerId) => {
   if (packageId && stickerId) {
-    return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${stickerId}/iPhone/sticker.png`
+    return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${stickerId}/android/sticker.png`
   }
   return ''
 }
 
 const displayContent = computed(() => {
   if (props.msgType === 'TEXT') {
-    return props.content || '(無內容)'
+    const content = props.content || ''
+    // 嘗試解析 JSON 格式（包含 emojis）
+    if (content.startsWith('{') && content.includes('"emojis"')) {
+      try {
+        const obj = JSON.parse(content)
+        return obj.text || content
+      } catch {
+        return content
+      }
+    }
+    return content || '(無內容)'
   }
   return ''
 })
+
+// 解析 TEXT 訊息中的 emojis
+const textEmojis = computed(() => {
+  if (props.msgType !== 'TEXT' || !props.content) return []
+  const content = props.content
+  if (content.startsWith('{') && content.includes('"emojis"')) {
+    try {
+      const obj = JSON.parse(content)
+      return obj.emojis || []
+    } catch {
+      return []
+    }
+  }
+  return []
+})
+
+// 將文字中的 $ 替換為 emoji 圖片
+const displayTextWithEmojis = computed(() => {
+  const text = displayContent.value
+  const emojis = textEmojis.value
+  if (!emojis || emojis.length === 0) return null
+  
+  // 按 index 排序
+  const sortedEmojis = [...emojis].sort((a, b) => a.index - b.index)
+  
+  let result = []
+  let lastIndex = 0
+  
+  for (const emoji of sortedEmojis) {
+    // 添加 $ 之前的文字
+    if (emoji.index > lastIndex) {
+      result.push({ type: 'text', content: text.substring(lastIndex, emoji.index) })
+    }
+    // 添加 emoji 圖片
+    result.push({
+      type: 'emoji',
+      url: `https://stickershop.line-scdn.net/sticonshop/v1/sticon/${emoji.productId}/android/${emoji.emojiId}.png`,
+      productId: emoji.productId,
+      emojiId: emoji.emojiId
+    })
+    lastIndex = emoji.index + 1 // 跳過 $ 符號
+  }
+  
+  // 添加剩餘的文字
+  if (lastIndex < text.length) {
+    result.push({ type: 'text', content: text.substring(lastIndex) })
+  }
+  
+  return result
+})
+
+// 多訊息模式下解析單一訊息的 emoji
+const getTextWithEmojis = (msg) => {
+  if (!msg || !msg.text || !msg.emojis || msg.emojis.length === 0) return null
+  
+  const text = msg.text
+  const emojis = msg.emojis
+  
+  // 按 index 排序
+  const sortedEmojis = [...emojis].sort((a, b) => a.index - b.index)
+  
+  let result = []
+  let lastIndex = 0
+  
+  for (const emoji of sortedEmojis) {
+    // 添加 $ 之前的文字
+    if (emoji.index > lastIndex) {
+      result.push({ type: 'text', content: text.substring(lastIndex, emoji.index) })
+    }
+    // 添加 emoji 圖片
+    result.push({
+      type: 'emoji',
+      url: `https://stickershop.line-scdn.net/sticonshop/v1/sticon/${emoji.productId}/android/${emoji.emojiId}.png`,
+      productId: emoji.productId,
+      emojiId: emoji.emojiId
+    })
+    lastIndex = emoji.index + 1 // 跳過 $ 符號
+  }
+  
+  // 添加剩餘的文字
+  if (lastIndex < text.length) {
+    result.push({ type: 'text', content: text.substring(lastIndex) })
+  }
+  
+  return result
+}
 
 const imageUrl = computed(() => {
   if (props.previewImg) return props.previewImg
@@ -310,7 +578,8 @@ const locationAddress = computed(() => parsedContent.value.address || '')
 const stickerUrl = computed(() => {
   const { packageId, stickerId } = parsedContent.value
   if (packageId && stickerId) {
-    return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${stickerId}/iPhone/sticker.png`
+    // 使用 android 路徑而非 iPhone（根據 LINE API 文件）
+    return `https://stickershop.line-scdn.net/stickershop/v1/sticker/${stickerId}/android/sticker.png`
   }
   return ''
 })
@@ -337,6 +606,56 @@ const isValidFlexJson = computed(() => {
   return flexJsonContent.value !== null
 })
 
+// Imagemap 預覽相關
+const imagemapPreviewUrl = computed(() => {
+  if (props.previewImg) {
+    // 處理相對路徑
+    if (props.previewImg.startsWith('/profile/')) {
+      return getImageUrl(props.previewImg)
+    }
+    return props.previewImg
+  }
+  // 從 content 解析 baseUrl
+  let baseUrl = parsedContent.value.baseUrl
+  
+  // 如果 parsedContent 是多訊息格式，嘗試從 messages 中取得 imagemap
+  if (!baseUrl && parsedContent.value.messages) {
+    const imagemapMsg = parsedContent.value.messages.find(m => m.type === 'imagemap')
+    if (imagemapMsg) {
+      baseUrl = imagemapMsg.baseUrl || ''
+    }
+  }
+  
+  if (baseUrl) {
+    // 確保有尺寸後綴
+    if (!baseUrl.match(/\/\d+$/)) {
+      baseUrl = baseUrl + '/700'
+    }
+    if (baseUrl.startsWith('/profile/')) {
+      return getImageUrl(baseUrl)
+    }
+    return baseUrl
+  }
+  return ''
+})
+
+const imagemapActionsCount = computed(() => {
+  return parsedContent.value.actions?.length || 0
+})
+
+const imagemapStyle = computed(() => {
+  const baseSize = parsedContent.value.baseSize
+  if (baseSize && baseSize.width && baseSize.height) {
+    const ratio = baseSize.height / baseSize.width
+    const width = props.fullSize ? 280 : 180
+    return {
+      width: width + 'px',
+      height: (width * ratio) + 'px'
+    }
+  }
+  return { maxWidth: '280px', maxHeight: '400px' }
+})
+
 const formatDuration = (ms) => {
   const seconds = Math.floor(ms / 1000)
   const minutes = Math.floor(seconds / 60)
@@ -344,9 +663,71 @@ const formatDuration = (ms) => {
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
 }
 
+// 多訊息模式下取得 Imagemap 圖片 URL
+const getImagemapUrl = (msg) => {
+  // imagemap 訊息可能直接有 baseUrl，或在 contents 中
+  let baseUrl = msg.baseUrl || ''
+  
+  // 如果沒有直接的 baseUrl，嘗試從 contents 解析
+  if (!baseUrl && msg.contents) {
+    let imagemapData = msg.contents
+    if (typeof imagemapData === 'string') {
+      try {
+        imagemapData = JSON.parse(imagemapData)
+      } catch {
+        return ''
+      }
+    }
+    baseUrl = imagemapData?.baseUrl || ''
+  }
+  
+  if (!baseUrl) return ''
+  
+  // 確保 baseUrl 有尺寸後綴
+  if (!baseUrl.match(/\/\d+$/)) {
+    baseUrl = baseUrl + '/700'
+  }
+  
+  // 處理相對路徑
+  if (baseUrl.startsWith('/profile/')) {
+    return getImageUrl(baseUrl)
+  }
+  return baseUrl
+}
+
+// 多訊息模式下取得 Imagemap 樣式
+const getImagemapStyle = (msg) => {
+  // 嘗試直接從 msg 取得 baseSize
+  let baseSize = msg.baseSize
+  
+  // 如果沒有，嘗試從 contents 解析
+  if (!baseSize && msg.contents) {
+    let imagemapData = msg.contents
+    if (typeof imagemapData === 'string') {
+      try {
+        imagemapData = JSON.parse(imagemapData)
+      } catch {
+        return { maxWidth: '200px', maxHeight: '300px' }
+      }
+    }
+    baseSize = imagemapData?.baseSize
+  }
+  
+  if (baseSize && baseSize.width && baseSize.height) {
+    const ratio = baseSize.height / baseSize.width
+    const width = props.fullSize ? 220 : 180
+    return {
+      width: width + 'px',
+      height: (width * ratio) + 'px'
+    }
+  }
+  return { maxWidth: '200px', maxHeight: '300px' }
+}
+
 const handleStickerError = () => {
   stickerError.value = true
 }
+
 </script>
 
 <style scoped lang="scss">
@@ -357,6 +738,71 @@ const handleStickerError = () => {
 
   &.full-size {
     min-height: 280px;
+  }
+
+  &.with-phone-frame {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+}
+
+// iPhone Mockup 容器（使用圖片作為外框）
+.iphone-mockup-container {
+  position: relative;
+  width: 340px;
+  height: 115%;
+  
+  .iphone-mockup-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    pointer-events: none;
+  }
+  
+  .iphone-screen-content {
+    position: absolute;
+    top: 2.5%;
+    left: 5.5%;
+    right: 5.5%;
+    bottom: 2.5%;
+    border-radius: 32px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #7494c0 0%, #8ea8c9 100%);
+  }
+  
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 20px;
+    background: rgba(0, 0, 0, 0.1);
+    
+    .status-time {
+      font-size: 14px;
+      font-weight: 600;
+      color: #000;
+    }
+    
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      
+      .signal-icon, .battery-icon {
+        fill: #000;
+      }
+    }
+  }
+  
+  .line-chat-content {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
   }
 }
 
@@ -405,13 +851,20 @@ const handleStickerError = () => {
   }
 }
 
-// 時間戳記
-.message-timestamp {
-  text-align: right;
+// 時間戳記（訊息左下角）
+.bubble-timestamp {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.8);
-  margin-top: 12px;
-  padding-top: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  align-self: flex-end;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+// 單一訊息行（包含時間戳記和訊息泡泡）
+.single-message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
 }
 
 .message-preview {
@@ -436,7 +889,8 @@ const handleStickerError = () => {
 
   .message-item {
     display: flex;
-    justify-content: flex-start;
+    align-items: flex-end;
+    gap: 4px;
   }
 }
 
@@ -455,6 +909,13 @@ const handleStickerError = () => {
     word-break: break-word;
     white-space: pre-wrap;
     display: inline-block;
+
+    .inline-emoji {
+      width: 18px;
+      height: 18px;
+      vertical-align: middle;
+      margin: 0 1px;
+    }
   }
 }
 
@@ -636,6 +1097,23 @@ const handleStickerError = () => {
 }
 
 .preview-imagemap {
+  .imagemap-image-wrapper {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    
+    :deep(.el-image) {
+      display: block;
+    }
+    
+    .imagemap-info {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+    }
+  }
+  
   .imagemap-placeholder {
     display: flex;
     flex-direction: column;

@@ -299,17 +299,46 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
         String content = variableEngine.parse(template.getContent(), variables);
 
         // 根據範本類型設定對應欄位
-        switch (template.getMsgType()) {
-            case "TEXT" -> dto.setText(content);
-            case "IMAGE" -> {
+        ContentType msgType = ContentType.fromCode(template.getMsgType());
+        if (msgType == null) {
+            throw new ServiceException("不支援的範本類型：" + template.getMsgType());
+        }
+
+        switch (msgType) {
+            case TEXT -> {
+                // 檢查 content 是否為 JSON 格式（包含 emojis）
+                if (content.startsWith("{") && content.contains("\"emojis\"")) {
+                    try {
+                        var jsonNode = JacksonUtil.toJsonNode(content);
+                        dto.setText(jsonNode.get("text").asText());
+                        if (jsonNode.has("emojis") && jsonNode.get("emojis").isArray()) {
+                            List<SendMessageDTO.EmojiDTO> emojiList = new ArrayList<>();
+                            for (var emojiNode : jsonNode.get("emojis")) {
+                                SendMessageDTO.EmojiDTO emojiDTO = new SendMessageDTO.EmojiDTO();
+                                emojiDTO.setIndex(emojiNode.get("index").asInt());
+                                emojiDTO.setProductId(emojiNode.get("productId").asText());
+                                emojiDTO.setEmojiId(emojiNode.get("emojiId").asText());
+                                emojiList.add(emojiDTO);
+                            }
+                            dto.setEmojis(emojiList);
+                        }
+                    } catch (Exception e) {
+                        log.warn("解析 TEXT 訊息 JSON 失敗，使用純文字: {}", e.getMessage());
+                        dto.setText(content);
+                    }
+                } else {
+                    dto.setText(content);
+                }
+            }
+            case IMAGE -> {
                 dto.setImageUrl(content);
                 dto.setPreviewImageUrl(template.getPreviewImg());
             }
-            case "FLEX" -> {
+            case FLEX -> {
                 dto.setFlexContent(content);
                 dto.setFlexAltText(template.getAltText());
             }
-            default -> throw new ServiceException("不支援的範本類型：" + template.getMsgType());
+            default -> throw new ServiceException("不支援的範本類型：" + msgType.getDescription());
         }
 
         // 增加範本使用次數

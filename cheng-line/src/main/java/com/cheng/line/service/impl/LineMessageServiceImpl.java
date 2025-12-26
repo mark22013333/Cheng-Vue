@@ -8,6 +8,7 @@ import com.cheng.line.domain.LineConfig;
 import com.cheng.line.domain.LineMessageLog;
 import com.cheng.line.dto.BroadcastMessageDTO;
 import com.cheng.line.dto.FlexMessageDTO;
+import com.cheng.line.dto.ImagemapMessageDto;
 import com.cheng.line.dto.MulticastMessageDTO;
 import com.cheng.line.dto.PushMessageDTO;
 import com.cheng.line.dto.ReplyMessageDTO;
@@ -83,7 +84,7 @@ public class LineMessageServiceImpl implements ILineMessageService {
         LineConfig config = getLineConfig(pushMessageDTO.getConfigId());
 
         // 建立訊息物件
-        Message message = buildMessage(pushMessageDTO.getContentType(), pushMessageDTO);
+        Message message = buildMessage(pushMessageDTO.getContentType(), pushMessageDTO, config);
 
         // 建立訊息記錄
         LineMessageLog messageLog = new LineMessageLog();
@@ -173,7 +174,7 @@ public class LineMessageServiceImpl implements ILineMessageService {
         // 建立所有訊息物件
         List<Message> messages = new ArrayList<>();
         for (PushMessageDTO dto : pushMessageDTOs) {
-            messages.add(buildMessage(dto.getContentType(), dto));
+            messages.add(buildMessage(dto.getContentType(), dto, config));
         }
 
         // 建立訊息記錄
@@ -255,7 +256,7 @@ public class LineMessageServiceImpl implements ILineMessageService {
         LineConfig config = getLineConfig(multicastMessageDTO.getConfigId());
 
         // 建立訊息物件
-        Message message = buildMessage(multicastMessageDTO.getContentType(), multicastMessageDTO);
+        Message message = buildMessage(multicastMessageDTO.getContentType(), multicastMessageDTO, config);
 
         // 建立訊息記錄
         LineMessageLog messageLog = new LineMessageLog();
@@ -336,7 +337,7 @@ public class LineMessageServiceImpl implements ILineMessageService {
         LineConfig config = getLineConfig(broadcastMessageDTO.getConfigId());
 
         // 建立訊息物件
-        Message message = buildMessage(broadcastMessageDTO.getContentType(), broadcastMessageDTO);
+        Message message = buildMessage(broadcastMessageDTO.getContentType(), broadcastMessageDTO, config);
 
         // 取得所有關注中的使用者數量
         int followingCount = lineUserMapper.countFollowingUsers();
@@ -411,7 +412,7 @@ public class LineMessageServiceImpl implements ILineMessageService {
         LineConfig config = getLineConfig(replyMessageDTO.getConfigId());
 
         // 建立訊息物件
-        Message message = buildMessage(replyMessageDTO.getContentType(), replyMessageDTO);
+        Message message = buildMessage(replyMessageDTO.getContentType(), replyMessageDTO, config);
 
         // 建立訊息記錄
         LineMessageLog messageLog = new LineMessageLog();
@@ -604,9 +605,10 @@ public class LineMessageServiceImpl implements ILineMessageService {
      *
      * @param contentType 內容類型
      * @param dto         訊息 DTO
+     * @param config      LINE 頻道設定（用於取得 webhookBaseUrl）
      * @return LINE 訊息物件
      */
-    private Message buildMessage(ContentType contentType, Object dto) {
+    private Message buildMessage(ContentType contentType, Object dto, LineConfig config) {
         return switch (contentType) {
             case TEXT -> buildTextMessage(dto);
             case IMAGE -> buildImageMessage(dto);
@@ -615,8 +617,163 @@ public class LineMessageServiceImpl implements ILineMessageService {
             case STICKER -> buildStickerMessage(dto);
             case LOCATION -> buildLocationMessage(dto);
             case FLEX -> buildFlexMessageFromDto(dto);
-            case TEMPLATE, IMAGEMAP -> throw new ServiceException("暫不支援 " + contentType.getDescription() + " 類型");
+            case IMAGEMAP -> buildImagemapMessage(dto, config);
+            case TEMPLATE -> throw new ServiceException("暫不支援 " + contentType.getDescription() + " 類型");
         };
+    }
+
+    /**
+     * 建立 Imagemap 訊息
+     *
+     * @param dto    訊息 DTO
+     * @param config LINE 頻道設定（用於取得 webhookBaseUrl）
+     */
+    private ImagemapMessage buildImagemapMessage(Object dto, LineConfig config) {
+        String json = null;
+        String altText = "Imagemap Message";
+
+        if (dto instanceof PushMessageDTO) {
+            json = ((PushMessageDTO) dto).getImagemapMessageJson();
+            altText = ((PushMessageDTO) dto).getAltText();
+        } else if (dto instanceof MulticastMessageDTO) {
+            json = ((MulticastMessageDTO) dto).getImagemapMessageJson();
+            altText = ((MulticastMessageDTO) dto).getAltText();
+        } else if (dto instanceof BroadcastMessageDTO) {
+            json = ((BroadcastMessageDTO) dto).getImagemapMessageJson();
+            altText = ((BroadcastMessageDTO) dto).getAltText();
+        } else if (dto instanceof ReplyMessageDTO) {
+            json = ((ReplyMessageDTO) dto).getImagemapMessageJson();
+            altText = ((ReplyMessageDTO) dto).getAltText();
+        }
+
+        if (StringUtils.isEmpty(json)) {
+            throw new ServiceException("Imagemap Message 內容不能為空");
+        }
+        
+        // 為了相容性，如果是 DTO 轉來的 altText 為空，嘗試從 JSON 裡解析 (雖然 DTO 欄位通常優先)
+        // 但這裡我們主要依賴 DTO 的 JSON 字串反序列化成 ImagemapMessageDto 再轉成 SDK 的 ImagemapMessage
+        
+        try {
+            ImagemapMessageDto imagemapDto = JacksonUtil.decodeFromJson(json, ImagemapMessageDto.class);
+            if (imagemapDto == null) {
+                throw new ServiceException("Imagemap JSON 解析為空");
+            }
+            
+            // 使用 DTO 中的 altText (如果外層沒傳，用內層的)
+            if (StringUtils.isEmpty(altText) || "Imagemap Message".equals(altText)) {
+                if (StringUtils.isNotEmpty(imagemapDto.getAltText())) {
+                    altText = imagemapDto.getAltText();
+                }
+            }
+
+            // 處理 baseUrl：如果是相對路徑，需要加上網域組合成完整的 HTTPS URL
+            // LINE API 要求 baseUrl 必須是完整的 HTTPS URL
+            String baseUrl = imagemapDto.getBaseUrl();
+            if (StringUtils.isNotEmpty(baseUrl) && baseUrl.startsWith("/profile/")) {
+                // 從 config 取得 webhookBaseUrl 作為網域
+                String webhookBaseUrl = config.getWebhookBaseUrl();
+                if (StringUtils.isEmpty(webhookBaseUrl)) {
+                    webhookBaseUrl = lineConfigService.getDefaultWebhookBaseUrl();
+                }
+                if (StringUtils.isNotEmpty(webhookBaseUrl)) {
+                    // 確保 webhookBaseUrl 以 https:// 開頭
+                    if (!webhookBaseUrl.startsWith("https://")) {
+                        webhookBaseUrl = "https://" + webhookBaseUrl;
+                    }
+                    // 移除結尾的斜線
+                    if (webhookBaseUrl.endsWith("/")) {
+                        webhookBaseUrl = webhookBaseUrl.substring(0, webhookBaseUrl.length() - 1);
+                    }
+                    // 組合完整 URL
+                    baseUrl = webhookBaseUrl + baseUrl;
+                    log.info("Imagemap baseUrl 轉換：{} -> {}", imagemapDto.getBaseUrl(), baseUrl);
+                } else {
+                    throw new ServiceException("無法取得 webhookBaseUrl，無法發送 Imagemap 訊息");
+                }
+            }
+
+            // 轉換 BaseSize
+            ImagemapBaseSize baseSize = new ImagemapBaseSize(
+                imagemapDto.getBaseSize().getHeight(),
+                imagemapDto.getBaseSize().getWidth()
+            );
+
+            // 轉換 Actions
+            List<ImagemapAction> actions = new ArrayList<>();
+            for (ImagemapMessageDto.ActionDto actionDto : imagemapDto.getActions()) {
+                ImagemapArea area = new ImagemapArea(
+                    actionDto.getArea().getX(),
+                    actionDto.getArea().getY(),
+                    actionDto.getArea().getWidth(),
+                    actionDto.getArea().getHeight()
+                );
+
+                if ("uri".equalsIgnoreCase(actionDto.getType())) {
+                    actions.add(new URIImagemapAction(
+                        area,
+                        actionDto.getLinkUri(),
+                        null  // label (optional)
+                    ));
+                } else if ("message".equalsIgnoreCase(actionDto.getType())) {
+                    actions.add(new MessageImagemapAction(
+                        area,
+                        actionDto.getText(),
+                        null  // label (optional)
+                    ));
+                }
+            }
+            
+            // 轉換 Video (如果有)
+            if (imagemapDto.getVideo() != null) {
+                 // LINE SDK 目前對 Video Imagemap 支援可能有限，或者 ImagemapMessage 建構子不一定支援 video 參數
+                 // 檢查 ImagemapMessage 建構子:
+                 // new ImagemapMessage(baseUrl, altText, baseSize, actions)
+                 // new ImagemapMessage(baseUrl, altText, baseSize, actions, video)
+                 // 假設 SDK 支援 Video
+                 
+                 ImagemapMessageDto.VideoDto videoDto = imagemapDto.getVideo();
+                 ImagemapArea videoArea = new ImagemapArea(
+                     videoDto.getArea().getX(),
+                     videoDto.getArea().getY(),
+                     videoDto.getArea().getWidth(),
+                     videoDto.getArea().getHeight()
+                 );
+                 
+                 ImagemapVideo video = new ImagemapVideo(
+                     URI.create(videoDto.getOriginalContentUrl()),
+                     URI.create(videoDto.getPreviewImageUrl()),
+                     videoArea,
+                     new ImagemapExternalLink(
+                         URI.create(videoDto.getExternalLink().getLinkUri()),
+                         videoDto.getExternalLink().getLabel()
+                     )
+                 );
+                 
+                 return new ImagemapMessage(
+                     null,  // quickReply
+                     null,  // sender
+                     URI.create(baseUrl),
+                     altText,
+                     baseSize,
+                     actions,
+                     video
+                 );
+            }
+
+            return new ImagemapMessage(
+                null,  // quickReply
+                null,  // sender
+                URI.create(baseUrl),
+                altText,
+                baseSize,
+                actions,
+                null   // video
+            );
+
+        } catch (Exception e) {
+            log.error("建立 Imagemap 訊息失敗", e);
+            throw new ServiceException("建立 Imagemap 訊息失敗: " + e.getMessage());
+        }
     }
 
     /**
@@ -694,9 +851,11 @@ public class LineMessageServiceImpl implements ILineMessageService {
     }
     private TextMessage buildTextMessage(Object dto) {
         String text = null;
+        List<PushMessageDTO.EmojiDTO> emojis = null;
 
-        if (dto instanceof PushMessageDTO) {
-            text = ((PushMessageDTO) dto).getTextMessage();
+        if (dto instanceof PushMessageDTO pushDto) {
+            text = pushDto.getTextMessage();
+            emojis = pushDto.getEmojis();
         } else if (dto instanceof MulticastMessageDTO) {
             text = ((MulticastMessageDTO) dto).getTextMessage();
         } else if (dto instanceof BroadcastMessageDTO) {
@@ -707,6 +866,16 @@ public class LineMessageServiceImpl implements ILineMessageService {
 
         if (StringUtils.isEmpty(text)) {
             throw new ServiceException("文字訊息內容不能為空");
+        }
+
+        // 如果有 emojis，使用 Builder 建立訊息
+        if (emojis != null && !emojis.isEmpty()) {
+            List<Emoji> lineEmojis = emojis.stream()
+                    .map(e -> new Emoji(e.getIndex(), e.getProductId(), e.getEmojiId()))
+                    .toList();
+            return new TextMessage.Builder(text)
+                    .emojis(lineEmojis)
+                    .build();
         }
 
         return new TextMessage(text);

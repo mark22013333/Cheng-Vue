@@ -13,7 +13,7 @@ import java.util.*;
  * Flex Message JSON 解析器與驗證器
  * <p>
  * 驗證前端傳來的 JSON 是否符合 LINE Flex Message Object 結構
- * 參考文件：https://developers.line.biz/en/reference/messaging-api/#flex-message
+ * 參考文件：<a href="https://developers.line.biz/en/reference/messaging-api/#flex-message">Flex-Message</a>
  *
  * @author cheng
  */
@@ -73,7 +73,8 @@ public class FlexMessageParser {
 
         try {
             // 解析 JSON
-            JsonNode rootNode = JacksonUtil.fromJson(jsonString, new TypeReference<JsonNode>() {});
+            JsonNode rootNode = JacksonUtil.fromJson(jsonString, new TypeReference<JsonNode>() {
+            });
             if (rootNode == null) {
                 return ValidationResult.error("無效的 JSON 格式");
             }
@@ -365,7 +366,8 @@ public class FlexMessageParser {
         }
 
         try {
-            JsonNode node = JacksonUtil.fromJson(jsonString, new TypeReference<JsonNode>() {});
+            JsonNode node = JacksonUtil.fromJson(jsonString, new TypeReference<JsonNode>() {
+            });
             return JacksonUtil.toJsonString(node);
         } catch (Exception e) {
             log.warn("格式化 JSON 失敗", e);
@@ -385,7 +387,8 @@ public class FlexMessageParser {
         }
 
         try {
-            JsonNode node = JacksonUtil.fromJson(jsonString, new TypeReference<JsonNode>() {});
+            JsonNode node = JacksonUtil.fromJson(jsonString, new TypeReference<JsonNode>() {
+            });
             return JacksonUtil.encodeToJson(node);
         } catch (Exception e) {
             log.warn("壓縮 JSON 失敗", e);

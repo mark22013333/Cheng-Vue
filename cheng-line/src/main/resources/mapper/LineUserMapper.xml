@@ -54,7 +54,7 @@
                create_time,
                update_time,
                remark
-        from sys_line_user
+        from line_user
     </sql>
 
     <select id="selectLineUserById" parameterType="Long" resultMap="LineUserResult">
@@ -114,7 +114,7 @@
     </select>
 
     <insert id="insertLineUser" parameterType="com.cheng.line.domain.LineUser" useGeneratedKeys="true" keyProperty="id">
-        insert into sys_line_user
+        insert into line_user
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="lineUserId != null and lineUserId != ''">line_user_id,</if>
             <if test="lineDisplayName != null and lineDisplayName != ''">line_display_name,</if>
@@ -152,7 +152,7 @@
     </insert>
 
     <update id="updateLineUser" parameterType="com.cheng.line.domain.LineUser">
-        update sys_line_user
+        update line_user
         <trim prefix="SET" suffixOverrides=",">
             <if test="lineDisplayName != null and lineDisplayName != ''">line_display_name = #{lineDisplayName},</if>
             <if test="linePictureUrl != null">line_picture_url = #{linePictureUrl},</if>
@@ -178,39 +178,39 @@
 
     <delete id="deleteLineUserById" parameterType="Long">
         delete
-        from sys_line_user
+        from line_user
         where id = #{id}
     </delete>
 
     <delete id="deleteLineUserByIds" parameterType="Long">
-        delete from sys_line_user where id in
+        delete from line_user where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
     </delete>
 
     <select id="countTotalUsers" resultType="long">
-        select count(*) from sys_line_user
+        select count(*) from line_user
     </select>
 
     <select id="countFollowingUsers" resultType="int">
-        select count(*) from sys_line_user where follow_status = 'FOLLOWING'
+        select count(*) from line_user where follow_status = 'FOLLOWING'
     </select>
 
     <select id="countBoundUsers" resultType="int">
-        select count(*) from sys_line_user where bind_status = 'BOUND'
+        select count(*) from line_user where bind_status = 'BOUND'
     </select>
 
     <select id="countUnfollowedUsers" resultType="long">
-        select count(*) from sys_line_user where follow_status = 'UNFOLLOWED'
+        select count(*) from line_user where follow_status = 'UNFOLLOWED'
     </select>
 
     <select id="countBlacklistedUsers" resultType="long">
-        select count(*) from sys_line_user where follow_status = 'BLACKLISTED'
+        select count(*) from line_user where follow_status = 'BLACKLISTED'
     </select>
 
     <select id="countNewUsersByDateRange" resultType="long">
-        select count(*) from sys_line_user
+        select count(*) from line_user
         where first_follow_time between #{startTime} and #{endTime}
     </select>
 
@@ -218,14 +218,14 @@
         select
             DATE_FORMAT(first_follow_time, '%Y-%m') as month,
             count(*) as count
-        from sys_line_user
+        from line_user
         where first_follow_time between #{startTime} and #{endTime}
         group by DATE_FORMAT(first_follow_time, '%Y-%m')
         order by month
     </select>
 
     <select id="selectAllFollowingLineUserIds" resultType="String">
-        select line_user_id from sys_line_user where follow_status = 'FOLLOWING'
+        select line_user_id from line_user where follow_status = 'FOLLOWING'
     </select>
 
     <select id="selectFollowingLineUsers" resultMap="LineUserResult">
@@ -235,7 +235,7 @@
     </select>
 
     <update id="updateBindStatus">
-        update sys_line_user
+        update line_user
         set bind_status = #{bindStatus.code},
             sys_user_id = #{sysUserId},
             <if test="bindStatus.code == 'BOUND'">
@@ -253,7 +253,7 @@
     </update>
 
     <update id="updateFollowStatus">
-        update sys_line_user
+        update line_user
         set follow_status = #{followStatus.code},
             <if test="followStatus.code == 'FOLLOWING'">
                 latest_follow_time = sysdate(),
@@ -270,7 +270,7 @@
     </update>
 
     <update id="incrementMessagesSent">
-        update sys_line_user
+        update line_user
         set total_messages_sent = total_messages_sent + 1,
             last_interaction_time = sysdate(),
             update_time = sysdate()
@@ -278,7 +278,7 @@
     </update>
 
     <update id="incrementMessagesReceived">
-        update sys_line_user
+        update line_user
         set total_messages_received = total_messages_received + 1,
             last_interaction_time = sysdate(),
             update_time = sysdate()
@@ -286,7 +286,7 @@
     </update>
 
     <update id="updateLastInteractionTime">
-        update sys_line_user
+        update line_user
         set last_interaction_time = sysdate(),
             update_time = sysdate()
         where line_user_id = #{lineUserId}

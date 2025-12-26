@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
 import java.io.Serial;
 
 /**
- * LINE Rich Menu（圖文選單）物件 sys_line_rich_menu
+ * LINE Rich Menu（圖文選單）物件 line_rich_menu
  *
  * @author cheng
  */
