@@ -75,6 +75,10 @@
                       <span>音訊訊息</span>
                     </div>
                   </div>
+                  <!-- STICKER -->
+                  <div v-else-if="msg.type === 'sticker'" class="preview-sticker">
+                    <img :src="getStickerUrl(msg.packageId, msg.stickerId)" alt="sticker" />
+                  </div>
                   <!-- OTHER -->
                   <div v-else class="preview-unknown">
                     <span>{{ msg.type || '未知類型' }}</span>

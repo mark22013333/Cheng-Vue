@@ -144,32 +144,43 @@
             </el-tag>
           </div>
 
-          <!-- 訊息列表 -->
+          <!-- 訊息列表（支援拖曳排序） -->
           <div class="message-list">
-            <div
-              v-for="(msg, index) in messages"
-              :key="index"
-              :class="['message-item', { active: activeMessageIndex === index }]"
-              @click="activeMessageIndex = index"
+            <draggable
+              v-model="messages"
+              item-key="_dragKey"
+              handle=".drag-handle"
+              animation="200"
+              ghost-class="ghost-item"
+              @end="onDragEnd"
+              class="message-list-inner"
             >
-              <div class="msg-header">
-                <el-icon :size="16"><component :is="getMsgTypeIcon(msg.type)" /></el-icon>
-                <span class="msg-type">{{ getMsgTypeLabel(msg.type) }}</span>
-                <el-button
-                  v-if="messages.length > 1"
-                  link
-                  type="danger"
-                  :icon="Delete"
-                  size="small"
-                  @click.stop="removeMessage(index)"
-                />
-              </div>
-              <div class="msg-preview">
-                <template v-if="msg.type === 'TEXT'">{{ msg.text?.substring(0, 30) }}...</template>
-                <template v-else-if="msg.type === 'FLEX'">Flex Message</template>
-                <template v-else>{{ getMsgTypeLabel(msg.type) }}</template>
-              </div>
-            </div>
+              <template #item="{ element: msg, index }">
+                <div
+                  :class="['message-item', { active: activeMessageIndex === index }]"
+                  @click="activeMessageIndex = index"
+                >
+                  <div class="msg-header">
+                    <el-icon class="drag-handle" :size="14" title="拖曳移動"><Rank /></el-icon>
+                    <el-icon :size="16"><component :is="getMsgTypeIcon(msg.type)" /></el-icon>
+                    <span class="msg-type">{{ getMsgTypeLabel(msg.type) }}</span>
+                    <el-button
+                      link
+                      type="danger"
+                      :icon="Delete"
+                      size="small"
+                      @click.stop="removeMessage(index)"
+                    />
+                  </div>
+                  <div class="msg-preview">
+                    <template v-if="msg.type === 'TEXT'">{{ msg.text?.substring(0, 30) || '...' }}</template>
+                    <template v-else-if="msg.type === 'FLEX'">Flex Message</template>
+                    <template v-else-if="msg.type === 'STICKER'">貼圖</template>
+                    <template v-else>{{ getMsgTypeLabel(msg.type) }}</template>
+                  </div>
+                </div>
+              </template>
+            </draggable>
 
             <!-- 新增訊息按鈕 -->
             <el-dropdown v-if="messages.length < 5" trigger="click" @command="addMessage">
@@ -559,7 +570,8 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Plus, Delete, ChatLineSquare, Picture, VideoCamera, Headset, Location, PriceTag, Grid, Document, ArrowDown, Upload, WarningFilled, Star, Close } from '@element-plus/icons-vue'
+import { Plus, Delete, ChatLineSquare, Picture, VideoCamera, Headset, Location, PriceTag, Grid, Document, ArrowDown, Upload, WarningFilled, Star, Close, Rank } from '@element-plus/icons-vue'
+import draggable from 'vuedraggable'
 import FlexPreview from '@/components/Line/FlexPreview.vue'
 import MediaSelector from './MediaSelector.vue'
 import ImagemapEditor from './ImagemapEditor.vue'
@@ -677,7 +689,7 @@ const form = reactive({
   remark: ''
 })
 
-const messages = ref([{ type: 'TEXT', text: '' }])
+const messages = ref([])
 
 const isNew = computed(() => !form.templateId)
 const currentMessage = computed(() => messages.value[activeMessageIndex.value])
@@ -1116,8 +1128,12 @@ const reloadTemplateVariables = () => {
 const getMsgTypeLabel = (type) => msgTypeOptions.find(o => o.value === type)?.label || type
 const getMsgTypeIcon = (type) => msgTypeOptions.find(o => o.value === type)?.icon || Document
 
+// 產生唯一的拖曳 key
+let dragKeyCounter = 0
+const generateDragKey = () => `msg_${Date.now()}_${dragKeyCounter++}`
+
 const addMessage = (type) => {
-  const newMsg = { type }
+  const newMsg = { type, _dragKey: generateDragKey() }
   switch (type) {
     case 'TEXT':
       newMsg.text = ''
@@ -1154,7 +1170,19 @@ const addMessage = (type) => {
 const removeMessage = (index) => {
   messages.value.splice(index, 1)
   if (activeMessageIndex.value >= messages.value.length) {
-    activeMessageIndex.value = messages.value.length - 1
+    activeMessageIndex.value = Math.max(0, messages.value.length - 1)
+  }
+}
+
+// 拖曳結束後的處理
+const onDragEnd = (evt) => {
+  // 更新選中的訊息索引，跟隨拖曳後的位置
+  if (evt.oldIndex === activeMessageIndex.value) {
+    activeMessageIndex.value = evt.newIndex
+  } else if (evt.oldIndex < activeMessageIndex.value && evt.newIndex >= activeMessageIndex.value) {
+    activeMessageIndex.value--
+  } else if (evt.oldIndex > activeMessageIndex.value && evt.newIndex <= activeMessageIndex.value) {
+    activeMessageIndex.value++
   }
 }
 
@@ -1590,7 +1618,7 @@ const initForm = () => {
         // 注意：儲存時 type 轉為小寫，載入時需轉回大寫
         messages.value = content.messages.map(msg => {
           const normalizedType = msg.type.toUpperCase()
-          const normalizedMsg = { ...msg, type: normalizedType }
+          const normalizedMsg = { ...msg, type: normalizedType, _dragKey: generateDragKey() }
           
           // IMAGEMAP 處理：支援扁平結構和 contents 結構
           if (normalizedType === 'IMAGEMAP') {
@@ -1635,13 +1663,18 @@ const initForm = () => {
         })
       } else {
         // 舊格式：單一訊息
-        messages.value = [parseOldFormat(props.template.msgType, props.template.content, props.template.altText)]
+        const parsedMsg = parseOldFormat(props.template.msgType, props.template.content, props.template.altText)
+        parsedMsg._dragKey = generateDragKey()
+        messages.value = [parsedMsg]
       }
     } catch (e) {
       // 純文字或 JSON 解析失敗，嘗試用 parseOldFormat 解析
-      messages.value = [parseOldFormat(props.template.msgType, props.template.content, props.template.altText)]
+      const parsedMsg = parseOldFormat(props.template.msgType, props.template.content, props.template.altText)
+      parsedMsg._dragKey = generateDragKey()
+      messages.value = [parsedMsg]
     }
   } else {
+    // 新增範本時，不預設任何訊息，讓使用者自行選擇
     Object.assign(form, {
       templateId: null,
       templateName: '',
@@ -1650,7 +1683,7 @@ const initForm = () => {
       sortOrder: 0,
       remark: ''
     })
-    messages.value = [{ type: 'TEXT', text: '' }]
+    messages.value = []
   }
   activeMessageIndex.value = 0
   
@@ -1795,14 +1828,22 @@ watch(
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 20px;
+  align-items: flex-start;
+
+  .message-list-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
 
   .message-item {
-    width: 120px;
+    width: 130px;
     padding: 12px;
     border: 1px solid #dcdfe6;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
+    background: #fff;
 
     &:hover {
       border-color: #409eff;
@@ -1818,6 +1859,20 @@ watch(
       align-items: center;
       gap: 4px;
       margin-bottom: 8px;
+
+      .drag-handle {
+        cursor: grab;
+        color: #c0c4cc;
+        margin-right: 2px;
+        
+        &:hover {
+          color: #409eff;
+        }
+        
+        &:active {
+          cursor: grabbing;
+        }
+      }
 
       .msg-type {
         flex: 1;
@@ -1835,8 +1890,15 @@ watch(
     }
   }
 
+  // 拖曳時的幽靈效果
+  .ghost-item {
+    opacity: 0.5;
+    background: #e6f1fc;
+    border: 2px dashed #409eff;
+  }
+
   .add-message-btn {
-    width: 120px;
+    width: 130px;
     height: 80px;
     display: flex;
     flex-direction: column;
