@@ -85,6 +85,15 @@
                   </div>
                 </div>
               </div>
+              <!-- Quick Reply 預覽（多訊息模式：只取最後一則訊息的 quickReply，顯示在底部） -->
+              <div v-if="lastMessageQuickReply && lastMessageQuickReply.length > 0" class="quick-reply-preview quick-reply-bottom">
+                <div class="quick-reply-container">
+                  <div v-for="(item, idx) in lastMessageQuickReply" :key="idx" class="quick-reply-item">
+                    <img v-if="item.imageUrl" :src="item.imageUrl" class="quick-reply-icon" />
+                    <span class="quick-reply-label">{{ item.action?.label || '按鈕' }}</span>
+                  </div>
+                </div>
+              </div>
             </template>
 
             <!-- 單一訊息模式 -->
@@ -100,6 +109,15 @@
                       </template>
                     </template>
                     <template v-else>{{ displayContent }}</template>
+                  </div>
+                  <!-- Quick Reply 預覽 -->
+                  <div v-if="quickReplyItems && quickReplyItems.length > 0" class="quick-reply-preview">
+                    <div class="quick-reply-container">
+                      <div v-for="(item, idx) in quickReplyItems" :key="idx" class="quick-reply-item">
+                        <img v-if="item.imageUrl" :src="item.imageUrl" class="quick-reply-icon" />
+                        <span class="quick-reply-label">{{ item.action?.label || '按鈕' }}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               <!-- IMAGE -->
@@ -267,6 +285,15 @@
           </div>
         </div>
       </div>
+      <!-- Quick Reply 預覽（多訊息模式：只取最後一則訊息的 quickReply，顯示在底部） -->
+      <div v-if="lastMessageQuickReply && lastMessageQuickReply.length > 0" class="quick-reply-preview quick-reply-bottom">
+        <div class="quick-reply-container">
+          <div v-for="(item, idx) in lastMessageQuickReply" :key="idx" class="quick-reply-item">
+            <img v-if="item.imageUrl" :src="item.imageUrl" class="quick-reply-icon" />
+            <span class="quick-reply-label">{{ item.action?.label || '按鈕' }}</span>
+          </div>
+        </div>
+      </div>
     </template>
 
     <!-- 單一訊息模式 -->
@@ -282,6 +309,15 @@
               </template>
             </template>
             <template v-else>{{ displayContent }}</template>
+          </div>
+          <!-- Quick Reply 預覽 -->
+          <div v-if="quickReplyItems && quickReplyItems.length > 0" class="quick-reply-preview">
+            <div class="quick-reply-container">
+              <div v-for="(item, idx) in quickReplyItems" :key="idx" class="quick-reply-item">
+                <img v-if="item.imageUrl" :src="item.imageUrl" class="quick-reply-icon" />
+                <span class="quick-reply-label">{{ item.action?.label || '按鈕' }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -489,6 +525,37 @@ const textEmojis = computed(() => {
       return obj.emojis || []
     } catch {
       return []
+    }
+  }
+  return []
+})
+
+// 解析 TEXT 訊息中的 quickReply（單一訊息模式）
+const quickReplyItems = computed(() => {
+  if (props.msgType !== 'TEXT' || !props.content) return []
+  const content = props.content
+  if (content.startsWith('{') && content.includes('"quickReply"')) {
+    try {
+      const obj = JSON.parse(content)
+      return obj.quickReply?.items || []
+    } catch {
+      return []
+    }
+  }
+  return []
+})
+
+// 多訊息模式：取得最後一則訊息的 quickReply（LINE 只會顯示最後一則的 Quick Reply）
+const lastMessageQuickReply = computed(() => {
+  if (!hasMultipleMessages.value) return []
+  const messages = messagesList.value
+  if (!messages || messages.length === 0) return []
+  
+  // 從最後一則訊息開始往前找有 quickReply 的訊息
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i]
+    if (msg.quickReply?.items && msg.quickReply.items.length > 0) {
+      return msg.quickReply.items
     }
   }
   return []
@@ -877,6 +944,8 @@ const handleStickerError = () => {
   align-items: flex-start;
   justify-content: flex-start;
   flex-direction: column;
+  flex: 1;
+  min-height: 180px;
 
   &.full-size {
     min-height: 120px;
@@ -920,6 +989,60 @@ const handleStickerError = () => {
       vertical-align: middle;
       margin: 0 1px;
     }
+  }
+}
+
+// Quick Reply 預覽樣式
+.quick-reply-preview {
+  margin-top: 12px;
+  width: 100%;
+  
+  .quick-reply-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .quick-reply-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #06c755;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      background: #f0f0f0;
+      transform: translateY(-1px);
+    }
+    
+    .quick-reply-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    
+    .quick-reply-label {
+      white-space: nowrap;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+  
+  // 多訊息模式底部固定樣式
+  &.quick-reply-bottom {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
   }
 }
 

@@ -347,7 +347,11 @@ const handleSave = async (data) => {
 
     if (data.messages.length === 1) {
       const msg = data.messages[0]
+      console.log('[handleSave] msg:', JSON.stringify(msg, null, 2))
+      console.log('[handleSave] enableQuickReply:', msg.enableQuickReply)
+      console.log('[handleSave] quickReply:', msg.quickReply)
       content = buildMessageContent(msg)
+      console.log('[handleSave] content:', content)
       altText = msg.altText || ''
     } else {
       // 多訊息組合
@@ -429,16 +433,30 @@ const recalculateEmojiIndices = (text, emojis) => {
 const buildMessageContent = (msg) => {
   switch (msg.type) {
     case 'TEXT':
-      // 如果有 emoji，需要返回包含 emojis 的 JSON 結構
+      // 建立文字訊息物件
+      const textObj = { type: 'text', text: msg.text }
+      
+      // 如果有 emoji，需要包含 emojis
       if (msg.emojis && msg.emojis.length > 0 && msg.text) {
         const recalculatedEmojis = recalculateEmojiIndices(msg.text, msg.emojis)
         if (recalculatedEmojis.length > 0) {
-          return JSON.stringify({
-            type: 'text',
-            text: msg.text,
-            emojis: recalculatedEmojis
-          })
+          textObj.emojis = recalculatedEmojis
         }
+      }
+      
+      // 如果有 Quick Reply，需要包含 quickReply
+      console.log('[buildMessageContent] enableQuickReply:', msg.enableQuickReply)
+      console.log('[buildMessageContent] quickReply:', msg.quickReply)
+      console.log('[buildMessageContent] items length:', msg.quickReply?.items?.length)
+      if (msg.enableQuickReply && msg.quickReply?.items?.length > 0) {
+        textObj.quickReply = msg.quickReply
+        console.log('[buildMessageContent] Added quickReply to textObj')
+      }
+      
+      // 如果有 emoji 或 quickReply，返回 JSON；否則返回純文字
+      console.log('[buildMessageContent] textObj:', textObj)
+      if (textObj.emojis || textObj.quickReply) {
+        return JSON.stringify(textObj)
       }
       return msg.text
     case 'IMAGE':
@@ -493,6 +511,10 @@ const buildMessageObject = (msg) => {
           obj.emojis = recalculatedEmojis
         }
       }
+      // 如果有 Quick Reply，加入 quickReply
+      if (msg.enableQuickReply && msg.quickReply?.items?.length > 0) {
+        obj.quickReply = msg.quickReply
+      }
       break
     case 'IMAGE':
       obj.originalContentUrl = msg.originalContentUrl
@@ -520,6 +542,10 @@ const buildMessageObject = (msg) => {
       obj.altText = msg.altText
       if (msg.contents) {
         obj.contents = typeof msg.contents === 'string' ? JSON.parse(msg.contents) : msg.contents
+      }
+      // 記錄選擇的 Flex 範本名稱（用於編輯時恢復下拉選單）
+      if (msg.flexPresetName) {
+        obj.flexPresetName = msg.flexPresetName
       }
       break
     case 'IMAGEMAP':

@@ -10,6 +10,7 @@ import com.cheng.line.domain.LineMessageTemplate;
 import com.cheng.line.dto.SendMessageDTO;
 import com.cheng.line.enums.ContentType;
 import com.cheng.line.enums.MessageType;
+import com.cheng.line.enums.QuickReplyActionType;
 import com.cheng.line.enums.SendStatus;
 import com.cheng.line.enums.TargetType;
 import com.cheng.line.mapper.LineMessageLogMapper;
@@ -76,20 +77,103 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
         // 變數替換
         String text = processVariables(dto.getText(), dto);
 
-        // 建立訊息
-        TextMessage message;
+        // 建立訊息 Builder
+        TextMessage.Builder builder = new TextMessage.Builder(text);
+        
+        // 設定 Emoji
         if (dto.getEmojis() != null && !dto.getEmojis().isEmpty()) {
             List<Emoji> emojis = dto.getEmojis().stream()
                     .map(e -> new Emoji(e.getIndex(), e.getProductId(), e.getEmojiId()))
                     .toList();
-            message = new TextMessage.Builder(text)
-                    .emojis(emojis)
-                    .build();
-        } else {
-            message = new TextMessage(text);
+            builder.emojis(emojis);
+        }
+        
+        // 設定 QuickReply
+        log.info("[sendTextMessage] 檢查 quickReply: dto.getQuickReply()={}, items={}", 
+            dto.getQuickReply() != null,
+            dto.getQuickReply() != null && dto.getQuickReply().getItems() != null ? dto.getQuickReply().getItems().size() : 0);
+        if (dto.getQuickReply() != null && dto.getQuickReply().getItems() != null && !dto.getQuickReply().getItems().isEmpty()) {
+            List<QuickReplyItem> quickReplyItems = dto.getQuickReply().getItems().stream()
+                    .map(this::buildQuickReplyItem)
+                    .filter(item -> item != null)
+                    .toList();
+            log.info("[sendTextMessage] 建立 quickReplyItems 完成, count: {}", quickReplyItems.size());
+            if (!quickReplyItems.isEmpty()) {
+                builder.quickReply(new QuickReply(quickReplyItems));
+                log.info("[sendTextMessage] QuickReply 已設定到 builder");
+            }
         }
 
-        return doSend(dto, message, ContentType.TEXT);
+        return doSend(dto, builder.build(), ContentType.TEXT);
+    }
+    
+    /**
+     * 建立 QuickReply 項目
+     */
+    private QuickReplyItem buildQuickReplyItem(SendMessageDTO.QuickReplyItemDTO itemDto) {
+        if (itemDto.getAction() == null) {
+            return null;
+        }
+        
+        SendMessageDTO.QuickReplyActionDTO actionDto = itemDto.getAction();
+        Action action = buildQuickReplyAction(actionDto);
+        if (action == null) {
+            return null;
+        }
+        
+        URI imageUrl = null;
+        if (StringUtils.isNotEmpty(itemDto.getImageUrl())) {
+            imageUrl = URI.create(itemDto.getImageUrl());
+        }
+        
+        return new QuickReplyItem(imageUrl, action);
+    }
+    
+    /**
+     * 建立 QuickReply Action
+     */
+    private Action buildQuickReplyAction(SendMessageDTO.QuickReplyActionDTO actionDto) {
+        if (actionDto == null || StringUtils.isEmpty(actionDto.getType())) {
+            return null;
+        }
+        
+        QuickReplyActionType actionType = QuickReplyActionType.fromCode(actionDto.getType());
+        if (actionType == null) {
+            log.warn("未知的 Quick Reply 動作類型: {}", actionDto.getType());
+            return null;
+        }
+        
+        return switch (actionType) {
+            case MESSAGE -> new MessageAction(actionDto.getLabel(), actionDto.getText());
+            case URI -> new URIAction(actionDto.getLabel(), URI.create(actionDto.getUri()), null);
+            case POSTBACK -> new PostbackAction(actionDto.getLabel(), actionDto.getData(), actionDto.getDisplayText(), null, null, null);
+            case DATETIMEPICKER -> {
+                DatetimePickerAction.Mode mode = parseDatetimePickerMode(actionDto.getMode());
+                yield new DatetimePickerAction.Builder()
+                        .label(actionDto.getLabel())
+                        .data(actionDto.getData())
+                        .mode(mode)
+                        .build();
+            }
+            case CAMERA -> new CameraAction(actionDto.getLabel());
+            case CAMERA_ROLL -> new CameraRollAction(actionDto.getLabel());
+            case LOCATION -> new LocationAction(actionDto.getLabel());
+            case CLIPBOARD -> new ClipboardAction(actionDto.getLabel(), actionDto.getClipboardText());
+        };
+    }
+    
+    /**
+     * 解析 DatetimePicker 的 Mode
+     */
+    private DatetimePickerAction.Mode parseDatetimePickerMode(String mode) {
+        if (StringUtils.isEmpty(mode)) {
+            return DatetimePickerAction.Mode.DATETIME;
+        }
+        return switch (mode.toLowerCase()) {
+            case "date" -> DatetimePickerAction.Mode.DATE;
+            case "time" -> DatetimePickerAction.Mode.TIME;
+            default -> DatetimePickerAction.Mode.DATETIME;
+        };
     }
 
     @Override
@@ -306,11 +390,12 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
 
         switch (msgType) {
             case TEXT -> {
-                // 檢查 content 是否為 JSON 格式（包含 emojis）
-                if (content.startsWith("{") && content.contains("\"emojis\"")) {
+                // 檢查 content 是否為 JSON 格式（包含 emojis 或 quickReply）
+                if (content.startsWith("{") && (content.contains("\"emojis\"") || content.contains("\"quickReply\""))) {
                     try {
                         var jsonNode = JacksonUtil.toJsonNode(content);
                         dto.setText(jsonNode.get("text").asText());
+                        // 解析 emojis
                         if (jsonNode.has("emojis") && jsonNode.get("emojis").isArray()) {
                             List<SendMessageDTO.EmojiDTO> emojiList = new ArrayList<>();
                             for (var emojiNode : jsonNode.get("emojis")) {
@@ -321,6 +406,39 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
                                 emojiList.add(emojiDTO);
                             }
                             dto.setEmojis(emojiList);
+                        }
+                        // 解析 quickReply
+                        log.info("[sendTemplateMessage] 檢查 quickReply: has={}, hasItems={}", 
+                            jsonNode.has("quickReply"), 
+                            jsonNode.has("quickReply") && jsonNode.get("quickReply").has("items"));
+                        if (jsonNode.has("quickReply") && jsonNode.get("quickReply").has("items")) {
+                            log.info("[sendTemplateMessage] 開始解析 quickReply items");
+                            SendMessageDTO.QuickReplyDTO quickReplyDTO = new SendMessageDTO.QuickReplyDTO();
+                            List<SendMessageDTO.QuickReplyItemDTO> items = new ArrayList<>();
+                            for (var itemNode : jsonNode.get("quickReply").get("items")) {
+                                SendMessageDTO.QuickReplyItemDTO itemDTO = new SendMessageDTO.QuickReplyItemDTO();
+                                itemDTO.setType(itemNode.has("type") ? itemNode.get("type").asText() : "action");
+                                if (itemNode.has("imageUrl") && !itemNode.get("imageUrl").isNull()) {
+                                    itemDTO.setImageUrl(itemNode.get("imageUrl").asText());
+                                }
+                                if (itemNode.has("action")) {
+                                    var actionNode = itemNode.get("action");
+                                    SendMessageDTO.QuickReplyActionDTO actionDTO = new SendMessageDTO.QuickReplyActionDTO();
+                                    actionDTO.setType(actionNode.has("type") ? actionNode.get("type").asText() : "message");
+                                    if (actionNode.has("label")) actionDTO.setLabel(actionNode.get("label").asText());
+                                    if (actionNode.has("text")) actionDTO.setText(actionNode.get("text").asText());
+                                    if (actionNode.has("uri")) actionDTO.setUri(actionNode.get("uri").asText());
+                                    if (actionNode.has("data")) actionDTO.setData(actionNode.get("data").asText());
+                                    if (actionNode.has("displayText")) actionDTO.setDisplayText(actionNode.get("displayText").asText());
+                                    if (actionNode.has("mode")) actionDTO.setMode(actionNode.get("mode").asText());
+                                    if (actionNode.has("clipboardText")) actionDTO.setClipboardText(actionNode.get("clipboardText").asText());
+                                    itemDTO.setAction(actionDTO);
+                                }
+                                items.add(itemDTO);
+                            }
+                            quickReplyDTO.setItems(items);
+                            dto.setQuickReply(quickReplyDTO);
+                            log.info("[sendTemplateMessage] 設定 quickReply 完成, items count: {}", items.size());
                         }
                     } catch (Exception e) {
                         log.warn("解析 TEXT 訊息 JSON 失敗，使用純文字: {}", e.getMessage());

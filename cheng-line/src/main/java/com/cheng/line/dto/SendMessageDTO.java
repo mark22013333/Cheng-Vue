@@ -66,6 +66,11 @@ public class SendMessageDTO {
      */
     private List<EmojiDTO> emojis;
 
+    /**
+     * 快速回覆按鈕
+     */
+    private QuickReplyDTO quickReply;
+
     // ========== IMAGE ==========
 
     /**
@@ -215,5 +220,38 @@ public class SendMessageDTO {
         private Integer y;
         private Integer width;
         private Integer height;
+    }
+
+    /**
+     * Quick Reply DTO
+     */
+    @Data
+    public static class QuickReplyDTO {
+        private List<QuickReplyItemDTO> items;
+    }
+
+    /**
+     * Quick Reply Item DTO
+     */
+    @Data
+    public static class QuickReplyItemDTO {
+        private String type;  // action
+        private String imageUrl;
+        private QuickReplyActionDTO action;
+    }
+
+    /**
+     * Quick Reply Action DTO
+     */
+    @Data
+    public static class QuickReplyActionDTO {
+        private String type;  // message, uri, postback, datetimepicker, camera, cameraRoll, location, clipboard
+        private String label;
+        private String text;
+        private String uri;
+        private String data;
+        private String displayText;
+        private String mode;  // datetime, date, time
+        private String clipboardText;
     }
 }

@@ -217,7 +217,15 @@ public class LineMessageTemplateController extends BaseController {
     @Log(title = "訊息範本", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody Map<String, Object> params) {
+        // DEBUG: 追蹤接收到的 content
+        log.info("[edit] 接收到的 content: {}", params.get("content"));
+        log.info("[edit] content 是否包含 quickReply: {}", 
+            params.get("content") != null && params.get("content").toString().contains("quickReply"));
+        
         LineMessageTemplate lineMessageTemplate = buildTemplateFromParams(params);
+        
+        // DEBUG: 追蹤 buildTemplateFromParams 後的 content
+        log.info("[edit] 建構後的 template.content: {}", lineMessageTemplate.getContent());
         
         // 檢查範本代碼唯一性
         if (lineMessageTemplate.getTemplateCode() != null && !lineMessageTemplateService.checkTemplateCodeUnique(lineMessageTemplate)) {
@@ -232,6 +240,8 @@ public class LineMessageTemplateController extends BaseController {
 
         lineMessageTemplate.setUpdateBy(getUsername());
         int result = lineMessageTemplateService.updateLineMessageTemplate(lineMessageTemplate);
+        
+        log.info("[edit] 範本更新結果: {}, templateId: {}", result, lineMessageTemplate.getTemplateId());
         
         // 更新圖文範本引用關聯
         maintainImagemapRefs(lineMessageTemplate.getTemplateId(), params);
@@ -379,6 +389,36 @@ public class LineMessageTemplateController extends BaseController {
                                 }
                                 pushMessage.setEmojis(emojiList);
                             }
+                            // 處理 quickReply
+                            if (msg.has("quickReply") && msg.get("quickReply").has("items")) {
+                                PushMessageDTO.QuickReplyDTO quickReplyDTO = new PushMessageDTO.QuickReplyDTO();
+                                List<PushMessageDTO.QuickReplyItemDTO> items = new java.util.ArrayList<>();
+                                for (var itemNode : msg.get("quickReply").get("items")) {
+                                    PushMessageDTO.QuickReplyItemDTO itemDTO = new PushMessageDTO.QuickReplyItemDTO();
+                                    itemDTO.setType(itemNode.has("type") ? itemNode.get("type").asText() : "action");
+                                    // Sets optional image URL for the quick reply item
+                                    if (itemNode.has("imageUrl") && !itemNode.get("imageUrl").isNull() && !itemNode.get("imageUrl").asText().isEmpty()) {
+                                        itemDTO.setImageUrl(itemNode.get("imageUrl").asText());
+                                    }
+                                    // Extracts action details for a quick reply item
+                                    if (itemNode.has("action")) {
+                                        var actionNode = itemNode.get("action");
+                                        PushMessageDTO.QuickReplyActionDTO actionDTO = new PushMessageDTO.QuickReplyActionDTO();
+                                        actionDTO.setType(actionNode.has("type") ? actionNode.get("type").asText() : "message");
+                                        if (actionNode.has("label")) actionDTO.setLabel(actionNode.get("label").asText());
+                                        if (actionNode.has("text")) actionDTO.setText(actionNode.get("text").asText());
+                                        if (actionNode.has("uri")) actionDTO.setUri(actionNode.get("uri").asText());
+                                        if (actionNode.has("data")) actionDTO.setData(actionNode.get("data").asText());
+                                        if (actionNode.has("displayText")) actionDTO.setDisplayText(actionNode.get("displayText").asText());
+                                        if (actionNode.has("mode")) actionDTO.setMode(actionNode.get("mode").asText());
+                                        if (actionNode.has("clipboardText")) actionDTO.setClipboardText(actionNode.get("clipboardText").asText());
+                                        itemDTO.setAction(actionDTO);
+                                    }
+                                    items.add(itemDTO);
+                                }
+                                quickReplyDTO.setItems(items);
+                                pushMessage.setQuickReply(quickReplyDTO);
+                            }
                         }
                         case FLEX -> {
                             if (msg.has("contents")) {
@@ -453,11 +493,12 @@ public class LineMessageTemplateController extends BaseController {
                     pushMessage.setAltText(template.getAltText());
                 }
                 case TEXT -> {
-                    // 檢查 content 是否為 JSON 格式（包含 emojis）
-                    if (content.startsWith("{") && content.contains("\"emojis\"")) {
+                    // 檢查 content 是否為 JSON 格式（包含 emojis 或 quickReply）
+                    if (content.startsWith("{") && (content.contains("\"emojis\"") || content.contains("\"quickReply\""))) {
                         try {
                             JsonNode textNode = JacksonUtil.fromJson(content, new TypeReference<JsonNode>() {});
                             pushMessage.setTextMessage(textNode.get("text").asText());
+                            // 解析 emojis
                             if (textNode.has("emojis") && textNode.get("emojis").isArray()) {
                                 List<PushMessageDTO.EmojiDTO> emojiList = new java.util.ArrayList<>();
                                 for (var emojiNode : textNode.get("emojis")) {
@@ -468,6 +509,34 @@ public class LineMessageTemplateController extends BaseController {
                                     emojiList.add(emojiDTO);
                                 }
                                 pushMessage.setEmojis(emojiList);
+                            }
+                            // 解析 quickReply
+                            if (textNode.has("quickReply") && textNode.get("quickReply").has("items")) {
+                                PushMessageDTO.QuickReplyDTO quickReplyDTO = new PushMessageDTO.QuickReplyDTO();
+                                List<PushMessageDTO.QuickReplyItemDTO> items = new java.util.ArrayList<>();
+                                for (var itemNode : textNode.get("quickReply").get("items")) {
+                                    PushMessageDTO.QuickReplyItemDTO itemDTO = new PushMessageDTO.QuickReplyItemDTO();
+                                    itemDTO.setType(itemNode.has("type") ? itemNode.get("type").asText() : "action");
+                                    if (itemNode.has("imageUrl") && !itemNode.get("imageUrl").isNull() && !itemNode.get("imageUrl").asText().isEmpty()) {
+                                        itemDTO.setImageUrl(itemNode.get("imageUrl").asText());
+                                    }
+                                    if (itemNode.has("action")) {
+                                        var actionNode = itemNode.get("action");
+                                        PushMessageDTO.QuickReplyActionDTO actionDTO = new PushMessageDTO.QuickReplyActionDTO();
+                                        actionDTO.setType(actionNode.has("type") ? actionNode.get("type").asText() : "message");
+                                        if (actionNode.has("label")) actionDTO.setLabel(actionNode.get("label").asText());
+                                        if (actionNode.has("text")) actionDTO.setText(actionNode.get("text").asText());
+                                        if (actionNode.has("uri")) actionDTO.setUri(actionNode.get("uri").asText());
+                                        if (actionNode.has("data")) actionDTO.setData(actionNode.get("data").asText());
+                                        if (actionNode.has("displayText")) actionDTO.setDisplayText(actionNode.get("displayText").asText());
+                                        if (actionNode.has("mode")) actionDTO.setMode(actionNode.get("mode").asText());
+                                        if (actionNode.has("clipboardText")) actionDTO.setClipboardText(actionNode.get("clipboardText").asText());
+                                        itemDTO.setAction(actionDTO);
+                                    }
+                                    items.add(itemDTO);
+                                }
+                                quickReplyDTO.setItems(items);
+                                pushMessage.setQuickReply(quickReplyDTO);
                             }
                         } catch (Exception e) {
                             pushMessage.setTextMessage(content);
