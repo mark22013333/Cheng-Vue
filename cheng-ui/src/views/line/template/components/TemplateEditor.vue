@@ -209,7 +209,7 @@
             <!-- TEXT 編輯器 -->
             <template v-if="currentMessage.type === 'TEXT'">
               <!-- 即時預覽（綠色對話框） -->
-              <div class="text-live-preview" v-if="currentMessage.text || (currentMessage.emojis && currentMessage.emojis.length > 0)">
+              <div class="text-live-preview" v-if="currentMessage.text || (currentMessage.emojis && currentMessage.emojis.length > 0) || (currentMessage.enableQuickReply && currentMessage.quickReply?.items?.length > 0)">
                 <div class="preview-label">預覽效果：</div>
                 <div class="preview-bubble">
                   <template v-for="(part, idx) in textPreviewParts" :key="idx">
@@ -217,6 +217,17 @@
                     <img v-else-if="part.type === 'emoji'" :src="part.url" class="preview-emoji" />
                   </template>
                   <span v-if="!currentMessage.text && (!currentMessage.emojis || currentMessage.emojis.length === 0)" class="empty-text">(無內容)</span>
+                </div>
+                <!-- Quick Reply 預覽 -->
+                <div v-if="currentMessage.enableQuickReply && currentMessage.quickReply?.items?.length > 0" class="quick-reply-preview">
+                  <div 
+                    v-for="(item, idx) in currentMessage.quickReply.items" 
+                    :key="idx" 
+                    class="quick-reply-btn-preview"
+                  >
+                    <img v-if="item.imageUrl" :src="item.imageUrl" class="quick-reply-icon" />
+                    <span>{{ item.action?.label || '(未設定)' }}</span>
+                  </div>
                 </div>
               </div>
               <el-form-item label="文字內容" prop="content">
@@ -248,6 +259,120 @@
                   插入 LINE Emoji
                 </el-button>
                 <span class="action-tip">使用 $ 作為 Emoji 佔位符，例如：「Hello $ World $」</span>
+              </div>
+
+              <!-- Quick Reply 設定 -->
+              <el-divider content-position="left">
+                <el-checkbox v-model="currentMessage.enableQuickReply">啟用快速回覆按鈕</el-checkbox>
+              </el-divider>
+              <div v-if="currentMessage.enableQuickReply" class="quick-reply-section">
+                <div class="quick-reply-header">
+                  <span class="section-label">快速回覆按鈕（最多 13 個）</span>
+                  <el-button type="primary" size="small" @click="addQuickReplyItem" :disabled="(currentMessage.quickReply?.items?.length || 0) >= 13">
+                    <el-icon><Plus /></el-icon>
+                    新增按鈕
+                  </el-button>
+                </div>
+                <div class="form-tip">※ 快速回覆按鈕會顯示在訊息下方，用戶點擊後可快速觸發動作</div>
+                
+                <el-row v-if="currentMessage.quickReply?.items?.length > 0" :gutter="16" class="quick-reply-layout">
+                  <!-- 左側：按鈕列表 -->
+                  <el-col :span="8">
+                    <div class="quick-reply-list">
+                      <div 
+                        v-for="(item, idx) in currentMessage.quickReply.items" 
+                        :key="idx"
+                        class="quick-reply-list-item"
+                        :class="{ active: selectedQuickReplyIndex === idx }"
+                        @click="selectedQuickReplyIndex = idx"
+                      >
+                        <div class="item-info">
+                          <span class="item-index">{{ idx + 1 }}</span>
+                          <span class="item-label">{{ item.action.label || '(未設定)' }}</span>
+                        </div>
+                        <el-button 
+                          type="danger" 
+                          size="small" 
+                          circle 
+                          :icon="Delete" 
+                          @click.stop="removeQuickReplyItem(idx)" 
+                        />
+                      </div>
+                    </div>
+                  </el-col>
+                  
+                  <!-- 右側：編輯區域 -->
+                  <el-col :span="16">
+                    <div v-if="selectedQuickReplyItem" class="quick-reply-editor">
+                      <div class="editor-title">編輯按鈕 {{ selectedQuickReplyIndex + 1 }}</div>
+                      
+                      <el-form-item label="動作類型" label-width="80px">
+                        <el-select v-model="selectedQuickReplyItem.action.type" placeholder="選擇動作類型" style="width: 100%">
+                          <el-option label="發送訊息" value="message" />
+                          <el-option label="開啟連結" value="uri" />
+                          <el-option label="Postback" value="postback" />
+                          <el-option label="日期選擇" value="datetimepicker" />
+                          <el-option label="開啟相機" value="camera" />
+                          <el-option label="開啟相簿" value="cameraRoll" />
+                          <el-option label="傳送位置" value="location" />
+                          <el-option label="複製文字" value="clipboard" />
+                        </el-select>
+                      </el-form-item>
+                      
+                      <el-form-item label="按鈕文字" label-width="80px" required>
+                        <el-input v-model="selectedQuickReplyItem.action.label" placeholder="顯示在按鈕上的文字" maxlength="20" show-word-limit />
+                      </el-form-item>
+                      
+                      <!-- 依動作類型顯示不同欄位 -->
+                      <template v-if="selectedQuickReplyItem.action.type === 'message'">
+                        <el-form-item label="訊息內容" label-width="80px" required>
+                          <el-input v-model="selectedQuickReplyItem.action.text" placeholder="用戶點擊後發送的訊息" maxlength="300" show-word-limit />
+                        </el-form-item>
+                      </template>
+                      
+                      <template v-else-if="selectedQuickReplyItem.action.type === 'uri'">
+                        <el-form-item label="連結網址" label-width="80px" required>
+                          <el-input v-model="selectedQuickReplyItem.action.uri" placeholder="https://..." />
+                        </el-form-item>
+                      </template>
+                      
+                      <template v-else-if="selectedQuickReplyItem.action.type === 'postback'">
+                        <el-form-item label="Postback" label-width="80px" required>
+                          <el-input v-model="selectedQuickReplyItem.action.data" placeholder="回傳資料（後端處理用）" maxlength="300" />
+                        </el-form-item>
+                        <el-form-item label="顯示文字" label-width="80px">
+                          <el-input v-model="selectedQuickReplyItem.action.displayText" placeholder="選填，點擊後在聊天室顯示的文字" maxlength="300" />
+                        </el-form-item>
+                      </template>
+                      
+                      <template v-else-if="selectedQuickReplyItem.action.type === 'datetimepicker'">
+                        <el-form-item label="Postback" label-width="80px" required>
+                          <el-input v-model="selectedQuickReplyItem.action.data" placeholder="回傳資料（後端處理用）" maxlength="300" />
+                        </el-form-item>
+                        <el-form-item label="模式" label-width="80px">
+                          <el-select v-model="selectedQuickReplyItem.action.mode" style="width: 100%">
+                            <el-option label="日期時間" value="datetime" />
+                            <el-option label="僅日期" value="date" />
+                            <el-option label="僅時間" value="time" />
+                          </el-select>
+                        </el-form-item>
+                      </template>
+                      
+                      <template v-else-if="selectedQuickReplyItem.action.type === 'clipboard'">
+                        <el-form-item label="複製內容" label-width="80px" required>
+                          <el-input v-model="selectedQuickReplyItem.action.clipboardText" placeholder="點擊後複製到剪貼簿的文字" maxlength="1000" />
+                        </el-form-item>
+                      </template>
+                      
+                      <!-- 按鈕圖示（所有類型都可設定） -->
+                      <el-form-item label="按鈕圖示" label-width="80px">
+                        <el-input v-model="selectedQuickReplyItem.imageUrl" placeholder="選填，PNG 圖片 URL（1:1 比例）" />
+                      </el-form-item>
+                    </div>
+                    <el-empty v-else description="請選擇左側按鈕進行編輯" :image-size="60" />
+                  </el-col>
+                </el-row>
+                <el-empty v-else description="尚未新增快速回覆按鈕" :image-size="60" />
               </div>
             </template>
 
@@ -801,6 +926,61 @@ const clearAllEmojisFromMessage = () => {
   ElMessage.success('已清除全部 Emoji')
 }
 
+// Quick Reply 相關函數
+const selectedQuickReplyIndex = ref(0)
+
+const selectedQuickReplyItem = computed(() => {
+  if (!currentMessage.value?.quickReply?.items?.length) return null
+  if (selectedQuickReplyIndex.value < 0 || selectedQuickReplyIndex.value >= currentMessage.value.quickReply.items.length) {
+    return null
+  }
+  return currentMessage.value.quickReply.items[selectedQuickReplyIndex.value]
+})
+
+const addQuickReplyItem = () => {
+  if (!currentMessage.value) return
+  
+  // 初始化 quickReply 結構
+  if (!currentMessage.value.quickReply) {
+    currentMessage.value.quickReply = { items: [] }
+  }
+  if (!currentMessage.value.quickReply.items) {
+    currentMessage.value.quickReply.items = []
+  }
+  
+  // 檢查是否已達上限
+  if (currentMessage.value.quickReply.items.length >= 13) {
+    ElMessage.warning('快速回覆按鈕最多 13 個')
+    return
+  }
+  
+  // 新增預設項目
+  currentMessage.value.quickReply.items.push({
+    type: 'action',
+    imageUrl: '',
+    action: {
+      type: 'message',
+      label: '',
+      text: ''
+    }
+  })
+  
+  // 自動選中新增的項目
+  selectedQuickReplyIndex.value = currentMessage.value.quickReply.items.length - 1
+}
+
+const removeQuickReplyItem = (index) => {
+  if (!currentMessage.value?.quickReply?.items) return
+  currentMessage.value.quickReply.items.splice(index, 1)
+  
+  // 調整選中索引
+  if (currentMessage.value.quickReply.items.length === 0) {
+    selectedQuickReplyIndex.value = 0
+  } else if (selectedQuickReplyIndex.value >= currentMessage.value.quickReply.items.length) {
+    selectedQuickReplyIndex.value = currentMessage.value.quickReply.items.length - 1
+  }
+}
+
 // 即時預覽：將文字中的 $ 替換為 emoji 圖片
 const textPreviewParts = computed(() => {
   if (!currentMessage.value || currentMessage.value.type !== 'TEXT') return []
@@ -1218,6 +1398,7 @@ const flexEditableFields = ref([])  // 變數欄位列表
 const showFlexJsonEditor = ref(false)
 const flexTemplateRaw = ref('')  // 原始範本 JSON（含 {{變數}} 佔位符）
 const flexVariableValues = ref({})  // 變數值對應表 { 變數名: 值 }
+const isRestoringFlexPreset = ref(false)  // 恢復下拉選單時的標記，避免重複載入
 
 const loadFlexPresets = async () => {
   flexPresetsLoading.value = true
@@ -1272,6 +1453,9 @@ const loadFlexTemplate = async (templateName) => {
       // 立即用預設值替換並更新預覽
       updateFlexPreview()
       console.log('[Flex] After updateFlexPreview, currentMessage.contents:', currentMessage.value?.contents?.substring(0, 200))
+
+      // 儲存選擇的範本名稱，以便編輯時恢復下拉選單
+      currentMessage.value.flexPresetName = templateName
 
       if (flexEditableFields.value.length === 0) {
         ElMessage.info('此範本沒有可編輯的變數，您可以直接編輯 JSON')
@@ -1476,6 +1660,7 @@ loadFlexPresets()
 
 // Imagemap 編輯器變更處理
 const onImagemapChange = (imagemapData) => {
+  console.log('[TemplateEditor] onImagemapChange:', imagemapData)
   if (!currentMessage.value) return
 
   // 將 imagemapData 轉換為 JSON 字串存入 contents
@@ -1569,6 +1754,45 @@ const handleSave = async () => {
             ElMessage.warning(`訊息 ${i + 1}：請至少新增一個熱區`)
             return
           }
+
+          // 驗證熱區內容
+          const validSchemes = ['http', 'https', 'tel', 'mailto', 'line', 'linemusic']
+          for (let j = 0; j < imagemapData.actions.length; j++) {
+            const action = imagemapData.actions[j]
+            if (action.type === 'uri') {
+              if (!action.linkUri?.trim()) {
+                ElMessage.warning(`訊息 ${i + 1}：熱區 ${j + 1} 請輸入連結網址`)
+                return
+              }
+              const schemeMatch = action.linkUri.trim().match(/^([a-zA-Z]+):/)
+              if (!schemeMatch || !validSchemes.includes(schemeMatch[1].toLowerCase())) {
+                ElMessage.warning(`訊息 ${i + 1}：熱區 ${j + 1} 連結網址格式錯誤，必須以 http, https, tel, mailto, line, linemusic 開頭`)
+                return
+              }
+            } else if (action.type === 'message') {
+              if (!action.text?.trim()) {
+                ElMessage.warning(`訊息 ${i + 1}：熱區 ${j + 1} 請輸入訊息文字`)
+                return
+              }
+            } else if (action.type === 'clipboard') {
+              if (!action.clipboardText?.trim()) {
+                ElMessage.warning(`訊息 ${i + 1}：熱區 ${j + 1} 請輸入複製內容`)
+                return
+              }
+            }
+          }
+
+          // 資料同步：將編輯器中的 imagemapData 轉回 JSON 字串存入 contents
+          console.log('[handleSave] Syncing Imagemap data:', imagemapData)
+          msg.contents = JSON.stringify(imagemapData, null, 2)
+          console.log('[handleSave] Updated contents:', msg.contents)
+          msg.altText = imagemapData.altText
+
+          // 移除可能存在的扁平結構欄位，確保儲存時優先使用 contents
+          // 因為 index.vue 的 buildMessageObject 會優先讀取 baseUrl 等扁平欄位，若不移除會導致儲存到舊資料
+          if (msg.baseUrl) msg.baseUrl = undefined
+          if (msg.baseSize) msg.baseSize = undefined
+          if (msg.actions) msg.actions = undefined
         } else if (!msg.contents?.trim()) {
           ElMessage.warning(`訊息 ${i + 1}：請設定圖片地圖內容`)
           return
@@ -1651,12 +1875,25 @@ const initForm = () => {
             return { ...normalizedMsg, imagemapSourceId }
           }
           
-          // FLEX 處理
+          // FLEX 處理：保留 flexPresetName
           if (normalizedType === 'FLEX' && msg.contents) {
             const contentsStr = typeof msg.contents === 'string'
               ? msg.contents
               : JSON.stringify(msg.contents, null, 2)
-            return { ...normalizedMsg, contents: contentsStr }
+            return { 
+              ...normalizedMsg, 
+              contents: contentsStr,
+              flexPresetName: msg.flexPresetName || ''
+            }
+          }
+          
+          // TEXT 處理：恢復 Quick Reply 設定
+          if (normalizedType === 'TEXT' && msg.quickReply?.items?.length > 0) {
+            return {
+              ...normalizedMsg,
+              enableQuickReply: true,
+              quickReply: msg.quickReply
+            }
           }
           
           return normalizedMsg
@@ -1687,8 +1924,24 @@ const initForm = () => {
   }
   activeMessageIndex.value = 0
   
-  // 如果當前訊息是 IMAGEMAP，載入範本列表並設置選中值
+  // 初始化當前訊息的相關狀態
   nextTick(async () => {
+    // FLEX 類型：初始化 flexTemplateRaw 和解析變數，並恢復下拉選單選擇
+    if (currentMessage.value?.type === 'FLEX' && currentMessage.value.contents) {
+      console.log('[initForm] FLEX message detected, initializing flexTemplateRaw')
+      flexTemplateRaw.value = currentMessage.value.contents
+      parseFlexVariables(currentMessage.value.contents)
+      console.log('[initForm] FLEX initialized, fields:', flexEditableFields.value.length)
+      
+      // 恢復下拉選單選擇的範本名稱（設置標記避免 watch 重複載入）
+      if (currentMessage.value.flexPresetName) {
+        console.log('[initForm] Restoring flexPresetName:', currentMessage.value.flexPresetName)
+        isRestoringFlexPreset.value = true
+        selectedFlexPreset.value = currentMessage.value.flexPresetName
+      }
+    }
+    
+    // IMAGEMAP 類型：載入範本列表並設置選中值
     if (currentMessage.value?.type === 'IMAGEMAP') {
       await loadImagemapTemplates()
       const sourceId = currentMessage.value.imagemapSourceId
@@ -1708,9 +1961,15 @@ const parseOldFormat = (msgType, content, altText) => {
     const obj = JSON.parse(content)
     switch (msgType) {
       case 'TEXT':
-        // 處理 JSON 格式的 TEXT（包含 emojis）
+        // 處理 JSON 格式的 TEXT（包含 emojis 和 quickReply）
         if (obj.type === 'text' && obj.text) {
-          return { type: 'TEXT', text: obj.text, emojis: obj.emojis || [] }
+          const result = { type: 'TEXT', text: obj.text, emojis: obj.emojis || [] }
+          // 恢復 Quick Reply 設定
+          if (obj.quickReply?.items?.length > 0) {
+            result.enableQuickReply = true
+            result.quickReply = obj.quickReply
+          }
+          return result
         }
         return { type: 'TEXT', text: content }
       case 'IMAGE':
@@ -1724,8 +1983,13 @@ const parseOldFormat = (msgType, content, altText) => {
       case 'STICKER':
         return { type: 'STICKER', packageId: obj.packageId, stickerId: obj.stickerId }
       case 'FLEX':
-        // 格式化 JSON 以便於編輯
-        return { type: 'FLEX', altText: altText || '', contents: JSON.stringify(obj, null, 2) }
+        // 格式化 JSON 以便於編輯，並恢復 flexPresetName
+        return { 
+          type: 'FLEX', 
+          altText: altText || '', 
+          contents: JSON.stringify(obj, null, 2),
+          flexPresetName: obj.flexPresetName || ''
+        }
       case 'IMAGEMAP':
         return { type: 'IMAGEMAP', altText: altText || '', contents: JSON.stringify(obj, null, 2), imagemapData: obj }
       default:
@@ -1747,10 +2011,18 @@ watch(
   async () => {
     if (currentMessage.value?.type === 'FLEX') {
       parseFlexEditableFields()
+      // 恢復下拉選單選擇的範本名稱（設置標記避免 watch 重複載入）
+      if (currentMessage.value.flexPresetName) {
+        isRestoringFlexPreset.value = true
+        selectedFlexPreset.value = currentMessage.value.flexPresetName
+      } else {
+        selectedFlexPreset.value = ''
+      }
     } else {
       flexEditableFields.value = []
       flexTemplateRaw.value = ''
       flexVariableValues.value = {}
+      selectedFlexPreset.value = ''
     }
     
     // IMAGEMAP 類型：載入範本列表並設置已選擇的範本
@@ -1776,12 +2048,90 @@ watch(
 watch(
   () => selectedFlexPreset.value,
   async (newVal) => {
-    console.log('[Flex Watch] selectedFlexPreset changed to:', newVal)
-    if (newVal && currentMessage.value) {
+    console.log('[Flex Watch] selectedFlexPreset changed to:', newVal, 'isRestoring:', isRestoringFlexPreset.value)
+    if (!newVal || !currentMessage.value) return
+    
+    // 如果是恢復選擇，需要載入範本結構但保留現有值
+    if (isRestoringFlexPreset.value) {
+      isRestoringFlexPreset.value = false
+      // 保存當前的 contents（已替換變數的值）
+      const savedContents = currentMessage.value.contents
+      // 載入範本以取得可編輯欄位結構
       await loadFlexTemplate(newVal)
+      // 恢復 contents（不使用範本的預設值）
+      if (savedContents) {
+        currentMessage.value.contents = savedContents
+        // 嘗試從已儲存的內容中提取變數值
+        extractVariableValuesFromContent(savedContents)
+      }
+      return
     }
+    
+    await loadFlexTemplate(newVal)
   }
 )
+
+/**
+ * 從已儲存的 JSON 內容中提取變數值
+ * 透過比對範本原始內容和已儲存內容來推測變數值
+ */
+const extractVariableValuesFromContent = (savedContent) => {
+  if (!savedContent || !flexTemplateRaw.value || flexEditableFields.value.length === 0) return
+  
+  try {
+    const savedObj = JSON.parse(savedContent)
+    const templateObj = JSON.parse(flexTemplateRaw.value)
+    
+    // 遍歷可編輯欄位，嘗試從已儲存內容中提取對應值
+    flexEditableFields.value.forEach(field => {
+      const varName = field.name
+      const pattern = new RegExp(`\\{\\{${varName}(?::[^}]*)?\\}\\}`)
+      
+      // 在範本中找到該變數的位置，然後在已儲存內容中找對應值
+      const value = findValueInContent(templateObj, savedObj, pattern, varName)
+      if (value !== null) {
+        flexVariableValues.value[varName] = value
+      }
+    })
+    
+    console.log('[extractVariableValuesFromContent] Extracted values:', flexVariableValues.value)
+  } catch (e) {
+    console.warn('[extractVariableValuesFromContent] Failed to extract values:', e)
+  }
+}
+
+/**
+ * 在 JSON 物件中遞迴尋找變數對應的值
+ */
+const findValueInContent = (templateNode, savedNode, pattern, varName) => {
+  if (templateNode === null || savedNode === null) return null
+  
+  if (typeof templateNode === 'string') {
+    if (pattern.test(templateNode)) {
+      return typeof savedNode === 'string' ? savedNode : null
+    }
+    return null
+  }
+  
+  if (Array.isArray(templateNode) && Array.isArray(savedNode)) {
+    for (let i = 0; i < Math.min(templateNode.length, savedNode.length); i++) {
+      const result = findValueInContent(templateNode[i], savedNode[i], pattern, varName)
+      if (result !== null) return result
+    }
+    return null
+  }
+  
+  if (typeof templateNode === 'object' && typeof savedNode === 'object') {
+    for (const key of Object.keys(templateNode)) {
+      if (savedNode.hasOwnProperty(key)) {
+        const result = findValueInContent(templateNode[key], savedNode[key], pattern, varName)
+        if (result !== null) return result
+      }
+    }
+  }
+  
+  return null
+}
 </script>
 
 <style scoped lang="scss">
@@ -2002,6 +2352,35 @@ watch(
       font-style: italic;
     }
   }
+  
+  .quick-reply-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #e4e7ed;
+    
+    .quick-reply-btn-preview {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: #fff;
+      border: 1px solid #06c755;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #06c755;
+      white-space: nowrap;
+      
+      .quick-reply-icon {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+    }
+  }
 }
 
 .emoji-list-preview {
@@ -2192,6 +2571,109 @@ watch(
   :deep(.el-alert__description) {
     white-space: pre-wrap;
     font-family: monospace;
+  }
+}
+
+// Quick Reply 樣式
+.quick-reply-section {
+  margin-top: 12px;
+  
+  .quick-reply-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    
+    .section-label {
+      font-weight: 500;
+      font-size: 14px;
+      color: #303133;
+    }
+  }
+  
+  .quick-reply-layout {
+    margin-top: 12px;
+    min-height: 200px;
+  }
+  
+  .quick-reply-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    padding: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  .quick-reply-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: #f5f7fa;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      background: #ecf5ff;
+      border-color: #b3d8ff;
+    }
+    
+    &.active {
+      background: #ecf5ff;
+      border-color: #409eff;
+    }
+    
+    .item-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+      
+      .item-index {
+        width: 24px;
+        height: 24px;
+        background: #409eff;
+        color: #fff;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      
+      .item-label {
+        font-size: 13px;
+        color: #606266;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+  
+  .quick-reply-editor {
+    background: #fff;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    padding: 16px;
+    
+    .editor-title {
+      font-weight: 500;
+      font-size: 14px;
+      color: #303133;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #ebeef5;
+    }
   }
 }
 </style>

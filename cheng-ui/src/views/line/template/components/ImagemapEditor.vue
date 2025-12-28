@@ -182,7 +182,7 @@
         <div class="action-settings" v-if="selectedAction">
           <div class="settings-title">區域設定 - 按鈕 {{ selectedIndex + 1 }}</div>
 
-          <el-form :model="selectedAction" label-width="90px" size="small">
+          <el-form ref="actionFormRef" :model="selectedAction" :rules="actionRules" label-width="90px" size="small">
             <el-form-item label="動作類型">
               <el-select v-model="selectedAction.type" style="width: 100%" @change="onActionTypeChange">
                 <el-option label="開啟連結 (URI)" value="uri">
@@ -202,11 +202,11 @@
             </el-form-item>
 
             <!-- URI Action -->
-            <el-form-item v-if="selectedAction.type === 'uri'" label="連結網址" required>
+            <el-form-item v-if="selectedAction.type === 'uri'" label="連結網址" prop="linkUri">
               <el-input
                 v-model="selectedAction.linkUri"
                 placeholder="https://example.com"
-                @change="emitChange"
+                @input="emitChange"
               >
                 <template #prepend>
                   <el-icon><Link /></el-icon>
@@ -215,7 +215,7 @@
             </el-form-item>
 
             <!-- Message Action -->
-            <el-form-item v-if="selectedAction.type === 'message'" label="訊息文字" required>
+            <el-form-item v-if="selectedAction.type === 'message'" label="訊息文字" prop="text">
               <el-input
                 v-model="selectedAction.text"
                 type="textarea"
@@ -223,12 +223,12 @@
                 placeholder="點擊此區域時發送的文字"
                 maxlength="300"
                 show-word-limit
-                @change="emitChange"
+                @input="emitChange"
               />
             </el-form-item>
 
             <!-- Clipboard Action -->
-            <el-form-item v-if="selectedAction.type === 'clipboard'" label="複製內容" required>
+            <el-form-item v-if="selectedAction.type === 'clipboard'" label="複製內容" prop="clipboardText">
               <el-input
                 v-model="selectedAction.clipboardText"
                 type="textarea"
@@ -236,7 +236,7 @@
                 placeholder="點擊此區域時複製到剪貼簿的文字"
                 maxlength="1000"
                 show-word-limit
-                @change="emitChange"
+                @input="emitChange"
               />
             </el-form-item>
 
@@ -245,7 +245,7 @@
                 v-model="selectedAction.label"
                 placeholder="選填，用於無障礙輔助"
                 maxlength="50"
-                @change="emitChange"
+                @input="emitChange"
               />
             </el-form-item>
 
@@ -261,7 +261,7 @@
                     :disabled="selectedTemplate !== 'CUSTOM'"
                     controls-position="right"
                     style="width: 100%"
-                    @change="emitChange"
+                    @input="emitChange"
                   />
                 </el-form-item>
               </el-col>
@@ -274,7 +274,7 @@
                     :disabled="selectedTemplate !== 'CUSTOM'"
                     controls-position="right"
                     style="width: 100%"
-                    @change="emitChange"
+                    @input="emitChange"
                   />
                 </el-form-item>
               </el-col>
@@ -289,7 +289,7 @@
                     :disabled="selectedTemplate !== 'CUSTOM'"
                     controls-position="right"
                     style="width: 100%"
-                    @change="emitChange"
+                    @input="emitChange"
                   />
                 </el-form-item>
               </el-col>
@@ -302,7 +302,7 @@
                     :disabled="selectedTemplate !== 'CUSTOM'"
                     controls-position="right"
                     style="width: 100%"
-                    @change="emitChange"
+                    @input="emitChange"
                   />
                 </el-form-item>
               </el-col>
@@ -328,7 +328,7 @@
             placeholder="圖片無法顯示時的替代文字（必填）"
             maxlength="400"
             show-word-limit
-            @change="emitChange"
+            @input="emitChange"
           />
           <div class="form-tip">當圖片無法載入時，會顯示此文字</div>
         </el-form-item>
@@ -338,7 +338,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Delete, Upload, RefreshRight, Link, ChatDotRound, InfoFilled, Pointer, Position, Camera, Picture, DocumentCopy, Calendar } from '@element-plus/icons-vue'
 import { uploadImagemapImage, deleteImagemapImage } from '@/api/line/template'
@@ -349,6 +349,37 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
+
+const actionFormRef = ref(null)
+
+const validateUriScheme = (rule, value, callback) => {
+  if (!value) {
+    return callback()
+  }
+  const validSchemes = ['http', 'https', 'tel', 'mailto', 'line', 'linemusic']
+  const schemeMatch = value.trim().match(/^([a-zA-Z]+):/)
+  if (!schemeMatch) {
+    return callback(new Error("連結必須包含通訊協定，例如 https://"))
+  }
+  const scheme = schemeMatch[1].toLowerCase()
+  if (!validSchemes.includes(scheme)) {
+    return callback(new Error("連結必須使用以下協定：http, https, tel, mailto, line, linemusic"))
+  }
+  callback()
+}
+
+const actionRules = {
+  linkUri: [
+    { required: true, message: '請輸入連結網址', trigger: 'blur' },
+    { validator: validateUriScheme, trigger: ['blur', 'change'] }
+  ],
+  text: [
+    { required: true, message: '請輸入訊息文字', trigger: 'blur' }
+  ],
+  clipboardText: [
+    { required: true, message: '請輸入複製內容', trigger: 'blur' }
+  ]
+}
 
 // 基準寬度（LINE Imagemap 規格）
 const BASE_WIDTH = 1040
@@ -915,6 +946,9 @@ const removeActionAt = (index) => {
 
 const selectAction = (index) => {
   selectedIndex.value = index
+  nextTick(() => {
+    actionFormRef.value?.clearValidate()
+  })
 }
 
 const onActionTypeChange = () => {
@@ -1014,6 +1048,7 @@ const endDrag = () => {
 }
 
 const emitChange = () => {
+  console.log('[ImagemapEditor] emitChange triggered')
   const baseUrl = imageUuid.value ? `/profile/imagemap/${imageUuid.value}` : ''
 
   const imagemapData = {

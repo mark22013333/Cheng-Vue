@@ -48,6 +48,11 @@ public class PushMessageDTO implements Serializable {
     private List<EmojiDTO> emojis;
 
     /**
+     * Quick Reply 設定（當 contentType 為 TEXT 時使用）
+     */
+    private QuickReplyDTO quickReply;
+
+    /**
      * 圖片 URL（當 contentType 為 IMAGE 時使用）
      */
     private String imageUrl;
@@ -140,5 +145,38 @@ public class PushMessageDTO implements Serializable {
         private Integer index;
         private String productId;
         private String emojiId;
+    }
+
+    /**
+     * Quick Reply DTO
+     */
+    @Data
+    public static class QuickReplyDTO {
+        private List<QuickReplyItemDTO> items;
+    }
+
+    /**
+     * Quick Reply Item DTO
+     */
+    @Data
+    public static class QuickReplyItemDTO {
+        private String type;
+        private String imageUrl;
+        private QuickReplyActionDTO action;
+    }
+
+    /**
+     * Quick Reply Action DTO
+     */
+    @Data
+    public static class QuickReplyActionDTO {
+        private String type;
+        private String label;
+        private String text;
+        private String uri;
+        private String data;
+        private String displayText;
+        private String mode;
+        private String clipboardText;
     }
 }

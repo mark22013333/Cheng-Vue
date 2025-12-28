@@ -852,10 +852,12 @@ public class LineMessageServiceImpl implements ILineMessageService {
     private TextMessage buildTextMessage(Object dto) {
         String text = null;
         List<PushMessageDTO.EmojiDTO> emojis = null;
+        PushMessageDTO.QuickReplyDTO quickReply = null;
 
         if (dto instanceof PushMessageDTO pushDto) {
             text = pushDto.getTextMessage();
             emojis = pushDto.getEmojis();
+            quickReply = pushDto.getQuickReply();
         } else if (dto instanceof MulticastMessageDTO) {
             text = ((MulticastMessageDTO) dto).getTextMessage();
         } else if (dto instanceof BroadcastMessageDTO) {
@@ -868,17 +870,89 @@ public class LineMessageServiceImpl implements ILineMessageService {
             throw new ServiceException("文字訊息內容不能為空");
         }
 
-        // 如果有 emojis，使用 Builder 建立訊息
-        if (emojis != null && !emojis.isEmpty()) {
-            List<Emoji> lineEmojis = emojis.stream()
-                    .map(e -> new Emoji(e.getIndex(), e.getProductId(), e.getEmojiId()))
-                    .toList();
-            return new TextMessage.Builder(text)
-                    .emojis(lineEmojis)
-                    .build();
+        // 如果有 emojis 或 quickReply，使用 Builder 建立訊息
+        if ((emojis != null && !emojis.isEmpty()) || (quickReply != null && quickReply.getItems() != null && !quickReply.getItems().isEmpty())) {
+            TextMessage.Builder builder = new TextMessage.Builder(text);
+            
+            // 設定 Emoji
+            if (emojis != null && !emojis.isEmpty()) {
+                List<Emoji> lineEmojis = emojis.stream()
+                        .map(e -> new Emoji(e.getIndex(), e.getProductId(), e.getEmojiId()))
+                        .toList();
+                builder.emojis(lineEmojis);
+            }
+            
+            // 設定 QuickReply
+            if (quickReply != null && quickReply.getItems() != null && !quickReply.getItems().isEmpty()) {
+                List<QuickReplyItem> quickReplyItems = quickReply.getItems().stream()
+                        .map(this::buildQuickReplyItem)
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                if (!quickReplyItems.isEmpty()) {
+                    builder.quickReply(new QuickReply(quickReplyItems));
+                }
+            }
+            
+            return builder.build();
         }
 
         return new TextMessage(text);
+    }
+    
+    /**
+     * 建立 QuickReply 項目
+     */
+    private QuickReplyItem buildQuickReplyItem(PushMessageDTO.QuickReplyItemDTO itemDto) {
+        if (itemDto.getAction() == null) {
+            return null;
+        }
+        
+        Action action = buildQuickReplyAction(itemDto.getAction());
+        if (action == null) {
+            return null;
+        }
+        
+        URI imageUrl = null;
+        if (StringUtils.isNotEmpty(itemDto.getImageUrl())) {
+            imageUrl = URI.create(itemDto.getImageUrl());
+        }
+        
+        return new QuickReplyItem(imageUrl, action);
+    }
+    
+    /**
+     * 建立 QuickReply Action
+     */
+    private Action buildQuickReplyAction(PushMessageDTO.QuickReplyActionDTO actionDto) {
+        if (actionDto == null || StringUtils.isEmpty(actionDto.getType())) {
+            return null;
+        }
+        
+        return switch (actionDto.getType().toLowerCase()) {
+            case "message" -> new MessageAction(actionDto.getLabel(), actionDto.getText());
+            case "uri" -> new URIAction(actionDto.getLabel(), URI.create(actionDto.getUri()), null);
+            case "postback" -> new PostbackAction(actionDto.getLabel(), actionDto.getData(), actionDto.getDisplayText(), null, null, null);
+            case "datetimepicker" -> {
+                DatetimePickerAction.Mode mode = switch (StringUtils.isEmpty(actionDto.getMode()) ? "datetime" : actionDto.getMode().toLowerCase()) {
+                    case "date" -> DatetimePickerAction.Mode.DATE;
+                    case "time" -> DatetimePickerAction.Mode.TIME;
+                    default -> DatetimePickerAction.Mode.DATETIME;
+                };
+                yield new DatetimePickerAction.Builder()
+                        .label(actionDto.getLabel())
+                        .data(actionDto.getData())
+                        .mode(mode)
+                        .build();
+            }
+            case "camera" -> new CameraAction(actionDto.getLabel());
+            case "cameraroll" -> new CameraRollAction(actionDto.getLabel());
+            case "location" -> new LocationAction(actionDto.getLabel());
+            case "clipboard" -> new ClipboardAction(actionDto.getLabel(), actionDto.getClipboardText());
+            default -> {
+                log.warn("未知的 Quick Reply 動作類型: {}", actionDto.getType());
+                yield null;
+            }
+        };
     }
 
     /**
