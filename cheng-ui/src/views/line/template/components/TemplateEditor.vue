@@ -1091,6 +1091,39 @@ const removeQuickReplyItem = (index) => {
   }
 }
 
+// 監聽 Quick Reply action 類型變化，初始化必要欄位
+let previousActionType = null
+watch(
+  () => selectedQuickReplyItem.value?.action?.type,
+  (newType, oldType) => {
+    if (!selectedQuickReplyItem.value || !newType || newType === oldType) return
+    
+    const action = selectedQuickReplyItem.value.action
+    
+    // 根據新類型初始化必要欄位
+    switch (newType) {
+      case 'message':
+        if (!action.text) action.text = ''
+        break
+      case 'uri':
+        if (!action.uri) action.uri = ''
+        break
+      case 'postback':
+        if (!action.data) action.data = ''
+        break
+      case 'datetimepicker':
+        if (!action.data) action.data = ''
+        if (!action.mode) action.mode = 'datetime'
+        break
+      case 'clipboard':
+        if (!action.clipboardText) action.clipboardText = ''
+        break
+      // camera, cameraRoll, location 只需要 type 和 label，無需額外初始化
+    }
+  },
+  { immediate: false }
+)
+
 // 即時預覽：將文字中的 $ 替換為 emoji 圖片
 const textPreviewParts = computed(() => {
   if (!currentMessage.value || currentMessage.value.type !== 'TEXT') return []

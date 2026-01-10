@@ -95,6 +95,7 @@
          </el-table-column>
          <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width" fixed="right">
             <template #default="scope">
+               <el-button link type="primary" icon="View" @click="handleView(scope.row)" v-hasPermi="['system:notice:query']">查看</el-button>
                <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:notice:edit']">修改</el-button>
                <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:notice:remove']" >刪除</el-button>
             </template>
@@ -108,6 +109,30 @@
          v-model:limit="queryParams.pageSize"
          @pagination="getList"
       />
+
+      <!-- 查看公告對話框 -->
+      <el-dialog :title="viewData.noticeTitle || '查看公告'" v-model="viewOpen" width="720px" append-to-body>
+         <el-descriptions :column="2" border>
+            <el-descriptions-item label="公告標題">{{ viewData.noticeTitle }}</el-descriptions-item>
+            <el-descriptions-item label="公告類型">
+               <dict-tag :options="sys_notice_type" :value="viewData.noticeType" />
+            </el-descriptions-item>
+            <el-descriptions-item label="狀態">
+               <dict-tag :options="sys_notice_status" :value="viewData.status" />
+            </el-descriptions-item>
+            <el-descriptions-item label="建立者">{{ viewData.createBy }}</el-descriptions-item>
+            <el-descriptions-item label="建立時間">
+               <span>{{ parseTime(viewData.createTime, '{y}-{m}-{d} {h}:{m}') }}</span>
+            </el-descriptions-item>
+         </el-descriptions>
+         <el-divider />
+         <div class="notice-content" v-html="viewData.noticeContent"></div>
+         <template #footer>
+            <div class="dialog-footer">
+               <el-button type="primary" @click="viewOpen = false">關閉</el-button>
+            </div>
+         </template>
+      </el-dialog>
 
       <!-- 新增或修改公告對話框 -->
       <el-dialog :title="title" v-model="open" width="780px" append-to-body>
@@ -167,6 +192,7 @@ const { sys_notice_status, sys_notice_type } = proxy.useDict("sys_notice_status"
 
 const noticeList = ref([])
 const open = ref(false)
+const viewOpen = ref(false)
 const loading = ref(true)
 const showSearch = ref(true)
 const ids = ref([])
@@ -174,6 +200,7 @@ const single = ref(true)
 const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
+const viewData = ref({})
 
 const data = reactive({
   form: {},
@@ -290,5 +317,20 @@ function handleDelete(row) {
   }).catch(() => {})
 }
 
+/** 查看公告 */
+function handleView(row) {
+  const noticeId = row.noticeId || ids.value
+  getNotice(noticeId).then(response => {
+    viewData.value = response.data || {}
+    viewOpen.value = true
+  })
+}
+
 getList()
 </script>
+
+<style scoped>
+.notice-content :deep(img) {
+  max-width: 100%;
+}
+</style>
