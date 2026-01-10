@@ -51,6 +51,11 @@
               <div class="notice-time">{{ notice.createTime }}</div>
             </div>
           </el-scrollbar>
+          <div class="panel-footer">
+            <router-link to="/system/notice" class="view-all-link">
+              查看全部公告
+            </router-link>
+          </div>
         </div>
       </el-popover>
 
@@ -448,6 +453,22 @@ onUnmounted(() => {
     .notice-time {
       font-size: 12px;
       color: #909399;
+    }
+  }
+
+  .panel-footer {
+    padding: 12px 16px;
+    border-top: 1px solid #f0f0f0;
+    text-align: center;
+
+    .view-all-link {
+      color: #409eff;
+      font-size: 14px;
+      text-decoration: none;
+      
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 }

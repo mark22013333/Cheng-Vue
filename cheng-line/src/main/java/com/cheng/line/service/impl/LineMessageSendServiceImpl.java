@@ -144,10 +144,17 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
             return null;
         }
         
+        log.info("[buildQuickReplyAction] type={}, label={}, data={}, text={}, displayText={}", 
+            actionDto.getType(), actionDto.getLabel(), actionDto.getData(), actionDto.getText(), actionDto.getDisplayText());
+        
         return switch (actionType) {
             case MESSAGE -> new MessageAction(actionDto.getLabel(), actionDto.getText());
             case URI -> new URIAction(actionDto.getLabel(), URI.create(actionDto.getUri()), null);
-            case POSTBACK -> new PostbackAction(actionDto.getLabel(), actionDto.getData(), actionDto.getDisplayText(), null, null, null);
+            case POSTBACK -> {
+                log.info("[buildQuickReplyAction] 建立 POSTBACK action: label={}, data={}, displayText={}", 
+                    actionDto.getLabel(), actionDto.getData(), actionDto.getDisplayText());
+                yield new PostbackAction(actionDto.getLabel(), actionDto.getData(), actionDto.getDisplayText(), null, null, null);
+            }
             case DATETIMEPICKER -> {
                 DatetimePickerAction.Mode mode = parseDatetimePickerMode(actionDto.getMode());
                 yield new DatetimePickerAction.Builder()
@@ -609,6 +616,7 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
                             SendMessageDTO.QuickReplyDTO quickReplyDTO = new SendMessageDTO.QuickReplyDTO();
                             List<SendMessageDTO.QuickReplyItemDTO> items = new ArrayList<>();
                             for (var itemNode : jsonNode.get("quickReply").get("items")) {
+                                log.info("[sendTemplateMessage] 解析 item: {}", itemNode.toString());
                                 SendMessageDTO.QuickReplyItemDTO itemDTO = new SendMessageDTO.QuickReplyItemDTO();
                                 itemDTO.setType(itemNode.has("type") ? itemNode.get("type").asText() : "action");
                                 if (itemNode.has("imageUrl") && !itemNode.get("imageUrl").isNull()) {
@@ -616,6 +624,9 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
                                 }
                                 if (itemNode.has("action")) {
                                     var actionNode = itemNode.get("action");
+                                    log.info("[sendTemplateMessage] 解析 action: type={}, data={}", 
+                                        actionNode.has("type") ? actionNode.get("type").asText() : "null",
+                                        actionNode.has("data") ? actionNode.get("data").asText() : "null");
                                     SendMessageDTO.QuickReplyActionDTO actionDTO = new SendMessageDTO.QuickReplyActionDTO();
                                     actionDTO.setType(actionNode.has("type") ? actionNode.get("type").asText() : "message");
                                     if (actionNode.has("label")) actionDTO.setLabel(actionNode.get("label").asText());
@@ -626,6 +637,8 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
                                     if (actionNode.has("mode")) actionDTO.setMode(actionNode.get("mode").asText());
                                     if (actionNode.has("clipboardText")) actionDTO.setClipboardText(actionNode.get("clipboardText").asText());
                                     itemDTO.setAction(actionDTO);
+                                    log.info("[sendTemplateMessage] 解析完成 actionDTO: type={}, label={}, data={}", 
+                                        actionDTO.getType(), actionDTO.getLabel(), actionDTO.getData());
                                 }
                                 items.add(itemDTO);
                             }

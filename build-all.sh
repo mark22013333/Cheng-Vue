@@ -42,6 +42,36 @@ print_separator() {
     echo -e "${CYAN}════════════════════════════════════════════${NC}"
 }
 
+sync_frontend_lockfile() {
+    if [ ! -d "cheng-ui" ]; then
+        print_error "找不到 cheng-ui 目錄，無法同步前端 lockfile"
+        exit 1
+    fi
+
+    if [ ! -f "cheng-ui/package.json" ]; then
+        print_error "找不到 cheng-ui/package.json，無法同步前端 lockfile"
+        exit 1
+    fi
+
+    if ! command -v docker &> /dev/null; then
+        print_error "Docker 未安裝，無法同步前端 lockfile"
+        exit 1
+    fi
+
+    print_separator
+    print_info "同步前端 pnpm-lock.yaml（避免 frozen-lockfile 失敗）"
+    print_separator
+
+    docker run --rm \
+        -e COREPACK_ENABLE_AUTO_PIN=0 \
+        -v "$(pwd)/cheng-ui:/app" \
+        -w /app \
+        node:18-alpine \
+        sh -lc "corepack enable && corepack prepare pnpm@10.24.0 --activate && pnpm install --lockfile-only --config.lockfile=true"
+
+    print_success "前端 pnpm-lock.yaml 同步完成"
+}
+
 # ============================================
 # 主程序
 # ============================================
@@ -62,6 +92,8 @@ main() {
     print_info "步驟 1/2：建置前端映像"
     print_separator
     echo ""
+
+    sync_frontend_lockfile
     
     AUTO_CONFIRM=true bash build-frontend.sh
     

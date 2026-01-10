@@ -432,6 +432,82 @@ const recalculateEmojiIndices = (text, emojis) => {
   return result
 }
 
+// 清理 Quick Reply action，根據類型只保留必要欄位（LINE API 對格式要求嚴格）
+const cleanQuickReplyAction = (action) => {
+  if (!action) return action
+  
+  // 基礎欄位：type 和 label
+  const cleaned = {
+    type: action.type,
+    label: action.label
+  }
+  
+  // 根據 action type 只保留必要欄位
+  switch (action.type) {
+    case 'message':
+      cleaned.text = action.text || ''
+      break
+    case 'uri':
+      cleaned.uri = action.uri || ''
+      break
+    case 'postback':
+      cleaned.data = action.data || ''
+      // displayText 是選填，只有非空時才加入
+      if (action.displayText && action.displayText.trim()) {
+        cleaned.displayText = action.displayText
+      }
+      break
+    case 'datetimepicker':
+      cleaned.data = action.data || ''
+      cleaned.mode = action.mode || 'datetime'
+      // 可選欄位：initial, max, min
+      if (action.initial) cleaned.initial = action.initial
+      if (action.max) cleaned.max = action.max
+      if (action.min) cleaned.min = action.min
+      break
+    case 'camera':
+    case 'cameraRoll':
+    case 'location':
+      // 這些類型只需要 type 和 label
+      break
+    case 'clipboard':
+      cleaned.clipboardText = action.clipboardText || ''
+      break
+    default:
+      // 未知類型，保留原始資料
+      return action
+  }
+  
+  return cleaned
+}
+
+// 清理整個 Quick Reply 物件
+const cleanQuickReply = (quickReply) => {
+  if (!quickReply || !quickReply.items || !Array.isArray(quickReply.items)) {
+    return null
+  }
+  
+  const cleanedItems = quickReply.items
+    .filter(item => item && item.action && item.action.label) // 過濾無效項目
+    .map(item => {
+      const cleanedItem = {
+        type: 'action',
+        action: cleanQuickReplyAction(item.action)
+      }
+      // imageUrl 是選填，只有非空時才加入
+      if (item.imageUrl && item.imageUrl.trim()) {
+        cleanedItem.imageUrl = item.imageUrl
+      }
+      return cleanedItem
+    })
+  
+  if (cleanedItems.length === 0) {
+    return null
+  }
+  
+  return { items: cleanedItems }
+}
+
 // 清理 Template Message 中的 action，移除空的 displayText 欄位（LINE API 不接受空字串）
 const cleanTemplateActions = (template) => {
   if (!template) return template
@@ -493,17 +569,15 @@ const buildMessageContent = (msg) => {
         }
       }
       
-      // 如果有 Quick Reply，需要包含 quickReply
-      console.log('[buildMessageContent] enableQuickReply:', msg.enableQuickReply)
-      console.log('[buildMessageContent] quickReply:', msg.quickReply)
-      console.log('[buildMessageContent] items length:', msg.quickReply?.items?.length)
+      // 如果有 Quick Reply，需要包含 quickReply（清理後的格式）
       if (msg.enableQuickReply && msg.quickReply?.items?.length > 0) {
-        textObj.quickReply = msg.quickReply
-        console.log('[buildMessageContent] Added quickReply to textObj')
+        const cleanedQuickReply = cleanQuickReply(msg.quickReply)
+        if (cleanedQuickReply) {
+          textObj.quickReply = cleanedQuickReply
+        }
       }
       
       // 如果有 emoji 或 quickReply，返回 JSON；否則返回純文字
-      console.log('[buildMessageContent] textObj:', textObj)
       if (textObj.emojis || textObj.quickReply) {
         return JSON.stringify(textObj)
       }
@@ -563,9 +637,12 @@ const buildMessageObject = (msg) => {
           obj.emojis = recalculatedEmojis
         }
       }
-      // 如果有 Quick Reply，加入 quickReply
+      // 如果有 Quick Reply，加入 quickReply（清理後的格式）
       if (msg.enableQuickReply && msg.quickReply?.items?.length > 0) {
-        obj.quickReply = msg.quickReply
+        const cleanedQuickReply = cleanQuickReply(msg.quickReply)
+        if (cleanedQuickReply) {
+          obj.quickReply = cleanedQuickReply
+        }
       }
       break
     case 'IMAGE':
