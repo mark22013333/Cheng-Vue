@@ -21,6 +21,8 @@
         <result property="useCount" column="use_count"/>
         <result property="lastUsedAt" column="last_used_at"/>
         <result property="delFlag" column="del_flag"/>
+        <result property="creatorId" column="creator_id"/>
+        <result property="creatorName" column="creator_name"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
@@ -46,6 +48,8 @@
                t.use_count,
                t.last_used_at,
                t.del_flag,
+               t.creator_id,
+               t.creator_name,
                t.create_by,
                t.create_time,
                t.update_by,
@@ -86,6 +90,12 @@
             <if test="status != null">
                 AND t.status = #{status}
             </if>
+            <if test="creatorId != null">
+                AND t.creator_id = #{creatorId}
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                AND t.creator_name like concat('%', #{creatorName}, '%')
+            </if>
         </where>
         order by t.sort_order, t.create_time desc
     </select>
@@ -120,6 +130,8 @@
             <if test="sortOrder != null">sort_order,</if>
             <if test="messageCount != null">message_count,</if>
             <if test="remark != null">remark,</if>
+            <if test="creatorId != null">creator_id,</if>
+            <if test="creatorName != null">creator_name,</if>
             <if test="createBy != null and createBy != ''">create_by,</if>
             create_time
         </trim>
@@ -137,6 +149,8 @@
             <if test="sortOrder != null">#{sortOrder},</if>
             <if test="messageCount != null">#{messageCount},</if>
             <if test="remark != null">#{remark},</if>
+            <if test="creatorId != null">#{creatorId},</if>
+            <if test="creatorName != null">#{creatorName},</if>
             <if test="createBy != null and createBy != ''">#{createBy},</if>
             sysdate()
         </trim>

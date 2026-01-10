@@ -22,6 +22,7 @@ import com.cheng.line.service.ILineConfigService;
 import com.cheng.line.service.ILineMessageService;
 import com.cheng.line.service.ILineUserService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linecorp.bot.messaging.client.MessagingApiClient;
 import com.linecorp.bot.messaging.model.*;
@@ -618,7 +619,7 @@ public class LineMessageServiceImpl implements ILineMessageService {
             case LOCATION -> buildLocationMessage(dto);
             case FLEX -> buildFlexMessageFromDto(dto);
             case IMAGEMAP -> buildImagemapMessage(dto, config);
-            case TEMPLATE -> throw new ServiceException("暫不支援 " + contentType.getDescription() + " 類型");
+            case TEMPLATE -> buildTemplateMessage(dto);
         };
     }
 
@@ -774,6 +775,213 @@ public class LineMessageServiceImpl implements ILineMessageService {
             log.error("建立 Imagemap 訊息失敗", e);
             throw new ServiceException("建立 Imagemap 訊息失敗: " + e.getMessage());
         }
+    }
+
+    /**
+     * 建立 Template 訊息（Buttons/Confirm/Carousel/Image Carousel）
+     */
+    private TemplateMessage buildTemplateMessage(Object dto) {
+        String json = null;
+        String altText = "模板訊息";
+
+        if (dto instanceof PushMessageDTO pushDto) {
+            json = pushDto.getTemplateMessageJson();
+            if (StringUtils.isNotEmpty(pushDto.getAltText())) {
+                altText = pushDto.getAltText();
+            }
+        } else if (dto instanceof MulticastMessageDTO multicastDto) {
+            json = multicastDto.getTemplateMessageJson();
+            if (StringUtils.isNotEmpty(multicastDto.getAltText())) {
+                altText = multicastDto.getAltText();
+            }
+        } else if (dto instanceof BroadcastMessageDTO broadcastDto) {
+            json = broadcastDto.getTemplateMessageJson();
+            if (StringUtils.isNotEmpty(broadcastDto.getAltText())) {
+                altText = broadcastDto.getAltText();
+            }
+        } else if (dto instanceof ReplyMessageDTO replyDto) {
+            json = replyDto.getTemplateMessageJson();
+            if (StringUtils.isNotEmpty(replyDto.getAltText())) {
+                altText = replyDto.getAltText();
+            }
+        }
+
+        if (StringUtils.isEmpty(json)) {
+            throw new ServiceException("Template Message 內容不能為空");
+        }
+
+        try {
+            JsonNode rootNode = JacksonUtil.toJsonNode(json);
+            if (rootNode == null) {
+                throw new ServiceException("Template Message JSON 解析失敗");
+            }
+
+            // 從 JSON 中取得 altText（如果有的話）
+            if (rootNode.has("altText") && StringUtils.isNotEmpty(rootNode.get("altText").asText())) {
+                altText = rootNode.get("altText").asText();
+            }
+
+            // 取得 template 物件
+            JsonNode templateNode = rootNode.has("template") ? rootNode.get("template") : rootNode;
+            if (templateNode == null || !templateNode.has("type")) {
+                throw new ServiceException("Template Message 缺少 template 物件或 type 欄位");
+            }
+
+            String templateType = templateNode.get("type").asText();
+            Template template = switch (templateType) {
+                case "buttons" -> buildButtonsTemplate(templateNode);
+                case "confirm" -> buildConfirmTemplate(templateNode);
+                case "carousel" -> buildCarouselTemplate(templateNode);
+                case "image_carousel" -> buildImageCarouselTemplate(templateNode);
+                default -> throw new ServiceException("不支援的 Template 類型：" + templateType);
+            };
+
+            return new TemplateMessage(altText, template);
+
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("建立 Template 訊息失敗", e);
+            throw new ServiceException("建立 Template 訊息失敗: " + e.getMessage());
+        }
+    }
+
+    private ButtonsTemplate buildButtonsTemplate(JsonNode node) {
+        String text = node.has("text") ? node.get("text").asText() : "";
+        String title = node.has("title") && !node.get("title").isNull() ? node.get("title").asText() : null;
+
+        URI thumbnailImageUrl = null;
+        if (node.has("thumbnailImageUrl") && !node.get("thumbnailImageUrl").isNull() 
+                && StringUtils.isNotEmpty(node.get("thumbnailImageUrl").asText())) {
+            thumbnailImageUrl = URI.create(node.get("thumbnailImageUrl").asText());
+        }
+
+        String imageAspectRatio = node.has("imageAspectRatio") ? node.get("imageAspectRatio").asText() : "rectangle";
+        String imageSize = node.has("imageSize") ? node.get("imageSize").asText() : "cover";
+        String imageBackgroundColor = node.has("imageBackgroundColor") && !node.get("imageBackgroundColor").isNull() 
+                ? node.get("imageBackgroundColor").asText() : null;
+
+        List<Action> actions = buildTemplateActions(node.get("actions"));
+
+        Action defaultAction = null;
+        if (node.has("defaultAction") && !node.get("defaultAction").isNull()) {
+            defaultAction = buildTemplateAction(node.get("defaultAction"));
+        }
+
+        return new ButtonsTemplate(
+                thumbnailImageUrl,
+                imageAspectRatio,
+                imageSize,
+                imageBackgroundColor,
+                title,
+                text,
+                defaultAction,
+                actions
+        );
+    }
+
+    private ConfirmTemplate buildConfirmTemplate(JsonNode node) {
+        String text = node.has("text") ? node.get("text").asText() : "";
+        List<Action> actions = buildTemplateActions(node.get("actions"));
+
+        if (actions.size() != 2) {
+            throw new ServiceException("Confirm Template 必須有剛好 2 個 action");
+        }
+
+        return new ConfirmTemplate(text, actions);
+    }
+
+    private CarouselTemplate buildCarouselTemplate(JsonNode node) {
+        String imageAspectRatio = node.has("imageAspectRatio") ? node.get("imageAspectRatio").asText() : "rectangle";
+        String imageSize = node.has("imageSize") ? node.get("imageSize").asText() : "cover";
+
+        List<CarouselColumn> columns = new ArrayList<>();
+        if (node.has("columns") && node.get("columns").isArray()) {
+            for (JsonNode columnNode : node.get("columns")) {
+                columns.add(buildCarouselColumn(columnNode));
+            }
+        }
+
+        return new CarouselTemplate(columns, imageAspectRatio, imageSize);
+    }
+
+    private CarouselColumn buildCarouselColumn(JsonNode node) {
+        String text = node.has("text") ? node.get("text").asText() : "";
+        String title = node.has("title") && !node.get("title").isNull() ? node.get("title").asText() : null;
+
+        URI thumbnailImageUrl = null;
+        if (node.has("thumbnailImageUrl") && !node.get("thumbnailImageUrl").isNull()
+                && StringUtils.isNotEmpty(node.get("thumbnailImageUrl").asText())) {
+            thumbnailImageUrl = URI.create(node.get("thumbnailImageUrl").asText());
+        }
+
+        String imageBackgroundColor = node.has("imageBackgroundColor") && !node.get("imageBackgroundColor").isNull()
+                ? node.get("imageBackgroundColor").asText() : null;
+        List<Action> actions = buildTemplateActions(node.get("actions"));
+
+        Action defaultAction = null;
+        if (node.has("defaultAction") && !node.get("defaultAction").isNull()) {
+            defaultAction = buildTemplateAction(node.get("defaultAction"));
+        }
+
+        return new CarouselColumn(thumbnailImageUrl, imageBackgroundColor, title, text, defaultAction, actions);
+    }
+
+    private ImageCarouselTemplate buildImageCarouselTemplate(JsonNode node) {
+        List<ImageCarouselColumn> columns = new ArrayList<>();
+        if (node.has("columns") && node.get("columns").isArray()) {
+            for (JsonNode columnNode : node.get("columns")) {
+                URI imageUrl = URI.create(columnNode.get("imageUrl").asText());
+                Action action = buildTemplateAction(columnNode.get("action"));
+                columns.add(new ImageCarouselColumn(imageUrl, action));
+            }
+        }
+        return new ImageCarouselTemplate(columns);
+    }
+
+    private List<Action> buildTemplateActions(JsonNode actionsNode) {
+        List<Action> actions = new ArrayList<>();
+        if (actionsNode != null && actionsNode.isArray()) {
+            for (JsonNode actionNode : actionsNode) {
+                Action action = buildTemplateAction(actionNode);
+                if (action != null) {
+                    actions.add(action);
+                }
+            }
+        }
+        return actions;
+    }
+
+    private Action buildTemplateAction(JsonNode node) {
+        if (node == null || node.isNull()) return null;
+
+        String type = node.has("type") ? node.get("type").asText() : "";
+        String label = node.has("label") ? node.get("label").asText() : "";
+
+        return switch (type) {
+            case "message" -> new MessageAction(label, node.has("text") ? node.get("text").asText() : "");
+            case "uri" -> new URIAction(label, URI.create(node.get("uri").asText()), null);
+            case "postback" -> new PostbackAction(
+                    label,
+                    node.has("data") ? node.get("data").asText() : "",
+                    node.has("displayText") && !node.get("displayText").isNull() ? node.get("displayText").asText() : null,
+                    null, null, null
+            );
+            case "datetimepicker" -> {
+                String modeStr = node.has("mode") ? node.get("mode").asText() : "datetime";
+                DatetimePickerAction.Mode mode = switch (modeStr.toLowerCase()) {
+                    case "date" -> DatetimePickerAction.Mode.DATE;
+                    case "time" -> DatetimePickerAction.Mode.TIME;
+                    default -> DatetimePickerAction.Mode.DATETIME;
+                };
+                yield new DatetimePickerAction.Builder()
+                        .label(label)
+                        .data(node.has("data") ? node.get("data").asText() : "")
+                        .mode(mode)
+                        .build();
+            }
+            default -> null;
+        };
     }
 
     /**

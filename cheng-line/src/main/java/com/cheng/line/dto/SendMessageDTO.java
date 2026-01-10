@@ -198,6 +198,17 @@ public class SendMessageDTO {
     private Map<String, String> templateVariables;
 
     /**
+     * LINE Template Message 內容（JSON 字串）
+     * 支援 Buttons/Confirm/Carousel/Image Carousel 類型
+     */
+    private String templateContent;
+
+    /**
+     * Template Message 替代文字
+     */
+    private String templateAltText;
+
+    /**
      * Emoji DTO
      */
     @Data

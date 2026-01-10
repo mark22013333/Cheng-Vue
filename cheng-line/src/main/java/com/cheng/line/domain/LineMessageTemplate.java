@@ -109,6 +109,17 @@ public class LineMessageTemplate extends BaseEntity {
     private String delFlag;
 
     /**
+     * 建立者使用者ID
+     */
+    private Long creatorId;
+
+    /**
+     * 建立者名稱（冗餘欄位）
+     */
+    @Excel(name = "建立者")
+    private String creatorName;
+
+    /**
      * 分類名稱（關聯查詢）
      */
     @Excel(name = "分類名稱")
