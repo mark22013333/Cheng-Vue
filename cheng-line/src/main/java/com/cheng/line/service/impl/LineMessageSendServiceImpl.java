@@ -62,6 +62,7 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
             case AUDIO -> sendAudioMessage(dto);
             case STICKER -> sendStickerMessage(dto);
             case FLEX -> sendFlexMessage(dto);
+            case TEMPLATE -> sendLineTemplateMessage(dto);
             default -> throw new ServiceException("不支援的訊息類型：" + dto.getContentType());
         };
     }
@@ -348,6 +349,198 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
         FlexMessage message = new FlexMessage.Builder(dto.getFlexAltText(), container)
                 .build();
         return doSend(dto, message, ContentType.FLEX);
+    }
+
+    /**
+     * 發送 LINE Template Message（Buttons/Confirm/Carousel/Image Carousel）
+     */
+    @Transactional
+    public Long sendLineTemplateMessage(SendMessageDTO dto) {
+        validateBasicParams(dto);
+        if (StringUtils.isEmpty(dto.getTemplateContent())) {
+            throw new ServiceException("Template Message 內容不能為空");
+        }
+
+        try {
+            var rootNode = JacksonUtil.toJsonNode(dto.getTemplateContent());
+            
+            if (rootNode == null || !rootNode.has("template")) {
+                throw new ServiceException("Template Message 格式錯誤：缺少 template 物件");
+            }
+
+            String altText = rootNode.has("altText") ? rootNode.get("altText").asText() : "模板訊息";
+            var templateNode = rootNode.get("template");
+            String templateType = templateNode.has("type") ? templateNode.get("type").asText() : "";
+
+            Template template = switch (templateType) {
+                case "buttons" -> buildButtonsTemplate(templateNode);
+                case "confirm" -> buildConfirmTemplate(templateNode);
+                case "carousel" -> buildCarouselTemplate(templateNode);
+                case "image_carousel" -> buildImageCarouselTemplate(templateNode);
+                default -> throw new ServiceException("不支援的 Template 類型：" + templateType);
+            };
+
+            TemplateMessage message = new TemplateMessage(altText, template);
+            return doSend(dto, message, ContentType.TEMPLATE);
+
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("解析 Template Message 失敗", e);
+            throw new ServiceException("Template Message 解析失敗：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 建立 Buttons Template
+     */
+    private ButtonsTemplate buildButtonsTemplate(com.fasterxml.jackson.databind.JsonNode node) {
+        String text = node.has("text") ? node.get("text").asText() : "";
+        String title = node.has("title") ? node.get("title").asText() : null;
+        
+        URI thumbnailImageUrl = null;
+        if (node.has("thumbnailImageUrl") && !node.get("thumbnailImageUrl").asText().isEmpty()) {
+            thumbnailImageUrl = URI.create(node.get("thumbnailImageUrl").asText());
+        }
+
+        String imageAspectRatio = node.has("imageAspectRatio") ? node.get("imageAspectRatio").asText() : "rectangle";
+        String imageSize = node.has("imageSize") ? node.get("imageSize").asText() : "cover";
+        String imageBackgroundColor = node.has("imageBackgroundColor") ? node.get("imageBackgroundColor").asText() : null;
+
+        List<Action> actions = buildActions(node.get("actions"));
+
+        Action defaultAction = null;
+        if (node.has("defaultAction")) {
+            defaultAction = buildAction(node.get("defaultAction"));
+        }
+
+        return new ButtonsTemplate(
+                thumbnailImageUrl,
+                imageAspectRatio,
+                imageSize,
+                imageBackgroundColor,
+                title,
+                text,
+                defaultAction,
+                actions
+        );
+    }
+
+    /**
+     * 建立 Confirm Template
+     */
+    private ConfirmTemplate buildConfirmTemplate(com.fasterxml.jackson.databind.JsonNode node) {
+        String text = node.has("text") ? node.get("text").asText() : "";
+        List<Action> actions = buildActions(node.get("actions"));
+        
+        if (actions.size() != 2) {
+            throw new ServiceException("Confirm Template 必須有剛好 2 個 action");
+        }
+
+        return new ConfirmTemplate(text, actions);
+    }
+
+    /**
+     * 建立 Carousel Template
+     */
+    private CarouselTemplate buildCarouselTemplate(com.fasterxml.jackson.databind.JsonNode node) {
+        String imageAspectRatio = node.has("imageAspectRatio") ? node.get("imageAspectRatio").asText() : "rectangle";
+        String imageSize = node.has("imageSize") ? node.get("imageSize").asText() : "cover";
+
+        List<CarouselColumn> columns = new ArrayList<>();
+        if (node.has("columns") && node.get("columns").isArray()) {
+            for (var columnNode : node.get("columns")) {
+                columns.add(buildCarouselColumn(columnNode));
+            }
+        }
+
+        return new CarouselTemplate(columns, imageAspectRatio, imageSize);
+    }
+
+    /**
+     * 建立 Carousel Column
+     */
+    private CarouselColumn buildCarouselColumn(com.fasterxml.jackson.databind.JsonNode node) {
+        String text = node.has("text") ? node.get("text").asText() : "";
+        String title = node.has("title") ? node.get("title").asText() : null;
+        
+        URI thumbnailImageUrl = null;
+        if (node.has("thumbnailImageUrl") && !node.get("thumbnailImageUrl").asText().isEmpty()) {
+            thumbnailImageUrl = URI.create(node.get("thumbnailImageUrl").asText());
+        }
+
+        String imageBackgroundColor = node.has("imageBackgroundColor") ? node.get("imageBackgroundColor").asText() : null;
+        List<Action> actions = buildActions(node.get("actions"));
+
+        Action defaultAction = null;
+        if (node.has("defaultAction")) {
+            defaultAction = buildAction(node.get("defaultAction"));
+        }
+
+        return new CarouselColumn(thumbnailImageUrl, imageBackgroundColor, title, text, defaultAction, actions);
+    }
+
+    /**
+     * 建立 Image Carousel Template
+     */
+    private ImageCarouselTemplate buildImageCarouselTemplate(com.fasterxml.jackson.databind.JsonNode node) {
+        List<ImageCarouselColumn> columns = new ArrayList<>();
+        if (node.has("columns") && node.get("columns").isArray()) {
+            for (var columnNode : node.get("columns")) {
+                URI imageUrl = URI.create(columnNode.get("imageUrl").asText());
+                Action action = buildAction(columnNode.get("action"));
+                columns.add(new ImageCarouselColumn(imageUrl, action));
+            }
+        }
+        return new ImageCarouselTemplate(columns);
+    }
+
+    /**
+     * 建立 Actions 列表
+     */
+    private List<Action> buildActions(com.fasterxml.jackson.databind.JsonNode actionsNode) {
+        List<Action> actions = new ArrayList<>();
+        if (actionsNode != null && actionsNode.isArray()) {
+            for (var actionNode : actionsNode) {
+                Action action = buildAction(actionNode);
+                if (action != null) {
+                    actions.add(action);
+                }
+            }
+        }
+        return actions;
+    }
+
+    /**
+     * 建立單一 Action
+     */
+    private Action buildAction(com.fasterxml.jackson.databind.JsonNode node) {
+        if (node == null) return null;
+        
+        String type = node.has("type") ? node.get("type").asText() : "";
+        String label = node.has("label") ? node.get("label").asText() : "";
+
+        return switch (type) {
+            case "message" -> new MessageAction(label, node.has("text") ? node.get("text").asText() : "");
+            case "uri" -> new URIAction(label, URI.create(node.get("uri").asText()), null);
+            case "postback" -> new PostbackAction(
+                    label,
+                    node.has("data") ? node.get("data").asText() : "",
+                    node.has("displayText") ? node.get("displayText").asText() : null,
+                    null, null, null
+            );
+            case "datetimepicker" -> {
+                DatetimePickerAction.Mode mode = parseDatetimePickerMode(
+                        node.has("mode") ? node.get("mode").asText() : "datetime"
+                );
+                yield new DatetimePickerAction.Builder()
+                        .label(label)
+                        .data(node.has("data") ? node.get("data").asText() : "")
+                        .mode(mode)
+                        .build();
+            }
+            default -> null;
+        };
     }
 
     @Override

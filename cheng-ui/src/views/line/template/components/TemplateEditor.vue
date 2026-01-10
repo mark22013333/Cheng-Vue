@@ -45,7 +45,7 @@
       </el-form>
       <template #footer>
         <el-button @click="testDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="testSending" :disabled="!testLineUserId" @click="sendTestMessage">
+        <el-button v-hasPermi="['line:template:send']" type="primary" :loading="testSending" :disabled="!testLineUserId" @click="sendTestMessage">
           發送測試
         </el-button>
       </template>
@@ -176,6 +176,7 @@
                     <template v-if="msg.type === 'TEXT'">{{ msg.text?.substring(0, 30) || '...' }}</template>
                     <template v-else-if="msg.type === 'FLEX'">Flex Message</template>
                     <template v-else-if="msg.type === 'STICKER'">貼圖</template>
+                    <template v-else-if="msg.type === 'TEMPLATE'">{{ msg.templateData?.templateType || '模板訊息' }}</template>
                     <template v-else>{{ getMsgTypeLabel(msg.type) }}</template>
                   </div>
                 </div>
@@ -516,21 +517,86 @@
             <template v-else-if="currentMessage.type === 'FLEX'">
               <el-row :gutter="16">
                 <el-col :span="14">
+                  <!-- 範本選擇 -->
+                  <el-form-item label="選擇範本">
+                    <div class="flex-template-selectors">
+                      <!-- 系統範本 -->
+                      <el-select 
+                        v-model="selectedFlexPreset" 
+                        placeholder="系統範本" 
+                        :loading="flexPresetsLoading" 
+                        clearable
+                        filterable
+                        class="flex-template-select"
+                        @change="handleFlexPresetChange"
+                      >
+                        <el-option v-for="preset in flexPresets" :key="preset.name" :label="preset.label" :value="preset.name">
+                          <div class="preset-option">
+                            <span class="preset-label">{{ preset.label }}</span>
+                            <span class="preset-desc">{{ preset.description }}</span>
+                          </div>
+                        </el-option>
+                      </el-select>
+                      <!-- 我的範本 -->
+                      <el-select 
+                        v-model="selectedMyTemplate" 
+                        placeholder="我的範本" 
+                        clearable
+                        filterable
+                        class="flex-template-select"
+                        popper-class="flex-template-dropdown"
+                        @change="handleMyTemplateChange"
+                      >
+                        <el-option 
+                          v-for="tpl in myFlexTemplates" 
+                          :key="tpl.flexTemplateId" 
+                          :label="tpl.templateName" 
+                          :value="tpl.flexTemplateId"
+                        >
+                          <div class="preset-option-with-action">
+                            <div class="preset-info">
+                              <span class="preset-label">{{ tpl.templateName }}</span>
+                              <span class="preset-desc">{{ tpl.description || '私人' }}</span>
+                            </div>
+                            <el-button 
+                              type="danger" 
+                              link 
+                              size="small" 
+                              @click.stop="handleDeleteMyTemplate(tpl)"
+                              title="刪除此範本"
+                            >
+                              <el-icon><Delete /></el-icon>
+                            </el-button>
+                          </div>
+                        </el-option>
+                      </el-select>
+                      <!-- 共用範本 -->
+                      <el-select 
+                        v-model="selectedSharedTemplate" 
+                        placeholder="共用範本" 
+                        clearable
+                        filterable
+                        class="flex-template-select"
+                        @change="handleSharedTemplateChange"
+                      >
+                        <el-option 
+                          v-for="tpl in sharedFlexTemplates" 
+                          :key="tpl.flexTemplateId" 
+                          :label="tpl.templateName" 
+                          :value="tpl.flexTemplateId"
+                        >
+                          <div class="preset-option">
+                            <span class="preset-label">{{ tpl.templateName }}</span>
+                            <span class="preset-desc">{{ tpl.creatorName || '共用' }}</span>
+                          </div>
+                        </el-option>
+                      </el-select>
+                    </div>
+                  </el-form-item>
+
                   <el-form-item label="替代文字" required>
                     <el-input v-model="currentMessage.altText" placeholder="不支援 Flex 時顯示的文字（必填）" maxlength="400" />
                     <div class="form-tip">※ LINE APP 通知或聊天列表預覽時顯示的文字</div>
-                  </el-form-item>
-
-                  <!-- 範本選擇 -->
-                  <el-form-item label="選擇範本">
-                    <el-select v-model="selectedFlexPreset" placeholder="請選擇 Flex 範本" :loading="flexPresetsLoading" style="width: 100%">
-                      <el-option v-for="preset in flexPresets" :key="preset.name" :label="preset.label" :value="preset.name">
-                        <div class="preset-option">
-                          <span class="preset-label">{{ preset.label }}</span>
-                          <span class="preset-desc">{{ preset.description }}</span>
-                        </div>
-                      </el-option>
-                    </el-select>
                   </el-form-item>
 
                   <!-- 可編輯欄位（從範本解析的 {{變數}} ） -->
@@ -588,6 +654,10 @@
                         <el-icon><Upload /></el-icon>
                         匯入 JSON
                       </el-button>
+                      <el-button size="small" type="success" plain @click="openSaveFlexTemplateDialog" :disabled="!flexTemplateRaw">
+                        <el-icon><FolderAdd /></el-icon>
+                        儲存為範本
+                      </el-button>
                     </div>
                   </el-form-item>
 
@@ -618,6 +688,14 @@
                   </div>
                 </el-col>
               </el-row>
+            </template>
+
+            <!-- TEMPLATE 編輯器（模板訊息：Buttons/Confirm/Carousel/Image Carousel） -->
+            <template v-else-if="currentMessage.type === 'TEMPLATE'">
+              <TemplateMessageEditor
+                v-model="currentMessage.templateData"
+                @change="handleTemplateMessageChange"
+              />
             </template>
 
             <!-- IMAGEMAP 編輯器 -->
@@ -689,20 +767,51 @@
       v-model="emojiSelectorVisible"
       @select="handleEmojiSelect"
     />
+
+    <!-- 儲存 Flex 範本對話框 -->
+    <el-dialog
+      v-model="saveFlexTemplateDialogVisible"
+      title="儲存為 Flex 範本"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="saveFlexTemplateForm" label-width="100px">
+        <el-form-item label="範本名稱" required>
+          <el-input v-model="saveFlexTemplateForm.templateName" placeholder="請輸入範本名稱" maxlength="100" />
+        </el-form-item>
+        <el-form-item label="替代文字">
+          <el-input v-model="saveFlexTemplateForm.altText" placeholder="不支援時顯示的文字" maxlength="400" />
+        </el-form-item>
+        <el-form-item label="範本說明">
+          <el-input v-model="saveFlexTemplateForm.description" type="textarea" :rows="2" placeholder="選填，描述此範本用途" maxlength="500" />
+        </el-form-item>
+        <el-form-item label="公開範本">
+          <el-switch v-model="saveFlexTemplateForm.isPublic" :active-value="1" :inactive-value="0" />
+          <span style="margin-left: 8px; color: #909399; font-size: 12px;">公開後其他使用者也可選用此範本</span>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="saveFlexTemplateDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="saveFlexTemplateLoading" @click="handleSaveFlexTemplate">儲存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Plus, Delete, ChatLineSquare, Picture, VideoCamera, Headset, Location, PriceTag, Grid, Document, ArrowDown, Upload, WarningFilled, Star, Close, Rank } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Delete, ChatLineSquare, Picture, VideoCamera, Headset, Location, PriceTag, Grid, Document, ArrowDown, Upload, WarningFilled, Star, Close, Rank, Postcard, FolderAdd } from '@element-plus/icons-vue'
+import useUserStore from '@/store/modules/user'
 import draggable from 'vuedraggable'
 import FlexPreview from '@/components/Line/FlexPreview.vue'
 import MediaSelector from './MediaSelector.vue'
 import ImagemapEditor from './ImagemapEditor.vue'
 import StickerSelector from './StickerSelector.vue'
 import EmojiSelector from './EmojiSelector.vue'
+import TemplateMessageEditor from './TemplateMessageEditor.vue'
 import { getFlexPresets, getFlexPresetContent, sendTestMessage as sendTestApi, listTemplate, getTemplate } from '@/api/line/template'
+import { getAvailableFlexTemplates, addFlexTemplate, updateFlexTemplate, delFlexTemplate } from '@/api/line/flexTemplate'
 import { listUser as listLineUser } from '@/api/line/user'
 
 const props = defineProps({
@@ -719,6 +828,7 @@ const msgTypeOptions = [
   { value: 'AUDIO', label: '音訊', icon: Headset, hint: 'audio' },
   { value: 'LOCATION', label: '位置', icon: Location, hint: 'location' },
   { value: 'STICKER', label: '貼圖', icon: PriceTag, hint: 'sticker' },
+  { value: 'TEMPLATE', label: '模板訊息', icon: Postcard, hint: 'buttons/carousel' },
   { value: 'IMAGEMAP', label: '圖文訊息', icon: Grid, hint: 'imagemap' },
   { value: 'FLEX', label: 'Flex 訊息', icon: Document, hint: 'flex' }
 ]
@@ -1337,6 +1447,11 @@ const addMessage = (type) => {
       newMsg.packageId = ''
       newMsg.stickerId = ''
       break
+    case 'TEMPLATE':
+      newMsg.altText = ''
+      newMsg.templateData = {}
+      newMsg.contents = ''
+      break
     case 'FLEX':
     case 'IMAGEMAP':
       newMsg.altText = ''
@@ -1366,6 +1481,14 @@ const onDragEnd = (evt) => {
   }
 }
 
+// Template Message 變更處理
+const handleTemplateMessageChange = (data) => {
+  if (!currentMessage.value) return
+  currentMessage.value.templateData = data
+  currentMessage.value.altText = data.altText || '模板訊息'
+  currentMessage.value.contents = data.content || ''
+}
+
 const formatFlexJson = () => {
   if (!currentMessage.value) return
   try {
@@ -1392,13 +1515,37 @@ const validateFlexJson = () => {
 
 // Flex 範本相關
 const flexPresets = ref([])
+const customFlexTemplates = ref([])  // 使用者自訂範本（包含我的和共用）
 const flexPresetsLoading = ref(false)
-const selectedFlexPreset = ref('')
+const selectedFlexPreset = ref('')  // 系統範本選擇
+const selectedMyTemplate = ref(null)  // 我的範本選擇
+const selectedSharedTemplate = ref(null)  // 共用範本選擇
 const flexEditableFields = ref([])  // 變數欄位列表
 const showFlexJsonEditor = ref(false)
 const flexTemplateRaw = ref('')  // 原始範本 JSON（含 {{變數}} 佔位符）
 const flexVariableValues = ref({})  // 變數值對應表 { 變數名: 值 }
 const isRestoringFlexPreset = ref(false)  // 恢復下拉選單時的標記，避免重複載入
+const currentUserId = ref(null)  // 當前使用者 ID
+
+const myFlexTemplates = computed(() => {
+  return customFlexTemplates.value.filter(
+    t => Number(t.creatorId) === Number(currentUserId.value) && Number(t.isPublic) !== 1
+  )
+})
+
+const sharedFlexTemplates = computed(() => {
+  return customFlexTemplates.value.filter(t => Number(t.isPublic) === 1)
+})
+
+// 儲存 Flex 範本相關
+const saveFlexTemplateDialogVisible = ref(false)
+const saveFlexTemplateLoading = ref(false)
+const saveFlexTemplateForm = reactive({
+  templateName: '',
+  altText: '訊息通知',
+  description: '',
+  isPublic: 0
+})
 
 const loadFlexPresets = async () => {
   flexPresetsLoading.value = true
@@ -1409,6 +1556,197 @@ const loadFlexPresets = async () => {
     console.error('載入 Flex 範本列表失敗', e)
   } finally {
     flexPresetsLoading.value = false
+  }
+}
+
+// 載入使用者自訂 Flex 範本
+const loadCustomFlexTemplates = async () => {
+  try {
+    const res = await getAvailableFlexTemplates()
+    customFlexTemplates.value = res.data || []
+  } catch (e) {
+    console.error('載入自訂 Flex 範本失敗', e)
+  }
+}
+
+const clearOtherTemplateSelections = (keepType) => {
+  if (keepType !== 'system') selectedFlexPreset.value = ''
+  if (keepType !== 'my') selectedMyTemplate.value = null
+  if (keepType !== 'shared') selectedSharedTemplate.value = null
+}
+
+const handleFlexPresetChange = async (val) => {
+  if (!val) return
+  clearOtherTemplateSelections('system')
+  await loadFlexTemplate(val)
+}
+
+const handleMyTemplateChange = async (val) => {
+  if (!val) return
+  clearOtherTemplateSelections('my')
+  await loadFlexTemplateById(val)
+}
+
+const handleSharedTemplateChange = async (val) => {
+  if (!val) return
+  clearOtherTemplateSelections('shared')
+  await loadFlexTemplateById(val)
+}
+
+const loadFlexTemplateById = async (templateId) => {
+  const tpl = customFlexTemplates.value.find(t => Number(t.flexTemplateId) === Number(templateId))
+  if (!tpl) {
+    ElMessage.error('找不到指定的範本')
+    return
+  }
+  
+  if (!currentMessage.value) {
+    ElMessage.warning('請先選擇訊息類型')
+    return
+  }
+  
+  ElMessage.info('正在載入範本...')
+  
+  try {
+    const content = tpl.flexJson
+    if (!content) {
+      ElMessage.error('範本內容為空')
+      return
+    }
+    
+    // 設定替代文字
+    if (tpl.altText) {
+      currentMessage.value.altText = tpl.altText
+    }
+    
+    // 儲存原始範本
+    flexTemplateRaw.value = content
+    
+    // 解析變數
+    parseFlexVariables(content)
+    
+    // 更新預覽
+    updateFlexPreview()
+    
+    // 儲存範本名稱
+    currentMessage.value.flexPresetName = 'custom_' + templateId
+    
+    if (flexEditableFields.value.length === 0) {
+      ElMessage.info('此範本沒有可編輯的變數，您可以直接編輯 JSON')
+    } else {
+      ElMessage.success(`已載入範本，共 ${flexEditableFields.value.length} 個可編輯變數`)
+    }
+  } catch (e) {
+    console.error('載入範本失敗', e)
+    ElMessage.error('載入範本失敗')
+  }
+}
+
+const handleDeleteMyTemplate = async (tpl) => {
+  try {
+    await ElMessageBox.confirm(
+      `確定要刪除範本「${tpl.templateName}」嗎？此操作無法復原。`,
+      '確認刪除',
+      { type: 'warning' }
+    )
+    
+    const res = await delFlexTemplate(tpl.flexTemplateId)
+    if (res.code === 200) {
+      ElMessage.success('範本已刪除')
+      // 如果刪除的是當前選中的範本，清除選擇
+      if (selectedMyTemplate.value === tpl.flexTemplateId) {
+        selectedMyTemplate.value = null
+      }
+      // 重新載入範本列表
+      await loadCustomFlexTemplates()
+    } else {
+      ElMessage.error(res.msg || '刪除失敗')
+    }
+  } catch (e) {
+    if (e !== 'cancel') {
+      console.error('刪除範本失敗', e)
+      ElMessage.error('刪除失敗')
+    }
+  }
+}
+
+const openSaveFlexTemplateDialog = () => {
+  if (!flexTemplateRaw.value) {
+    ElMessage.warning('請先載入或匯入 Flex JSON')
+    return
+  }
+  // 重置表單
+  saveFlexTemplateForm.templateName = ''
+  saveFlexTemplateForm.altText = currentMessage.value?.altText || '訊息通知'
+  saveFlexTemplateForm.description = ''
+  saveFlexTemplateForm.isPublic = 0
+  saveFlexTemplateDialogVisible.value = true
+}
+
+const handleSaveFlexTemplate = async () => {
+  if (!saveFlexTemplateForm.templateName?.trim()) {
+    ElMessage.warning('請輸入範本名稱')
+    return
+  }
+  
+  const templateName = saveFlexTemplateForm.templateName.trim()
+  
+  const existingTemplate = customFlexTemplates.value.find(
+    t => t.templateName === templateName && Number(t.creatorId) === Number(currentUserId.value)
+  )
+  
+  if (existingTemplate) {
+    try {
+      await ElMessageBox.confirm(
+        `已存在名稱為「${templateName}」的範本，是否要覆蓋原有的 JSON 內容？`,
+        '範本名稱重複',
+        { 
+          type: 'warning',
+          confirmButtonText: '覆蓋',
+          cancelButtonText: '取消'
+        }
+      )
+      await doSaveFlexTemplate(templateName, existingTemplate.flexTemplateId)
+    } catch (e) {
+      return
+    }
+  } else {
+    await doSaveFlexTemplate(templateName, null)
+  }
+}
+
+const doSaveFlexTemplate = async (templateName, existingId) => {
+  saveFlexTemplateLoading.value = true
+  try {
+    const data = {
+      templateName: templateName,
+      flexJson: flexTemplateRaw.value,
+      altText: saveFlexTemplateForm.altText || '訊息通知',
+      description: saveFlexTemplateForm.description,
+      isPublic: saveFlexTemplateForm.isPublic
+    }
+    
+    let res
+    if (existingId) {
+      data.flexTemplateId = existingId
+      res = await updateFlexTemplate(data)
+    } else {
+      res = await addFlexTemplate(data)
+    }
+    
+    if (res.code === 200) {
+      ElMessage.success(existingId ? '範本已更新' : '範本儲存成功')
+      saveFlexTemplateDialogVisible.value = false
+      // 重新載入自訂範本列表
+      await loadCustomFlexTemplates()
+    } else {
+      ElMessage.error(res.msg || '儲存失敗')
+    }
+  } catch (e) {
+    console.error('儲存 Flex 範本失敗', e)
+    ElMessage.error('儲存失敗：' + (e.message || '未知錯誤'))
+  } finally {
+    saveFlexTemplateLoading.value = false
   }
 }
 
@@ -1430,14 +1768,37 @@ const loadFlexTemplate = async (templateName) => {
   ElMessage.info('正在載入範本...')
 
   try {
-    console.log('[Flex] Calling getFlexPresetContent for:', templateName)
-    const res = await getFlexPresetContent(templateName)
-    console.log('[Flex] API response:', res)
+    let content = ''
+    
+    // 判斷是自訂範本還是系統範本
+    if (templateName.startsWith('custom_')) {
+      // 自訂範本：從 customFlexTemplates 中查找
+      const templateId = parseInt(templateName.replace('custom_', ''))
+      const customTpl = customFlexTemplates.value.find(t => t.flexTemplateId === templateId)
+      if (customTpl) {
+        content = customTpl.flexJson
+        // 同時設定替代文字
+        if (customTpl.altText && currentMessage.value) {
+          currentMessage.value.altText = customTpl.altText
+        }
+      } else {
+        ElMessage.error('找不到指定的自訂範本')
+        return
+      }
+    } else {
+      // 系統範本：呼叫 API 取得
+      console.log('[Flex] Calling getFlexPresetContent for:', templateName)
+      const res = await getFlexPresetContent(templateName)
+      console.log('[Flex] API response:', res)
 
-    // 後端 AjaxResult.success(string) 會將字串放在 msg 欄位
-    const responseData = res.data || res.msg
-    if (responseData) {
-      const content = typeof responseData === 'string' ? responseData : JSON.stringify(responseData, null, 2)
+      // 後端 AjaxResult.success(string) 會將字串放在 msg 欄位
+      const responseData = res.data || res.msg
+      if (responseData) {
+        content = typeof responseData === 'string' ? responseData : JSON.stringify(responseData, null, 2)
+      }
+    }
+    
+    if (content) {
       console.log('[Flex] Parsed content length:', content.length)
       console.log('[Flex] Content preview:', content.substring(0, 200))
 
@@ -1463,7 +1824,7 @@ const loadFlexTemplate = async (templateName) => {
         ElMessage.success(`已載入範本，共 ${flexEditableFields.value.length} 個可編輯變數`)
       }
     } else {
-      console.warn('[Flex] responseData is empty or undefined, res:', res)
+      console.warn('[Flex] content is empty')
       ElMessage.error('範本內容為空')
     }
   } catch (e) {
@@ -1655,8 +2016,17 @@ const updateFlexField = (index) => {
   updateFlexVariable(field.name, value)
 }
 
-// 初始化時載入 Flex 範本列表
+const userStore = useUserStore()
+watch(
+  () => userStore.id,
+  (val) => {
+    currentUserId.value = val
+  },
+  { immediate: true }
+)
+
 loadFlexPresets()
+loadCustomFlexTemplates()
 
 // Imagemap 編輯器變更處理
 const onImagemapChange = (imagemapData) => {
@@ -1798,6 +2168,74 @@ const handleSave = async () => {
           return
         }
         break
+      case 'TEMPLATE':
+        // 驗證 TEMPLATE 訊息：檢查 templateData 是否已設定
+        if (!msg.templateData) {
+          ElMessage.warning(`訊息 ${i + 1}：請設定模板內容`)
+          return
+        }
+        // 確保 contents 已同步（從 templateData.content 取得）
+        if (msg.templateData.content) {
+          msg.contents = msg.templateData.content
+        }
+        if (!msg.contents) {
+          ElMessage.warning(`訊息 ${i + 1}：模板內容為空`)
+          return
+        }
+        // 驗證模板內容是否完整（避免 LINE API 400 錯誤）
+        try {
+          const tplContent = typeof msg.contents === 'string' ? JSON.parse(msg.contents) : msg.contents
+          const tpl = tplContent.template || tplContent
+          const tplType = tpl.type || msg.templateData.templateType
+          
+          if (tplType === 'buttons') {
+            if (!tpl.text?.trim()) {
+              ElMessage.warning(`訊息 ${i + 1}：按鈕模板的內文不能為空`)
+              return
+            }
+            if (!tpl.actions || tpl.actions.length === 0) {
+              ElMessage.warning(`訊息 ${i + 1}：按鈕模板至少需要一個動作按鈕`)
+              return
+            }
+          } else if (tplType === 'confirm') {
+            if (!tpl.text?.trim()) {
+              ElMessage.warning(`訊息 ${i + 1}：確認模板的文字不能為空`)
+              return
+            }
+          } else if (tplType === 'carousel') {
+            if (!tpl.columns || tpl.columns.length === 0) {
+              ElMessage.warning(`訊息 ${i + 1}：輪播模板至少需要一張卡片`)
+              return
+            }
+            for (let j = 0; j < tpl.columns.length; j++) {
+              const col = tpl.columns[j]
+              if (!col.text?.trim()) {
+                ElMessage.warning(`訊息 ${i + 1}：輪播卡片 ${j + 1} 的內文不能為空`)
+                return
+              }
+              if (!col.actions || col.actions.length === 0) {
+                ElMessage.warning(`訊息 ${i + 1}：輪播卡片 ${j + 1} 至少需要一個動作按鈕`)
+                return
+              }
+            }
+          } else if (tplType === 'image_carousel') {
+            if (!tpl.columns || tpl.columns.length === 0) {
+              ElMessage.warning(`訊息 ${i + 1}：圖片輪播至少需要一張圖片`)
+              return
+            }
+            for (let j = 0; j < tpl.columns.length; j++) {
+              const col = tpl.columns[j]
+              if (!col.imageUrl?.trim()) {
+                ElMessage.warning(`訊息 ${i + 1}：圖片輪播第 ${j + 1} 張圖片網址不能為空`)
+                return
+              }
+            }
+          }
+        } catch (e) {
+          ElMessage.warning(`訊息 ${i + 1}：模板格式錯誤`)
+          return
+        }
+        break
     }
   }
 
@@ -1893,6 +2331,60 @@ const initForm = () => {
               ...normalizedMsg,
               enableQuickReply: true,
               quickReply: msg.quickReply
+            }
+          }
+          
+          // TEMPLATE 處理：恢復 templateData
+          if (normalizedType === 'TEMPLATE') {
+            let templateData = null
+            let contentsStr = ''
+            try {
+              // 情況 1：msg.template 直接存在（從 buildMessageObject 儲存的格式）
+              if (msg.template) {
+                const tpl = msg.template
+                // 建構完整的 template message JSON
+                const fullTemplateJson = {
+                  type: 'template',
+                  altText: msg.altText || '模板訊息',
+                  template: tpl
+                }
+                contentsStr = JSON.stringify(fullTemplateJson)
+                templateData = {
+                  content: contentsStr,
+                  altText: msg.altText || '模板訊息',
+                  templateType: tpl.type || 'buttons',
+                  templateData: tpl
+                }
+              }
+              // 情況 2：msg.contents 存在（舊格式或直接設定）
+              else if (msg.contents) {
+                const parsed = typeof msg.contents === 'string' 
+                  ? JSON.parse(msg.contents) 
+                  : msg.contents
+                contentsStr = typeof msg.contents === 'string' 
+                  ? msg.contents 
+                  : JSON.stringify(msg.contents)
+                templateData = {
+                  content: contentsStr,
+                  altText: parsed.altText || msg.altText || '模板訊息',
+                  templateType: parsed.template?.type || 'buttons',
+                  templateData: parsed.template || parsed
+                }
+              }
+              // 情況 3：msg.templateData 存在（編輯中的暫存格式）
+              else if (msg.templateData) {
+                templateData = msg.templateData
+                contentsStr = msg.templateData.content || ''
+              }
+            } catch (e) {
+              console.error('[initForm] TEMPLATE parse error:', e)
+            }
+            return { 
+              ...normalizedMsg, 
+              templateData,
+              contents: contentsStr,
+              altText: templateData?.altText || msg.altText || '模板訊息',
+              text: undefined  // 清除 text 欄位，避免顯示在預覽中
             }
           }
           
@@ -1992,12 +2484,27 @@ const parseOldFormat = (msgType, content, altText) => {
         }
       case 'IMAGEMAP':
         return { type: 'IMAGEMAP', altText: altText || '', contents: JSON.stringify(obj, null, 2), imagemapData: obj }
+      case 'TEMPLATE':
+        // 解析 Template Message（Buttons/Confirm/Carousel/Image Carousel）
+        const contentsStr = JSON.stringify(obj, null, 2)
+        const templateData = {
+          content: contentsStr,  // TemplateMessageEditor 期望的格式
+          altText: obj.altText || altText || '模板訊息',
+          templateType: obj.template?.type || 'buttons',
+          templateData: obj.template || obj
+        }
+        return { 
+          type: 'TEMPLATE', 
+          altText: templateData.altText, 
+          templateData,
+          contents: contentsStr
+        }
       default:
         return { type: 'TEXT', text: content }
     }
   } catch (e) {
     // 如果解析失敗，可能 content 已經是格式化的字串
-    if (msgType === 'FLEX' || msgType === 'IMAGEMAP') {
+    if (msgType === 'FLEX' || msgType === 'IMAGEMAP' || msgType === 'TEMPLATE') {
       return { type: msgType, altText: altText || '', contents: content }
     }
     return { type: 'TEXT', text: content }
@@ -2044,14 +2551,14 @@ watch(
   { immediate: true }
 )
 
-// 監聽範本選擇變化，自動載入範本
+// 監聽範本選擇變化（僅用於恢復選擇，一般選擇由 @change 事件處理）
 watch(
   () => selectedFlexPreset.value,
   async (newVal) => {
     console.log('[Flex Watch] selectedFlexPreset changed to:', newVal, 'isRestoring:', isRestoringFlexPreset.value)
     if (!newVal || !currentMessage.value) return
     
-    // 如果是恢復選擇，需要載入範本結構但保留現有值
+    // 僅處理恢復選擇的情況（切換訊息時恢復之前選擇的範本）
     if (isRestoringFlexPreset.value) {
       isRestoringFlexPreset.value = false
       // 保存當前的 contents（已替換變數的值）
@@ -2064,10 +2571,8 @@ watch(
         // 嘗試從已儲存的內容中提取變數值
         extractVariableValuesFromContent(savedContents)
       }
-      return
     }
-    
-    await loadFlexTemplate(newVal)
+    // 一般選擇由 handleFlexPresetChange 處理，不在此重複載入
   }
 )
 
@@ -2675,5 +3180,76 @@ const findValueInContent = (templateNode, savedNode, pattern, varName) => {
       border-bottom: 1px solid #ebeef5;
     }
   }
+}
+
+.flex-template-selectors {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  
+  .flex-template-select {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.preset-option-with-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  
+  .preset-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    
+    .preset-label {
+      font-size: 13px;
+      color: #303133;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .preset-desc {
+      font-size: 11px;
+      color: #909399;
+      margin-top: 2px;
+    }
+  }
+  
+  .el-button {
+    margin-left: 8px;
+    opacity: 0;
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 6px;
+    transition: opacity 0.2s;
+  }
+}
+
+:deep(.el-select-dropdown__item:hover) {
+  .preset-option-with-action .el-button {
+    opacity: 1;
+  }
+}
+
+:global(.flex-template-dropdown .el-select-dropdown__item) {
+  height: auto;
+  line-height: 18px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  overflow: visible;
+}
+
+:global(.flex-template-dropdown .preset-option-with-action .el-button) {
+  opacity: 0;
+}
+
+:global(.flex-template-dropdown .el-select-dropdown__item:hover .preset-option-with-action .el-button) {
+  opacity: 1 !important;
 }
 </style>

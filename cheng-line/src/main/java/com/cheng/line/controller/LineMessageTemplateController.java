@@ -456,8 +456,9 @@ public class LineMessageTemplateController extends BaseController {
                             }
                         }
                         case TEMPLATE -> {
-                            // 暫不支援
-                            continue;
+                            // Template Message（Buttons/Confirm/Carousel/Image Carousel）
+                            pushMessage.setTemplateMessageJson(msg.toString());
+                            pushMessage.setAltText(msg.has("altText") ? msg.get("altText").asText() : "模板訊息");
                         }
                     }
                     pushMessageList.add(pushMessage);
@@ -562,6 +563,11 @@ public class LineMessageTemplateController extends BaseController {
                         pushMessage.setImageUrl(content);
                     }
                 }
+                case TEMPLATE -> {
+                    // Template Message（Buttons/Confirm/Carousel/Image Carousel）
+                    pushMessage.setTemplateMessageJson(content);
+                    pushMessage.setAltText(template.getAltText() != null ? template.getAltText() : "模板訊息");
+                }
                 default -> {
                     return error("暫不支援此類型的測試推播：" + singleContentType.getDescription());
                 }
@@ -658,6 +664,11 @@ public class LineMessageTemplateController extends BaseController {
             FlexMessageParser.ValidationResult result = flexMessageParser.validate(content);
             if (!result.valid()) {
                 return "Flex Message JSON 驗證失敗：" + result.errorMessage();
+            }
+        } else if (contentType == ContentType.TEMPLATE) {
+            String templateError = validateTemplateMessage(content);
+            if (templateError != null) {
+                return templateError;
             }
         } else if (contentType == ContentType.IMAGEMAP) {
             try {
@@ -757,6 +768,332 @@ public class LineMessageTemplateController extends BaseController {
         }
 
         return null;
+    }
+
+    /**
+     * 驗證 Template Message 內容
+     * 支援 buttons, confirm, carousel, image_carousel 類型
+     *
+     * @param content Template Message JSON 字串
+     * @return 錯誤訊息，null 表示驗證通過
+     */
+    private String validateTemplateMessage(String content) {
+        try {
+            JsonNode rootNode = JacksonUtil.fromJson(content, new TypeReference<JsonNode>() {});
+            
+            if (rootNode == null) {
+                return "Template Message JSON 內容不能為空";
+            }
+            
+            // 驗證 type = template
+            if (!rootNode.has("type") || !"template".equals(rootNode.get("type").asText())) {
+                return "Template Message type 必須為 'template'";
+            }
+            
+            // 驗證 altText
+            if (!rootNode.has("altText") || rootNode.get("altText").asText().trim().isEmpty()) {
+                return "Template Message altText 不能為空";
+            }
+            String altText = rootNode.get("altText").asText();
+            if (altText.length() > 400) {
+                return "Template Message altText 最多 400 字元";
+            }
+            
+            // 驗證 template 物件
+            if (!rootNode.has("template")) {
+                return "Template Message 必須包含 template 物件";
+            }
+            
+            JsonNode template = rootNode.get("template");
+            if (!template.has("type")) {
+                return "Template 必須指定 type";
+            }
+            
+            String templateType = template.get("type").asText();
+            
+            return switch (templateType) {
+                case "buttons" -> validateButtonsTemplate(template);
+                case "confirm" -> validateConfirmTemplate(template);
+                case "carousel" -> validateCarouselTemplate(template);
+                case "image_carousel" -> validateImageCarouselTemplate(template);
+                default -> "不支援的 Template 類型：" + templateType + "（支援：buttons, confirm, carousel, image_carousel）";
+            };
+            
+        } catch (Exception e) {
+            return "Template Message JSON 格式錯誤：" + e.getMessage();
+        }
+    }
+    
+    /**
+     * 驗證 Buttons Template
+     */
+    private String validateButtonsTemplate(JsonNode template) {
+        // 驗證 text（必填）
+        if (!template.has("text") || template.get("text").asText().trim().isEmpty()) {
+            return "Buttons Template text 不能為空";
+        }
+        
+        String text = template.get("text").asText();
+        boolean hasImageOrTitle = template.has("thumbnailImageUrl") || template.has("title");
+        int maxTextLength = hasImageOrTitle ? 60 : 160;
+        
+        if (text.length() > maxTextLength) {
+            return String.format("Buttons Template text 最多 %d 字元（%s圖片或標題）", 
+                maxTextLength, hasImageOrTitle ? "有" : "無");
+        }
+        
+        // 驗證 title（選填，最多 40 字元）
+        if (template.has("title")) {
+            String title = template.get("title").asText();
+            if (title.length() > 40) {
+                return "Buttons Template title 最多 40 字元";
+            }
+        }
+        
+        // 驗證 thumbnailImageUrl（選填，必須是 HTTPS）
+        if (template.has("thumbnailImageUrl")) {
+            String imageUrl = template.get("thumbnailImageUrl").asText();
+            if (!imageUrl.startsWith("https://")) {
+                return "Buttons Template thumbnailImageUrl 必須使用 HTTPS";
+            }
+        }
+        
+        // 驗證 actions（必填，1~4 個）
+        if (!template.has("actions") || !template.get("actions").isArray()) {
+            return "Buttons Template 必須包含 actions 陣列";
+        }
+        
+        JsonNode actions = template.get("actions");
+        if (actions.size() < 1 || actions.size() > 4) {
+            return "Buttons Template actions 必須有 1~4 個（目前：" + actions.size() + " 個）";
+        }
+        
+        for (int i = 0; i < actions.size(); i++) {
+            String actionError = validateAction(actions.get(i), i + 1);
+            if (actionError != null) {
+                return "Buttons Template " + actionError;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 驗證 Confirm Template
+     */
+    private String validateConfirmTemplate(JsonNode template) {
+        // 驗證 text（必填，最多 240 字元）
+        if (!template.has("text") || template.get("text").asText().trim().isEmpty()) {
+            return "Confirm Template text 不能為空";
+        }
+        
+        String text = template.get("text").asText();
+        if (text.length() > 240) {
+            return "Confirm Template text 最多 240 字元";
+        }
+        
+        // 驗證 actions（必填，必須剛好 2 個）
+        if (!template.has("actions") || !template.get("actions").isArray()) {
+            return "Confirm Template 必須包含 actions 陣列";
+        }
+        
+        JsonNode actions = template.get("actions");
+        if (actions.size() != 2) {
+            return "Confirm Template actions 必須剛好 2 個（目前：" + actions.size() + " 個）";
+        }
+        
+        for (int i = 0; i < actions.size(); i++) {
+            String actionError = validateAction(actions.get(i), i + 1);
+            if (actionError != null) {
+                return "Confirm Template " + actionError;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 驗證 Carousel Template
+     */
+    private String validateCarouselTemplate(JsonNode template) {
+        // 驗證 columns（必填，1~10 個）
+        if (!template.has("columns") || !template.get("columns").isArray()) {
+            return "Carousel Template 必須包含 columns 陣列";
+        }
+        
+        JsonNode columns = template.get("columns");
+        if (columns.size() < 1 || columns.size() > 10) {
+            return "Carousel Template columns 必須有 1~10 個（目前：" + columns.size() + " 個）";
+        }
+        
+        for (int i = 0; i < columns.size(); i++) {
+            JsonNode column = columns.get(i);
+            String columnError = validateCarouselColumn(column, i + 1);
+            if (columnError != null) {
+                return columnError;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 驗證 Carousel Column
+     */
+    private String validateCarouselColumn(JsonNode column, int index) {
+        // 驗證 text（必填）
+        if (!column.has("text") || column.get("text").asText().trim().isEmpty()) {
+            return String.format("Carousel 卡片 %d：text 不能為空", index);
+        }
+        
+        String text = column.get("text").asText();
+        boolean hasImageOrTitle = column.has("thumbnailImageUrl") || column.has("title");
+        int maxTextLength = hasImageOrTitle ? 60 : 120;
+        
+        if (text.length() > maxTextLength) {
+            return String.format("Carousel 卡片 %d：text 最多 %d 字元（%s圖片或標題）", 
+                index, maxTextLength, hasImageOrTitle ? "有" : "無");
+        }
+        
+        // 驗證 title（選填，最多 40 字元）
+        if (column.has("title")) {
+            String title = column.get("title").asText();
+            if (title.length() > 40) {
+                return String.format("Carousel 卡片 %d：title 最多 40 字元", index);
+            }
+        }
+        
+        // 驗證 thumbnailImageUrl（選填，必須是 HTTPS）
+        if (column.has("thumbnailImageUrl")) {
+            String imageUrl = column.get("thumbnailImageUrl").asText();
+            if (!imageUrl.startsWith("https://")) {
+                return String.format("Carousel 卡片 %d：thumbnailImageUrl 必須使用 HTTPS", index);
+            }
+        }
+        
+        // 驗證 actions（必填，1~3 個）
+        if (!column.has("actions") || !column.get("actions").isArray()) {
+            return String.format("Carousel 卡片 %d：必須包含 actions 陣列", index);
+        }
+        
+        JsonNode actions = column.get("actions");
+        if (actions.size() < 1 || actions.size() > 3) {
+            return String.format("Carousel 卡片 %d：actions 必須有 1~3 個（目前：%d 個）", index, actions.size());
+        }
+        
+        for (int i = 0; i < actions.size(); i++) {
+            String actionError = validateAction(actions.get(i), i + 1);
+            if (actionError != null) {
+                return String.format("Carousel 卡片 %d %s", index, actionError);
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 驗證 Image Carousel Template
+     */
+    private String validateImageCarouselTemplate(JsonNode template) {
+        // 驗證 columns（必填，1~10 個）
+        if (!template.has("columns") || !template.get("columns").isArray()) {
+            return "Image Carousel Template 必須包含 columns 陣列";
+        }
+        
+        JsonNode columns = template.get("columns");
+        if (columns.size() < 1 || columns.size() > 10) {
+            return "Image Carousel Template columns 必須有 1~10 個（目前：" + columns.size() + " 個）";
+        }
+        
+        for (int i = 0; i < columns.size(); i++) {
+            JsonNode column = columns.get(i);
+            
+            // 驗證 imageUrl（必填，必須是 HTTPS）
+            if (!column.has("imageUrl") || column.get("imageUrl").asText().trim().isEmpty()) {
+                return String.format("Image Carousel 圖片 %d：imageUrl 不能為空", i + 1);
+            }
+            
+            String imageUrl = column.get("imageUrl").asText();
+            if (!imageUrl.startsWith("https://")) {
+                return String.format("Image Carousel 圖片 %d：imageUrl 必須使用 HTTPS", i + 1);
+            }
+            
+            // 驗證 action（必填，且必須是 URI 類型）
+            if (!column.has("action")) {
+                return String.format("Image Carousel 圖片 %d：必須包含 action", i + 1);
+            }
+            
+            JsonNode action = column.get("action");
+            if (!action.has("type") || !"uri".equals(action.get("type").asText())) {
+                return String.format("Image Carousel 圖片 %d：action type 必須為 'uri'", i + 1);
+            }
+            
+            if (!action.has("uri") || action.get("uri").asText().trim().isEmpty()) {
+                return String.format("Image Carousel 圖片 %d：action uri 不能為空", i + 1);
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 驗證 Action 物件
+     */
+    private String validateAction(JsonNode action, int index) {
+        if (!action.has("type")) {
+            return String.format("動作 %d：type 不能為空", index);
+        }
+        
+        String type = action.get("type").asText();
+        
+        // 驗證 label（大多數 action 都需要，最多 20 字元）
+        if (action.has("label")) {
+            String label = action.get("label").asText();
+            if (label.length() > 20) {
+                return String.format("動作 %d：label 最多 20 字元", index);
+            }
+        }
+        
+        return switch (type) {
+            case "message" -> {
+                if (!action.has("text") || action.get("text").asText().trim().isEmpty()) {
+                    yield String.format("動作 %d：message action 的 text 不能為空", index);
+                }
+                if (action.get("text").asText().length() > 300) {
+                    yield String.format("動作 %d：message action 的 text 最多 300 字元", index);
+                }
+                yield null;
+            }
+            case "uri" -> {
+                if (!action.has("uri") || action.get("uri").asText().trim().isEmpty()) {
+                    yield String.format("動作 %d：uri action 的 uri 不能為空", index);
+                }
+                yield null;
+            }
+            case "postback" -> {
+                if (!action.has("data") || action.get("data").asText().trim().isEmpty()) {
+                    yield String.format("動作 %d：postback action 的 data 不能為空", index);
+                }
+                if (action.get("data").asText().length() > 300) {
+                    yield String.format("動作 %d：postback action 的 data 最多 300 字元", index);
+                }
+                yield null;
+            }
+            case "datetimepicker" -> {
+                if (!action.has("data") || action.get("data").asText().trim().isEmpty()) {
+                    yield String.format("動作 %d：datetimepicker action 的 data 不能為空", index);
+                }
+                if (!action.has("mode")) {
+                    yield String.format("動作 %d：datetimepicker action 的 mode 不能為空", index);
+                }
+                String mode = action.get("mode").asText();
+                if (!"date".equals(mode) && !"time".equals(mode) && !"datetime".equals(mode)) {
+                    yield String.format("動作 %d：datetimepicker action 的 mode 必須為 date、time 或 datetime", index);
+                }
+                yield null;
+            }
+            default -> null;
+        };
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.cheng.line.service.impl;
 
 import com.cheng.common.constant.UserConstants;
+import com.cheng.common.utils.SecurityUtils;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.line.domain.LineMessageTemplate;
 import com.cheng.line.domain.LineUser;
@@ -51,6 +52,17 @@ public class LineMessageTemplateServiceImpl implements ILineMessageTemplateServi
 
     @Override
     public int insertLineMessageTemplate(LineMessageTemplate lineMessageTemplate) {
+        // 設定建立者資訊
+        try {
+            Long userId = SecurityUtils.getUserId();
+            String username = SecurityUtils.getUsername();
+            String nickName = SecurityUtils.getLoginUser().getUser().getNickName();
+            
+            lineMessageTemplate.setCreatorId(userId);
+            lineMessageTemplate.setCreatorName(nickName != null ? nickName : username);
+        } catch (Exception e) {
+            log.warn("無法取得當前使用者資訊", e);
+        }
         return lineMessageTemplateMapper.insertLineMessageTemplate(lineMessageTemplate);
     }
 

@@ -143,6 +143,7 @@
             <!-- 發送按鈕 -->
             <el-form-item>
               <el-button
+                v-hasPermi="['line:message:send']"
                 type="primary"
                 :icon="Promotion"
                 :loading="sending"
@@ -153,6 +154,9 @@
               >
                 {{ sending ? '發送中...' : '發送訊息' }}
               </el-button>
+              <div v-if="!hasPermission('line:message:send')" class="no-permission-tip">
+                您沒有發送訊息的權限，請聯繫管理員
+              </div>
             </el-form-item>
           </el-form>
         </el-card>
@@ -198,6 +202,12 @@ import { listTemplate } from '@/api/line/template'
 import { listConfig } from '@/api/line/config'
 import { listUser } from '@/api/line/user'
 import { sendMessage } from '@/api/line/message'
+import { checkPermi } from '@/utils/permission'
+
+// 檢查權限
+const hasPermission = (permission) => {
+  return checkPermi([permission])
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -496,5 +506,16 @@ onMounted(async () => {
 
 .mt16 {
   margin-top: 16px;
+}
+
+.no-permission-tip {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fef0f0;
+  border: 1px solid #fde2e2;
+  border-radius: 4px;
+  color: #f56c6c;
+  font-size: 12px;
+  text-align: center;
 }
 </style>

@@ -79,6 +79,20 @@
                   <div v-else-if="msg.type === 'sticker'" class="preview-sticker">
                     <img :src="getStickerUrl(msg.packageId, msg.stickerId)" alt="sticker" />
                   </div>
+                  <!-- TEMPLATE -->
+                  <div v-else-if="msg.type === 'template'" class="preview-template">
+                    <TemplateMessagePreview
+                      v-if="getTemplatePreviewData(msg)"
+                      :template-type="getTemplatePreviewData(msg).templateType"
+                      :template-data="getTemplatePreviewData(msg).templateData"
+                      :alt-text="msg.altText"
+                      :compact="true"
+                    />
+                    <div v-else class="template-placeholder">
+                      <el-icon :size="24"><Grid /></el-icon>
+                      <span>模板訊息</span>
+                    </div>
+                  </div>
                   <!-- OTHER -->
                   <div v-else class="preview-unknown">
                     <span>{{ msg.type || '未知類型' }}</span>
@@ -137,6 +151,20 @@
               <!-- FLEX -->
               <div v-else-if="msgType === 'FLEX'" class="preview-flex">
                 <FlexPreview v-if="isValidFlexJson" :json-content="flexJsonContent" :width="200" :show-header="false" />
+              </div>
+              <!-- TEMPLATE -->
+              <div v-else-if="msgType === 'TEMPLATE'" class="preview-template">
+                <TemplateMessagePreview
+                  v-if="templatePreviewData"
+                  :template-type="templatePreviewData.templateType"
+                  :template-data="templatePreviewData.templateData"
+                  :alt-text="templatePreviewData.altText"
+                  :compact="true"
+                />
+                <div v-else class="template-placeholder">
+                  <el-icon :size="24"><Grid /></el-icon>
+                  <span>模板訊息</span>
+                </div>
               </div>
               <!-- OTHER -->
               <div v-else class="preview-unknown">
@@ -278,6 +306,21 @@
             </div>
           </div>
 
+          <!-- TEMPLATE -->
+          <div v-else-if="msg.type === 'template'" class="preview-template">
+            <TemplateMessagePreview
+              v-if="getTemplatePreviewData(msg)"
+              :template-type="getTemplatePreviewData(msg).templateType"
+              :template-data="getTemplatePreviewData(msg).templateData"
+              :alt-text="msg.altText"
+              :compact="true"
+            />
+            <div v-else class="template-placeholder">
+              <el-icon :size="24"><Grid /></el-icon>
+              <span>模板訊息</span>
+            </div>
+          </div>
+
           <!-- UNKNOWN -->
           <div v-else class="preview-unknown">
             <el-icon :size="24"><QuestionFilled /></el-icon>
@@ -414,6 +457,21 @@
         </div>
       </div>
 
+      <!-- TEMPLATE -->
+      <div v-else-if="msgType === 'TEMPLATE'" class="preview-template">
+        <TemplateMessagePreview
+          v-if="templatePreviewData"
+          :template-type="templatePreviewData.templateType"
+          :template-data="templatePreviewData.templateData"
+          :alt-text="templatePreviewData.altText"
+          :compact="!fullSize"
+        />
+        <div v-else class="template-placeholder">
+          <el-icon :size="fullSize ? 48 : 24"><Grid /></el-icon>
+          <span>模板訊息</span>
+        </div>
+      </div>
+
       <!-- UNKNOWN -->
       <div v-else class="preview-unknown">
         <el-icon :size="32"><QuestionFilled /></el-icon>
@@ -430,6 +488,7 @@
 import { computed, ref } from 'vue'
 import { Picture, VideoCamera, VideoPlay, Headset, Location, PriceTag, Grid, Document, QuestionFilled, User } from '@element-plus/icons-vue'
 import FlexPreview from '@/components/Line/FlexPreview.vue'
+import TemplateMessagePreview from './template/TemplateMessagePreview.vue'
 import iphoneMockupImg from '@/assets/images/iphone-14-mockup-with-transparent.png'
 import { getImageUrl } from '@/utils/image'
 
@@ -797,6 +856,36 @@ const getImagemapStyle = (msg) => {
 
 const handleStickerError = () => {
   stickerError.value = true
+}
+
+// Template Message 預覽資料（單一訊息模式）
+const templatePreviewData = computed(() => {
+  if (props.msgType !== 'TEMPLATE') return null
+  return parseTemplateData(parsedContent.value)
+})
+
+// 從訊息物件解析 Template 資料（多訊息模式）
+const getTemplatePreviewData = (msg) => {
+  if (!msg || msg.type !== 'template') return null
+  return parseTemplateData(msg)
+}
+
+// 解析 Template 資料的通用函數
+const parseTemplateData = (data) => {
+  if (!data) return null
+  
+  // 檢查是否有 template 物件
+  const template = data.template
+  if (!template) return null
+  
+  const templateType = template.type
+  if (!templateType) return null
+  
+  return {
+    templateType: templateType,
+    templateData: template,
+    altText: data.altText || '模板訊息'
+  }
 }
 
 </script>

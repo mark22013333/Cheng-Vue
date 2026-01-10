@@ -75,7 +75,8 @@
                   />
                 </el-descriptions-item>
                 <el-descriptions-item label="使用次數">{{ selectedTemplate.useCount || 0 }} 次</el-descriptions-item>
-                <el-descriptions-item label="建立時間" :span="2">{{ selectedTemplate.createTime }}</el-descriptions-item>
+                <el-descriptions-item label="建立者">{{ selectedTemplate.creatorName || selectedTemplate.createBy || '-' }}</el-descriptions-item>
+                <el-descriptions-item label="建立時間">{{ selectedTemplate.createTime }}</el-descriptions-item>
               </el-descriptions>
             </div>
             <div class="preview-content">
@@ -181,6 +182,7 @@ const msgTypeOptions = [
   { value: 'AUDIO', label: '音訊', tag: 'success' },
   { value: 'LOCATION', label: '位置', tag: 'info' },
   { value: 'STICKER', label: '貼圖', tag: 'info' },
+  { value: 'TEMPLATE', label: '模板訊息', tag: 'warning' },
   { value: 'IMAGEMAP', label: '圖文訊息', tag: 'warning' },
   { value: 'FLEX', label: 'Flex', tag: 'danger' }
 ]
@@ -430,6 +432,53 @@ const recalculateEmojiIndices = (text, emojis) => {
   return result
 }
 
+// 清理 Template Message 中的 action，移除空的 displayText 欄位（LINE API 不接受空字串）
+const cleanTemplateActions = (template) => {
+  if (!template) return template
+  
+  const cleanAction = (action) => {
+    if (!action) return action
+    const cleaned = { ...action }
+    // 如果 displayText 是空字串，移除該欄位
+    if (cleaned.displayText === '' || cleaned.displayText === null || cleaned.displayText === undefined) {
+      delete cleaned.displayText
+    }
+    return cleaned
+  }
+  
+  const result = { ...template }
+  
+  // 清理 actions（buttons/confirm 模板）
+  if (result.actions && Array.isArray(result.actions)) {
+    result.actions = result.actions.map(cleanAction)
+  }
+  
+  // 清理 defaultAction（buttons 模板）
+  if (result.defaultAction) {
+    result.defaultAction = cleanAction(result.defaultAction)
+  }
+  
+  // 清理 columns（carousel/image_carousel 模板）
+  if (result.columns && Array.isArray(result.columns)) {
+    result.columns = result.columns.map(col => {
+      const cleanedCol = { ...col }
+      if (cleanedCol.actions && Array.isArray(cleanedCol.actions)) {
+        cleanedCol.actions = cleanedCol.actions.map(cleanAction)
+      }
+      if (cleanedCol.defaultAction) {
+        cleanedCol.defaultAction = cleanAction(cleanedCol.defaultAction)
+      }
+      // image_carousel 的 action（單一 action）
+      if (cleanedCol.action) {
+        cleanedCol.action = cleanAction(cleanedCol.action)
+      }
+      return cleanedCol
+    })
+  }
+  
+  return result
+}
+
 const buildMessageContent = (msg) => {
   switch (msg.type) {
     case 'TEXT':
@@ -491,6 +540,9 @@ const buildMessageContent = (msg) => {
         packageId: msg.packageId,
         stickerId: msg.stickerId
       })
+    case 'TEMPLATE':
+      // Template Message（Buttons/Confirm/Carousel/Image Carousel）
+      return msg.contents || msg.templateData?.content || ''
     case 'FLEX':
     case 'IMAGEMAP':
       return msg.contents
@@ -546,6 +598,21 @@ const buildMessageObject = (msg) => {
       // 記錄選擇的 Flex 範本名稱（用於編輯時恢復下拉選單）
       if (msg.flexPresetName) {
         obj.flexPresetName = msg.flexPresetName
+      }
+      break
+    case 'TEMPLATE':
+      obj.type = 'template'
+      obj.altText = msg.altText || msg.templateData?.altText || '模板訊息'
+      // Template Message 的 template 物件
+      if (msg.contents) {
+        const templateData = typeof msg.contents === 'string' ? JSON.parse(msg.contents) : msg.contents
+        if (templateData.template) {
+          obj.template = cleanTemplateActions(templateData.template)
+        } else {
+          obj.template = cleanTemplateActions(templateData)
+        }
+      } else if (msg.templateData) {
+        obj.template = cleanTemplateActions(msg.templateData.templateData || msg.templateData)
       }
       break
     case 'IMAGEMAP':

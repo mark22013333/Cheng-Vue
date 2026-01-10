@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.line.mapper.LineFlexTemplateMapper">
+
+    <resultMap type="com.cheng.line.domain.LineFlexTemplate" id="LineFlexTemplateResult">
+        <id property="flexTemplateId" column="flex_template_id"/>
+        <result property="templateName" column="template_name"/>
+        <result property="flexJson" column="flex_json"/>
+        <result property="altText" column="alt_text"/>
+        <result property="previewUrl" column="preview_url"/>
+        <result property="description" column="description"/>
+        <result property="isPublic" column="is_public"/>
+        <result property="useCount" column="use_count"/>
+        <result property="creatorId" column="creator_id"/>
+        <result property="creatorName" column="creator_name"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectLineFlexTemplateVo">
+        select flex_template_id, template_name, flex_json, alt_text, preview_url, description,
+               is_public, use_count, creator_id, creator_name, status, del_flag,
+               create_by, create_time, update_by, update_time, remark
+        from line_flex_template
+    </sql>
+
+    <select id="selectLineFlexTemplateList" parameterType="com.cheng.line.domain.LineFlexTemplate"
+            resultMap="LineFlexTemplateResult">
+        <include refid="selectLineFlexTemplateVo"/>
+        <where>
+            del_flag = '0'
+            <if test="templateName != null and templateName != ''">
+                and template_name like concat('%', #{templateName}, '%')
+            </if>
+            <if test="isPublic != null">
+                and is_public = #{isPublic}
+            </if>
+            <if test="creatorId != null">
+                and creator_id = #{creatorId}
+            </if>
+            <if test="creatorName != null and creatorName != ''">
+                and creator_name like concat('%', #{creatorName}, '%')
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectAvailableFlexTemplates" resultMap="LineFlexTemplateResult">
+        <include refid="selectLineFlexTemplateVo"/>
+        where del_flag = '0'
+          and status = 1
+          and (is_public = 1 or creator_id = #{creatorId})
+        order by is_public desc, use_count desc, create_time desc
+    </select>
+
+    <select id="selectLineFlexTemplateById" parameterType="Long" resultMap="LineFlexTemplateResult">
+        <include refid="selectLineFlexTemplateVo"/>
+        where flex_template_id = #{flexTemplateId}
+          and del_flag = '0'
+    </select>
+
+    <insert id="insertLineFlexTemplate" parameterType="com.cheng.line.domain.LineFlexTemplate" useGeneratedKeys="true"
+            keyProperty="flexTemplateId">
+        insert into line_flex_template
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="templateName != null and templateName != ''">template_name,</if>
+            <if test="flexJson != null and flexJson != ''">flex_json,</if>
+            <if test="altText != null">alt_text,</if>
+            <if test="previewUrl != null">preview_url,</if>
+            <if test="description != null">description,</if>
+            <if test="isPublic != null">is_public,</if>
+            <if test="useCount != null">use_count,</if>
+            <if test="creatorId != null">creator_id,</if>
+            <if test="creatorName != null">creator_name,</if>
+            <if test="status != null">status,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="templateName != null and templateName != ''">#{templateName},</if>
+            <if test="flexJson != null and flexJson != ''">#{flexJson},</if>
+            <if test="altText != null">#{altText},</if>
+            <if test="previewUrl != null">#{previewUrl},</if>
+            <if test="description != null">#{description},</if>
+            <if test="isPublic != null">#{isPublic},</if>
+            <if test="useCount != null">#{useCount},</if>
+            <if test="creatorId != null">#{creatorId},</if>
+            <if test="creatorName != null">#{creatorName},</if>
+            <if test="status != null">#{status},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateLineFlexTemplate" parameterType="com.cheng.line.domain.LineFlexTemplate">
+        update line_flex_template
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="templateName != null and templateName != ''">template_name = #{templateName},</if>
+            <if test="flexJson != null and flexJson != ''">flex_json = #{flexJson},</if>
+            <if test="altText != null">alt_text = #{altText},</if>
+            <if test="previewUrl != null">preview_url = #{previewUrl},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="isPublic != null">is_public = #{isPublic},</if>
+            <if test="useCount != null">use_count = #{useCount},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where flex_template_id = #{flexTemplateId}
+    </update>
+
+    <update id="deleteLineFlexTemplateById" parameterType="Long">
+        update line_flex_template
+        set del_flag = '2'
+        where flex_template_id = #{flexTemplateId}
+    </update>
+
+    <update id="deleteLineFlexTemplateByIds" parameterType="Long">
+        update line_flex_template set del_flag = '2' where flex_template_id in
+        <foreach item="flexTemplateId" collection="array" open="(" separator="," close=")">
+            #{flexTemplateId}
+        </foreach>
+    </update>
+
+    <update id="incrementUseCount" parameterType="Long">
+        update line_flex_template
+        set use_count = use_count + 1
+        where flex_template_id = #{flexTemplateId}
+    </update>
+
+</mapper>

@@ -32,6 +32,10 @@
               <el-tag :type="getMsgTypeTag(type)" size="small">{{ getMsgTypeLabel(type) }}</el-tag>
             </template>
             <span v-if="item.templateCode" class="code">{{ item.templateCode }}</span>
+            <span v-if="item.creatorName" class="creator">
+              <el-icon :size="12"><User /></el-icon>
+              {{ item.creatorName }}
+            </span>
           </div>
         </div>
         <div class="item-status">
@@ -52,7 +56,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { Search, Plus, ChatLineSquare, Picture, VideoCamera, Headset, Location, PriceTag, Grid, Document } from '@element-plus/icons-vue'
+import { Search, Plus, ChatLineSquare, Picture, VideoCamera, Headset, Location, PriceTag, Grid, Document, User } from '@element-plus/icons-vue'
 
 const props = defineProps({
   list: { type: Array, default: () => [] },
@@ -89,7 +93,8 @@ const filteredList = computed(() => {
     const keyword = searchText.value.toLowerCase()
     result = result.filter(item =>
       item.templateName?.toLowerCase().includes(keyword) ||
-      item.templateCode?.toLowerCase().includes(keyword)
+      item.templateCode?.toLowerCase().includes(keyword) ||
+      item.creatorName?.toLowerCase().includes(keyword)
     )
   }
   if (filterType.value) {
@@ -210,6 +215,19 @@ const handleSelect = (item) => {
         font-family: monospace;
         font-size: 11px;
         flex-shrink: 0;
+      }
+
+      .creator {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        color: #909399;
+        font-size: 11px;
+        flex-shrink: 0;
+        
+        .el-icon {
+          margin-right: 2px;
+        }
       }
     }
   }
