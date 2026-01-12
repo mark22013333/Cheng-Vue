@@ -36,6 +36,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectInvItemList" parameterType="InvItem" resultMap="InvItemResult">
         <include refid="selectInvItemVo"/>
+        <if test="tagId != null">
+            INNER JOIN inv_item_tag_relation tr ON i.item_id = tr.item_id AND tr.tag_id = #{tagId}
+        </if>
         <where>  
             <if test="itemCode != null  and itemCode != ''"> and i.item_code like concat('%', #{itemCode}, '%')</if>
             <if test="itemName != null  and itemName != ''"> and i.item_name like concat('%', #{itemName}, '%')</if>
@@ -154,6 +157,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectItemWithStockList" parameterType="com.cheng.system.dto.InvItemWithStockDTO" resultMap="InvItemWithStockResult">
         <include refid="selectItemWithStockVo"/>
+        <if test="tagId != null">
+            INNER JOIN inv_item_tag_relation tr ON i.item_id = tr.item_id AND tr.tag_id = #{tagId}
+        </if>
         <where>
             i.del_flag = '0'
             <if test="itemCode != null and itemCode != ''"> and i.item_code like concat('%', #{itemCode}, '%')</if>
@@ -354,5 +360,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         WHERE item_id = #{itemId}
           AND version = #{version}
     </update>
+
+    <!-- 批次查詢存在的物品編碼 -->
+    <select id="selectExistingItemCodes" resultType="java.util.Map">
+        SELECT item_id, item_code
+        FROM inv_item
+        WHERE del_flag = '0' AND item_code IN
+        <foreach collection="itemCodes" item="code" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+    </select>
 
 </mapper>

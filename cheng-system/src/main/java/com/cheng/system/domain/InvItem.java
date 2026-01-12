@@ -12,6 +12,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.io.Serial;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 物品資訊表 inv_item
@@ -184,6 +185,16 @@ public class InvItem extends BaseEntity {
      */
     @Excel(name = "預約數量")
     private Integer reservedQuantity;
+
+    /**
+     * 物品標籤列表（非資料庫欄位，查詢時填充）
+     */
+    private transient List<SysTag> tags;
+
+    /**
+     * 標籤ID（查詢條件用）
+     */
+    private transient Long tagId;
 
     public InvItem() {
     }

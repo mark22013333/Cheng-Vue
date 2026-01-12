@@ -31,86 +31,89 @@
     </resultMap>
 
     <sql id="selectLineUserVo">
-        select id,
-               line_user_id,
-               line_display_name,
-               line_picture_url,
-               line_status_message,
-               line_language,
-               sys_user_id,
-               bind_status,
-               follow_status,
-               first_follow_time,
-               latest_follow_time,
-               unfollow_time,
-               block_time,
-               first_bind_time,
-               latest_bind_time,
-               unbind_time,
-               bind_count,
-               total_messages_sent,
-               total_messages_received,
-               last_interaction_time,
-               create_time,
-               update_time,
-               remark
-        from line_user
+        select u.id,
+               u.line_user_id,
+               u.line_display_name,
+               u.line_picture_url,
+               u.line_status_message,
+               u.line_language,
+               u.sys_user_id,
+               u.bind_status,
+               u.follow_status,
+               u.first_follow_time,
+               u.latest_follow_time,
+               u.unfollow_time,
+               u.block_time,
+               u.first_bind_time,
+               u.latest_bind_time,
+               u.unbind_time,
+               u.bind_count,
+               u.total_messages_sent,
+               u.total_messages_received,
+               u.last_interaction_time,
+               u.create_time,
+               u.update_time,
+               u.remark
+        from line_user u
     </sql>
 
     <select id="selectLineUserById" parameterType="Long" resultMap="LineUserResult">
         <include refid="selectLineUserVo"/>
-        where id = #{id}
+        where u.id = #{id}
     </select>
 
     <select id="selectLineUserByLineUserId" parameterType="String" resultMap="LineUserResult">
         <include refid="selectLineUserVo"/>
-        where line_user_id = #{lineUserId}
+        where u.line_user_id = #{lineUserId}
     </select>
 
     <select id="selectLineUserBySysUserId" parameterType="Long" resultMap="LineUserResult">
         <include refid="selectLineUserVo"/>
-        where sys_user_id = #{sysUserId} and bind_status = 'BOUND'
+        where u.sys_user_id = #{sysUserId} and u.bind_status = 'BOUND'
         limit 1
     </select>
 
     <select id="selectLineUserList" parameterType="com.cheng.line.domain.LineUser" resultMap="LineUserResult">
         <include refid="selectLineUserVo"/>
+        <if test="tagId != null">
+            INNER JOIN line_user_tag_relation tr ON u.line_user_id = tr.line_user_id AND tr.tag_id = #{tagId}
+        </if>
         <where>
             <if test="lineUserId != null and lineUserId != ''">
-                AND line_user_id like concat('%', #{lineUserId}, '%')
+                AND u.line_user_id like concat('%', #{lineUserId}, '%')
             </if>
             <if test="lineDisplayName != null and lineDisplayName != ''">
-                AND line_display_name like concat('%', #{lineDisplayName}, '%')
+                AND u.line_display_name like concat('%', #{lineDisplayName}, '%')
             </if>
             <if test="sysUserId != null">
-                AND sys_user_id = #{sysUserId}
+                AND u.sys_user_id = #{sysUserId}
             </if>
             <if test="bindStatus != null and bindStatus.code != null">
-                AND bind_status = #{bindStatus.code}
+                AND u.bind_status = #{bindStatus.code}
             </if>
             <if test="followStatus != null and followStatus.code != null">
-                AND follow_status = #{followStatus.code}
+                AND u.follow_status = #{followStatus.code}
             </if>
             <if test="params.beginTime != null and params.beginTime != ''">
-                and date_format(first_follow_time,'%Y-%m-%d') &gt;= date_format(#{params.beginTime},'%Y-%m-%d')
+                and date_format(u.first_follow_time,'%Y-%m-%d') &gt;= date_format(#{params.beginTime},'%Y-%m-%d')
             </if>
             <if test="params.endTime != null and params.endTime != ''">
-                and date_format(first_follow_time,'%Y-%m-%d') &lt;= date_format(#{params.endTime},'%Y-%m-%d')
+                and date_format(u.first_follow_time,'%Y-%m-%d') &lt;= date_format(#{params.endTime},'%Y-%m-%d')
             </if>
         </where>
-        order by create_time desc
+        order by u.create_time desc
     </select>
 
     <select id="selectFollowedLineUsers" resultMap="LineUserResult">
         <include refid="selectLineUserVo"/>
-        where follow_status = 'FOLLOWING'
-        order by latest_follow_time desc
+        where u.follow_status = 'FOLLOWING'
+        order by u.latest_follow_time desc
     </select>
 
     <select id="selectBoundLineUsers" resultMap="LineUserResult">
         <include refid="selectLineUserVo"/>
-        where bind_status = 'BOUND'
-        order by latest_bind_time desc
+        where u.bind_status = 'BOUND'
+        order by u.latest_bind_time desc
     </select>
 
     <insert id="insertLineUser" parameterType="com.cheng.line.domain.LineUser" useGeneratedKeys="true" keyProperty="id">
@@ -291,5 +294,13 @@
             update_time = sysdate()
         where line_user_id = #{lineUserId}
     </update>
+
+    <select id="selectExistingLineUserIds" resultType="String">
+        select line_user_id from line_user
+        where line_user_id in
+        <foreach collection="lineUserIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 
 </mapper>

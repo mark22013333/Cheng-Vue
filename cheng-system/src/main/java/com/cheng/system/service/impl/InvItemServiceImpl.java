@@ -16,11 +16,13 @@ import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.common.utils.uuid.IdUtils;
 import com.cheng.common.event.ReservationEvent;
 import com.cheng.system.domain.InvItem;
+import com.cheng.system.domain.InvItemTagRelation;
 import com.cheng.system.domain.InvStock;
 import com.cheng.system.domain.InvStockRecord;
 import com.cheng.system.domain.InvBookInfo;
 import com.cheng.system.domain.InvBorrow;
 import com.cheng.system.domain.InvCategory;
+import com.cheng.system.domain.SysTag;
 import com.cheng.system.domain.vo.ImportResult;
 import com.cheng.system.dto.InvItemImportDTO;
 import com.cheng.system.domain.vo.ReserveResult;
@@ -76,6 +78,7 @@ public class InvItemServiceImpl implements IInvItemService {
     private final InvStockRecordMapper invStockRecordMapper;
     private final InvBorrowMapper invBorrowMapper;
     private final InvCategoryMapper invCategoryMapper;
+    private final InvItemTagRelationMapper invItemTagRelationMapper;
     private final IInvBorrowService invBorrowService;
     private final Validator validator;
     private final ApplicationEventPublisher eventPublisher;
@@ -155,7 +158,88 @@ public class InvItemServiceImpl implements IInvItemService {
      */
     @Override
     public List<InvItem> selectInvItemList(InvItem invItem) {
-        return invItemMapper.selectInvItemList(invItem);
+        List<InvItem> items = invItemMapper.selectInvItemList(invItem);
+        fillItemTags(items);
+        return items;
+    }
+
+    /**
+     * 填充物品標籤資料
+     */
+    private void fillItemTags(List<InvItem> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+
+        // 取得所有物品 ID
+        List<Long> itemIds = items.stream()
+                .map(InvItem::getItemId)
+                .toList();
+
+        // 批次查詢標籤關聯
+        List<InvItemTagRelation> relations = invItemTagRelationMapper.selectByItemIds(itemIds);
+
+        // 依物品 ID 分組
+        Map<Long, List<InvItemTagRelation>> tagsByItem = relations.stream()
+                .collect(java.util.stream.Collectors.groupingBy(InvItemTagRelation::getItemId));
+
+        // 填充標籤到物品
+        for (InvItem item : items) {
+            List<InvItemTagRelation> itemTags = tagsByItem.get(item.getItemId());
+            if (itemTags != null && !itemTags.isEmpty()) {
+                List<SysTag> tags = itemTags.stream()
+                        .map(rel -> {
+                            SysTag tag = new SysTag();
+                            tag.setTagId(rel.getTagId());
+                            tag.setTagName(rel.getTagName());
+                            tag.setTagColor(rel.getTagColor());
+                            return tag;
+                        })
+                        .toList();
+                item.setTags(tags);
+            }
+        }
+    }
+
+    /**
+     * 填充 DTO 列表的標籤資料
+     *
+     * @param items DTO 列表
+     */
+    @Override
+    public void fillItemTagsForDTO(List<InvItemWithStockDTO> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+
+        // 取得所有物品 ID
+        List<Long> itemIds = items.stream()
+                .map(InvItemWithStockDTO::getItemId)
+                .toList();
+
+        // 批次查詢標籤關聯
+        List<InvItemTagRelation> relations = invItemTagRelationMapper.selectByItemIds(itemIds);
+
+        // 依物品 ID 分組
+        Map<Long, List<InvItemTagRelation>> tagsByItem = relations.stream()
+                .collect(java.util.stream.Collectors.groupingBy(InvItemTagRelation::getItemId));
+
+        // 填充標籤到物品
+        for (InvItemWithStockDTO item : items) {
+            List<InvItemTagRelation> itemTags = tagsByItem.get(item.getItemId());
+            if (itemTags != null && !itemTags.isEmpty()) {
+                List<SysTag> tags = itemTags.stream()
+                        .map(rel -> {
+                            SysTag tag = new SysTag();
+                            tag.setTagId(rel.getTagId());
+                            tag.setTagName(rel.getTagName());
+                            tag.setTagColor(rel.getTagColor());
+                            return tag;
+                        })
+                        .toList();
+                item.setTags(tags);
+            }
+        }
     }
 
     /**

@@ -37,6 +37,14 @@
                              placeholder="預設為物品最低庫存"
                              style="width: 150px"/>
           </el-form-item>
+          <el-form-item label="標籤" prop="tagId">
+            <tag-select
+              v-model="queryParams.tagId"
+              :options="tagOptions"
+              placeholder="選擇標籤"
+              width="160px"
+            />
+          </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="handleQuery">搜尋</el-button>
             <el-button icon="Refresh" @click="resetQuery">重置</el-button>
@@ -164,6 +172,41 @@
           </el-table-column>
           <el-table-column v-if="columns.location.visible" label="存放位置" align="center" prop="location" width="140" sortable="custom"
                            :show-overflow-tooltip="true"/>
+          <el-table-column v-if="columns.tags.visible" label="標籤" align="center" min-width="180">
+            <template #default="scope">
+              <div v-if="scope.row.tags && scope.row.tags.length > 0" class="item-tags">
+                <bookmark-tag
+                  v-for="(tag, index) in getDisplayTags(scope.row)"
+                  :key="tag.tagId"
+                  :label="tag.tagName"
+                  :color="tag.tagColor"
+                  size="small"
+                />
+                <el-popover
+                  v-if="scope.row.tags.length > 3"
+                  placement="top"
+                  :width="200"
+                  trigger="click"
+                >
+                  <template #reference>
+                    <el-button type="text" size="small" style="margin-left: 4px;">
+                      +{{ scope.row.tags.length - 3 }} 更多
+                    </el-button>
+                  </template>
+                  <div class="all-tags">
+                    <bookmark-tag
+                      v-for="tag in scope.row.tags"
+                      :key="tag.tagId"
+                      :label="tag.tagName"
+                      :color="tag.tagColor"
+                      size="small"
+                    />
+                  </div>
+                </el-popover>
+              </div>
+              <span v-else style="color: #909399;">-</span>
+            </template>
+          </el-table-column>
 
           <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column"
                            min-width="180" fixed="right">
@@ -633,6 +676,17 @@
             <el-form-item label="備註" prop="remark">
               <el-input v-model="editForm.remark" type="textarea" :rows="2" placeholder="請輸入備註"/>
             </el-form-item>
+            <el-form-item label="標籤" prop="tagIds">
+              <tag-select
+                v-model="editForm.tagIds"
+                :options="tagOptions"
+                :multiple="true"
+                :filterable="true"
+                :show-tag-code="true"
+                placeholder="選擇標籤（可多選）"
+                width="100%"
+              />
+            </el-form-item>
           </el-form>
           <div slot="footer" class="dialog-footer">
             <el-button @click="editDialogVisible = false">取消</el-button>
@@ -667,6 +721,7 @@ import {
 } from "@/api/inventory/management"
 import {listCategory} from "@/api/inventory/category"
 import {createRefreshTask} from "@/api/inventory/scan"
+import {getInventoryTagOptions, getItemTags, updateInvItemTags} from "@/api/tag/inventory"
 import {getTableConfig, saveTableConfig} from "@/api/system/tableConfig"
 import {getSystemConfigInfo} from "@/api/system/config"
 import ImageUpload from '@/components/ImageUpload'
@@ -714,8 +769,11 @@ export default {
         stockStatus: null,
         lowStockThreshold: null,
         orderByColumn: null,
-        isAsc: null
+        isAsc: null,
+        tagId: null
       },
+      // 標籤選項
+      tagOptions: [],
       // 全域低庫存閾值
       globalLowStockThreshold: null,
       // 預設列訊息
@@ -730,7 +788,8 @@ export default {
         availableQty: {label: '可用', visible: true},
         borrowedQty: {label: '借出', visible: true},
         stockStatus: {label: '庫存狀態', visible: true},
-        location: {label: '存放位置', visible: true}
+        location: {label: '存放位置', visible: true},
+        tags: {label: '標籤', visible: true}
       },
       // 列訊息
       columns: {
@@ -744,7 +803,8 @@ export default {
         availableQty: {label: '可用', visible: true},
         borrowedQty: {label: '借出', visible: true},
         stockStatus: {label: '庫存狀態', visible: true},
-        location: {label: '存放位置', visible: true}
+        location: {label: '存放位置', visible: true},
+        tags: {label: '標籤', visible: true}
       },
       // 入庫表單
       stockInForm: {
@@ -796,6 +856,8 @@ export default {
       },
       // 分類列表
       categoryList: [],
+      // 標籤選項
+      tagOptions: [],
       // 匯入相關數據
       importDialogVisible: false,
       importLoading: false,
@@ -860,12 +922,26 @@ export default {
     await this.loadTableConfig();
     this.getList();
     this.getCategoryList();
+    this.loadTagOptions();
   },
   mounted() {
     // 載入系統配置（文件上傳限制等）
     this.loadSystemConfig();
   },
   methods: {
+    /** 取得顯示的標籤（最多 3 個） */
+    getDisplayTags(row) {
+      if (!row.tags || row.tags.length === 0) {
+        return []
+      }
+      return row.tags.slice(0, 3)
+    },
+    /** 載入標籤選項 */
+    loadTagOptions() {
+      getInventoryTagOptions('1').then(response => {
+        this.tagOptions = response.data || []
+      })
+    },
     /** 載入表格欄位配置 */
     async loadTableConfig() {
       try {
@@ -928,6 +1004,7 @@ export default {
       this.resetEditForm();
       this.editDialogTitle = "新增物品";
       this.isEdit = false;
+      this.loadTagOptions();
       this.editDialogVisible = true;
     },
     /** 修改按鈕操作 */
@@ -935,9 +1012,20 @@ export default {
       const itemId = row.itemId || this.ids;
       this.editDialogTitle = "修改物品資訊";
       this.isEdit = true;
-      getManagement(itemId).then(response => {
-        this.editForm = response.data;
+      this.loadTagOptions();
+      Promise.all([
+        getManagement(itemId),
+        getItemTags(itemId)
+      ]).then(([itemRes, tagsRes]) => {
+        this.editForm = itemRes.data;
+        this.editForm.tagIds = (tagsRes.data || []).map(tag => tag.tagId);
         this.editDialogVisible = true;
+      });
+    },
+    /** 載入標籤選項 */
+    loadTagOptions() {
+      getInventoryTagOptions('1').then(response => {
+        this.tagOptions = response.data || [];
       });
     },
     /** 刪除按鈕操作 */
@@ -1755,10 +1843,14 @@ export default {
     submitEdit() {
       this.$refs["editForm"].validate(valid => {
         if (valid) {
+          const tagIds = this.editForm.tagIds || [];
           if (this.isEdit) {
             // 修改物品
             updateManagement(this.editForm).then(response => {
               console.log('✅ 修改物品成功：', this.editForm.itemName);
+              // 同步更新標籤
+              return this.syncItemTags(this.editForm.itemId, tagIds);
+            }).then(() => {
               this.$modal.msgSuccess("修改成功");
               this.editDialogVisible = false;
               this.getList();
@@ -1767,13 +1859,26 @@ export default {
             // 新增物品
             addManagement(this.editForm).then(response => {
               console.log('✅ 新增物品成功：', this.editForm.itemName);
+              const newItemId = response.data;
+              // 如果有選擇標籤，則綁定標籤
+              if (tagIds.length > 0 && newItemId) {
+                return this.syncItemTags(newItemId, tagIds);
+              }
+            }).then(() => {
               this.$modal.msgSuccess("新增成功");
               this.editDialogVisible = false;
-              // 重新載入列表
               this.getList();
             });
           }
         }
+      });
+    },
+    /** 同步物品標籤 */
+    syncItemTags(itemId, tagIds) {
+      return updateInvItemTags({
+        itemId: itemId,
+        tagIds: tagIds || [],
+        replaceExisting: true
       });
     },
     /** 預約按鈕操作 */
@@ -2147,4 +2252,16 @@ export default {
   border-radius: 3px;
 }
 
+.item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.all-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 </style>

@@ -1,6 +1,7 @@
 package com.cheng.system.dto;
 
 import com.cheng.common.annotation.Excel;
+import com.cheng.system.domain.SysTag;
 import lombok.Data;
 
 import java.io.Serial;
@@ -8,6 +9,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 物品與庫存整合 DTO
@@ -146,6 +148,11 @@ public class InvItemWithStockDTO implements Serializable {
      * 樂觀鎖版本號
      */
     private Integer version;
+
+    /**
+     * 標籤列表（非資料庫欄位，由 Service 填充）
+     */
+    private transient List<SysTag> tags;
 
     // ========== 庫存資訊 ==========
     /**
@@ -393,4 +400,9 @@ public class InvItemWithStockDTO implements Serializable {
      * 排序方向（asc/desc）
      */
     private String isAsc;
+
+    /**
+     * 標籤ID（查詢條件用）
+     */
+    private Long tagId;
 }

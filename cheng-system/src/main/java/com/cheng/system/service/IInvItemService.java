@@ -225,4 +225,11 @@ public interface IInvItemService {
      * @return 匯入結果
      */
     String importDataWithImages(MultipartFile file, Boolean updateSupport, Long defaultCategoryId, String defaultUnit) throws Exception;
+
+    /**
+     * 填充 DTO 列表的標籤資料
+     *
+     * @param items DTO 列表
+     */
+    void fillItemTagsForDTO(List<InvItemWithStockDTO> items);
 }

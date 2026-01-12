@@ -4,12 +4,14 @@ import com.cheng.common.annotation.Excel;
 import com.cheng.common.core.domain.BaseEntity;
 import com.cheng.line.enums.BindStatus;
 import com.cheng.line.enums.FollowStatus;
+import com.cheng.system.domain.SysTag;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
 import java.util.Date;
+import java.util.List;
 
 /**
  * LINE 使用者物件 line_user
@@ -149,6 +151,16 @@ public class LineUser extends BaseEntity {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Excel(name = "最後互動時間", dateFormat = "yyyy-MM-dd HH:mm:ss")
     private Date lastInteractionTime;
+
+    /**
+     * 使用者標籤列表（非資料庫欄位，查詢時填充）
+     */
+    private transient List<SysTag> tags;
+
+    /**
+     * 標籤ID（查詢條件用）
+     */
+    private transient Long tagId;
 
     /**
      * 取得綁定狀態代碼（用於資料庫儲存）

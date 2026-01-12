@@ -194,4 +194,12 @@ public interface LineUserMapper {
      * @return 每月統計列表（Map格式：{month: "2024-01", count: 10}）
      */
     List<java.util.Map<String, Object>> getMonthlyJoinStats(@Param("startTime") String startTime, @Param("endTime") String endTime);
+
+    /**
+     * 批次查詢存在的 LINE 使用者 ID
+     *
+     * @param lineUserIds LINE 使用者 ID 列表
+     * @return 存在的 LINE 使用者 ID 列表
+     */
+    List<String> selectExistingLineUserIds(@Param("lineUserIds") List<String> lineUserIds);
 }

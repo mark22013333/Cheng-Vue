@@ -118,6 +118,30 @@ function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
       console.log('[filterAsyncRouter] 🔧 Renamed template list route to "LineTemplate"')
     }
 
+    // 修正路由名稱：標籤模組 - LINE 標籤列表（避免與其他 List 衝突）
+    if (route.component === 'tag/line/list/index') {
+      route.name = 'LineTagList'
+      console.log('[filterAsyncRouter] 🔧 Renamed tag/line/list route to "LineTagList"')
+    }
+
+    // 修正路由名稱：標籤模組 - LINE 使用者貼標
+    if (route.component === 'tag/line/bindUser/index') {
+      route.name = 'LineTagBindUser'
+      console.log('[filterAsyncRouter] 🔧 Renamed tag/line/bindUser route to "LineTagBindUser"')
+    }
+
+    // 修正路由名稱：標籤模組 - 庫存標籤列表
+    if (route.component === 'tag/inventory/list/index') {
+      route.name = 'InvTagList'
+      console.log('[filterAsyncRouter] 🔧 Renamed tag/inventory/list route to "InvTagList"')
+    }
+
+    // 修正路由名稱：標籤模組 - 庫存物品貼標
+    if (route.component === 'tag/inventory/bindItem/index') {
+      route.name = 'InvTagBindItem'
+      console.log('[filterAsyncRouter] 🔧 Renamed tag/inventory/bindItem route to "InvTagBindItem"')
+    }
+
     if (type && route.children) {
       route.children = filterChildren(route.children)
     }
