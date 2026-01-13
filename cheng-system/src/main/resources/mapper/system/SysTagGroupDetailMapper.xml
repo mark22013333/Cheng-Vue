@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.system.mapper.SysTagGroupDetailMapper">
+
+    <resultMap type="com.cheng.system.domain.SysTagGroupDetail" id="SysTagGroupDetailResult">
+        <id property="id" column="id"/>
+        <result property="groupId" column="group_id"/>
+        <result property="groupIndex" column="group_index"/>
+        <result property="tagId" column="tag_id"/>
+        <result property="operator" column="operator"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="tagName" column="tag_name"/>
+        <result property="tagColor" column="tag_color"/>
+    </resultMap>
+
+    <select id="selectByGroupId" parameterType="Long" resultMap="SysTagGroupDetailResult">
+        select d.id, d.group_id, d.group_index, d.tag_id, d.operator, d.create_by, d.create_time,
+               t.tag_name, t.tag_color
+        from sys_tag_group_detail d
+        left join sys_tag t on d.tag_id = t.tag_id
+        where d.group_id = #{groupId}
+        order by d.group_index asc
+    </select>
+
+    <select id="selectAllByPlatform" resultMap="SysTagGroupDetailResult">
+        select d.id, d.group_id, d.group_index, d.tag_id, d.operator, d.create_by, d.create_time
+        from sys_tag_group_detail d
+        inner join sys_tag_group g on d.group_id = g.group_id
+        where g.platform_scope = #{platformScope}
+          and g.status = 1
+        order by d.group_id, d.group_index asc
+    </select>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        insert into sys_tag_group_detail (group_id, group_index, tag_id, operator, create_by, create_time)
+        values
+        <foreach collection="details" item="item" separator=",">
+            (#{item.groupId}, #{item.groupIndex}, #{item.tagId}, #{item.operator}, #{item.createBy}, sysdate())
+        </foreach>
+    </insert>
+
+    <delete id="deleteByGroupId" parameterType="Long">
+        delete from sys_tag_group_detail where group_id = #{groupId}
+    </delete>
+
+    <delete id="deleteByGroupIds" parameterType="Long">
+        delete from sys_tag_group_detail where group_id in
+        <foreach collection="array" item="groupId" open="(" separator="," close=")">
+            #{groupId}
+        </foreach>
+    </delete>
+
+</mapper>

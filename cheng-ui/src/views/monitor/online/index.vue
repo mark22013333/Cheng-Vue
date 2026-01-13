@@ -48,7 +48,7 @@
          </el-table-column>
          <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width" fixed="right">
             <template #default="scope">
-               <el-button link type="primary" icon="Delete" @click="handleForceLogout(scope.row)" v-hasPermi="['monitor:online:forceLogout']">強制退出</el-button>
+               <el-button link type="primary" icon="Delete" @click="handleForceLogout(scope.row)" v-hasPermi="['monitor:online:forceLogout']">強制登出</el-button>
             </template>
          </el-table-column>
       </el-table>
@@ -95,9 +95,9 @@ function resetQuery() {
   handleQuery()
 }
 
-/** 強制退出按鈕操作 */
+/** 強制登出按鈕操作 */
 function handleForceLogout(row) {
-    proxy.$modal.confirm('是否確認強制退出名稱為"' + row.userName + '"的使用者?').then(function () {
+    proxy.$modal.confirm('是否確認強制登出名稱為"' + row.userName + '"的使用者?').then(function () {
   return forceLogout(row.tokenId)
   }).then(() => {
     getList()

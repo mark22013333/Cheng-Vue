@@ -93,7 +93,7 @@ function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
       console.log('[filterAsyncRouter] 🚫 Skipping external link:', route.path)
       return false
     }
-    
+
     // 修正路由名稱重複問題：Marketing -> User 與 System -> User 名稱衝突
     // 同時配合組件名稱 LineUser 以確保 keep-alive 生效
     if (route.path === 'line/user' && route.name === 'User') {
@@ -140,6 +140,19 @@ function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
     if (route.component === 'tag/inventory/bindItem/index') {
       route.name = 'InvTagBindItem'
       console.log('[filterAsyncRouter] 🔧 Renamed tag/inventory/bindItem route to "InvTagBindItem"')
+    }
+
+    // 修正路由名稱：標籤群組 - LINE 標籤群組（避免與其他模組衝突）
+    if (route.component === 'tag/group/line/index') {
+      route.name = 'LineTagGroup'
+      console.log('[filterAsyncRouter] 🔧 Renamed tag/group/line route to "LineTagGroup"')
+    }
+
+    // 修正路由名稱：標籤群組 - 庫存標籤群組
+    // 關鍵修復：此路由的 path='inventory' 會與庫存管理主選單衝突，導致庫存管理子選單 404
+    if (route.component === 'tag/group/inventory/index') {
+      route.name = 'InvTagGroup'
+      console.log('[filterAsyncRouter] 🔧 Renamed tag/group/inventory route to "InvTagGroup"')
     }
 
     if (type && route.children) {
