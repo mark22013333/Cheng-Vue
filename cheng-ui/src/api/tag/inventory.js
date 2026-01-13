@@ -130,3 +130,6 @@ export function delInvItemTagRelations(ids) {
     method: 'delete'
   })
 }
+
+// 別名匯出（相容性）
+export { getInventoryTagOptions as getInvTagOptions }
