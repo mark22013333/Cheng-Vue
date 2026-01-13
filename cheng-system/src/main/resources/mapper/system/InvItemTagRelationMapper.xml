@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.system.mapper.InvItemTagRelationMapper">
+
+    <resultMap type="com.cheng.system.domain.InvItemTagRelation" id="InvItemTagRelationResult">
+        <id     property="id"        column="id"/>
+        <result property="itemId"    column="item_id"/>
+        <result property="tagId"     column="tag_id"/>
+        <result property="createBy"  column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="tagName"   column="tag_name"/>
+        <result property="tagColor"  column="tag_color"/>
+        <result property="itemName"  column="item_name"/>
+        <result property="itemCode"  column="item_code"/>
+    </resultMap>
+
+    <sql id="selectInvItemTagRelationVo">
+        select r.id, r.item_id, r.tag_id, r.create_by, r.create_time,
+               t.tag_name, t.tag_color,
+               i.item_name, i.item_code
+        from inv_item_tag_relation r
+        left join sys_tag t on r.tag_id = t.tag_id
+        left join inv_item i on r.item_id = i.item_id
+    </sql>
+
+    <select id="selectInvItemTagRelationById" parameterType="Long" resultMap="InvItemTagRelationResult">
+        <include refid="selectInvItemTagRelationVo"/>
+        where r.id = #{id}
+    </select>
+
+    <select id="selectByItemId" parameterType="Long" resultMap="InvItemTagRelationResult">
+        <include refid="selectInvItemTagRelationVo"/>
+        where r.item_id = #{itemId}
+        order by r.create_time desc
+    </select>
+
+    <select id="selectByTagId" parameterType="Long" resultMap="InvItemTagRelationResult">
+        <include refid="selectInvItemTagRelationVo"/>
+        where r.tag_id = #{tagId}
+        order by r.create_time desc
+    </select>
+
+    <select id="selectInvItemTagRelationList" parameterType="com.cheng.system.domain.InvItemTagRelation" resultMap="InvItemTagRelationResult">
+        <include refid="selectInvItemTagRelationVo"/>
+        <where>
+            <if test="itemId != null">
+                AND r.item_id = #{itemId}
+            </if>
+            <if test="tagId != null">
+                AND r.tag_id = #{tagId}
+            </if>
+            <if test="tagName != null and tagName != ''">
+                AND t.tag_name like concat('%', #{tagName}, '%')
+            </if>
+            <if test="itemName != null and itemName != ''">
+                AND i.item_name like concat('%', #{itemName}, '%')
+            </if>
+        </where>
+        order by r.create_time desc
+    </select>
+
+    <select id="checkRelationExists" resultMap="InvItemTagRelationResult">
+        select r.id, r.item_id, r.tag_id, r.create_by, r.create_time
+        from inv_item_tag_relation r
+        where r.item_id = #{itemId} and r.tag_id = #{tagId}
+        limit 1
+    </select>
+
+    <select id="countItemsByTagId" parameterType="Long" resultType="int">
+        select count(*) from inv_item_tag_relation where tag_id = #{tagId}
+    </select>
+
+    <insert id="insertInvItemTagRelation" parameterType="com.cheng.system.domain.InvItemTagRelation" useGeneratedKeys="true" keyProperty="id">
+        insert into inv_item_tag_relation
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="itemId != null">item_id,</if>
+            <if test="tagId != null">tag_id,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="itemId != null">#{itemId},</if>
+            <if test="tagId != null">#{tagId},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        </trim>
+    </insert>
+
+    <insert id="batchInsertInvItemTagRelation" parameterType="java.util.List">
+        insert ignore into inv_item_tag_relation (item_id, tag_id, create_by, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.itemId}, #{item.tagId}, #{item.createBy}, sysdate())
+        </foreach>
+    </insert>
+
+    <delete id="deleteInvItemTagRelationById" parameterType="Long">
+        delete from inv_item_tag_relation where id = #{id}
+    </delete>
+
+    <delete id="deleteByItemIdAndTagId">
+        delete from inv_item_tag_relation where item_id = #{itemId} and tag_id = #{tagId}
+    </delete>
+
+    <delete id="deleteByItemId" parameterType="Long">
+        delete from inv_item_tag_relation where item_id = #{itemId}
+    </delete>
+
+    <delete id="deleteByTagId" parameterType="Long">
+        delete from inv_item_tag_relation where tag_id = #{tagId}
+    </delete>
+
+    <delete id="deleteInvItemTagRelationByIds" parameterType="Long">
+        delete from inv_item_tag_relation where id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectByItemIds" resultMap="InvItemTagRelationResult">
+        <include refid="selectInvItemTagRelationVo"/>
+        where r.item_id in
+        <foreach collection="itemIds" item="itemId" open="(" separator="," close=")">
+            #{itemId}
+        </foreach>
+        order by r.item_id, r.create_time desc
+    </select>
+
+    <insert id="batchInsertIgnore" parameterType="java.util.List">
+        insert ignore into inv_item_tag_relation (item_id, tag_id, create_by, create_time)
+        values
+        <foreach collection="relations" item="item" separator=",">
+            (#{item.itemId}, #{item.tagId}, #{item.createBy}, sysdate())
+        </foreach>
+    </insert>
+
+</mapper>

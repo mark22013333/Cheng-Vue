@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.system.mapper.SysTagGroupMapper">
+
+    <resultMap type="com.cheng.system.domain.SysTagGroup" id="SysTagGroupResult">
+        <id property="groupId" column="group_id"/>
+        <result property="groupName" column="group_name"/>
+        <result property="groupCode" column="group_code"/>
+        <result property="platformScope" column="platform_scope"/>
+        <result property="calcMode" column="calc_mode"/>
+        <result property="countResult" column="count_result"/>
+        <result property="lastCalcTime" column="last_calc_time"/>
+        <result property="description" column="description"/>
+        <result property="status" column="status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectSysTagGroupVo">
+        select group_id, group_name, group_code, platform_scope, calc_mode, count_result,
+               last_calc_time, description, status, create_by, create_time, update_by, update_time, remark
+        from sys_tag_group
+    </sql>
+
+    <select id="selectSysTagGroupList" parameterType="com.cheng.system.domain.SysTagGroup" resultMap="SysTagGroupResult">
+        <include refid="selectSysTagGroupVo"/>
+        <where>
+            <if test="groupName != null and groupName != ''">
+                AND group_name like concat('%', #{groupName}, '%')
+            </if>
+            <if test="groupCode != null and groupCode != ''">
+                AND group_code like concat('%', #{groupCode}, '%')
+            </if>
+            <if test="platformScope != null and platformScope != ''">
+                AND platform_scope = #{platformScope}
+            </if>
+            <if test="calcMode != null and calcMode != ''">
+                AND calc_mode = #{calcMode}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectSysTagGroupById" parameterType="Long" resultMap="SysTagGroupResult">
+        <include refid="selectSysTagGroupVo"/>
+        where group_id = #{groupId}
+    </select>
+
+    <select id="selectSysTagGroupByCode" parameterType="String" resultMap="SysTagGroupResult">
+        <include refid="selectSysTagGroupVo"/>
+        where group_code = #{groupCode}
+    </select>
+
+    <select id="checkGroupCodeUnique" resultType="int">
+        select count(1) from sys_tag_group
+        where group_code = #{groupCode}
+        <if test="groupId != null">
+            and group_id != #{groupId}
+        </if>
+    </select>
+
+    <insert id="insertSysTagGroup" parameterType="com.cheng.system.domain.SysTagGroup" useGeneratedKeys="true" keyProperty="groupId">
+        insert into sys_tag_group
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="groupName != null and groupName != ''">group_name,</if>
+            <if test="groupCode != null and groupCode != ''">group_code,</if>
+            <if test="platformScope != null and platformScope != ''">platform_scope,</if>
+            <if test="calcMode != null">calc_mode,</if>
+            <if test="countResult != null">count_result,</if>
+            <if test="lastCalcTime != null">last_calc_time,</if>
+            <if test="description != null">description,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="groupName != null and groupName != ''">#{groupName},</if>
+            <if test="groupCode != null and groupCode != ''">#{groupCode},</if>
+            <if test="platformScope != null and platformScope != ''">#{platformScope},</if>
+            <if test="calcMode != null">#{calcMode},</if>
+            <if test="countResult != null">#{countResult},</if>
+            <if test="lastCalcTime != null">#{lastCalcTime},</if>
+            <if test="description != null">#{description},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate(),
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateSysTagGroup" parameterType="com.cheng.system.domain.SysTagGroup">
+        update sys_tag_group
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="groupName != null and groupName != ''">group_name = #{groupName},</if>
+            <if test="groupCode != null and groupCode != ''">group_code = #{groupCode},</if>
+            <if test="platformScope != null and platformScope != ''">platform_scope = #{platformScope},</if>
+            <if test="calcMode != null">calc_mode = #{calcMode},</if>
+            <if test="countResult != null">count_result = #{countResult},</if>
+            <if test="lastCalcTime != null">last_calc_time = #{lastCalcTime},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where group_id = #{groupId}
+    </update>
+
+    <update id="updateCountResult">
+        update sys_tag_group
+        set count_result = #{countResult},
+            last_calc_time = sysdate(),
+            update_time = sysdate()
+        where group_id = #{groupId}
+    </update>
+
+    <delete id="deleteSysTagGroupById" parameterType="Long">
+        delete from sys_tag_group where group_id = #{groupId}
+    </delete>
+
+    <delete id="deleteSysTagGroupByIds" parameterType="Long">
+        delete from sys_tag_group where group_id in
+        <foreach collection="array" item="groupId" open="(" separator="," close=")">
+            #{groupId}
+        </foreach>
+    </delete>
+
+</mapper>

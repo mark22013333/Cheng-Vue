@@ -43,6 +43,10 @@ import ImageUpload from "@/components/ImageUpload"
 import ImagePreview from "@/components/ImagePreview"
 // 字典標籤元件
 import DictTag from '@/components/DictTag'
+// 標籤選擇元件
+import TagSelect from '@/components/TagSelect'
+// 書籤標籤元件
+import BookmarkTag from '@/components/BookmarkTag'
 
 const app = createApp(App)
 
@@ -65,6 +69,8 @@ app.component('ImageUpload', ImageUpload)
 app.component('ImagePreview', ImagePreview)
 app.component('RightToolbar', RightToolbar)
 app.component('Editor', Editor)
+app.component('TagSelect', TagSelect)
+app.component('BookmarkTag', BookmarkTag)
 
 app.use(router)
 app.use(store)

@@ -191,4 +191,12 @@ public interface InvItemMapper {
     int updateItemVersion(@Param("itemId") Long itemId,
                           @Param("version") Integer version,
                           @Param("userId") Long userId);
+
+    /**
+     * 批次查詢存在的物品編碼
+     *
+     * @param itemCodes 物品編碼列表
+     * @return 存在的物品編碼與 ID 對應列表
+     */
+    List<java.util.Map<String, Object>> selectExistingItemCodes(@Param("itemCodes") List<String> itemCodes);
 }

@@ -80,6 +80,9 @@ public class InvManagementController extends BaseController {
             item.calculateStockValue();
         });
 
+        // 填充標籤資料
+        invItemService.fillItemTagsForDTO(list);
+
         return getDataTable(list);
     }
 

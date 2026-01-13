@@ -58,7 +58,8 @@
     "vuedraggable": "^4.1.0",
     "vuex": "^4.1.0",
     "flex-render": "^0.1.8",
-    "@breezystack/lamejs": "^1.2.7"
+    "@breezystack/lamejs": "^1.2.7",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.4",

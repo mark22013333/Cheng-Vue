@@ -5,6 +5,7 @@ import com.cheng.common.utils.StringUtils;
 import com.cheng.line.client.LineClientFactory;
 import com.cheng.line.domain.LineConfig;
 import com.cheng.line.domain.LineUser;
+import com.cheng.line.domain.LineUserTagRelation;
 import com.cheng.line.dto.LineUserImportResultDTO;
 import com.cheng.line.dto.LineUserStatsDTO;
 import com.cheng.line.enums.BindStatus;
@@ -12,6 +13,8 @@ import com.cheng.line.enums.FollowStatus;
 import com.cheng.line.mapper.LineUserMapper;
 import com.cheng.line.service.ILineConfigService;
 import com.cheng.line.service.ILineUserService;
+import com.cheng.line.service.ILineUserTagRelationService;
+import com.cheng.system.domain.SysTag;
 import com.linecorp.bot.messaging.client.MessagingApiClient;
 import com.linecorp.bot.messaging.model.UserProfileResponse;
 import jakarta.annotation.Resource;
@@ -26,7 +29,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 /**
  * LINE 使用者 服務層實作
@@ -40,6 +45,7 @@ public class LineUserServiceImpl implements ILineUserService {
     private @Resource LineUserMapper lineUserMapper;
     private @Resource ILineConfigService lineConfigService;
     private @Resource LineClientFactory lineClientFactory;
+    private @Resource ILineUserTagRelationService lineUserTagRelationService;
 
     /**
      * 查詢 LINE 使用者
@@ -71,7 +77,47 @@ public class LineUserServiceImpl implements ILineUserService {
      */
     @Override
     public List<LineUser> selectLineUserList(LineUser lineUser) {
-        return lineUserMapper.selectLineUserList(lineUser);
+        List<LineUser> users = lineUserMapper.selectLineUserList(lineUser);
+        fillUserTags(users);
+        return users;
+    }
+
+    /**
+     * 填充使用者標籤資料
+     */
+    private void fillUserTags(List<LineUser> users) {
+        if (users == null || users.isEmpty()) {
+            return;
+        }
+
+        // 取得所有使用者 ID
+        List<String> lineUserIds = users.stream()
+                .map(LineUser::getLineUserId)
+                .collect(Collectors.toList());
+
+        // 批次查詢標籤關聯
+        List<LineUserTagRelation> relations = lineUserTagRelationService.selectByLineUserIds(lineUserIds);
+
+        // 依使用者 ID 分組
+        Map<String, List<LineUserTagRelation>> tagsByUser = relations.stream()
+                .collect(Collectors.groupingBy(LineUserTagRelation::getLineUserId));
+
+        // 填充標籤到使用者
+        for (LineUser user : users) {
+            List<LineUserTagRelation> userTags = tagsByUser.get(user.getLineUserId());
+            if (userTags != null && !userTags.isEmpty()) {
+                List<SysTag> tags = userTags.stream()
+                        .map(rel -> {
+                            SysTag tag = new SysTag();
+                            tag.setTagId(rel.getTagId());
+                            tag.setTagName(rel.getTagName());
+                            tag.setTagColor(rel.getTagColor());
+                            return tag;
+                        })
+                        .collect(Collectors.toList());
+                user.setTags(tags);
+            }
+        }
     }
 
     /**

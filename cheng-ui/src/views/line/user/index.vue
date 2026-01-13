@@ -39,6 +39,14 @@
           <el-option label="黑名單" value="BLACKLISTED" />
         </el-select>
       </el-form-item>
+      <el-form-item label="標籤" prop="tagId">
+        <tag-select
+          v-model="queryParams.tagId"
+          :options="tagOptions"
+          placeholder="選擇標籤"
+          width="160px"
+        />
+      </el-form-item>
       <el-form-item label="加入時間">
         <el-date-picker
           v-model="dateRange"
@@ -157,6 +165,41 @@
           <el-tag v-else type="warning" size="small">未綁定</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="標籤" align="center" min-width="180">
+        <template #default="scope">
+          <div v-if="scope.row.tags && scope.row.tags.length > 0" class="user-tags">
+            <bookmark-tag
+              v-for="(tag, index) in getDisplayTags(scope.row)"
+              :key="tag.tagId"
+              :label="tag.tagName"
+              :color="tag.tagColor"
+              size="small"
+            />
+            <el-popover
+              v-if="scope.row.tags.length > 3"
+              placement="top"
+              :width="200"
+              trigger="click"
+            >
+              <template #reference>
+                <el-button type="text" size="small" style="margin-left: 4px;">
+                  +{{ scope.row.tags.length - 3 }} 更多
+                </el-button>
+              </template>
+              <div class="all-tags">
+                <bookmark-tag
+                  v-for="tag in scope.row.tags"
+                  :key="tag.tagId"
+                  :label="tag.tagName"
+                  :color="tag.tagColor"
+                  size="small"
+                />
+              </div>
+            </el-popover>
+          </div>
+          <span v-else style="color: #909399;">-</span>
+        </template>
+      </el-table-column>
       <el-table-column label="互動統計" align="center" width="120">
         <template #default="scope">
           <el-tooltip placement="top">
@@ -182,6 +225,7 @@
       <el-table-column label="操作" align="center" width="220" class-name="small-padding fixed-width operation-column" fixed="right">
         <template #default="scope">
           <el-button v-if="checkPermi(['line:user:query'])" link type="primary" :icon="View" @click="handleDetail(scope.row)">詳情</el-button>
+          <el-button v-if="checkPermi(['line:user:edit'])" link type="primary" :icon="Edit" @click="handleEdit(scope.row)">編輯</el-button>
           <el-dropdown @command="(command) => handleCommand(command, scope.row)">
             <el-button link type="primary" :icon="DArrowRight">更多</el-button>
             <template #dropdown>
@@ -248,15 +292,66 @@
       v-model:visible="importVisible"
       @success="handleImportSuccess"
     />
+
+    <!-- 編輯對話框（標籤、狀態） -->
+    <el-dialog
+      title="編輯使用者"
+      :model-value="editDialogVisible"
+      @update:model-value="val => editDialogVisible = val"
+      width="550px"
+      append-to-body
+    >
+      <el-form :model="editForm" label-width="100px">
+        <el-form-item label="LINE ID">
+          <el-input v-model="editForm.lineUserId" disabled />
+        </el-form-item>
+        <el-form-item label="顯示名稱">
+          <el-input v-model="editForm.lineDisplayName" disabled />
+        </el-form-item>
+        <el-divider content-position="left">狀態設定</el-divider>
+        <el-form-item label="關注狀態">
+          <el-radio-group v-model="editForm.followStatus">
+            <el-radio label="FOLLOWING">關注中</el-radio>
+            <el-radio label="BLACKLISTED">黑名單</el-radio>
+            <el-radio label="UNFOLLOWED">未關注</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="綁定狀態">
+          <el-radio-group v-model="editForm.bindStatus">
+            <el-radio label="BOUND">已綁定</el-radio>
+            <el-radio label="UNBOUND">未綁定</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-divider content-position="left">標籤設定</el-divider>
+        <el-form-item label="標籤">
+          <tag-select
+            v-model="editForm.tagIds"
+            :options="tagOptions"
+            :multiple="true"
+            :filterable="true"
+            :show-tag-code="true"
+            placeholder="選擇標籤（可多選）"
+            width="100%"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="editDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitEdit">確定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { h } from 'vue'
 import { listUser, delUser, getUserStats, unbindUser, syncUserProfile, exportUser, addToBlacklist, removeFromBlacklist, batchAddToBlacklist, batchRemoveFromBlacklist } from '@/api/line/user'
+import { getLineTagOptions, getUserTags, updateLineUserTags } from '@/api/tag/line'
 import {
   Search, Refresh, Upload, Download, Delete, Remove, CircleCheck,
-  UserFilled, DocumentCopy, Comment, View, DArrowRight, Link, Unlock, RemoveFilled
+  UserFilled, DocumentCopy, Comment, View, DArrowRight, Link, Unlock, RemoveFilled, Edit
 } from '@element-plus/icons-vue'
 import StatsCard from './components/StatsCard'
 import UserDetail from './components/UserDetail'
@@ -278,7 +373,7 @@ export default {
   setup() {
     return {
       Search, Refresh, Upload, Download, Delete, Remove, CircleCheck,
-      UserFilled, DocumentCopy, Comment, View, DArrowRight, Link, Unlock, RemoveFilled
+      UserFilled, DocumentCopy, Comment, View, DArrowRight, Link, Unlock, RemoveFilled, Edit
     }
   },
   data() {
@@ -368,7 +463,8 @@ export default {
         lineUserId: undefined,
         lineDisplayName: undefined,
         bindStatus: undefined,
-        followStatus: undefined
+        followStatus: undefined,
+        tagId: undefined
       },
       // 使用者詳情
       detailVisible: false,
@@ -377,12 +473,26 @@ export default {
       bindVisible: false,
       currentLineUserId: null,
       // 匯入對話框
-      importVisible: false
+      importVisible: false,
+      // 編輯對話框
+      editDialogVisible: false,
+      editForm: {
+        lineUserId: '',
+        lineDisplayName: '',
+        followStatus: '',
+        bindStatus: '',
+        originalFollowStatus: '',
+        originalBindStatus: '',
+        tagIds: []
+      },
+      // 標籤選項
+      tagOptions: []
     }
   },
   created() {
     this.getList()
     this.getStats()
+    this.loadTagOptions()
   },
   methods: {
     /** 權限檢查 */
@@ -390,6 +500,13 @@ export default {
     /** 禁用未來日期 */
     disabledDate(time) {
       return time.getTime() > Date.now()
+    },
+    /** 取得顯示的標籤（最多 3 個） */
+    getDisplayTags(row) {
+      if (!row.tags || row.tags.length === 0) {
+        return []
+      }
+      return row.tags.slice(0, 3)
     },
     /** 查詢使用者列表 */
     getList() {
@@ -666,6 +783,68 @@ export default {
         this.getStats()
         this.$modal.msgSuccess(response.msg || '批次移除黑名單成功')
       }).catch(() => {})
+    },
+    /** 編輯使用者 */
+    handleEdit(row) {
+      this.loadTagOptions()
+      this.editForm.lineUserId = row.lineUserId
+      this.editForm.lineDisplayName = row.lineDisplayName || ''
+      this.editForm.followStatus = row.followStatus || 'UNFOLLOWED'
+      this.editForm.bindStatus = row.bindStatus || 'UNBOUND'
+      this.editForm.originalFollowStatus = row.followStatus || 'UNFOLLOWED'
+      this.editForm.originalBindStatus = row.bindStatus || 'UNBOUND'
+      // 載入使用者現有標籤
+      getUserTags(row.lineUserId).then(response => {
+        this.editForm.tagIds = (response.data || []).map(tag => tag.tagId)
+        this.editDialogVisible = true
+      })
+    },
+    /** 載入標籤選項 */
+    loadTagOptions() {
+      getLineTagOptions('1').then(response => {
+        this.tagOptions = response.data || []
+      })
+    },
+    /** 提交編輯 */
+    async submitEdit() {
+      const promises = []
+
+      // 1. 更新標籤
+      const tagIds = this.editForm.tagIds || []
+      promises.push(
+        updateLineUserTags({
+          lineUserId: this.editForm.lineUserId,
+          tagIds: tagIds,
+          replaceExisting: true
+        })
+      )
+
+      // 2. 更新關注狀態（如果有變更）
+      if (this.editForm.followStatus !== this.editForm.originalFollowStatus) {
+        const lineUserId = this.editForm.lineUserId
+        if (this.editForm.followStatus === 'BLACKLISTED') {
+          promises.push(addToBlacklist(lineUserId))
+        } else if (this.editForm.originalFollowStatus === 'BLACKLISTED') {
+          promises.push(removeFromBlacklist(lineUserId))
+        }
+      }
+
+      // 3. 更新綁定狀態（如果有變更）
+      if (this.editForm.bindStatus !== this.editForm.originalBindStatus) {
+        if (this.editForm.bindStatus === 'UNBOUND') {
+          promises.push(unbindUser(this.editForm.lineUserId))
+        }
+      }
+
+      try {
+        await Promise.all(promises)
+        this.$modal.msgSuccess('更新成功')
+        this.editDialogVisible = false
+        this.getList()
+        this.getStats()
+      } catch (error) {
+        console.error('更新失敗:', error)
+      }
     }
   }
 }
@@ -676,4 +855,16 @@ export default {
   padding: 20px;
 }
 
+.user-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.all-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 </style>
