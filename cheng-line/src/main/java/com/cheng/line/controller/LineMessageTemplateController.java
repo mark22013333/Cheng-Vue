@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -351,7 +352,7 @@ public class LineMessageTemplateController extends BaseController {
             if (rootNode != null && rootNode.has("messages") && rootNode.get("messages").isArray()) {
                 // 多訊息格式：一次 API 呼叫發送所有訊息
                 JsonNode messages = rootNode.get("messages");
-                List<PushMessageDTO> pushMessageList = new java.util.ArrayList<>();
+                List<PushMessageDTO> pushMessageList = new ArrayList<>();
 
                 for (int i = 0; i < messages.size(); i++) {
                     JsonNode msg = messages.get(i);
@@ -379,7 +380,7 @@ public class LineMessageTemplateController extends BaseController {
                             pushMessage.setTextMessage(msg.has("text") ? msg.get("text").asText() : "");
                             // 處理 emojis
                             if (msg.has("emojis") && msg.get("emojis").isArray()) {
-                                List<PushMessageDTO.EmojiDTO> emojiList = new java.util.ArrayList<>();
+                                List<PushMessageDTO.EmojiDTO> emojiList = new ArrayList<>();
                                 for (var emojiNode : msg.get("emojis")) {
                                     PushMessageDTO.EmojiDTO emojiDTO = new PushMessageDTO.EmojiDTO();
                                     emojiDTO.setIndex(emojiNode.get("index").asInt());
@@ -392,7 +393,7 @@ public class LineMessageTemplateController extends BaseController {
                             // 處理 quickReply
                             if (msg.has("quickReply") && msg.get("quickReply").has("items")) {
                                 PushMessageDTO.QuickReplyDTO quickReplyDTO = new PushMessageDTO.QuickReplyDTO();
-                                List<PushMessageDTO.QuickReplyItemDTO> items = new java.util.ArrayList<>();
+                                List<PushMessageDTO.QuickReplyItemDTO> items = new ArrayList<>();
                                 for (var itemNode : msg.get("quickReply").get("items")) {
                                     PushMessageDTO.QuickReplyItemDTO itemDTO = new PushMessageDTO.QuickReplyItemDTO();
                                     itemDTO.setType(itemNode.has("type") ? itemNode.get("type").asText() : "action");
@@ -501,7 +502,7 @@ public class LineMessageTemplateController extends BaseController {
                             pushMessage.setTextMessage(textNode.get("text").asText());
                             // 解析 emojis
                             if (textNode.has("emojis") && textNode.get("emojis").isArray()) {
-                                List<PushMessageDTO.EmojiDTO> emojiList = new java.util.ArrayList<>();
+                                List<PushMessageDTO.EmojiDTO> emojiList = new ArrayList<>();
                                 for (var emojiNode : textNode.get("emojis")) {
                                     PushMessageDTO.EmojiDTO emojiDTO = new PushMessageDTO.EmojiDTO();
                                     emojiDTO.setIndex(emojiNode.get("index").asInt());
@@ -514,7 +515,7 @@ public class LineMessageTemplateController extends BaseController {
                             // 解析 quickReply
                             if (textNode.has("quickReply") && textNode.get("quickReply").has("items")) {
                                 PushMessageDTO.QuickReplyDTO quickReplyDTO = new PushMessageDTO.QuickReplyDTO();
-                                List<PushMessageDTO.QuickReplyItemDTO> items = new java.util.ArrayList<>();
+                                List<PushMessageDTO.QuickReplyItemDTO> items = new ArrayList<>();
                                 for (var itemNode : textNode.get("quickReply").get("items")) {
                                     PushMessageDTO.QuickReplyItemDTO itemDTO = new PushMessageDTO.QuickReplyItemDTO();
                                     itemDTO.setType(itemNode.has("type") ? itemNode.get("type").asText() : "action");

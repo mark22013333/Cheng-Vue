@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.shop.mapper.ShopOrderItemMapper">
+
+    <resultMap type="com.cheng.shop.domain.ShopOrderItem" id="ShopOrderItemResult">
+        <id     property="itemId"           column="item_id"/>
+        <result property="orderId"          column="order_id"/>
+        <result property="productId"        column="product_id"/>
+        <result property="skuId"            column="sku_id"/>
+        <result property="productName"      column="product_name"/>
+        <result property="skuName"          column="sku_name"/>
+        <result property="skuImage"         column="sku_image"/>
+        <result property="unitPrice"        column="unit_price"/>
+        <result property="quantity"         column="quantity"/>
+        <result property="totalPrice"       column="total_price"/>
+        <result property="invItemId"        column="inv_item_id"/>
+        <result property="invItemName"      column="inv_item_name"/>
+        <result property="createTime"       column="create_time"/>
+    </resultMap>
+
+    <sql id="selectOrderItemVo">
+        select item_id, order_id, product_id, sku_id, product_name, sku_name, sku_image,
+               unit_price, quantity, total_price, inv_item_id, inv_item_name, create_time
+        from shop_order_item
+    </sql>
+
+    <select id="selectOrderItemsByOrderId" parameterType="Long" resultMap="ShopOrderItemResult">
+        <include refid="selectOrderItemVo"/>
+        where order_id = #{orderId}
+    </select>
+
+    <select id="selectOrderItemById" parameterType="Long" resultMap="ShopOrderItemResult">
+        <include refid="selectOrderItemVo"/>
+        where item_id = #{itemId}
+    </select>
+
+    <insert id="insertOrderItem" parameterType="com.cheng.shop.domain.ShopOrderItem" useGeneratedKeys="true" keyProperty="itemId">
+        insert into shop_order_item
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">order_id,</if>
+            <if test="productId != null">product_id,</if>
+            <if test="skuId != null">sku_id,</if>
+            <if test="productName != null and productName != ''">product_name,</if>
+            <if test="skuName != null">sku_name,</if>
+            <if test="skuImage != null">sku_image,</if>
+            <if test="unitPrice != null">unit_price,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="totalPrice != null">total_price,</if>
+            <if test="invItemId != null">inv_item_id,</if>
+            <if test="invItemName != null">inv_item_name,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">#{orderId},</if>
+            <if test="productId != null">#{productId},</if>
+            <if test="skuId != null">#{skuId},</if>
+            <if test="productName != null and productName != ''">#{productName},</if>
+            <if test="skuName != null">#{skuName},</if>
+            <if test="skuImage != null">#{skuImage},</if>
+            <if test="unitPrice != null">#{unitPrice},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="totalPrice != null">#{totalPrice},</if>
+            <if test="invItemId != null">#{invItemId},</if>
+            <if test="invItemName != null">#{invItemName},</if>
+            now()
+        </trim>
+    </insert>
+
+    <insert id="batchInsertOrderItems" parameterType="java.util.List">
+        insert into shop_order_item (order_id, product_id, sku_id, product_name, sku_name,
+            sku_image, unit_price, quantity, total_price, inv_item_id, inv_item_name, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.orderId}, #{item.productId}, #{item.skuId}, #{item.productName}, #{item.skuName},
+             #{item.skuImage}, #{item.unitPrice}, #{item.quantity}, #{item.totalPrice},
+             #{item.invItemId}, #{item.invItemName}, now())
+        </foreach>
+    </insert>
+
+    <delete id="deleteOrderItemById" parameterType="Long">
+        delete from shop_order_item where item_id = #{itemId}
+    </delete>
+
+    <delete id="deleteOrderItemsByOrderId" parameterType="Long">
+        delete from shop_order_item where order_id = #{orderId}
+    </delete>
+
+</mapper>

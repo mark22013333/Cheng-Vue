@@ -340,6 +340,13 @@
                 <version>${cheng.version}</version>
             </dependency>
 
+            <!-- 商城模組 -->
+            <dependency>
+                <groupId>com.cheng</groupId>
+                <artifactId>cheng-shop</artifactId>
+                <version>${cheng.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -360,6 +367,7 @@
         <module>cheng-common</module>
         <module>cheng-crawler</module>
         <module>cheng-line</module>
+        <module>cheng-shop</module>
     </modules>
     <packaging>pom</packaging>
 

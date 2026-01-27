@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 物品資訊 數據層
@@ -198,5 +199,5 @@ public interface InvItemMapper {
      * @param itemCodes 物品編碼列表
      * @return 存在的物品編碼與 ID 對應列表
      */
-    List<java.util.Map<String, Object>> selectExistingItemCodes(@Param("itemCodes") List<String> itemCodes);
+    List<Map<String, Object>> selectExistingItemCodes(@Param("itemCodes") List<String> itemCodes);
 }

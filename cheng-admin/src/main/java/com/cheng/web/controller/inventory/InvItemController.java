@@ -55,6 +55,23 @@ public class InvItemController extends BaseController {
     }
 
     /**
+     * 查詢物品列表（含庫存數量，供商城使用）
+     */
+    @PreAuthorize("@ss.hasPermi('inventory:item:list')")
+    @GetMapping("/listWithStock")
+    public TableDataInfo listWithStock(InvItemWithStockDTO query) {
+        startPage();
+        List<InvItemWithStockDTO> list = invItemMapper.selectItemWithStockList(query);
+        // 計算庫存狀態
+        list.forEach(item -> {
+            item.calculateStockStatus();
+        });
+        // 填充標籤資料
+        invItemService.fillItemTagsForDTO(list);
+        return getDataTable(list);
+    }
+
+    /**
      * 查詢低庫存物品列表
      */
     @PreAuthorize("@ss.hasPermi('inventory:item:list')")

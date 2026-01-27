@@ -160,6 +160,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <if test="tagId != null">
             INNER JOIN inv_item_tag_relation tr ON i.item_id = tr.item_id AND tr.tag_id = #{tagId}
         </if>
+        <if test="tagName != null and tagName != ''">
+            INNER JOIN inv_item_tag_relation tr2 ON i.item_id = tr2.item_id
+            INNER JOIN sys_tag st ON tr2.tag_id = st.tag_id AND st.tag_name LIKE concat('%', #{tagName}, '%')
+        </if>
         <where>
             i.del_flag = '0'
             <if test="itemCode != null and itemCode != ''"> and i.item_code like concat('%', #{itemCode}, '%')</if>

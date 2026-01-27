@@ -34,8 +34,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -701,7 +703,7 @@ public class InvScanController extends BaseController {
         private boolean valid;
         private String message;
         private Map<String, String> changes = new HashMap<>();
-        private java.util.List<String> updatedFields = new java.util.ArrayList<>();
+        private List<String> updatedFields = new ArrayList<>();
         private int existingScore;  // 現有資料分數
         private int newScore;       // 新資料分數
 

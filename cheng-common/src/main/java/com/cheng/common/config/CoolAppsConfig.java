@@ -104,6 +104,25 @@ public class CoolAppsConfig {
         return getProfile() + "/download";
     }
 
+    /**
+     * 取得商城上傳路徑
+     */
+    public static String getShopUploadPath() {
+        return getProfile() + "/upload/shopmall";
+    }
+
+    /**
+     * 取得商城分類上傳路徑
+     *
+     * @param category 分類名稱（product, banner, category 等）
+     */
+    public static String getShopUploadPath(String category) {
+        if (category == null || category.isBlank()) {
+            return getShopUploadPath();
+        }
+        return getProfile() + "/upload/shopmall/" + category;
+    }
+
     public void setCaptchaType(String captchaType) {
         CoolAppsConfig.captchaType = captchaType;
     }

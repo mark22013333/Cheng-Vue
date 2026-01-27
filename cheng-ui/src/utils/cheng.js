@@ -226,3 +226,35 @@ export function getNormalPath(p) {
 export function blobValidate(data) {
   return data.type !== 'application/json'
 }
+
+/**
+ * 金額格式化（千分位）
+ * @param {number|string} value 金額數值
+ * @param {number} decimals 小數位數（預設 0）
+ * @param {string} prefix 前綴符號（預設空字串）
+ * @returns {string} 格式化後的金額字串
+ */
+export function formatPrice(value, decimals = 0, prefix = '') {
+  if (value === null || value === undefined || value === '') {
+    return prefix + '0'
+  }
+  const num = Number(value)
+  if (isNaN(num)) {
+    return prefix + '0'
+  }
+  return prefix + num.toLocaleString('zh-TW', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  })
+}
+
+/**
+ * 金額格式化（帶貨幣符號）
+ * @param {number|string} value 金額數值
+ * @param {string} currency 貨幣符號（預設 'NT$'）
+ * @param {number} decimals 小數位數（預設 0）
+ * @returns {string} 格式化後的金額字串
+ */
+export function formatCurrency(value, currency = 'NT$', decimals = 0) {
+  return formatPrice(value, decimals, currency + ' ')
+}

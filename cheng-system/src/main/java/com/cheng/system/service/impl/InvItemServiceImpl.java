@@ -788,7 +788,7 @@ public class InvItemServiceImpl implements IInvItemService {
      * @return 有效物品列表
      */
     private List<InvItem> validateAndConvertItems(List<InvItemImportDTO> importList, ImportTaskParams params, String taskId) {
-        List<InvItem> validItemList = new java.util.ArrayList<>();
+        List<InvItem> validItemList = new ArrayList<>();
         int total = importList.size();
         int processed = 0;
 

@@ -85,6 +85,66 @@ public class CommonController {
     }
 
     /**
+     * 商城圖片上傳請求（單個）
+     *
+     * @param file     上傳檔案
+     * @param category 分類名稱（product, banner, category 等）
+     */
+    @PostMapping("/upload/shop")
+    public AjaxResult uploadShopFile(MultipartFile file, String category) {
+        try {
+            // 上傳檔案路徑（商城專用目錄）
+            String filePath = CoolAppsConfig.getShopUploadPath(category);
+            // 上傳並返回新檔案名稱
+            String fileName = FileUploadUtils.upload(filePath, file);
+            String url = serverConfig.getUrl() + fileName;
+            AjaxResult ajax = AjaxResult.success();
+            ajax.put("url", url);
+            ajax.put("fileName", fileName);
+            ajax.put("newFileName", FileUtils.getName(fileName));
+            ajax.put("originalFilename", file.getOriginalFilename());
+            return ajax;
+        } catch (Exception e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 商城圖片上傳請求（多個）
+     *
+     * @param files    上傳檔案列表
+     * @param category 分類名稱（product, banner, category 等）
+     */
+    @PostMapping("/upload/shop/batch")
+    public AjaxResult uploadShopFiles(List<MultipartFile> files, String category) {
+        try {
+            // 上傳檔案路徑（商城專用目錄）
+            String filePath = CoolAppsConfig.getShopUploadPath(category);
+            List<String> urls = new ArrayList<>();
+            List<String> fileNames = new ArrayList<>();
+            List<String> newFileNames = new ArrayList<>();
+            List<String> originalFilenames = new ArrayList<>();
+            for (MultipartFile file : files) {
+                // 上傳並返回新檔案名稱
+                String fileName = FileUploadUtils.upload(filePath, file);
+                String url = serverConfig.getUrl() + fileName;
+                urls.add(url);
+                fileNames.add(fileName);
+                newFileNames.add(FileUtils.getName(fileName));
+                originalFilenames.add(file.getOriginalFilename());
+            }
+            AjaxResult ajax = AjaxResult.success();
+            ajax.put("urls", StringUtils.join(urls, FILE_DELIMETER));
+            ajax.put("fileNames", StringUtils.join(fileNames, FILE_DELIMETER));
+            ajax.put("newFileNames", StringUtils.join(newFileNames, FILE_DELIMETER));
+            ajax.put("originalFilenames", StringUtils.join(originalFilenames, FILE_DELIMETER));
+            return ajax;
+        } catch (Exception e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    /**
      * 共用上傳請求（多個）
      */
     @PostMapping("/uploads")

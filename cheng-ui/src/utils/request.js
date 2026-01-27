@@ -84,10 +84,15 @@ service.interceptors.response.use(res => {
   if (code === 401) {
     if (!isRelogin.show) {
       isRelogin.show = true
-      ElMessageBox.confirm('登入狀態已過期，您可以繼續留在該頁面，或者重新登入', '系統提示', { confirmButtonText: '重新登入', cancelButtonText: '取消', type: 'warning' }).then(() => {
+      // 判斷當前是否在商城頁面
+      const isMallPage = window.location.pathname.startsWith('/mall')
+      const loginPath = isMallPage ? `/mall/login?redirect=${encodeURIComponent(window.location.pathname)}` : '/index'
+      const message = isMallPage ? '登入狀態已過期，請重新登入' : '登入狀態已過期，您可以繼續留在該頁面，或者重新登入'
+
+      ElMessageBox.confirm(message, '系統提示', { confirmButtonText: '重新登入', cancelButtonText: '取消', type: 'warning' }).then(() => {
         isRelogin.show = false
         useUserStore().logOut().then(() => {
-          location.href = '/index'
+          location.href = loginPath
         })
       }).catch(() => {
         isRelogin.show = false

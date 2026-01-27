@@ -22,6 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -246,7 +247,7 @@ public class InvBorrowController extends BaseController {
 
             // 如果沒有提供借出時間，使用當前時間
             if (invBorrow.getBorrowTime() == null) {
-                invBorrow.setBorrowTime(new java.util.Date());
+                invBorrow.setBorrowTime(new Date());
             }
 
             // 設定初始狀態為待審核

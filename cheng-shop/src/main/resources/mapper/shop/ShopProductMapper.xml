@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.shop.mapper.ShopProductMapper">
+
+    <resultMap type="com.cheng.shop.domain.ShopProduct" id="ShopProductResult">
+        <id     property="productId"    column="product_id"/>
+        <result property="categoryId"   column="category_id"/>
+        <result property="title"        column="title"/>
+        <result property="subTitle"     column="sub_title"/>
+        <result property="mainImage"    column="main_image"/>
+        <result property="sliderImages" column="slider_images"/>
+        <result property="videoUrl"     column="video_url"/>
+        <result property="description"  column="description"/>
+        <result property="salesCount"   column="sales_count"/>
+        <result property="viewCount"    column="view_count"/>
+        <result property="isHot"        column="is_hot"/>
+        <result property="isNew"        column="is_new"/>
+        <result property="isRecommend"  column="is_recommend"/>
+        <result property="sortOrder"    column="sort_order"/>
+        <result property="status"       column="status"/>
+        <result property="createBy"     column="create_by"/>
+        <result property="createTime"   column="create_time"/>
+        <result property="updateBy"     column="update_by"/>
+        <result property="updateTime"   column="update_time"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="price"        column="price"/>
+        <result property="originalPrice" column="original_price"/>
+    </resultMap>
+
+    <sql id="selectProductVo">
+        select p.product_id, p.category_id, p.title, p.sub_title, p.main_image, p.slider_images, p.video_url,
+               p.description, p.price, p.original_price, p.sales_count, p.view_count, p.is_hot, p.is_new, p.is_recommend, p.sort_order,
+               p.status, p.create_by, p.create_time, p.update_by, p.update_time,
+               c.name as category_name
+        from shop_product p
+        left join shop_category c on p.category_id = c.category_id
+    </sql>
+
+    <select id="selectProductList" parameterType="com.cheng.shop.domain.ShopProduct" resultMap="ShopProductResult">
+        <include refid="selectProductVo"/>
+        <where>
+            <choose>
+                <when test="categoryIds != null and categoryIds.size() > 0">
+                    AND p.category_id IN
+                    <foreach item="catId" collection="categoryIds" open="(" separator="," close=")">
+                        #{catId}
+                    </foreach>
+                </when>
+                <when test="categoryId != null">
+                    AND p.category_id = #{categoryId}
+                </when>
+            </choose>
+            <if test="title != null and title != ''">
+                AND p.title like concat('%', #{title}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND p.status = #{status}
+            </if>
+            <if test="isHot != null">
+                AND p.is_hot = #{isHot}
+            </if>
+            <if test="isNew != null">
+                AND p.is_new = #{isNew}
+            </if>
+            <if test="isRecommend != null">
+                AND p.is_recommend = #{isRecommend}
+            </if>
+        </where>
+        order by p.sort_order asc, p.product_id desc
+    </select>
+
+    <select id="selectProductById" parameterType="Long" resultMap="ShopProductResult">
+        <include refid="selectProductVo"/>
+        where p.product_id = #{productId}
+    </select>
+
+    <select id="selectHotProducts" resultMap="ShopProductResult">
+        <include refid="selectProductVo"/>
+        where p.status = 'ON_SALE' and p.is_hot = 1
+        order by p.sort_order asc, p.sales_count desc
+        limit #{limit}
+    </select>
+
+    <select id="selectNewProducts" resultMap="ShopProductResult">
+        <include refid="selectProductVo"/>
+        where p.status = 'ON_SALE' and p.is_new = 1
+        order by p.create_time desc
+        limit #{limit}
+    </select>
+
+    <select id="selectRecommendProducts" resultMap="ShopProductResult">
+        <include refid="selectProductVo"/>
+        where p.status = 'ON_SALE' and p.is_recommend = 1
+        order by p.sort_order asc
+        limit #{limit}
+    </select>
+
+    <insert id="insertProduct" parameterType="com.cheng.shop.domain.ShopProduct" useGeneratedKeys="true" keyProperty="productId">
+        insert into shop_product
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="categoryId != null">category_id,</if>
+            <if test="title != null and title != ''">title,</if>
+            <if test="subTitle != null">sub_title,</if>
+            <if test="mainImage != null and mainImage != ''">main_image,</if>
+            <if test="sliderImages != null">slider_images,</if>
+            <if test="videoUrl != null">video_url,</if>
+            <if test="description != null">description,</if>
+            <if test="price != null">price,</if>
+            <if test="originalPrice != null">original_price,</if>
+            <if test="salesCount != null">sales_count,</if>
+            <if test="viewCount != null">view_count,</if>
+            <if test="isHot != null">is_hot,</if>
+            <if test="isNew != null">is_new,</if>
+            <if test="isRecommend != null">is_recommend,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="categoryId != null">#{categoryId},</if>
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="subTitle != null">#{subTitle},</if>
+            <if test="mainImage != null and mainImage != ''">#{mainImage},</if>
+            <if test="sliderImages != null">#{sliderImages},</if>
+            <if test="videoUrl != null">#{videoUrl},</if>
+            <if test="description != null">#{description},</if>
+            <if test="price != null">#{price},</if>
+            <if test="originalPrice != null">#{originalPrice},</if>
+            <if test="salesCount != null">#{salesCount},</if>
+            <if test="viewCount != null">#{viewCount},</if>
+            <if test="isHot != null">#{isHot},</if>
+            <if test="isNew != null">#{isNew},</if>
+            <if test="isRecommend != null">#{isRecommend},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            now()
+        </trim>
+    </insert>
+
+    <update id="updateProduct" parameterType="com.cheng.shop.domain.ShopProduct">
+        update shop_product
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="subTitle != null">sub_title = #{subTitle},</if>
+            <if test="mainImage != null">main_image = #{mainImage},</if>
+            <if test="sliderImages != null">slider_images = #{sliderImages},</if>
+            <if test="videoUrl != null">video_url = #{videoUrl},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="originalPrice != null">original_price = #{originalPrice},</if>
+            <if test="isHot != null">is_hot = #{isHot},</if>
+            <if test="isNew != null">is_new = #{isNew},</if>
+            <if test="isRecommend != null">is_recommend = #{isRecommend},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = now()
+        </trim>
+        where product_id = #{productId}
+    </update>
+
+    <delete id="deleteProductById" parameterType="Long">
+        delete from shop_product where product_id = #{productId}
+    </delete>
+
+    <delete id="deleteProductByIds" parameterType="Long">
+        delete from shop_product where product_id in
+        <foreach item="productId" collection="array" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+    </delete>
+
+    <update id="increaseViewCount" parameterType="Long">
+        update shop_product set view_count = view_count + 1 where product_id = #{productId}
+    </update>
+
+    <update id="increaseSalesCount">
+        update shop_product set sales_count = sales_count + #{count} where product_id = #{productId}
+    </update>
+
+</mapper>

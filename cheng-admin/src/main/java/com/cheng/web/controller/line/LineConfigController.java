@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * LINE 頻道設定 Controller
@@ -237,7 +238,7 @@ public class LineConfigController extends BaseController {
     @PreAuthorize("@ss.hasPermi('line:config:edit')")
     @Log(title = "設定LINE Webhook(表單值)", businessType = BusinessType.UPDATE)
     @PostMapping("/setLineWebhookWithParams")
-    public AjaxResult setLineWebhookWithParams(@RequestBody java.util.Map<String, Object> params) {
+    public AjaxResult setLineWebhookWithParams(@RequestBody Map<String, Object> params) {
         try {
             String webhookUrl = (String) params.get("webhookUrl");
             String channelAccessToken = (String) params.get("channelAccessToken");

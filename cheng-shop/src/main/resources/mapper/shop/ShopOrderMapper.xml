@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.shop.mapper.ShopOrderMapper">
+
+    <resultMap type="com.cheng.shop.domain.ShopOrder" id="ShopOrderResult">
+        <id     property="orderId"          column="order_id"/>
+        <result property="orderNo"          column="order_no"/>
+        <result property="memberId"         column="member_id"/>
+        <result property="memberNickname"   column="member_nickname"/>
+        <result property="productAmount"    column="product_amount"/>
+        <result property="shippingAmount"   column="shipping_amount"/>
+        <result property="discountAmount"   column="discount_amount"/>
+        <result property="totalAmount"      column="total_amount"/>
+        <result property="paidAmount"       column="paid_amount"/>
+        <result property="receiverName"     column="receiver_name"/>
+        <result property="receiverMobile"   column="receiver_mobile"/>
+        <result property="receiverAddress"  column="receiver_address"/>
+        <result property="receiverZip"      column="receiver_zip"/>
+        <result property="status"           column="status"/>
+        <result property="payStatus"        column="pay_status"/>
+        <result property="shipStatus"       column="ship_status"/>
+        <result property="paymentMethod"    column="payment_method"/>
+        <result property="paymentNo"        column="payment_no"/>
+        <result property="paidTime"         column="paid_time"/>
+        <result property="shippingMethod"   column="shipping_method"/>
+        <result property="shippingNo"       column="shipping_no"/>
+        <result property="shippedTime"      column="shipped_time"/>
+        <result property="receivedTime"     column="received_time"/>
+        <result property="buyerRemark"      column="buyer_remark"/>
+        <result property="sellerRemark"     column="seller_remark"/>
+        <result property="cancelReason"     column="cancel_reason"/>
+        <result property="cancelTime"       column="cancel_time"/>
+        <result property="completeTime"     column="complete_time"/>
+        <result property="createTime"       column="create_time"/>
+        <result property="updateTime"       column="update_time"/>
+    </resultMap>
+
+    <sql id="selectOrderVo">
+        select o.order_id, o.order_no, o.member_id, o.member_nickname,
+               o.product_amount, o.shipping_amount, o.discount_amount, o.total_amount, o.paid_amount,
+               o.receiver_name, o.receiver_mobile, o.receiver_address, o.receiver_zip,
+               o.status, o.pay_status, o.ship_status,
+               o.payment_method, o.payment_no, o.paid_time,
+               o.shipping_method, o.shipping_no, o.shipped_time, o.received_time,
+               o.buyer_remark, o.seller_remark, o.cancel_reason, o.cancel_time, o.complete_time,
+               o.create_time, o.update_time
+        from shop_order o
+    </sql>
+
+    <select id="selectOrderList" parameterType="com.cheng.shop.domain.ShopOrder" resultMap="ShopOrderResult">
+        <include refid="selectOrderVo"/>
+        <where>
+            <if test="orderNo != null and orderNo != ''">
+                AND o.order_no like concat('%', #{orderNo}, '%')
+            </if>
+            <if test="memberId != null">
+                AND o.member_id = #{memberId}
+            </if>
+            <if test="status != null and status != ''">
+                AND o.status = #{status}
+            </if>
+            <if test="payStatus != null and payStatus != ''">
+                AND o.pay_status = #{payStatus}
+            </if>
+            <if test="shipStatus != null and shipStatus != ''">
+                AND o.ship_status = #{shipStatus}
+            </if>
+            <if test="receiverName != null and receiverName != ''">
+                AND o.receiver_name like concat('%', #{receiverName}, '%')
+            </if>
+            <if test="receiverMobile != null and receiverMobile != ''">
+                AND o.receiver_mobile like concat('%', #{receiverMobile}, '%')
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                AND o.create_time &gt;= #{params.beginTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND o.create_time &lt;= #{params.endTime}
+            </if>
+        </where>
+        order by o.order_id desc
+    </select>
+
+    <select id="selectOrderById" parameterType="Long" resultMap="ShopOrderResult">
+        <include refid="selectOrderVo"/>
+        where o.order_id = #{orderId}
+    </select>
+
+    <select id="selectOrderByOrderNo" parameterType="String" resultMap="ShopOrderResult">
+        <include refid="selectOrderVo"/>
+        where o.order_no = #{orderNo}
+    </select>
+
+    <select id="selectOrdersByMemberId" resultMap="ShopOrderResult">
+        <include refid="selectOrderVo"/>
+        where o.member_id = #{memberId}
+        <if test="status != null and status != ''">
+            AND o.status = #{status}
+        </if>
+        order by o.order_id desc
+    </select>
+
+    <insert id="insertOrder" parameterType="com.cheng.shop.domain.ShopOrder" useGeneratedKeys="true" keyProperty="orderId">
+        insert into shop_order
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderNo != null and orderNo != ''">order_no,</if>
+            <if test="memberId != null">member_id,</if>
+            <if test="memberNickname != null">member_nickname,</if>
+            <if test="productAmount != null">product_amount,</if>
+            <if test="shippingAmount != null">shipping_amount,</if>
+            <if test="discountAmount != null">discount_amount,</if>
+            <if test="totalAmount != null">total_amount,</if>
+            <if test="paidAmount != null">paid_amount,</if>
+            <if test="receiverName != null and receiverName != ''">receiver_name,</if>
+            <if test="receiverMobile != null and receiverMobile != ''">receiver_mobile,</if>
+            <if test="receiverAddress != null and receiverAddress != ''">receiver_address,</if>
+            <if test="receiverZip != null">receiver_zip,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="payStatus != null and payStatus != ''">pay_status,</if>
+            <if test="shipStatus != null and shipStatus != ''">ship_status,</if>
+            <if test="paymentMethod != null and paymentMethod != ''">payment_method,</if>
+            <if test="shippingMethod != null and shippingMethod != ''">shipping_method,</if>
+            <if test="buyerRemark != null">buyer_remark,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderNo != null and orderNo != ''">#{orderNo},</if>
+            <if test="memberId != null">#{memberId},</if>
+            <if test="memberNickname != null">#{memberNickname},</if>
+            <if test="productAmount != null">#{productAmount},</if>
+            <if test="shippingAmount != null">#{shippingAmount},</if>
+            <if test="discountAmount != null">#{discountAmount},</if>
+            <if test="totalAmount != null">#{totalAmount},</if>
+            <if test="paidAmount != null">#{paidAmount},</if>
+            <if test="receiverName != null and receiverName != ''">#{receiverName},</if>
+            <if test="receiverMobile != null and receiverMobile != ''">#{receiverMobile},</if>
+            <if test="receiverAddress != null and receiverAddress != ''">#{receiverAddress},</if>
+            <if test="receiverZip != null">#{receiverZip},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="payStatus != null and payStatus != ''">#{payStatus},</if>
+            <if test="shipStatus != null and shipStatus != ''">#{shipStatus},</if>
+            <if test="paymentMethod != null and paymentMethod != ''">#{paymentMethod},</if>
+            <if test="shippingMethod != null and shippingMethod != ''">#{shippingMethod},</if>
+            <if test="buyerRemark != null">#{buyerRemark},</if>
+            now()
+        </trim>
+    </insert>
+
+    <update id="updateOrder" parameterType="com.cheng.shop.domain.ShopOrder">
+        update shop_order
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="receiverName != null">receiver_name = #{receiverName},</if>
+            <if test="receiverMobile != null">receiver_mobile = #{receiverMobile},</if>
+            <if test="receiverAddress != null">receiver_address = #{receiverAddress},</if>
+            <if test="receiverZip != null">receiver_zip = #{receiverZip},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="payStatus != null and payStatus != ''">pay_status = #{payStatus},</if>
+            <if test="shipStatus != null and shipStatus != ''">ship_status = #{shipStatus},</if>
+            <if test="paidTime != null">paid_time = #{paidTime},</if>
+            <if test="shippingNo != null">shipping_no = #{shippingNo},</if>
+            <if test="shippedTime != null">shipped_time = #{shippedTime},</if>
+            <if test="receivedTime != null">received_time = #{receivedTime},</if>
+            <if test="completeTime != null">complete_time = #{completeTime},</if>
+            <if test="cancelTime != null">cancel_time = #{cancelTime},</if>
+            <if test="cancelReason != null">cancel_reason = #{cancelReason},</if>
+            <if test="sellerRemark != null">seller_remark = #{sellerRemark},</if>
+            update_time = now()
+        </trim>
+        where order_id = #{orderId}
+    </update>
+
+    <update id="updateOrderStatus">
+        update shop_order set status = #{status}, update_time = now() where order_id = #{orderId}
+    </update>
+
+    <update id="updatePayStatus">
+        update shop_order set pay_status = #{payStatus}, update_time = now() where order_id = #{orderId}
+    </update>
+
+    <update id="updateShipStatus">
+        update shop_order set ship_status = #{shipStatus}, update_time = now() where order_id = #{orderId}
+    </update>
+
+    <delete id="deleteOrderById" parameterType="Long">
+        delete from shop_order where order_id = #{orderId}
+    </delete>
+
+    <select id="countOrderByStatus" resultType="int">
+        select count(*) from shop_order
+        where member_id = #{memberId}
+        <if test="status != null and status != ''">
+            and status = #{status}
+        </if>
+    </select>
+
+</mapper>

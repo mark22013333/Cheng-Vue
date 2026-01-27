@@ -1094,7 +1094,7 @@ public class LineMessageServiceImpl implements ILineMessageService {
             if (quickReply != null && quickReply.getItems() != null && !quickReply.getItems().isEmpty()) {
                 List<QuickReplyItem> quickReplyItems = quickReply.getItems().stream()
                         .map(this::buildQuickReplyItem)
-                        .filter(java.util.Objects::nonNull)
+                        .filter(Objects::nonNull)
                         .toList();
                 if (!quickReplyItems.isEmpty()) {
                     builder.quickReply(new QuickReply(quickReplyItems));

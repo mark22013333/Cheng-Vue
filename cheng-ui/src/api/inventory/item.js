@@ -9,6 +9,15 @@ export function listItem(query) {
   })
 }
 
+// 查詢物品列表（含庫存數量，供商城使用）
+export function listItemWithStock(query) {
+  return request({
+    url: '/inventory/item/listWithStock',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查詢物品資訊詳細
 export function getItem(itemId) {
   return request({
