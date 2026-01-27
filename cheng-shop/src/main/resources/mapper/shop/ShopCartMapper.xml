@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.shop.mapper.ShopCartMapper">
+
+    <resultMap type="com.cheng.shop.domain.ShopCart" id="ShopCartResult">
+        <id     property="cartId"       column="cart_id"/>
+        <result property="memberId"     column="member_id"/>
+        <result property="skuId"        column="sku_id"/>
+        <result property="quantity"     column="quantity"/>
+        <result property="isSelected"   column="is_selected"/>
+        <result property="createTime"   column="create_time"/>
+        <result property="updateTime"   column="update_time"/>
+        <result property="productId"    column="product_id"/>
+        <result property="productName"  column="product_name"/>
+        <result property="productImage" column="product_image"/>
+        <result property="skuName"      column="sku_name"/>
+        <result property="skuImage"     column="sku_image"/>
+        <result property="price"        column="price"/>
+        <result property="stockQuantity" column="stock_quantity"/>
+    </resultMap>
+
+    <sql id="selectCartVo">
+        select c.cart_id, c.member_id, c.sku_id, c.quantity, c.is_selected, c.create_time, c.update_time,
+               s.product_id, p.title as product_name, p.main_image as product_image,
+               s.sku_name, s.sku_image, s.price, s.stock_quantity
+        from shop_cart c
+        left join shop_product_sku s on c.sku_id = s.sku_id
+        left join shop_product p on s.product_id = p.product_id
+    </sql>
+
+    <select id="selectCartListByMemberId" parameterType="Long" resultMap="ShopCartResult">
+        <include refid="selectCartVo"/>
+        where c.member_id = #{memberId}
+        order by c.create_time desc
+    </select>
+
+    <select id="selectCartById" parameterType="Long" resultMap="ShopCartResult">
+        <include refid="selectCartVo"/>
+        where c.cart_id = #{cartId}
+    </select>
+
+    <select id="selectCartByMemberAndSku" resultMap="ShopCartResult">
+        <include refid="selectCartVo"/>
+        where c.member_id = #{memberId} and c.sku_id = #{skuId}
+    </select>
+
+    <select id="selectSelectedCartsByMemberId" parameterType="Long" resultMap="ShopCartResult">
+        <include refid="selectCartVo"/>
+        where c.member_id = #{memberId} and c.is_selected = 1
+        order by c.create_time desc
+    </select>
+
+    <insert id="insertCart" parameterType="com.cheng.shop.domain.ShopCart" useGeneratedKeys="true" keyProperty="cartId">
+        insert into shop_cart
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="memberId != null">member_id,</if>
+            <if test="skuId != null">sku_id,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="isSelected != null">is_selected,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="memberId != null">#{memberId},</if>
+            <if test="skuId != null">#{skuId},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="isSelected != null">#{isSelected},</if>
+            now()
+        </trim>
+    </insert>
+
+    <update id="updateCart" parameterType="com.cheng.shop.domain.ShopCart">
+        update shop_cart
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="isSelected != null">is_selected = #{isSelected},</if>
+            update_time = now()
+        </trim>
+        where cart_id = #{cartId}
+    </update>
+
+    <update id="updateCartQuantity">
+        update shop_cart set quantity = #{quantity}, update_time = now() where cart_id = #{cartId}
+    </update>
+
+    <update id="updateCartSelected">
+        update shop_cart set is_selected = #{isSelected}, update_time = now() where cart_id = #{cartId}
+    </update>
+
+    <update id="updateAllSelected">
+        update shop_cart set is_selected = #{isSelected}, update_time = now() where member_id = #{memberId}
+    </update>
+
+    <delete id="deleteCartById" parameterType="Long">
+        delete from shop_cart where cart_id = #{cartId}
+    </delete>
+
+    <delete id="deleteCartByIds" parameterType="Long">
+        delete from shop_cart where cart_id in
+        <foreach item="cartId" collection="array" open="(" separator="," close=")">
+            #{cartId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteCartByMemberId" parameterType="Long">
+        delete from shop_cart where member_id = #{memberId}
+    </delete>
+
+    <delete id="deleteSelectedCarts" parameterType="Long">
+        delete from shop_cart where member_id = #{memberId} and is_selected = 1
+    </delete>
+
+    <select id="countCartByMemberId" parameterType="Long" resultType="int">
+        select count(*) from shop_cart where member_id = #{memberId}
+    </select>
+
+</mapper>

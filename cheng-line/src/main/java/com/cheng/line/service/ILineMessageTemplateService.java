@@ -3,6 +3,7 @@ package com.cheng.line.service;
 import com.cheng.line.domain.LineMessageTemplate;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * LINE 訊息範本 服務層
@@ -107,14 +108,14 @@ public interface ILineMessageTemplateService {
      * @param variables 變數 Map
      * @return 替換變數後的內容
      */
-    String parseTemplateContent(String content, java.util.Map<String, String> variables);
+    String parseTemplateContent(String content, Map<String, String> variables);
 
     /**
      * 取得預設 Flex 範本列表
      *
      * @return 範本列表（名稱和描述）
      */
-    List<java.util.Map<String, String>> getFlexPresetTemplates();
+    List<Map<String, String>> getFlexPresetTemplates();
 
     /**
      * 取得指定 Flex 範本內容

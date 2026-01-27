@@ -101,7 +101,7 @@ public interface InvBorrowMapper {
      * @param actualReturn   實際歸還時間
      * @return 結果
      */
-    int updateReturnInfo(Long borrowId, Integer returnQuantity, java.util.Date actualReturn);
+    int updateReturnInfo(Long borrowId, Integer returnQuantity, Date actualReturn);
 
     /**
      * 刪除借出記錄

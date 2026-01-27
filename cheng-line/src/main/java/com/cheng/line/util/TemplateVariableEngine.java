@@ -4,6 +4,8 @@ import com.cheng.common.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -134,8 +136,8 @@ public class TemplateVariableEngine {
      * @param template 範本內容
      * @return 變數名稱列表
      */
-    public java.util.List<String> extractVariableNames(String template) {
-        java.util.List<String> variableNames = new java.util.ArrayList<>();
+    public List<String> extractVariableNames(String template) {
+        List<String> variableNames = new ArrayList<>();
         if (StringUtils.isEmpty(template)) {
             return variableNames;
         }

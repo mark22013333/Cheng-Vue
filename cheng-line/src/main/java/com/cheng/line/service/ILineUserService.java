@@ -6,6 +6,7 @@ import com.cheng.line.dto.LineUserStatsDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * LINE 使用者 服務層
@@ -159,7 +160,7 @@ public interface ILineUserService {
      * @param endTime   結束時間
      * @return 每月統計列表
      */
-    List<java.util.Map<String, Object>> getMonthlyJoinStats(String startTime, String endTime);
+    List<Map<String, Object>> getMonthlyJoinStats(String startTime, String endTime);
 
     /**
      * 將使用者加入黑名單

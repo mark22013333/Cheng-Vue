@@ -90,6 +90,12 @@
             <artifactId>cheng-line</artifactId>
         </dependency>
 
+        <!-- 商城模組 -->
+        <dependency>
+            <groupId>com.cheng</groupId>
+            <artifactId>cheng-shop</artifactId>
+        </dependency>
+
         <!-- LINE Bot Spring Boot Handler (Webhook 事件處理註解) -->
         <dependency>
             <groupId>com.linecorp.bot</groupId>

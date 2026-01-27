@@ -1,6 +1,7 @@
 import { createWebHistory, createRouter } from 'vue-router'
 /* Layout */
 import Layout from '@/layout'
+import ShopLayout from '@/layout/ShopLayout.vue'
 
 /**
  * Note: 路由配置項
@@ -83,6 +84,99 @@ export const constantRoutes = [
         meta: { title: '個人中心', icon: 'user' }
       }
     ]
+  },
+  {
+    path: '/mall/login',
+    component: () => import('@/views/shop-front/auth/login.vue'),
+    hidden: true,
+    meta: { title: '會員登入' }
+  },
+  {
+    path: '/mall/register',
+    component: () => import('@/views/shop-front/auth/register.vue'),
+    hidden: true,
+    meta: { title: '會員註冊' }
+  },
+  {
+    path: '/mall',
+    component: ShopLayout,
+    hidden: true,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/shop-front/home/index.vue'),
+        name: 'MallHome',
+        meta: { title: '商城首頁' }
+      },
+      {
+        path: 'products',
+        component: () => import('@/views/shop-front/product/list.vue'),
+        name: 'MallProducts',
+        meta: { title: '商品列表' }
+      },
+      {
+        path: 'product/:id',
+        component: () => import('@/views/shop-front/product/detail.vue'),
+        name: 'MallProductDetail',
+        meta: { title: '商品詳情' }
+      },
+      {
+        path: 'category',
+        component: () => import('@/views/shop-front/product/list.vue'),
+        name: 'MallCategory',
+        meta: { title: '商品分類' }
+      },
+      {
+        path: 'cart',
+        component: () => import('@/views/shop-front/cart/index.vue'),
+        name: 'MallCart',
+        meta: { title: '購物車' }
+      },
+      {
+        path: 'checkout',
+        component: () => import('@/views/shop-front/checkout/index.vue'),
+        name: 'MallCheckout',
+        meta: { title: '結帳' }
+      },
+      {
+        path: 'order-success/:orderNo',
+        component: () => import('@/views/shop-front/order/success.vue'),
+        name: 'MallOrderSuccess',
+        meta: { title: '訂單完成' }
+      },
+      {
+        path: 'member',
+        component: () => import('@/views/shop-front/member/index.vue'),
+        name: 'MallMember',
+        meta: { title: '會員中心' },
+        children: [
+          {
+            path: 'orders',
+            component: () => import('@/views/shop-front/member/orders.vue'),
+            name: 'MallMemberOrders',
+            meta: { title: '我的訂單' }
+          },
+          {
+            path: 'order/:orderNo',
+            component: () => import('@/views/shop-front/member/order-detail.vue'),
+            name: 'MallMemberOrderDetail',
+            meta: { title: '訂單詳情' }
+          },
+          {
+            path: 'address',
+            component: () => import('@/views/shop-front/member/address.vue'),
+            name: 'MallMemberAddress',
+            meta: { title: '收貨地址' }
+          },
+          {
+            path: 'profile',
+            component: () => import('@/views/shop-front/member/profile.vue'),
+            name: 'MallMemberProfile',
+            meta: { title: '個人資料' }
+          }
+        ]
+      }
+    ]
   }
 ]
 
@@ -155,6 +249,20 @@ export const dynamicRoutes = [
         component: () => import('@/views/tool/gen/editTable'),
         name: 'GenEdit',
         meta: { title: '修改產生配置', activeMenu: '/tool/gen' }
+      }
+    ]
+  },
+  {
+    path: '/shop/product-edit',
+    component: Layout,
+    hidden: true,
+    permissions: ['shop:product:add', 'shop:product:edit'],
+    children: [
+      {
+        path: 'index/:productId?',
+        component: () => import('@/views/shop/product/edit'),
+        name: 'ShopProductEdit',
+        meta: { title: '編輯商品', activeMenu: '/shop/product' }
       }
     ]
   }

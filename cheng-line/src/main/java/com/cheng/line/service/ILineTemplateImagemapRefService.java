@@ -3,6 +3,7 @@ package com.cheng.line.service;
 import com.cheng.line.domain.LineTemplateImagemapRef;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 訊息範本與圖文範本關聯 Service 介面
@@ -50,7 +51,7 @@ public interface ILineTemplateImagemapRefService {
      * @param templateId   訊息範本ID
      * @param imagemapRefs 引用資訊列表（包含 imagemapId 和 messageIndex）
      */
-    void maintainRefsWithIndex(Long templateId, List<java.util.Map<String, Object>> imagemapRefs);
+    void maintainRefsWithIndex(Long templateId, List<Map<String, Object>> imagemapRefs);
 
     /**
      * 刪除訊息範本的所有關聯

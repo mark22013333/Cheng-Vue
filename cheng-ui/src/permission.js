@@ -11,7 +11,20 @@ import usePermissionStore from '@/store/modules/permission'
 
 NProgress.configure({ showSpinner: false })
 
-const whiteList = ['/login', '/register']
+// 免登入白名單
+// 商城前台：首頁、商品列表、商品詳情、分類、購物車允許未登入訪問
+// 結帳和會員中心需要登入
+const whiteList = [
+  '/login',
+  '/register',
+  '/mall',
+  '/mall/login',
+  '/mall/register',
+  '/mall/products',
+  '/mall/product/**',
+  '/mall/category',
+  '/mall/cart'
+]
 
 const isWhiteList = (path) => {
   return whiteList.some(pattern => isPathMatch(pattern, path))
@@ -58,7 +71,12 @@ router.beforeEach((to, from, next) => {
       // 在免登入白名單，直接進入
       next()
     } else {
-      next(`/login?redirect=${to.fullPath}`) // 否則全部重定向到登入頁
+      // 判斷是否在商城頁面，若是則重定向到商城登入頁
+      if (to.path.startsWith('/mall')) {
+        next(`/mall/login?redirect=${to.fullPath}`)
+      } else {
+        next(`/login?redirect=${to.fullPath}`) // 否則全部重定向到後台登入頁
+      }
       NProgress.done()
     }
   }

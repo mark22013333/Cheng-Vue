@@ -99,7 +99,7 @@ public class SecurityConfig {
                     requests.requestMatchers("/login", "/register", "/captchaImage").permitAll()
                             // 靜態資源，可匿名訪問
                             .requestMatchers(HttpMethod.GET, "/", "/*.html", "/**.html", "/**.css", "/**.js", "/profile/**").permitAll()
-                            .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**", "/druid/**").permitAll()
+                            .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**", "/druid/**", "/mall/**", "/shop/front/**").permitAll()
                             // 除上面外的所有請求全部需要鑑權認證
                             .anyRequest().authenticated();
                 })

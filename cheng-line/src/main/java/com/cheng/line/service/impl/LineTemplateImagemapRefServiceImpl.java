@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 訊息範本與圖文範本關聯 Service 實作
@@ -131,7 +132,7 @@ public class LineTemplateImagemapRefServiceImpl implements ILineTemplateImagemap
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void maintainRefsWithIndex(Long templateId, List<java.util.Map<String, Object>> imagemapRefs) {
+    public void maintainRefsWithIndex(Long templateId, List<Map<String, Object>> imagemapRefs) {
         // 先刪除舊的關聯
         refMapper.deleteRefsByTemplateId(templateId);
 
@@ -144,7 +145,7 @@ public class LineTemplateImagemapRefServiceImpl implements ILineTemplateImagemap
         String username = SecurityUtils.getUsername();
         List<LineTemplateImagemapRef> refs = new ArrayList<>();
         
-        for (java.util.Map<String, Object> refData : imagemapRefs) {
+        for (Map<String, Object> refData : imagemapRefs) {
             Long imagemapId = Long.valueOf(refData.get("imagemapId").toString());
             Integer messageIndex = Integer.valueOf(refData.get("messageIndex").toString());
             

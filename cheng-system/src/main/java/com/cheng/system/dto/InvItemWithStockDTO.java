@@ -405,4 +405,9 @@ public class InvItemWithStockDTO implements Serializable {
      * 標籤ID（查詢條件用）
      */
     private Long tagId;
+
+    /**
+     * 標籤名稱（查詢條件用，模糊搜尋）
+     */
+    private String tagName;
 }

@@ -6,6 +6,7 @@ import com.cheng.line.enums.FollowStatus;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * LINE 使用者 Mapper 介面
@@ -193,7 +194,7 @@ public interface LineUserMapper {
      * @param endTime   結束時間
      * @return 每月統計列表（Map格式：{month: "2024-01", count: 10}）
      */
-    List<java.util.Map<String, Object>> getMonthlyJoinStats(@Param("startTime") String startTime, @Param("endTime") String endTime);
+    List<Map<String, Object>> getMonthlyJoinStats(@Param("startTime") String startTime, @Param("endTime") String endTime);
 
     /**
      * 批次查詢存在的 LINE 使用者 ID

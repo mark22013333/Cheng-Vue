@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.shop.mapper.ShopProductSkuMapper">
+
+    <resultMap type="com.cheng.shop.domain.ShopProductSku" id="ShopProductSkuResult">
+        <id     property="skuId"        column="sku_id"/>
+        <result property="productId"    column="product_id"/>
+        <result property="skuCode"      column="sku_code"/>
+        <result property="skuName"      column="sku_name"/>
+        <result property="skuImage"     column="sku_image"/>
+        <result property="price"        column="price"/>
+        <result property="originalPrice" column="original_price"/>
+        <result property="costPrice"    column="cost_price"/>
+        <result property="stockQuantity" column="stock_quantity"/>
+        <result property="salesCount"   column="sales_count"/>
+        <result property="sortOrder"    column="sort_order"/>
+        <result property="invItemId"    column="inv_item_id"/>
+        <result property="invItemName"  column="inv_item_name"/>
+        <result property="invItemCode"  column="inv_item_code"/>
+        <result property="status"       column="status"/>
+        <result property="createBy"     column="create_by"/>
+        <result property="createTime"   column="create_time"/>
+        <result property="updateBy"     column="update_by"/>
+        <result property="updateTime"   column="update_time"/>
+    </resultMap>
+
+    <sql id="selectSkuVo">
+        select s.sku_id, s.product_id, s.sku_code, s.sku_name, s.sku_image, s.price, s.original_price,
+               s.cost_price, s.stock_quantity, s.sales_count, s.sort_order, s.inv_item_id, s.status,
+               s.create_by, s.create_time, s.update_by, s.update_time,
+               i.item_name as inv_item_name, i.item_code as inv_item_code
+        from shop_product_sku s
+        left join inv_item i on s.inv_item_id = i.item_id
+    </sql>
+
+    <select id="selectSkuListByProductId" parameterType="Long" resultMap="ShopProductSkuResult">
+        <include refid="selectSkuVo"/>
+        where s.product_id = #{productId}
+        order by s.sku_id asc
+    </select>
+
+    <select id="selectSkuById" parameterType="Long" resultMap="ShopProductSkuResult">
+        <include refid="selectSkuVo"/>
+        where s.sku_id = #{skuId}
+    </select>
+
+    <select id="selectSkuByCode" parameterType="String" resultMap="ShopProductSkuResult">
+        <include refid="selectSkuVo"/>
+        where s.sku_code = #{skuCode}
+    </select>
+
+    <insert id="insertSku" parameterType="com.cheng.shop.domain.ShopProductSku" useGeneratedKeys="true" keyProperty="skuId">
+        insert into shop_product_sku
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="productId != null">product_id,</if>
+            <if test="skuCode != null and skuCode != ''">sku_code,</if>
+            <if test="skuName != null">sku_name,</if>
+            <if test="skuImage != null">sku_image,</if>
+            <if test="price != null">price,</if>
+            <if test="originalPrice != null">original_price,</if>
+            <if test="costPrice != null">cost_price,</if>
+            <if test="stockQuantity != null">stock_quantity,</if>
+            <if test="salesCount != null">sales_count,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="invItemId != null">inv_item_id,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="productId != null">#{productId},</if>
+            <if test="skuCode != null and skuCode != ''">#{skuCode},</if>
+            <if test="skuName != null">#{skuName},</if>
+            <if test="skuImage != null">#{skuImage},</if>
+            <if test="price != null">#{price},</if>
+            <if test="originalPrice != null">#{originalPrice},</if>
+            <if test="costPrice != null">#{costPrice},</if>
+            <if test="stockQuantity != null">#{stockQuantity},</if>
+            <if test="salesCount != null">#{salesCount},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="invItemId != null">#{invItemId},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            now()
+        </trim>
+    </insert>
+
+    <insert id="batchInsertSku" parameterType="java.util.List">
+        insert into shop_product_sku (product_id, sku_code, sku_name, sku_image, price,
+            original_price, cost_price, stock_quantity, sales_count, sort_order, inv_item_id, status, create_by, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.productId}, #{item.skuCode}, #{item.skuName}, #{item.skuImage},
+             #{item.price}, #{item.originalPrice}, #{item.costPrice}, #{item.stockQuantity}, #{item.salesCount},
+             #{item.sortOrder}, #{item.invItemId}, #{item.status}, #{item.createBy}, now())
+        </foreach>
+    </insert>
+
+    <update id="updateSku" parameterType="com.cheng.shop.domain.ShopProductSku">
+        update shop_product_sku
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="skuCode != null and skuCode != ''">sku_code = #{skuCode},</if>
+            <if test="skuName != null">sku_name = #{skuName},</if>
+            <if test="skuImage != null">sku_image = #{skuImage},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="originalPrice != null">original_price = #{originalPrice},</if>
+            <if test="costPrice != null">cost_price = #{costPrice},</if>
+            <if test="stockQuantity != null">stock_quantity = #{stockQuantity},</if>
+            <if test="salesCount != null">sales_count = #{salesCount},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="invItemId != null">inv_item_id = #{invItemId},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = now()
+        </trim>
+        where sku_id = #{skuId}
+    </update>
+
+    <delete id="deleteSkuById" parameterType="Long">
+        delete from shop_product_sku where sku_id = #{skuId}
+    </delete>
+
+    <delete id="deleteSkuByProductId" parameterType="Long">
+        delete from shop_product_sku where product_id = #{productId}
+    </delete>
+
+    <update id="decreaseStock">
+        update shop_product_sku
+        set stock_quantity = stock_quantity - #{quantity}
+        where sku_id = #{skuId} and stock_quantity >= #{quantity}
+    </update>
+
+    <update id="increaseStock">
+        update shop_product_sku
+        set stock_quantity = stock_quantity + #{quantity}
+        where sku_id = #{skuId}
+    </update>
+
+    <select id="checkSkuCodeUnique" resultType="int">
+        select count(*) from shop_product_sku
+        where sku_code = #{skuCode}
+        <if test="skuId != null">
+            and sku_id != #{skuId}
+        </if>
+    </select>
+
+</mapper>

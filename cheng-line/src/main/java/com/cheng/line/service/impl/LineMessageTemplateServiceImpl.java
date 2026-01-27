@@ -13,6 +13,9 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,7 +138,7 @@ public class LineMessageTemplateServiceImpl implements ILineMessageTemplateServi
 
     @Override
     public List<Map<String, String>> getFlexPresetTemplates() {
-        List<Map<String, String>> templates = new java.util.ArrayList<>();
+        List<Map<String, String>> templates = new ArrayList<>();
         
         // 定義範本清單（與 cheng-admin/resources/line/FlexTemplate 目錄對應）
         // 注意：檔名有空格的要正確對應
@@ -178,8 +181,8 @@ public class LineMessageTemplateServiceImpl implements ILineMessageTemplateServi
                 );
                 
                 if (resource.exists()) {
-                    try (java.io.InputStream is = resource.getInputStream()) {
-                        String content = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                    try (InputStream is = resource.getInputStream()) {
+                        String content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
                         log.info("成功載入 Flex 範本：{}", templateName);
                         return content;
                     }

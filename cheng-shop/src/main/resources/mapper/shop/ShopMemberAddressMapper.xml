@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.shop.mapper.ShopMemberAddressMapper">
+
+    <resultMap id="ShopMemberAddressResult" type="com.cheng.shop.domain.ShopMemberAddress">
+        <id property="addressId" column="address_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="receiverName" column="receiver_name"/>
+        <result property="receiverPhone" column="receiver_phone"/>
+        <result property="province" column="province"/>
+        <result property="city" column="city"/>
+        <result property="district" column="district"/>
+        <result property="detailAddress" column="detail_address"/>
+        <result property="postalCode" column="postal_code"/>
+        <result property="isDefault" column="is_default"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectAddressVo">
+        SELECT address_id, member_id, receiver_name, receiver_phone,
+               province, city, district, detail_address, postal_code,
+               is_default, create_time, update_time
+        FROM shop_member_address
+    </sql>
+
+    <select id="selectAddressListByMemberId" resultMap="ShopMemberAddressResult">
+        <include refid="selectAddressVo"/>
+        WHERE member_id = #{memberId}
+        ORDER BY is_default DESC, update_time DESC
+    </select>
+
+    <select id="selectAddressById" resultMap="ShopMemberAddressResult">
+        <include refid="selectAddressVo"/>
+        WHERE address_id = #{addressId}
+    </select>
+
+    <select id="selectDefaultAddressByMemberId" resultMap="ShopMemberAddressResult">
+        <include refid="selectAddressVo"/>
+        WHERE member_id = #{memberId} AND is_default = 1
+        LIMIT 1
+    </select>
+
+    <insert id="insertAddress" useGeneratedKeys="true" keyProperty="addressId">
+        INSERT INTO shop_member_address (
+            member_id, receiver_name, receiver_phone,
+            province, city, district, detail_address,
+            postal_code, is_default, create_time
+        ) VALUES (
+            #{memberId}, #{receiverName}, #{receiverPhone},
+            #{province}, #{city}, #{district}, #{detailAddress},
+            #{postalCode}, #{isDefault}, NOW()
+        )
+    </insert>
+
+    <update id="updateAddress">
+        UPDATE shop_member_address
+        <set>
+            <if test="receiverName != null and receiverName != ''">
+                receiver_name = #{receiverName},
+            </if>
+            <if test="receiverPhone != null and receiverPhone != ''">
+                receiver_phone = #{receiverPhone},
+            </if>
+            <if test="province != null">
+                province = #{province},
+            </if>
+            <if test="city != null">
+                city = #{city},
+            </if>
+            <if test="district != null">
+                district = #{district},
+            </if>
+            <if test="detailAddress != null and detailAddress != ''">
+                detail_address = #{detailAddress},
+            </if>
+            <if test="postalCode != null">
+                postal_code = #{postalCode},
+            </if>
+            <if test="isDefault != null">
+                is_default = #{isDefault},
+            </if>
+            update_time = NOW()
+        </set>
+        WHERE address_id = #{addressId}
+    </update>
+
+    <delete id="deleteAddressById">
+        DELETE FROM shop_member_address WHERE address_id = #{addressId}
+    </delete>
+
+    <update id="clearDefaultByMemberId">
+        UPDATE shop_member_address SET is_default = 0 WHERE member_id = #{memberId}
+    </update>
+
+    <update id="setDefaultAddress">
+        UPDATE shop_member_address SET is_default = 1 WHERE address_id = #{addressId}
+    </update>
+
+    <select id="countByMemberId" resultType="int">
+        SELECT COUNT(*) FROM shop_member_address WHERE member_id = #{memberId}
+    </select>
+
+</mapper>
