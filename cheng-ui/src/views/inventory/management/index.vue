@@ -37,6 +37,16 @@
                              placeholder="預設為物品最低庫存"
                              style="width: 150px"/>
           </el-form-item>
+          <el-form-item label="物品分類" prop="categoryId">
+            <el-select v-model="queryParams.categoryId" placeholder="請選擇分類" clearable style="width: 200px">
+              <el-option
+                v-for="category in categoryList"
+                :key="category.categoryId"
+                :label="category.categoryName"
+                :value="category.categoryId"
+              />
+            </el-select>
+          </el-form-item>
           <el-form-item label="標籤" prop="tagId">
             <tag-select
               v-model="queryParams.tagId"
@@ -119,95 +129,141 @@
         </el-row>
 
         <!-- 資料表格 -->
-        <el-table v-loading="loading" :data="managementList" @selection-change="handleSelectionChange"
+        <el-table ref="dataTable" v-loading="loading" :data="managementList" @selection-change="handleSelectionChange"
                   @sort-change="handleSortChange">
+          <!-- 固定：勾選框 -->
           <el-table-column type="selection" width="55" align="center"/>
-          <el-table-column v-if="columns.itemCode.visible" label="物品編碼" align="center" prop="itemCode" min-width="180" sortable="custom"
-                           :show-overflow-tooltip="true"/>
-          <el-table-column v-if="columns.image.visible" label="圖片" align="center" width="80">
-            <template #default="scope">
-              <el-image
-                v-if="scope.row.imageUrl"
-                :src="getImageUrl(scope.row.imageUrl)"
-                :preview-src-list="[getImageUrl(scope.row.imageUrl)]"
-                :hide-on-click-modal="true"
-                :preview-teleported="true"
-                fit="cover"
-                style="width: 50px; height: 50px; border-radius: 4px; cursor: pointer;"
-              >
-                <template #error>
-                  <div class="image-slot">
-                    <i class="el-icon-picture-outline" style="font-size: 30px; color: #ccc;"></i>
-                  </div>
-                </template>
-              </el-image>
-              <span v-else style="color: #ccc;">無圖</span>
-            </template>
-          </el-table-column>
-          <el-table-column v-if="columns.itemName.visible" label="物品名稱" align="center" prop="itemName" min-width="150" sortable="custom"
-                           :show-overflow-tooltip="true"/>
-          <el-table-column v-if="columns.author.visible && hasAuthorColumn" label="作者" align="center" prop="author" width="120" :show-overflow-tooltip="true"/>
-          <el-table-column v-if="columns.specification.visible" label="規格" align="center" prop="specification" width="120"/>
-          <el-table-column v-if="columns.brandModel.visible" label="品牌/型號" align="center" width="150">
-            <template #default="scope">
-              {{ scope.row.brand }} {{ scope.row.model }}
-            </template>
-          </el-table-column>
-
-          <!-- 庫存資訊 -->
-          <el-table-column v-if="columns.totalQuantity.visible" label="總數量" align="center" prop="totalQuantity" width="80">
-            <template #default="scope">
-              <el-tag v-if="scope.row.totalQuantity > 0" type="success">{{ scope.row.totalQuantity }}</el-tag>
-              <el-tag v-else type="danger">0</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column v-if="columns.availableQty.visible" label="可用" align="center" prop="availableQty" width="70"/>
-          <el-table-column v-if="columns.borrowedQty.visible" label="借出" align="center" prop="borrowedQty" width="70"/>
-          <el-table-column v-if="columns.stockStatus.visible" label="庫存狀態" align="center" prop="stockStatusText" width="90">
-            <template #default="scope">
-              <el-tag v-if="scope.row.stockStatus === '0'" type="success">{{ scope.row.stockStatusText }}</el-tag>
-              <el-tag v-else-if="scope.row.stockStatus === '1'" type="warning">{{ scope.row.stockStatusText }}</el-tag>
-              <el-tag v-else type="danger">{{ scope.row.stockStatusText }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column v-if="columns.location.visible" label="存放位置" align="center" prop="location" width="140" sortable="custom"
-                           :show-overflow-tooltip="true"/>
-          <el-table-column v-if="columns.tags.visible" label="標籤" align="center" min-width="180">
-            <template #default="scope">
-              <div v-if="scope.row.tags && scope.row.tags.length > 0" class="item-tags">
-                <bookmark-tag
-                  v-for="(tag, index) in getDisplayTags(scope.row)"
-                  :key="tag.tagId"
-                  :label="tag.tagName"
-                  :color="tag.tagColor"
-                  size="small"
-                />
-                <el-popover
-                  v-if="scope.row.tags.length > 3"
-                  placement="top"
-                  :width="200"
-                  trigger="click"
+          
+          <!-- 動態欄位（按 order 排序） -->
+          <template v-for="key in sortedColumnKeys" :key="key">
+            <!-- 物品編碼 -->
+            <el-table-column v-if="key === 'itemCode' && columns.itemCode.visible" 
+              label="物品編碼" align="center" prop="itemCode" min-width="180" sortable="custom"
+              :show-overflow-tooltip="true"/>
+            
+            <!-- 圖片 -->
+            <el-table-column v-if="key === 'image' && columns.image.visible" label="圖片" align="center" width="80">
+              <template #default="scope">
+                <el-image
+                  v-if="scope.row.imageUrl"
+                  :src="getImageUrl(scope.row.imageUrl)"
+                  :preview-src-list="[getImageUrl(scope.row.imageUrl)]"
+                  :hide-on-click-modal="true"
+                  :preview-teleported="true"
+                  fit="cover"
+                  style="width: 50px; height: 50px; border-radius: 4px; cursor: pointer;"
                 >
-                  <template #reference>
-                    <el-button type="text" size="small" style="margin-left: 4px;">
-                      +{{ scope.row.tags.length - 3 }} 更多
-                    </el-button>
+                  <template #error>
+                    <div class="image-slot">
+                      <i class="el-icon-picture-outline" style="font-size: 30px; color: #ccc;"></i>
+                    </div>
                   </template>
-                  <div class="all-tags">
-                    <bookmark-tag
-                      v-for="tag in scope.row.tags"
-                      :key="tag.tagId"
-                      :label="tag.tagName"
-                      :color="tag.tagColor"
-                      size="small"
-                    />
-                  </div>
-                </el-popover>
-              </div>
-              <span v-else style="color: #909399;">-</span>
-            </template>
-          </el-table-column>
+                </el-image>
+                <span v-else style="color: #ccc;">無圖</span>
+              </template>
+            </el-table-column>
+            
+            <!-- 物品名稱 -->
+            <el-table-column v-if="key === 'itemName' && columns.itemName.visible" 
+              label="物品名稱" align="center" prop="itemName" min-width="150" sortable="custom"
+              :show-overflow-tooltip="true"/>
+            
+            <!-- 分類 -->
+            <el-table-column v-if="key === 'categoryName' && columns.categoryName.visible" 
+              label="分類" align="center" prop="categoryName" width="120">
+              <template #default="scope">
+                <el-tag v-if="scope.row.categoryName" type="info" size="small">{{ scope.row.categoryName }}</el-tag>
+                <span v-else style="color: #909399;">-</span>
+              </template>
+            </el-table-column>
+            
+            <!-- 作者 -->
+            <el-table-column v-if="key === 'author' && columns.author.visible && hasAuthorColumn" 
+              label="作者" align="center" prop="author" width="120" :show-overflow-tooltip="true"/>
+            
+            <!-- 規格 -->
+            <el-table-column v-if="key === 'specification' && columns.specification.visible" 
+              label="規格" align="center" prop="specification" width="120"/>
+            
+            <!-- 品牌/型號 -->
+            <el-table-column v-if="key === 'brandModel' && columns.brandModel.visible" 
+              label="品牌/型號" align="center" width="150">
+              <template #default="scope">
+                {{ scope.row.brand }} {{ scope.row.model }}
+              </template>
+            </el-table-column>
 
+            <!-- 總數量 -->
+            <el-table-column v-if="key === 'totalQuantity' && columns.totalQuantity.visible" 
+              label="總數量" align="center" prop="totalQuantity" width="80">
+              <template #default="scope">
+                <el-tag v-if="scope.row.totalQuantity > 0" type="success">{{ scope.row.totalQuantity }}</el-tag>
+                <el-tag v-else type="danger">0</el-tag>
+              </template>
+            </el-table-column>
+            
+            <!-- 可用 -->
+            <el-table-column v-if="key === 'availableQty' && columns.availableQty.visible" 
+              label="可用" align="center" prop="availableQty" width="70"/>
+            
+            <!-- 借出 -->
+            <el-table-column v-if="key === 'borrowedQty' && columns.borrowedQty.visible" 
+              label="借出" align="center" prop="borrowedQty" width="70"/>
+            
+            <!-- 庫存狀態 -->
+            <el-table-column v-if="key === 'stockStatus' && columns.stockStatus.visible" 
+              label="庫存狀態" align="center" prop="stockStatusText" width="90">
+              <template #default="scope">
+                <el-tag v-if="scope.row.stockStatus === '0'" type="success">{{ scope.row.stockStatusText }}</el-tag>
+                <el-tag v-else-if="scope.row.stockStatus === '1'" type="warning">{{ scope.row.stockStatusText }}</el-tag>
+                <el-tag v-else type="danger">{{ scope.row.stockStatusText }}</el-tag>
+              </template>
+            </el-table-column>
+            
+            <!-- 存放位置 -->
+            <el-table-column v-if="key === 'location' && columns.location.visible" 
+              label="存放位置" align="center" prop="location" width="140" sortable="custom"
+              :show-overflow-tooltip="true"/>
+            
+            <!-- 標籤 -->
+            <el-table-column v-if="key === 'tags' && columns.tags.visible" label="標籤" align="center" min-width="180">
+              <template #default="scope">
+                <div v-if="scope.row.tags && scope.row.tags.length > 0" class="item-tags">
+                  <bookmark-tag
+                    v-for="(tag, index) in getDisplayTags(scope.row)"
+                    :key="tag.tagId"
+                    :label="tag.tagName"
+                    :color="tag.tagColor"
+                    size="small"
+                  />
+                  <el-popover
+                    v-if="scope.row.tags.length > 3"
+                    placement="top"
+                    :width="200"
+                    trigger="click"
+                  >
+                    <template #reference>
+                      <el-button type="text" size="small" style="margin-left: 4px;">
+                        +{{ scope.row.tags.length - 3 }} 更多
+                      </el-button>
+                    </template>
+                    <div class="all-tags">
+                      <bookmark-tag
+                        v-for="tag in scope.row.tags"
+                        :key="tag.tagId"
+                        :label="tag.tagName"
+                        :color="tag.tagColor"
+                        size="small"
+                      />
+                    </div>
+                  </el-popover>
+                </div>
+                <span v-else style="color: #909399;">-</span>
+              </template>
+            </el-table-column>
+          </template>
+
+          <!-- 固定：操作 -->
           <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column"
                            min-width="180" fixed="right">
             <template #default="scope">
@@ -778,33 +834,35 @@ export default {
       globalLowStockThreshold: null,
       // 預設列訊息
       defaultColumns: {
-        itemCode: {label: '物品編碼', visible: true},
-        image: {label: '圖片', visible: true},
-        itemName: {label: '物品名稱', visible: true},
-        author: {label: '作者', visible: true},
-        specification: {label: '規格', visible: true},
-        brandModel: {label: '品牌/型號', visible: true},
-        totalQuantity: {label: '總數量', visible: true},
-        availableQty: {label: '可用', visible: true},
-        borrowedQty: {label: '借出', visible: true},
-        stockStatus: {label: '庫存狀態', visible: true},
-        location: {label: '存放位置', visible: true},
-        tags: {label: '標籤', visible: true}
+        itemCode: {label: '物品編碼', visible: true, order: 0},
+        image: {label: '圖片', visible: true, order: 1},
+        itemName: {label: '物品名稱', visible: true, order: 2},
+        categoryName: {label: '分類', visible: true, order: 3},
+        author: {label: '作者', visible: true, order: 4},
+        specification: {label: '規格', visible: true, order: 5},
+        brandModel: {label: '品牌/型號', visible: true, order: 6},
+        totalQuantity: {label: '總數量', visible: true, order: 7},
+        availableQty: {label: '可用', visible: true, order: 8},
+        borrowedQty: {label: '借出', visible: true, order: 9},
+        stockStatus: {label: '庫存狀態', visible: true, order: 10},
+        location: {label: '存放位置', visible: true, order: 11},
+        tags: {label: '標籤', visible: true, order: 12}
       },
       // 列訊息
       columns: {
-        itemCode: {label: '物品編碼', visible: true},
-        image: {label: '圖片', visible: true},
-        itemName: {label: '物品名稱', visible: true},
-        author: {label: '作者', visible: true},
-        specification: {label: '規格', visible: true},
-        brandModel: {label: '品牌/型號', visible: true},
-        totalQuantity: {label: '總數量', visible: true},
-        availableQty: {label: '可用', visible: true},
-        borrowedQty: {label: '借出', visible: true},
-        stockStatus: {label: '庫存狀態', visible: true},
-        location: {label: '存放位置', visible: true},
-        tags: {label: '標籤', visible: true}
+        itemCode: {label: '物品編碼', visible: true, order: 0},
+        image: {label: '圖片', visible: true, order: 1},
+        itemName: {label: '物品名稱', visible: true, order: 2},
+        categoryName: {label: '分類', visible: true, order: 3},
+        author: {label: '作者', visible: true, order: 4},
+        specification: {label: '規格', visible: true, order: 5},
+        brandModel: {label: '品牌/型號', visible: true, order: 6},
+        totalQuantity: {label: '總數量', visible: true, order: 7},
+        availableQty: {label: '可用', visible: true, order: 8},
+        borrowedQty: {label: '借出', visible: true, order: 9},
+        stockStatus: {label: '庫存狀態', visible: true, order: 10},
+        location: {label: '存放位置', visible: true, order: 11},
+        tags: {label: '標籤', visible: true, order: 12}
       },
       // 入庫表單
       stockInForm: {
@@ -912,6 +970,12 @@ export default {
     // 判斷是否有任何物品包含作者資訊（用於顯示作者欄位）
     hasAuthorColumn() {
       return this.managementList.some(item => item.author && item.author.trim() !== '');
+    },
+    // 按 order 排序後的欄位 key 陣列
+    sortedColumnKeys() {
+      return Object.entries(this.columns)
+        .sort((a, b) => (a[1].order ?? 999) - (b[1].order ?? 999))
+        .map(([key]) => key)
     }
   },
   async created() {
@@ -955,7 +1019,8 @@ export default {
             if (savedConfig.hasOwnProperty(key)) {
               merged[key] = {
                 label: this.defaultColumns[key].label,
-                visible: savedConfig[key].visible
+                visible: savedConfig[key].visible,
+                order: savedConfig[key].order ?? this.defaultColumns[key].order
               };
             } else {
               merged[key] = { ...this.defaultColumns[key] };
@@ -1020,12 +1085,6 @@ export default {
         this.editForm = itemRes.data;
         this.editForm.tagIds = (tagsRes.data || []).map(tag => tag.tagId);
         this.editDialogVisible = true;
-      });
-    },
-    /** 載入標籤選項 */
-    loadTagOptions() {
-      getInventoryTagOptions('1').then(response => {
-        this.tagOptions = response.data || [];
       });
     },
     /** 刪除按鈕操作 */
@@ -2264,4 +2323,5 @@ export default {
   flex-wrap: wrap;
   gap: 4px;
 }
+
 </style>

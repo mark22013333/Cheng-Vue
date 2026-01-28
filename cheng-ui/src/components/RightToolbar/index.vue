@@ -12,17 +12,26 @@
         <el-dropdown trigger="click" :hide-on-click="false" style="padding-left: 12px" v-if="showColumnsType == 'checkbox'">
           <el-button circle icon="Menu" />
           <template #dropdown>
-            <el-dropdown-menu>
+            <el-dropdown-menu class="column-dropdown-menu">
               <!-- 全選/反選 按鈕 -->
               <el-dropdown-item>
                 <el-checkbox :indeterminate="isIndeterminate" v-model="isChecked" @change="toggleCheckAll"> 列展示 </el-checkbox>
               </el-dropdown-item>
               <div class="check-line"></div>
-              <template v-for="(item, key) in columns" :key="item.key">
-                <el-dropdown-item>
-                  <el-checkbox v-model="item.visible" @change="checkboxChange($event, key)" :label="item.label" />
-                </el-dropdown-item>
-              </template>
+              <div class="drag-tip">
+                <el-icon><Rank /></el-icon>
+                <span>拖曳調整欄位順序</span>
+              </div>
+              <div ref="sortableContainer" class="sortable-container">
+                <div v-for="item in sortedColumns" :key="item.key" :data-key="item.key" class="sortable-item">
+                  <el-icon class="drag-handle"><Rank /></el-icon>
+                  <el-checkbox 
+                    :model-value="columns[item.key]?.visible" 
+                    @change="checkboxChange($event, item.key)" 
+                    :label="item.label" 
+                  />
+                </div>
+              </div>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -40,9 +49,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useTableConfig } from '@/composables/useTableConfig'
 import { ElMessage } from 'element-plus'
+import { Rank } from '@element-plus/icons-vue'
+import Sortable from 'sortablejs'
 
 const props = defineProps({
   /* 是否顯示檢索条件 */
@@ -82,7 +93,7 @@ const props = defineProps({
   }
 })
 
-const emits = defineEmits(['update:showSearch', 'queryTable'])
+const emits = defineEmits(['update:showSearch', 'queryTable', 'columnsOrderChange'])
 
 // 顯隱資料
 const value = ref([])
@@ -106,6 +117,20 @@ const isChecked = computed({
 })
 const isIndeterminate = computed(() => Array.isArray(props.columns) ? props.columns.some((col) => col.visible) && !isChecked.value : Object.values(props.columns).some((col) => col.visible) && !isChecked.value)
 const transferData = computed(() => Array.isArray(props.columns) ? props.columns.map((item, index) => ({ key: index, label: item.label })) : Object.keys(props.columns).map((key, index) => ({ key: index, label: props.columns[key].label })))
+
+// 排序後的欄位列表
+const sortedColumns = computed(() => {
+  if (Array.isArray(props.columns)) {
+    return props.columns.map((col, index) => ({ ...col, key: index }))
+  }
+  return Object.entries(props.columns)
+    .map(([key, col]) => ({ ...col, key, order: col.order ?? 999 }))
+    .sort((a, b) => a.order - b.order)
+})
+
+// Sortable 實例
+const sortableContainer = ref(null)
+let sortableInstance = null
 
 // 搜尋
 function toggleSearch() {
@@ -234,7 +259,53 @@ onMounted(() => {
     console.log(`📋 表格欄位配置功能已啟用：${props.pageKey}`)
     console.log('💡 提示：修改欄位顯示/隱藏後，會在 2 秒後自動儲存')
   }
+  // 初始化拖曳排序
+  nextTick(() => {
+    initSortable()
+  })
 })
+
+// 初始化 Sortable
+function initSortable() {
+  if (sortableContainer.value && !sortableInstance) {
+    sortableInstance = Sortable.create(sortableContainer.value, {
+      animation: 150,
+      handle: '.drag-handle',
+      ghostClass: 'sortable-ghost',
+      onEnd: handleSortEnd
+    })
+  }
+}
+
+// 拖曳結束處理
+function handleSortEnd(evt) {
+  const { oldIndex, newIndex } = evt
+  if (oldIndex === newIndex) return
+  
+  // 取得新的順序
+  const items = sortableContainer.value.querySelectorAll('.sortable-item')
+  const newOrder = Array.from(items).map((item, index) => ({
+    key: item.dataset.key,
+    order: index
+  }))
+  
+  // 更新 columns 的 order 屬性
+  if (!Array.isArray(props.columns)) {
+    newOrder.forEach(({ key, order }) => {
+      if (props.columns[key]) {
+        props.columns[key].order = order
+      }
+    })
+  }
+  
+  // 發送事件通知父組件
+  emits('columnsOrderChange', newOrder)
+  
+  // 觸發自動儲存
+  triggerAutoSave()
+  
+  console.log('🔄 欄位順序已更新:', newOrder)
+}
 </script>
 
 <style lang='scss' scoped>
@@ -255,5 +326,45 @@ onMounted(() => {
   height: 1px;
   background-color: #ccc;
   margin: 3px auto;
+}
+.drag-tip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 17px;
+  font-size: 12px;
+  color: #909399;
+  border-bottom: 1px dashed #e4e7ed;
+  margin-bottom: 4px;
+}
+.sortable-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+.sortable-item {
+  display: flex;
+  align-items: center;
+  padding: 0 17px;
+  line-height: 30px;
+  cursor: default;
+  transition: background-color 0.2s;
+}
+.sortable-item:hover {
+  background-color: #f5f7fa;
+}
+.sortable-item .drag-handle {
+  color: #c0c4cc;
+  margin-right: 8px;
+  cursor: grab;
+}
+.sortable-item .drag-handle:active {
+  cursor: grabbing;
+}
+.sortable-ghost {
+  background-color: #ecf5ff;
+  border: 1px dashed #409eff;
+}
+:deep(.column-dropdown-menu) {
+  min-width: 200px;
 }
 </style>
