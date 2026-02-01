@@ -58,3 +58,12 @@ export function offSaleProduct(productId) {
     method: 'put'
   })
 }
+
+// 批量更新商品標記（熱門/新品/推薦）
+export function updateProductFlag(data) {
+  return request({
+    url: '/shop/product/flag',
+    method: 'put',
+    data: data
+  })
+}

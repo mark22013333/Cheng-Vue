@@ -106,4 +106,23 @@ public interface IShopProductService {
      * @return 影響行數
      */
     int increaseViewCount(Long productId);
+
+    /**
+     * 批量更新商品標記（熱門/新品/推薦）
+     *
+     * @param productIds 商品ID陣列
+     * @param flagName   標記欄位名（is_hot / is_new / is_recommend）
+     * @param flagValue  標記值
+     * @return 影響行數
+     */
+    int updateProductFlag(Long[] productIds, String flagName, boolean flagValue);
+
+    /**
+     * 增加商品銷量
+     *
+     * @param productId 商品ID
+     * @param count     增加數量
+     * @return 影響行數
+     */
+    int increaseSalesCount(Long productId, int count);
 }

@@ -21,6 +21,10 @@
         <result property="shipStatus"       column="ship_status"/>
         <result property="paymentMethod"    column="payment_method"/>
         <result property="paymentNo"        column="payment_no"/>
+        <result property="ecpayTradeNo"    column="ecpay_trade_no"/>
+        <result property="ecpayInfo"       column="ecpay_info"/>
+        <result property="giftId"          column="gift_id"/>
+        <result property="giftName"        column="gift_name"/>
         <result property="paidTime"         column="paid_time"/>
         <result property="shippingMethod"   column="shipping_method"/>
         <result property="shippingNo"       column="shipping_no"/>
@@ -40,7 +44,8 @@
                o.product_amount, o.shipping_amount, o.discount_amount, o.total_amount, o.paid_amount,
                o.receiver_name, o.receiver_mobile, o.receiver_address, o.receiver_zip,
                o.status, o.pay_status, o.ship_status,
-               o.payment_method, o.payment_no, o.paid_time,
+               o.payment_method, o.payment_no, o.ecpay_trade_no, o.ecpay_info,
+               o.gift_id, o.gift_name, o.paid_time,
                o.shipping_method, o.shipping_no, o.shipped_time, o.received_time,
                o.buyer_remark, o.seller_remark, o.cancel_reason, o.cancel_time, o.complete_time,
                o.create_time, o.update_time
@@ -120,6 +125,8 @@
             <if test="shipStatus != null and shipStatus != ''">ship_status,</if>
             <if test="paymentMethod != null and paymentMethod != ''">payment_method,</if>
             <if test="shippingMethod != null and shippingMethod != ''">shipping_method,</if>
+            <if test="giftId != null">gift_id,</if>
+            <if test="giftName != null">gift_name,</if>
             <if test="buyerRemark != null">buyer_remark,</if>
             create_time
         </trim>
@@ -141,6 +148,8 @@
             <if test="shipStatus != null and shipStatus != ''">#{shipStatus},</if>
             <if test="paymentMethod != null and paymentMethod != ''">#{paymentMethod},</if>
             <if test="shippingMethod != null and shippingMethod != ''">#{shippingMethod},</if>
+            <if test="giftId != null">#{giftId},</if>
+            <if test="giftName != null">#{giftName},</if>
             <if test="buyerRemark != null">#{buyerRemark},</if>
             now()
         </trim>
@@ -156,7 +165,13 @@
             <if test="status != null and status != ''">status = #{status},</if>
             <if test="payStatus != null and payStatus != ''">pay_status = #{payStatus},</if>
             <if test="shipStatus != null and shipStatus != ''">ship_status = #{shipStatus},</if>
+            <if test="paymentNo != null">payment_no = #{paymentNo},</if>
+            <if test="paidAmount != null">paid_amount = #{paidAmount},</if>
             <if test="paidTime != null">paid_time = #{paidTime},</if>
+            <if test="ecpayTradeNo != null">ecpay_trade_no = #{ecpayTradeNo},</if>
+            <if test="ecpayInfo != null">ecpay_info = #{ecpayInfo},</if>
+            <if test="giftId != null">gift_id = #{giftId},</if>
+            <if test="giftName != null">gift_name = #{giftName},</if>
             <if test="shippingNo != null">shipping_no = #{shippingNo},</if>
             <if test="shippedTime != null">shipped_time = #{shippedTime},</if>
             <if test="receivedTime != null">received_time = #{receivedTime},</if>
@@ -191,6 +206,13 @@
         <if test="status != null and status != ''">
             and status = #{status}
         </if>
+    </select>
+
+    <!-- 帶行鎖的訂單查詢（FOR UPDATE），用於金流回調防止併發 -->
+    <select id="selectOrderByOrderNoForUpdate" parameterType="String" resultMap="ShopOrderResult">
+        <include refid="selectOrderVo"/>
+        where o.order_no = #{orderNo}
+        FOR UPDATE
     </select>
 
 </mapper>

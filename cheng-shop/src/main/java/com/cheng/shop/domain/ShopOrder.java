@@ -114,6 +114,26 @@ public class ShopOrder extends BaseEntity {
     private String paymentNo;
 
     /**
+     * ECPay 交易編號
+     */
+    private String ecpayTradeNo;
+
+    /**
+     * ECPay 回傳完整資訊（JSON）
+     */
+    private String ecpayInfo;
+
+    /**
+     * 禮物ID
+     */
+    private Long giftId;
+
+    /**
+     * 禮物名稱
+     */
+    private String giftName;
+
+    /**
      * 付款時間
      */
     private Date paidTime;

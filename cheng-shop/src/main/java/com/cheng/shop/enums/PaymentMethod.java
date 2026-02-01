@@ -19,7 +19,8 @@ public enum PaymentMethod implements CodedEnum<String> {
     CREDIT_CARD("CREDIT_CARD", "信用卡"),
     ATM("ATM", "ATM轉帳"),
     CVS("CVS", "超商付款"),
-    COD("COD", "貨到付款");
+    COD("COD", "貨到付款"),
+    ECPAY("ECPAY", "綠界金流");
 
     private final String code;
     private final String description;
@@ -34,7 +35,7 @@ public enum PaymentMethod implements CodedEnum<String> {
      * 是否為線上支付
      */
     public boolean isOnlinePayment() {
-        return this == LINE_PAY || this == CREDIT_CARD;
+        return this == LINE_PAY || this == CREDIT_CARD || this == ECPAY;
     }
 
     public static PaymentMethod fromCode(String code) {

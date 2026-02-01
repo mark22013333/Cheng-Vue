@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.shop.mapper.ShopGiftMapper">
+
+    <resultMap type="com.cheng.shop.domain.ShopGift" id="ShopGiftResult">
+        <id     property="giftId"          column="gift_id"/>
+        <result property="name"            column="name"/>
+        <result property="imageUrl"        column="image_url"/>
+        <result property="thresholdAmount" column="threshold_amount"/>
+        <result property="stockQuantity"   column="stock_quantity"/>
+        <result property="sortOrder"       column="sort_order"/>
+        <result property="status"          column="status"/>
+        <result property="createBy"        column="create_by"/>
+        <result property="createTime"      column="create_time"/>
+        <result property="updateBy"        column="update_by"/>
+        <result property="updateTime"      column="update_time"/>
+        <result property="remark"          column="remark"/>
+    </resultMap>
+
+    <sql id="selectGiftVo">
+        select gift_id, name, image_url, threshold_amount, stock_quantity, sort_order, status,
+               create_by, create_time, update_by, update_time, remark
+        from shop_gift
+    </sql>
+
+    <select id="selectGiftList" parameterType="com.cheng.shop.domain.ShopGift" resultMap="ShopGiftResult">
+        <include refid="selectGiftVo"/>
+        <where>
+            <if test="name != null and name != ''">
+                AND name like concat('%', #{name}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+        order by sort_order asc, gift_id desc
+    </select>
+
+    <select id="selectGiftById" parameterType="Long" resultMap="ShopGiftResult">
+        <include refid="selectGiftVo"/>
+        where gift_id = #{giftId}
+    </select>
+
+    <select id="selectAvailableGifts" resultMap="ShopGiftResult">
+        <include refid="selectGiftVo"/>
+        where status = 'ENABLED'
+          and stock_quantity > 0
+          and threshold_amount &lt;= #{amount}
+        order by threshold_amount desc, sort_order asc
+    </select>
+
+    <insert id="insertGift" parameterType="com.cheng.shop.domain.ShopGift" useGeneratedKeys="true" keyProperty="giftId">
+        insert into shop_gift
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">name,</if>
+            <if test="imageUrl != null">image_url,</if>
+            <if test="thresholdAmount != null">threshold_amount,</if>
+            <if test="stockQuantity != null">stock_quantity,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null">remark,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="imageUrl != null">#{imageUrl},</if>
+            <if test="thresholdAmount != null">#{thresholdAmount},</if>
+            <if test="stockQuantity != null">#{stockQuantity},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null">#{remark},</if>
+            now()
+        </trim>
+    </insert>
+
+    <update id="updateGift" parameterType="com.cheng.shop.domain.ShopGift">
+        update shop_gift
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="thresholdAmount != null">threshold_amount = #{thresholdAmount},</if>
+            <if test="stockQuantity != null">stock_quantity = #{stockQuantity},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = now()
+        </trim>
+        where gift_id = #{giftId}
+    </update>
+
+    <delete id="deleteGiftById" parameterType="Long">
+        delete from shop_gift where gift_id = #{giftId}
+    </delete>
+
+    <delete id="deleteGiftByIds" parameterType="Long">
+        delete from shop_gift where gift_id in
+        <foreach item="giftId" collection="array" open="(" separator="," close=")">
+            #{giftId}
+        </foreach>
+    </delete>
+
+    <update id="decreaseStock">
+        update shop_gift
+        set stock_quantity = stock_quantity - #{quantity},
+            update_time    = now()
+        where gift_id = #{giftId}
+          and stock_quantity >= #{quantity}
+    </update>
+
+</mapper>

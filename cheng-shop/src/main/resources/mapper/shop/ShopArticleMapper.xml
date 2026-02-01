@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.shop.mapper.ShopArticleMapper">
+
+    <resultMap type="com.cheng.shop.domain.ShopArticle" id="ShopArticleResult">
+        <id     property="articleId"   column="article_id"/>
+        <result property="title"       column="title"/>
+        <result property="summary"     column="summary"/>
+        <result property="content"     column="content"/>
+        <result property="coverImage"  column="cover_image"/>
+        <result property="productId"   column="product_id"/>
+        <result property="sortOrder"   column="sort_order"/>
+        <result property="viewCount"   column="view_count"/>
+        <result property="status"      column="status"/>
+        <result property="createBy"    column="create_by"/>
+        <result property="createTime"  column="create_time"/>
+        <result property="updateBy"    column="update_by"/>
+        <result property="updateTime"  column="update_time"/>
+        <result property="remark"      column="remark"/>
+        <result property="productTitle" column="product_title"/>
+    </resultMap>
+
+    <!-- 列表查詢（不含 content 大欄位） -->
+    <sql id="selectArticleListVo">
+        select a.article_id, a.title, a.summary, a.cover_image, a.product_id,
+               a.sort_order, a.view_count, a.status,
+               a.create_by, a.create_time, a.update_by, a.update_time, a.remark,
+               p.title as product_title
+        from shop_article a
+        left join shop_product p on a.product_id = p.product_id
+    </sql>
+
+    <!-- 詳情查詢（含 content） -->
+    <sql id="selectArticleVo">
+        select a.article_id, a.title, a.summary, a.content, a.cover_image, a.product_id,
+               a.sort_order, a.view_count, a.status,
+               a.create_by, a.create_time, a.update_by, a.update_time, a.remark,
+               p.title as product_title
+        from shop_article a
+        left join shop_product p on a.product_id = p.product_id
+    </sql>
+
+    <select id="selectArticleList" parameterType="com.cheng.shop.domain.ShopArticle" resultMap="ShopArticleResult">
+        <include refid="selectArticleListVo"/>
+        <where>
+            <if test="title != null and title != ''">
+                AND a.title like concat('%', #{title}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND a.status = #{status}
+            </if>
+        </where>
+        order by a.sort_order asc, a.article_id desc
+    </select>
+
+    <select id="selectArticleById" parameterType="Long" resultMap="ShopArticleResult">
+        <include refid="selectArticleVo"/>
+        where a.article_id = #{articleId}
+    </select>
+
+    <select id="selectPublishedArticleList" resultMap="ShopArticleResult">
+        <include refid="selectArticleListVo"/>
+        where a.status = 'PUBLISHED'
+        order by a.sort_order asc, a.create_time desc
+    </select>
+
+    <select id="selectLatestArticles" resultMap="ShopArticleResult">
+        <include refid="selectArticleListVo"/>
+        where a.status = 'PUBLISHED'
+        order by a.create_time desc
+        limit #{limit}
+    </select>
+
+    <insert id="insertArticle" parameterType="com.cheng.shop.domain.ShopArticle" useGeneratedKeys="true" keyProperty="articleId">
+        insert into shop_article
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null and title != ''">title,</if>
+            <if test="summary != null">summary,</if>
+            <if test="content != null">content,</if>
+            <if test="coverImage != null">cover_image,</if>
+            <if test="productId != null">product_id,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="viewCount != null">view_count,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null">remark,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="summary != null">#{summary},</if>
+            <if test="content != null">#{content},</if>
+            <if test="coverImage != null">#{coverImage},</if>
+            <if test="productId != null">#{productId},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="viewCount != null">#{viewCount},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null">#{remark},</if>
+            now()
+        </trim>
+    </insert>
+
+    <update id="updateArticle" parameterType="com.cheng.shop.domain.ShopArticle">
+        update shop_article
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="summary != null">summary = #{summary},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="coverImage != null">cover_image = #{coverImage},</if>
+            <if test="productId != null">product_id = #{productId},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = now()
+        </trim>
+        where article_id = #{articleId}
+    </update>
+
+    <delete id="deleteArticleById" parameterType="Long">
+        delete from shop_article where article_id = #{articleId}
+    </delete>
+
+    <delete id="deleteArticleByIds" parameterType="Long">
+        delete from shop_article where article_id in
+        <foreach item="articleId" collection="array" open="(" separator="," close=")">
+            #{articleId}
+        </foreach>
+    </delete>
+
+    <update id="increaseViewCount" parameterType="Long">
+        update shop_article set view_count = view_count + 1 where article_id = #{articleId}
+    </update>
+
+</mapper>

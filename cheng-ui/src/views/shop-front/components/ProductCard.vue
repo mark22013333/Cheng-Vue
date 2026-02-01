@@ -11,10 +11,16 @@
       <h3 class="product-title">{{ product.title }}</h3>
       <p class="product-subtitle" v-if="product.subTitle">{{ product.subTitle }}</p>
       <div class="product-price">
-        <span class="current-price">NT$ {{ product.price || 0 }}</span>
-        <span v-if="product.originalPrice && product.originalPrice > product.price" class="original-price">
+        <span class="current-price">NT$ {{ product.finalPrice || product.price || 0 }}</span>
+        <span v-if="product.originalDisplayPrice && product.originalDisplayPrice > (product.finalPrice || product.price)" class="original-price">
+          NT$ {{ product.originalDisplayPrice }}
+        </span>
+        <span v-else-if="product.originalPrice && product.originalPrice > (product.finalPrice || product.price)" class="original-price">
           NT$ {{ product.originalPrice }}
         </span>
+      </div>
+      <div v-if="product.discountLabel" class="discount-label">
+        {{ product.discountLabel }}
       </div>
       <div class="product-meta">
         <span class="sales">銷量 {{ product.salesCount || 0 }}</span>
@@ -136,6 +142,17 @@ function getImageUrl(url) {
   font-size: 12px;
   color: #c0c4cc;
   text-decoration: line-through;
+}
+
+.discount-label {
+  display: inline-block;
+  padding: 2px 8px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: #f56c6c;
+  background: #fef0f0;
+  border: 1px solid #fde2e2;
+  border-radius: 4px;
 }
 
 .product-meta {

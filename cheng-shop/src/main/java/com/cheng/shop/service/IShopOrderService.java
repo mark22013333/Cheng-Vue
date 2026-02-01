@@ -1,6 +1,7 @@
 package com.cheng.shop.service;
 
 import com.cheng.shop.domain.ShopOrder;
+import com.cheng.shop.payment.CallbackResult;
 
 import java.util.List;
 import java.util.Map;
@@ -136,4 +137,21 @@ public interface IShopOrderService {
      * @return 影響行數
      */
     int updateShipStatus(Long orderId, String shipStatus);
+
+    /**
+     * 處理金流回調
+     * <p>
+     * 使用悲觀鎖（FOR UPDATE）確保併發安全，在事務內執行：
+     * <ol>
+     *     <li>鎖定訂單行</li>
+     *     <li>冪等性檢查（已付款則跳過）</li>
+     *     <li>更新訂單狀態</li>
+     *     <li>發布 {@link com.cheng.shop.event.PaymentSuccessEvent} 事件</li>
+     * </ol>
+     * 銷量更新等副作用由事件監聽器在事務提交後異步處理。
+     *
+     * @param result 金流回調結果
+     * @return 處理結果訊息（回傳給金流平台）
+     */
+    String handlePaymentCallback(CallbackResult result);
 }

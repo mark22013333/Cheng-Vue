@@ -139,6 +139,16 @@ public class ShopProductServiceImpl implements IShopProductService {
         return productMapper.increaseViewCount(productId);
     }
 
+    @Override
+    public int updateProductFlag(Long[] productIds, String flagName, boolean flagValue) {
+        return productMapper.updateProductFlag(productIds, flagName, flagValue);
+    }
+
+    @Override
+    public int increaseSalesCount(Long productId, int count) {
+        return productMapper.increaseSalesCount(productId, count);
+    }
+
     /**
      * 處理 sliderImages JSON 欄位
      * 支援逗號分隔字串或 JSON 陣列格式，統一轉換為 JSON 陣列

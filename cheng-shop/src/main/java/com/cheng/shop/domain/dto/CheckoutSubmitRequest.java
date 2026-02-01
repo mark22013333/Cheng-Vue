@@ -26,4 +26,9 @@ public class CheckoutSubmitRequest {
      * 付款方式（目前僅支援 COD 貨到付款）
      */
     private String paymentMethod = "COD";
+
+    /**
+     * 選擇的禮物ID（可選）
+     */
+    private Long giftId;
 }

@@ -127,6 +127,18 @@ export const constantRoutes = [
         meta: { title: '商品分類' }
       },
       {
+        path: 'articles',
+        component: () => import('@/views/shop-front/article/list.vue'),
+        name: 'MallArticles',
+        meta: { title: '文章列表' }
+      },
+      {
+        path: 'article/:id',
+        component: () => import('@/views/shop-front/article/detail.vue'),
+        name: 'MallArticleDetail',
+        meta: { title: '文章詳情' }
+      },
+      {
         path: 'cart',
         component: () => import('@/views/shop-front/cart/index.vue'),
         name: 'MallCart',
@@ -143,6 +155,12 @@ export const constantRoutes = [
         component: () => import('@/views/shop-front/order/success.vue'),
         name: 'MallOrderSuccess',
         meta: { title: '訂單完成' }
+      },
+      {
+        path: 'payment-result/:orderNo',
+        component: () => import('@/views/shop-front/order/payment-result.vue'),
+        name: 'MallPaymentResult',
+        meta: { title: '付款結果' }
       },
       {
         path: 'member',

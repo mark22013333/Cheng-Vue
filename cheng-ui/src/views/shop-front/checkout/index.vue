@@ -56,14 +56,51 @@
         />
       </div>
 
+      <!-- 滿額禮物 -->
+      <div class="checkout-section" v-if="checkoutData.availableGifts && checkoutData.availableGifts.length > 0">
+        <h2>滿額禮物</h2>
+        <div class="gift-list">
+          <div
+            v-for="gift in checkoutData.availableGifts"
+            :key="gift.giftId"
+            class="gift-option"
+            :class="{ 'is-selected': selectedGiftId === gift.giftId }"
+            @click="selectGift(gift)"
+          >
+            <el-image
+              v-if="gift.imageUrl"
+              :src="getImageUrl(gift.imageUrl)"
+              class="gift-image"
+              fit="cover"
+            />
+            <div class="gift-info">
+              <div class="gift-name">{{ gift.name }}</div>
+              <div class="gift-threshold">滿 ${{ formatPrice(gift.thresholdAmount) }} 可選</div>
+            </div>
+            <el-icon v-if="selectedGiftId === gift.giftId" class="gift-check">
+              <CircleCheckFilled />
+            </el-icon>
+          </div>
+        </div>
+        <el-button v-if="selectedGiftId" text type="info" size="small" @click="selectedGiftId = null" style="margin-top: 8px;">
+          取消選擇禮物
+        </el-button>
+      </div>
+
       <!-- 付款方式 -->
       <div class="checkout-section">
         <h2>付款方式</h2>
-        <el-radio-group v-model="paymentMethod">
+        <el-radio-group v-model="paymentMethod" class="payment-group">
           <el-radio value="COD" size="large">
             <div class="payment-option">
               <span class="payment-name">貨到付款</span>
               <span class="payment-desc">收到商品後現金支付</span>
+            </div>
+          </el-radio>
+          <el-radio value="ECPAY" size="large">
+            <div class="payment-option">
+              <span class="payment-name">綠界金流</span>
+              <span class="payment-desc">支援信用卡、ATM、超商付款</span>
             </div>
           </el-radio>
         </el-radio-group>
@@ -190,6 +227,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { CircleCheckFilled } from '@element-plus/icons-vue'
 import { getCheckoutPreview, submitOrder } from '@/api/shop/checkout'
+import { createEcpayPayment } from '@/api/shop/payment'
 import { addAddress } from '@/api/shop/address'
 import { getToken } from '@/utils/auth'
 
@@ -204,6 +242,7 @@ const addingAddress = ref(false)
 const remark = ref('')
 const paymentMethod = ref('COD')
 const selectedAddress = ref(null)
+const selectedGiftId = ref(null)
 const addressFormRef = ref(null)
 
 // 新增地址表單
@@ -240,7 +279,8 @@ const checkoutData = reactive({
   productAmount: 0,
   shippingFee: 0,
   discountAmount: 0,
-  payableAmount: 0
+  payableAmount: 0,
+  availableGifts: []
 })
 
 onMounted(() => {
@@ -266,6 +306,15 @@ async function fetchCheckoutPreview(addressId) {
       checkoutData.shippingFee = data.shippingFee || 0
       checkoutData.discountAmount = data.discountAmount || 0
       checkoutData.payableAmount = data.payableAmount || 0
+      checkoutData.availableGifts = data.availableGifts || []
+
+      // 清除已選禮物（如果不在可用列表中）
+      if (selectedGiftId.value) {
+        const stillAvailable = checkoutData.availableGifts.some(g => g.giftId === selectedGiftId.value)
+        if (!stillAvailable) {
+          selectedGiftId.value = null
+        }
+      }
 
       if (data.address) {
         selectedAddress.value = data.address
@@ -294,6 +343,14 @@ function getImageUrl(url) {
 
 function formatPrice(price) {
   return Number(price || 0).toFixed(2)
+}
+
+function selectGift(gift) {
+  if (selectedGiftId.value === gift.giftId) {
+    selectedGiftId.value = null
+  } else {
+    selectedGiftId.value = gift.giftId
+  }
 }
 
 function selectAddress(addr) {
@@ -348,6 +405,28 @@ async function handleAddAddress() {
   }
 }
 
+async function handleEcpayPayment(orderNo) {
+  try {
+    const res = await createEcpayPayment(orderNo)
+    if (res.code === 200 && res.data?.formHtml) {
+      // 將 ECPay 自動提交表單插入頁面並執行
+      const container = document.createElement('div')
+      container.innerHTML = res.data.formHtml
+      document.body.appendChild(container)
+      const form = container.querySelector('form')
+      if (form) {
+        form.submit()
+      }
+    } else {
+      ElMessage.error(res.msg || '建立付款失敗，請至訂單頁面重新付款')
+      router.push(`/mall/member/order/${orderNo}`)
+    }
+  } catch (error) {
+    ElMessage.error('建立付款失敗，請至訂單頁面重新付款')
+    router.push(`/mall/member/order/${orderNo}`)
+  }
+}
+
 async function handleSubmit() {
   if (!selectedAddress.value) {
     ElMessage.warning('請選擇收貨地址')
@@ -367,15 +446,25 @@ async function handleSubmit() {
 
     submitting.value = true
 
-    const response = await submitOrder({
+    const submitData = {
       addressId: selectedAddress.value.addressId,
       remark: remark.value,
       paymentMethod: paymentMethod.value
-    })
+    }
+    if (selectedGiftId.value) {
+      submitData.giftId = selectedGiftId.value
+    }
+    const response = await submitOrder(submitData)
 
     if (response.code === 200) {
-      ElMessage.success('訂單提交成功')
-      router.push(`/mall/order-success/${response.data.orderNo}`)
+      const result = response.data
+      // 若需要線上付款（ECPay），導向金流頁面
+      if (result.needOnlinePayment) {
+        await handleEcpayPayment(result.orderNo)
+      } else {
+        ElMessage.success('訂單提交成功')
+        router.push(`/mall/order-success/${result.orderNo}`)
+      }
     } else {
       ElMessage.error(response.msg || '訂單提交失敗')
     }
@@ -512,6 +601,12 @@ async function handleSubmit() {
 }
 
 /* 付款方式 */
+.payment-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .payment-option {
   display: flex;
   flex-direction: column;
@@ -618,6 +713,68 @@ async function handleSubmit() {
   top: 16px;
   right: 16px;
   font-size: 20px;
+  color: var(--mall-primary, #409eff);
+}
+
+/* 禮物選擇 */
+.gift-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.gift-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #fafafa;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 200px;
+  flex: 1;
+}
+
+.gift-option:hover {
+  background: #f0f2f5;
+}
+
+.gift-option.is-selected {
+  border-color: var(--mall-primary, #409eff);
+  background: var(--mall-primary-light, #ecf5ff);
+}
+
+.gift-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.gift-info {
+  flex: 1;
+}
+
+.gift-name {
+  font-size: 14px;
+  color: #303133;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.gift-threshold {
+  font-size: 12px;
+  color: #909399;
+}
+
+.gift-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 18px;
   color: var(--mall-primary, #409eff);
 }
 

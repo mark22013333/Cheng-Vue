@@ -116,6 +116,14 @@
       <div class="action-section">
         <el-button @click="$router.push('/mall/member/orders')">返回訂單列表</el-button>
         <el-button
+          v-if="order.status === 'PENDING' && order.paymentMethod === 'ECPAY'"
+          type="primary"
+          :loading="paying"
+          @click="handlePayment"
+        >
+          立即付款
+        </el-button>
+        <el-button
           v-if="order.status === 'PENDING'"
           type="danger"
           plain
@@ -145,6 +153,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Location, ShoppingBag, Document, Tickets } from '@element-plus/icons-vue'
 import { getMyOrderDetail, memberCancelOrder, memberConfirmReceipt } from '@/api/shop/order'
+import { createEcpayPayment } from '@/api/shop/payment'
 
 const route = useRoute()
 const router = useRouter()
@@ -152,6 +161,7 @@ const orderNo = route.params.orderNo || ''
 
 const loading = ref(false)
 const order = ref(null)
+const paying = ref(false)
 
 onMounted(() => {
   if (orderNo) {
@@ -247,11 +257,34 @@ function getReceivedTimeDescription(order) {
 function getPaymentMethodText(method) {
   const map = {
     COD: '貨到付款',
+    ECPAY: '綠界金流',
     CREDIT_CARD: '信用卡',
     LINE_PAY: 'LINE Pay',
     BANK_TRANSFER: '銀行轉帳'
   }
   return map[method] || method || '未指定'
+}
+
+async function handlePayment() {
+  paying.value = true
+  try {
+    const res = await createEcpayPayment(order.value.orderNo)
+    if (res.code === 200 && res.data?.formHtml) {
+      const container = document.createElement('div')
+      container.innerHTML = res.data.formHtml
+      document.body.appendChild(container)
+      const form = container.querySelector('form')
+      if (form) {
+        form.submit()
+      }
+    } else {
+      ElMessage.error(res.msg || '建立付款失敗')
+    }
+  } catch (error) {
+    ElMessage.error(error.message || '建立付款失敗')
+  } finally {
+    paying.value = false
+  }
 }
 
 async function handleCancel() {

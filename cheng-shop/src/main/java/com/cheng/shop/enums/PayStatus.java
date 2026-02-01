@@ -44,11 +44,9 @@ public enum PayStatus implements CodedEnum<String> {
     public String getColor() {
         return switch (this) {
             case UNPAID -> "#909399";
-            case PAYING -> "#E6A23C";
+            case PAYING, REFUNDING -> "#E6A23C";
             case PAID -> "#67C23A";
-            case REFUNDING -> "#E6A23C";
-            case REFUNDED -> "#F56C6C";
-            case FAILED -> "#F56C6C";
+            case REFUNDED, FAILED -> "#F56C6C";
         };
     }
 

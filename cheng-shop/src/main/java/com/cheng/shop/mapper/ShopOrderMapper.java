@@ -106,4 +106,15 @@ public interface ShopOrderMapper {
      * @return 數量
      */
     int countOrderByStatus(@Param("memberId") Long memberId, @Param("status") String status);
+
+    /**
+     * 根據訂單編號查詢訂單（帶行鎖）
+     * <p>
+     * 使用 FOR UPDATE 悲觀鎖，防止併發回調導致的 Race Condition。
+     * 必須在事務內使用，否則鎖無效。
+     *
+     * @param orderNo 訂單編號
+     * @return 訂單（已鎖定）
+     */
+    ShopOrder selectOrderByOrderNoForUpdate(String orderNo);
 }

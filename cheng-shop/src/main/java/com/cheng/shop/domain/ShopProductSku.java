@@ -56,6 +56,11 @@ public class ShopProductSku extends BaseEntity {
     private BigDecimal originalPrice;
 
     /**
+     * 特惠價（優先於全站折扣）
+     */
+    private BigDecimal salePrice;
+
+    /**
      * 成本價
      */
     private BigDecimal costPrice;

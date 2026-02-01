@@ -46,6 +46,32 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="8">
+            <el-form-item label="特惠價" prop="salePrice">
+              <el-input-number v-model="form.salePrice" :min="0" :precision="0" placeholder="留空表示無特惠" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="特價結束時間" prop="saleEndDate">
+              <el-date-picker
+                v-model="form.saleEndDate"
+                type="datetime"
+                placeholder="留空表示長期"
+                style="width: 100%"
+                value-format="YYYY-MM-DD HH:mm:ss"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item>
+              <span v-if="form.salePrice > 0" class="sale-price-hint">
+                <el-tag type="danger" size="small">特惠價啟用中</el-tag>
+                <span style="margin-left: 8px; color: #f56c6c;">省 ${{ (form.price || 0) - (form.salePrice || 0) }}</span>
+              </span>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="8">
             <el-form-item label="推薦" prop="isRecommend">
               <el-switch v-model="form.isRecommend" :active-value="true" :inactive-value="false" />
             </el-form-item>
@@ -283,6 +309,8 @@ const form = ref({
   sliderImages: undefined,
   price: 0,
   originalPrice: 0,
+  salePrice: undefined,
+  saleEndDate: undefined,
   description: undefined,
   sortOrder: 0,
   isRecommend: false,

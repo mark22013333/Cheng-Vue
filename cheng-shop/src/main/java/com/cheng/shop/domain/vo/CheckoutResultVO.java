@@ -33,4 +33,9 @@ public class CheckoutResultVO {
      * 付款方式
      */
     private String paymentMethod;
+
+    /**
+     * 是否需要線上付款（ECPay/信用卡等）
+     */
+    private Boolean needOnlinePayment;
 }

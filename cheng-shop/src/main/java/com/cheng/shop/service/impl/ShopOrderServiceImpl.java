@@ -9,13 +9,18 @@ import com.cheng.shop.enums.OrderStatus;
 import com.cheng.shop.enums.PayStatus;
 import com.cheng.shop.enums.ShipStatus;
 import com.cheng.common.utils.SecurityUtils;
+import com.cheng.shop.event.PaymentSuccessEvent;
 import com.cheng.shop.mapper.ShopOrderItemMapper;
 import com.cheng.shop.mapper.ShopOrderMapper;
 import com.cheng.shop.mapper.ShopProductSkuMapper;
+import com.cheng.shop.payment.CallbackResult;
+import com.cheng.shop.service.IShopGiftService;
 import com.cheng.shop.service.IShopOrderService;
+import com.cheng.shop.service.IShopProductService;
 import com.cheng.shop.service.ShopStockSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +44,9 @@ public class ShopOrderServiceImpl implements IShopOrderService {
     private final ShopOrderItemMapper orderItemMapper;
     private final ShopProductSkuMapper skuMapper;
     private final ShopStockSyncService stockSyncService;
+    private final IShopGiftService giftService;
+    private final IShopProductService productService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public List<ShopOrder> selectOrderList(ShopOrder order) {
@@ -165,11 +173,22 @@ public class ShopOrderServiceImpl implements IShopOrderService {
         updateOrder.setPayStatus(PayStatus.PAID.getCode());
         updateOrder.setPaidTime(DateUtils.getNowDate());
 
+        int result = orderMapper.updateOrder(updateOrder);
+
+        // 更新商品銷量
+        List<ShopOrderItem> items = orderItemMapper.selectOrderItemsByOrderId(orderId);
+        for (ShopOrderItem item : items) {
+            if (item.getProductId() != null && item.getQuantity() != null) {
+                productService.increaseSalesCount(item.getProductId(), item.getQuantity());
+            }
+        }
+
         log.info("訂單支付成功，訂單ID: {}", orderId);
-        return orderMapper.updateOrder(updateOrder);
+        return result;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int shipOrder(Long orderId, String trackingNo) {
         ShopOrder order = orderMapper.selectOrderById(orderId);
         if (order == null) {
@@ -179,6 +198,16 @@ public class ShopOrderServiceImpl implements IShopOrderService {
         OrderStatus currentStatus = order.getStatusEnum();
         if (currentStatus != OrderStatus.PAID && currentStatus != OrderStatus.PROCESSING) {
             throw new ServiceException("當前訂單狀態無法出貨");
+        }
+
+        // 出貨時扣減禮物庫存
+        if (order.getGiftId() != null) {
+            int deducted = giftService.decreaseStock(order.getGiftId(), 1);
+            if (deducted <= 0) {
+                log.warn("禮物庫存扣減失敗，giftId={}，訂單仍繼續出貨", order.getGiftId());
+            } else {
+                log.info("禮物庫存已扣減，giftId={}, 訂單ID={}", order.getGiftId(), orderId);
+            }
         }
 
         ShopOrder updateOrder = new ShopOrder();
@@ -243,9 +272,12 @@ public class ShopOrderServiceImpl implements IShopOrderService {
 
     @Override
     public String generateOrderNo() {
-        String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        String random = IdUtils.fastSimpleUUID().substring(0, 6).toUpperCase();
-        return "ORD" + dateStr + random;
+        // 格式: O + yyMMdd(6) + HHmmss(6) + 7碼隨機英數字 = 20碼
+        // 範例: O2601300947035DE91AB
+        // 綠界 MerchantTradeNo 上限 20 碼
+        String dateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"));
+        String random = IdUtils.fastSimpleUUID().substring(0, 7).toUpperCase();
+        return "O" + dateTime + random;
     }
 
     @Override
@@ -281,8 +313,21 @@ public class ShopOrderServiceImpl implements IShopOrderService {
             updateOrder.setPaidTime(DateUtils.getNowDate());
         }
 
+        int result = orderMapper.updateOrder(updateOrder);
+
+        // 手動標記為已付款時，同步更新商品銷量
+        if (PayStatus.PAID.getCode().equals(payStatus)
+                && !PayStatus.PAID.getCode().equals(order.getPayStatus())) {
+            List<ShopOrderItem> items = orderItemMapper.selectOrderItemsByOrderId(orderId);
+            for (ShopOrderItem item : items) {
+                if (item.getProductId() != null && item.getQuantity() != null) {
+                    productService.increaseSalesCount(item.getProductId(), item.getQuantity());
+                }
+            }
+        }
+
         log.info("手動更新訂單付款狀態，訂單ID: {}, 新狀態: {}", orderId, payStatus);
-        return orderMapper.updateOrder(updateOrder);
+        return result;
     }
 
     @Override
@@ -316,5 +361,48 @@ public class ShopOrderServiceImpl implements IShopOrderService {
 
         log.info("手動更新訂單物流狀態，訂單ID: {}, 新狀態: {}", orderId, shipStatus);
         return orderMapper.updateOrder(updateOrder);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String handlePaymentCallback(CallbackResult result) {
+        String orderNo = result.getOrderNo();
+
+        // 1. 使用 FOR UPDATE 鎖定訂單行，防止併發回調
+        ShopOrder order = orderMapper.selectOrderByOrderNoForUpdate(orderNo);
+        if (order == null) {
+            log.error("金流回調：訂單不存在，orderNo={}", orderNo);
+            return "0|ErrorMessage=Order Not Found";
+        }
+
+        // 2. 冪等性檢查：已付款的訂單不重複處理
+        if (PayStatus.PAID.getCode().equals(order.getPayStatus())) {
+            log.info("金流回調：訂單已付款，跳過處理，orderNo={}", orderNo);
+            return result.getResponseBody();
+        }
+
+        // 3. 根據回調結果更新訂單
+        if (result.isPaymentSuccess()) {
+            ShopOrder updateOrder = new ShopOrder();
+            updateOrder.setOrderId(order.getOrderId());
+            updateOrder.setPayStatusEnum(PayStatus.PAID);
+            updateOrder.setStatusEnum(OrderStatus.PAID);
+            updateOrder.setEcpayTradeNo(result.getTradeNo());
+            updateOrder.setEcpayInfo(result.getRawInfo());
+            updateOrder.setPaidTime(DateUtils.getNowDate());
+            updateOrder.setPaymentNo(result.getTradeNo());
+            orderMapper.updateOrder(updateOrder);
+
+            log.info("金流回調：訂單更新為已付款，orderNo={}, tradeNo={}", orderNo, result.getTradeNo());
+
+            // 4. 發布支付成功事件（銷量更新等副作用由 Listener 在事務提交後處理）
+            // 注意：傳遞的是 updateOrder（含 orderId），Listener 會重新載入完整訂單
+            updateOrder.setOrderNo(orderNo); // 補上 orderNo 供 Listener 記錄日誌
+            eventPublisher.publishEvent(new PaymentSuccessEvent(this, updateOrder));
+        } else {
+            log.warn("金流回調：付款未成功，orderNo={}", orderNo);
+        }
+
+        return result.getResponseBody();
     }
 }
