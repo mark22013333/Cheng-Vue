@@ -6,16 +6,24 @@ import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
 import com.cheng.shop.domain.ShopBanner;
 import com.cheng.shop.domain.ShopCategory;
+import com.cheng.shop.domain.ShopArticle;
+import com.cheng.shop.domain.ShopGift;
 import com.cheng.shop.domain.ShopProduct;
 import com.cheng.shop.domain.ShopProductSku;
+import com.cheng.shop.service.IShopArticleService;
 import com.cheng.shop.service.IShopBannerService;
 import com.cheng.shop.service.IShopCategoryService;
+import com.cheng.shop.service.IShopGiftService;
 import com.cheng.shop.service.IShopProductService;
 import com.cheng.shop.service.IShopProductSkuService;
+import com.cheng.shop.service.ShopPriceService;
+import com.cheng.system.service.ISysConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,10 +37,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ShopFrontController extends BaseController {
 
+    private final IShopArticleService articleService;
     private final IShopProductService productService;
     private final IShopProductSkuService skuService;
     private final IShopCategoryService categoryService;
     private final IShopBannerService bannerService;
+    private final IShopGiftService giftService;
+    private final ShopPriceService priceService;
+    private final ISysConfigService configService;
 
     /**
      * 查詢有效輪播（前台首頁用）
@@ -49,6 +61,7 @@ public class ShopFrontController extends BaseController {
     @GetMapping("/products/hot")
     public AjaxResult listHotProducts(@RequestParam(defaultValue = "8") Integer limit) {
         List<ShopProduct> list = productService.selectHotProducts(limit);
+        priceService.enrichProductPrices(list);
         return success(list);
     }
 
@@ -58,6 +71,7 @@ public class ShopFrontController extends BaseController {
     @GetMapping("/products/new")
     public AjaxResult listNewProducts(@RequestParam(defaultValue = "8") Integer limit) {
         List<ShopProduct> list = productService.selectNewProducts(limit);
+        priceService.enrichProductPrices(list);
         return success(list);
     }
 
@@ -67,6 +81,7 @@ public class ShopFrontController extends BaseController {
     @GetMapping("/products/recommend")
     public AjaxResult listRecommendProducts(@RequestParam(defaultValue = "8") Integer limit) {
         List<ShopProduct> list = productService.selectRecommendProducts(limit);
+        priceService.enrichProductPrices(list);
         return success(list);
     }
 
@@ -93,6 +108,7 @@ public class ShopFrontController extends BaseController {
 
         startPage();
         List<ShopProduct> list = productService.selectProductList(product);
+        priceService.enrichProductPrices(list);
         return getDataTable(list);
     }
 
@@ -107,6 +123,8 @@ public class ShopFrontController extends BaseController {
         }
         // 增加瀏覽量
         productService.increaseViewCount(productId);
+        // 計算折扣價格
+        priceService.enrichProductPrices(List.of(product));
         return success(product);
     }
 
@@ -129,6 +147,50 @@ public class ShopFrontController extends BaseController {
         ShopCategory query = new ShopCategory();
         query.setStatus("ENABLED");
         List<ShopCategory> list = categoryService.selectCategoryList(query);
+        return success(list);
+    }
+
+    /**
+     * 查詢可用禮物（前台：根據消費金額篩選）
+     */
+    @GetMapping("/gifts")
+    public AjaxResult listAvailableGifts(@RequestParam BigDecimal amount) {
+        if (!"1".equals(configService.selectConfigByKey("shop.gift.enabled"))) {
+            return success(Collections.emptyList());
+        }
+        List<ShopGift> list = giftService.selectAvailableGifts(amount);
+        return success(list);
+    }
+
+    /**
+     * 查詢已發布文章列表（前台，分頁）
+     */
+    @GetMapping("/articles")
+    public TableDataInfo listArticles() {
+        startPage();
+        List<ShopArticle> list = articleService.selectPublishedArticleList();
+        return getDataTable(list);
+    }
+
+    /**
+     * 查詢文章詳情（前台，瀏覽數+1）
+     */
+    @GetMapping("/article/{articleId}")
+    public AjaxResult getArticle(@PathVariable Long articleId) {
+        ShopArticle article = articleService.selectArticleById(articleId);
+        if (article == null || !"PUBLISHED".equals(article.getStatus())) {
+            return error("文章不存在或未發布");
+        }
+        articleService.increaseViewCount(articleId);
+        return success(article);
+    }
+
+    /**
+     * 查詢最新文章（首頁用）
+     */
+    @GetMapping("/articles/latest")
+    public AjaxResult listLatestArticles(@RequestParam(defaultValue = "6") Integer limit) {
+        List<ShopArticle> list = articleService.selectLatestArticles(limit);
         return success(list);
     }
 }

@@ -40,11 +40,29 @@
         <p class="product-subtitle" v-if="product.subTitle">{{ product.subTitle }}</p>
         
         <div class="price-section">
-          <span class="current-price">NT$ {{ selectedSku?.price || product.price || 0 }}</span>
-          <span v-if="selectedSku?.originalPrice" class="original-price">
+          <span class="current-price">NT$ {{ currentPrice }}</span>
+          <span
+            v-if="selectedSku?.originalPrice && Number(selectedSku.originalPrice) > Number(currentPrice)"
+            class="original-price"
+          >
             NT$ {{ selectedSku.originalPrice }}
           </span>
+          <span
+            v-else-if="product.originalDisplayPrice && Number(product.originalDisplayPrice) > Number(currentPrice)"
+            class="original-price"
+          >
+            NT$ {{ product.originalDisplayPrice }}
+          </span>
+          <span
+            v-else-if="product.originalPrice && Number(product.originalPrice) > Number(currentPrice)"
+            class="original-price"
+          >
+            NT$ {{ product.originalPrice }}
+          </span>
+          <span v-if="showDiscountTag" class="discount-tag">{{ product.discountLabel }}</span>
         </div>
+
+        <div v-if="showSaleCountdown" class="sale-countdown">特惠價倒數：{{ saleCountdownText }}</div>
 
         <div class="meta-section">
           <span>銷量：{{ product.salesCount || 0 }}</span>
@@ -108,7 +126,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getProduct, getProductSkus, listCategories } from '@/api/shop/front'
@@ -153,6 +171,121 @@ const categoryPath = computed(() => {
 const selectedSku = computed(() => {
   return skuList.value.find(sku => sku.skuId === selectedSkuId.value)
 })
+
+const nowTs = ref(Date.now())
+let countdownTimer = null
+let saleExpiredReloaded = false
+
+function parseDateTimeString(value) {
+  if (!value) return null
+  try {
+    const ts = new Date(String(value).replace(' ', 'T')).getTime()
+    return Number.isFinite(ts) ? ts : null
+  } catch (e) {
+    return null
+  }
+}
+
+const saleEndTs = computed(() => parseDateTimeString(product.value?.saleEndDate))
+
+const saleRemainingMs = computed(() => {
+  if (!saleEndTs.value) return 0
+  return saleEndTs.value - nowTs.value
+})
+
+const effectiveSalePrice = computed(() => {
+  if (selectedSku.value?.salePrice != null) {
+    return Number(selectedSku.value.salePrice || 0)
+  }
+  return Number(product.value?.salePrice || 0)
+})
+
+const hasActiveSalePrice = computed(() => {
+  const salePrice = Number(effectiveSalePrice.value || 0)
+  if (!(salePrice > 0)) return false
+  if (!saleEndTs.value) return true
+  return saleRemainingMs.value > 0
+})
+
+const currentPrice = computed(() => {
+  if (!product.value) return 0
+
+  // 若商品特惠價已過期，但後端回傳的 finalPrice 仍可能是舊資料，先強制回到商品價格
+  if (saleEndTs.value && saleRemainingMs.value <= 0) {
+    return Number(selectedSku.value?.price || product.value.price || 0)
+  }
+
+  // 優先顯示特惠價（有效期間內）
+  if (hasActiveSalePrice.value) {
+    return Number(effectiveSalePrice.value || 0)
+  }
+
+  // 有選擇 SKU 時，價格以 SKU 為準
+  if (selectedSku.value?.price != null) {
+    return Number(selectedSku.value.price || 0)
+  }
+
+  // 其次使用後端計算後的最終售價（例如全站折扣）
+  const finalPrice = product.value.finalPrice
+  if (finalPrice != null) {
+    return Number(finalPrice || 0)
+  }
+
+  // 最後才退回商品價格
+  return Number(product.value.price || 0)
+})
+
+const showDiscountTag = computed(() => {
+  if (!product.value?.discountLabel) return false
+
+  const original = Number(
+    selectedSku.value?.originalPrice ?? product.value.originalDisplayPrice ?? product.value.originalPrice ?? 0
+  )
+  return original > Number(currentPrice.value)
+})
+
+const showSaleCountdown = computed(() => {
+  return hasActiveSalePrice.value && !!product.value?.saleEndDate && Number(effectiveSalePrice.value || 0) > 0
+})
+
+function formatCountdown(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  const hh = String(hours).padStart(2, '0')
+  const mm = String(minutes).padStart(2, '0')
+  const ss = String(seconds).padStart(2, '0')
+
+  if (days > 0) {
+    return `${days}天 ${hh}:${mm}:${ss}`
+  }
+  return `${hh}:${mm}:${ss}`
+}
+
+const saleCountdownText = computed(() => formatCountdown(saleRemainingMs.value))
+
+function stopCountdown() {
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+}
+
+function startCountdown() {
+  stopCountdown()
+  nowTs.value = Date.now()
+  if (!showSaleCountdown.value) return
+  countdownTimer = setInterval(() => {
+    nowTs.value = Date.now()
+    if (saleEndTs.value && saleRemainingMs.value <= 0 && !saleExpiredReloaded) {
+      saleExpiredReloaded = true
+      loadProduct()
+    }
+  }, 1000)
+}
 
 const allImages = computed(() => {
   const images = []
@@ -257,6 +390,7 @@ async function loadProduct() {
     const res = await getProduct(productId)
     product.value = res.data
     currentImage.value = res.data?.mainImage || ''
+    saleExpiredReloaded = false
 
     // 載入 SKU
     const skuRes = await getProductSkus(productId)
@@ -278,9 +412,21 @@ watch(() => route.params.id, () => {
   loadProduct()
 })
 
+watch(showSaleCountdown, () => {
+  startCountdown()
+})
+
+watch(selectedSkuId, () => {
+  startCountdown()
+})
+
 onMounted(() => {
   loadCategories()
   loadProduct()
+})
+
+onUnmounted(() => {
+  stopCountdown()
 })
 </script>
 
@@ -403,6 +549,22 @@ onMounted(() => {
   font-size: 16px;
   color: #c0c4cc;
   text-decoration: line-through;
+}
+
+.discount-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: white;
+  background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.sale-countdown {
+  font-size: 13px;
+  color: #e6a23c;
+  margin-top: 8px;
 }
 
 .meta-section {

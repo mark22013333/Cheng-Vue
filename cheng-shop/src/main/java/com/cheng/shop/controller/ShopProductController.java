@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +34,20 @@ public class ShopProductController extends BaseController {
      */
     @PreAuthorize("@ss.hasPermi('shop:product:list')")
     @GetMapping("/list")
-    public TableDataInfo list(ShopProduct product) {
+    public TableDataInfo list(ShopProduct product,
+                              @RequestParam(required = false) String categoryIds) {
+        // 處理逗號分隔的分類 ID 列表（支援父分類包含子分類搜尋）
+        if (categoryIds != null && !categoryIds.isBlank()) {
+            List<Long> ids = Arrays.stream(categoryIds.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(Long::parseLong)
+                    .toList();
+            if (!ids.isEmpty()) {
+                product.setCategoryIds(ids);
+                product.setCategoryId(null);
+            }
+        }
         startPage();
         List<ShopProduct> list = productService.selectProductList(product);
         return getDataTable(list);
@@ -137,5 +151,27 @@ public class ShopProductController extends BaseController {
             ajaxResult.put("action", "下架");
         }
         return ajaxResult;
+    }
+
+    /**
+     * 批量更新商品標記（熱門/新品/推薦）
+     */
+    @PreAuthorize("@ss.hasPermi('shop:product:edit')")
+    @Log(title = "商品管理", businessType = BusinessType.UPDATE)
+    @PutMapping("/flag")
+    public AjaxResult updateFlag(@RequestBody Map<String, Object> params) {
+        List<?> rawIds = (List<?>) params.get("productIds");
+        Long[] productIds = rawIds.stream()
+                .map(id -> Long.valueOf(id.toString()))
+                .toArray(Long[]::new);
+        String flagName = (String) params.get("flagName");
+        boolean flagValue = Boolean.parseBoolean(params.get("flagValue").toString());
+
+        // 白名單驗證
+        if (!Arrays.asList("is_hot", "is_new", "is_recommend").contains(flagName)) {
+            return error("不支援的標記類型：" + flagName);
+        }
+
+        return toAjax(productService.updateProductFlag(productIds, flagName, flagValue));
     }
 }

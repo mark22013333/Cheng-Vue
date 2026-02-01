@@ -55,11 +55,18 @@
         </template>
       </el-table-column>
       <el-table-column prop="title" label="標題" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="linkUrl" label="連結" min-width="200" show-overflow-tooltip>
+      <el-table-column label="連結" min-width="200" show-overflow-tooltip>
         <template #default="scope">
-          <el-link v-if="scope.row.linkUrl" :href="scope.row.linkUrl" target="_blank" type="primary">
-            {{ scope.row.linkUrl }}
-          </el-link>
+          <template v-if="scope.row.linkType === 'PRODUCT'">
+            <el-tag type="success" size="small">商品</el-tag>
+            <span style="margin-left: 6px;">ID: {{ scope.row.linkValue }}</span>
+          </template>
+          <template v-else-if="scope.row.linkType === 'URL'">
+            <el-tag type="warning" size="small">外部</el-tag>
+            <el-link :href="scope.row.linkValue" target="_blank" type="primary" style="margin-left: 6px;">
+              {{ scope.row.linkValue }}
+            </el-link>
+          </template>
           <span v-else>-</span>
         </template>
       </el-table-column>
@@ -114,36 +121,12 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.linkType === 'PRODUCT'" label="選擇商品" prop="linkValue">
-          <el-select
+          <product-picker-dialog
             v-model="form.linkValue"
-            filterable
-            remote
-            :remote-method="searchProducts"
-            :loading="productLoading"
-            placeholder="請搜尋並選擇商品"
+            :only-sale="true"
+            @confirm="onBannerProductSelected"
             style="width: 100%"
-            clearable
-          >
-            <el-option
-              v-for="item in productOptions"
-              :key="item.productId"
-              :label="item.title"
-              :value="String(item.productId)"
-            >
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <el-image
-                  v-if="item.mainImage"
-                  :src="getImageUrl(item.mainImage)"
-                  style="width: 32px; height: 32px; border-radius: 4px; flex-shrink: 0;"
-                  fit="cover"
-                />
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ item.title }}</div>
-                  <div style="font-size: 11px; color: #999;">NT$ {{ item.price }}</div>
-                </div>
-              </div>
-            </el-option>
-          </el-select>
+          />
         </el-form-item>
         <el-form-item v-if="form.linkType === 'URL'" label="連結網址" prop="linkValue">
           <el-input v-model="form.linkValue" placeholder="請輸入完整網址，例如：https://example.com">
@@ -178,8 +161,9 @@
 </template>
 
 <script setup name="ShopBanner">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, getCurrentInstance } from 'vue'
 import { listBanner, getBanner, addBanner, updateBanner, delBanner } from '@/api/shop/banner'
+import ProductPickerDialog from '@/components/ProductPickerDialog/index.vue'
 
 const { proxy } = getCurrentInstance()
 
@@ -257,7 +241,11 @@ function handleAdd() {
 function handleUpdate(row) {
   reset()
   getBanner(row.bannerId).then(response => {
-    form.value = response.data
+    const data = response.data
+    if (!data.linkType) {
+      data.linkType = 'NONE'
+    }
+    form.value = data
     open.value = true
     title.value = '修改輪播'
   })
@@ -303,11 +291,20 @@ function reset() {
     bannerId: undefined,
     title: undefined,
     imageUrl: undefined,
-    linkUrl: undefined,
+    linkType: 'NONE',
+    linkValue: undefined,
     sortOrder: 0,
     status: 'ENABLED'
   }
   bannerFormRef.value?.resetFields()
+}
+
+function handleLinkTypeChange() {
+  form.value.linkValue = undefined
+}
+
+function onBannerProductSelected(product) {
+  form.value.linkValue = String(product.productId)
 }
 
 function getImageUrl(url) {

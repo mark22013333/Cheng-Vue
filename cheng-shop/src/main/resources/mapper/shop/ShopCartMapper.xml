@@ -16,13 +16,18 @@
         <result property="skuName"      column="sku_name"/>
         <result property="skuImage"     column="sku_image"/>
         <result property="price"        column="price"/>
+        <result property="skuSalePrice"       column="sku_sale_price"/>
+        <result property="productSalePrice"   column="product_sale_price"/>
+        <result property="productSaleEndDate" column="product_sale_end_date"/>
         <result property="stockQuantity" column="stock_quantity"/>
     </resultMap>
 
     <sql id="selectCartVo">
         select c.cart_id, c.member_id, c.sku_id, c.quantity, c.is_selected, c.create_time, c.update_time,
                s.product_id, p.title as product_name, p.main_image as product_image,
-               s.sku_name, s.sku_image, s.price, s.stock_quantity
+               s.sku_name, s.sku_image, s.price, s.sale_price as sku_sale_price,
+               p.sale_price as product_sale_price, p.sale_end_date as product_sale_end_date,
+               s.stock_quantity
         from shop_cart c
         left join shop_product_sku s on c.sku_id = s.sku_id
         left join shop_product p on s.product_id = p.product_id

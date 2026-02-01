@@ -84,3 +84,35 @@ export function listCategories() {
     method: 'get'
   })
 }
+
+/**
+ * 查詢已發布文章列表（前台，分頁）
+ */
+export function listFrontArticles(query) {
+  return request({
+    url: '/shop/front/articles',
+    method: 'get',
+    params: query
+  })
+}
+
+/**
+ * 查詢文章詳情（前台）
+ */
+export function getFrontArticle(articleId) {
+  return request({
+    url: `/shop/front/article/${articleId}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 查詢最新文章（首頁用）
+ */
+export function listLatestArticles(limit = 6) {
+  return request({
+    url: '/shop/front/articles/latest',
+    method: 'get',
+    params: { limit }
+  })
+}

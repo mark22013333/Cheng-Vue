@@ -1,6 +1,7 @@
 package com.cheng.shop.domain.vo;
 
 import com.cheng.shop.domain.ShopCart;
+import com.cheng.shop.domain.ShopGift;
 import com.cheng.shop.domain.ShopMemberAddress;
 import lombok.Builder;
 import lombok.Data;
@@ -56,4 +57,9 @@ public class CheckoutPreviewVO {
      * 應付金額
      */
     private BigDecimal payableAmount;
+
+    /**
+     * 可用禮物列表
+     */
+    private List<ShopGift> availableGifts;
 }

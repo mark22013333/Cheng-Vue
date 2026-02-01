@@ -102,4 +102,14 @@ public interface ShopProductMapper {
      * @return 影響行數
      */
     int increaseSalesCount(@Param("productId") Long productId, @Param("count") int count);
+
+    /**
+     * 批量更新商品標記（熱門/新品/推薦）
+     *
+     * @param productIds 商品ID陣列
+     * @param flagName   標記欄位名（is_hot / is_new / is_recommend）
+     * @param flagValue  標記值（true / false）
+     * @return 影響行數
+     */
+    int updateProductFlag(@Param("productIds") Long[] productIds, @Param("flagName") String flagName, @Param("flagValue") boolean flagValue);
 }

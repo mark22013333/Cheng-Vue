@@ -86,6 +86,21 @@ public class ShopCart implements Serializable {
     private BigDecimal price;
 
     /**
+     * SKU 特惠價（關聯查詢）
+     */
+    private BigDecimal skuSalePrice;
+
+    /**
+     * 商品特惠價（關聯查詢）
+     */
+    private BigDecimal productSalePrice;
+
+    /**
+     * 商品特價結束時間（關聯查詢）
+     */
+    private Date productSaleEndDate;
+
+    /**
      * 庫存數量
      */
     private Integer stockQuantity;

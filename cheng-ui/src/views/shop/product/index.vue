@@ -47,6 +47,21 @@
           刪除
         </el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Star" :disabled="multiple" @click="handleBatchFlag('is_hot', true)" v-hasPermi="['shop:product:edit']">
+          設為熱門
+        </el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="success" plain icon="Promotion" :disabled="multiple" @click="handleBatchFlag('is_new', true)" v-hasPermi="['shop:product:edit']">
+          設為新品
+        </el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="info" plain icon="Pointer" :disabled="multiple" @click="handleBatchFlag('is_recommend', true)" v-hasPermi="['shop:product:edit']">
+          設為推薦
+        </el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
     </el-row>
 
@@ -67,6 +82,39 @@
         </template>
       </el-table-column>
       <el-table-column prop="salesCount" label="銷量" width="70" align="center" />
+      <el-table-column prop="isHot" label="熱門" width="70" align="center">
+        <template #default="scope">
+          <el-switch
+            v-model="scope.row.isHot"
+            :active-value="true"
+            :inactive-value="false"
+            @change="handleFlagChange(scope.row, 'is_hot', scope.row.isHot)"
+            v-hasPermi="['shop:product:edit']"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column prop="isNew" label="新品" width="70" align="center">
+        <template #default="scope">
+          <el-switch
+            v-model="scope.row.isNew"
+            :active-value="true"
+            :inactive-value="false"
+            @change="handleFlagChange(scope.row, 'is_new', scope.row.isNew)"
+            v-hasPermi="['shop:product:edit']"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column prop="isRecommend" label="推薦" width="70" align="center">
+        <template #default="scope">
+          <el-switch
+            v-model="scope.row.isRecommend"
+            :active-value="true"
+            :inactive-value="false"
+            @change="handleFlagChange(scope.row, 'is_recommend', scope.row.isRecommend)"
+            v-hasPermi="['shop:product:edit']"
+          />
+        </template>
+      </el-table-column>
       <el-table-column prop="status" label="狀態" width="80" align="center">
         <template #default="scope">
           <el-tag :type="getStatusType(scope.row.status)" size="small">{{ getStatusLabel(scope.row.status) }}</el-tag>
@@ -174,7 +222,7 @@
 <script setup name="ShopProduct">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { listProduct, getProduct, addProduct, updateProduct, delProduct, onSaleProduct, offSaleProduct } from '@/api/shop/product'
+import { listProduct, getProduct, addProduct, updateProduct, delProduct, onSaleProduct, offSaleProduct, updateProductFlag } from '@/api/shop/product'
 import { treeCategory } from '@/api/shop/category'
 import { formatCurrency } from '@/utils/cheng'
 
@@ -288,6 +336,29 @@ function handleOffSale(row) {
   }).then(() => {
     getList()
     proxy.$modal.msgSuccess('下架成功')
+  }).catch(() => {})
+}
+
+const flagLabels = { is_hot: '熱門', is_new: '新品', is_recommend: '推薦' }
+
+function handleFlagChange(row, flagName, flagValue) {
+  updateProductFlag({ productIds: [row.productId], flagName, flagValue }).then(() => {
+    proxy.$modal.msgSuccess('更新成功')
+  }).catch(() => {
+    // 復原開關
+    if (flagName === 'is_hot') row.isHot = !flagValue
+    if (flagName === 'is_new') row.isNew = !flagValue
+    if (flagName === 'is_recommend') row.isRecommend = !flagValue
+  })
+}
+
+function handleBatchFlag(flagName, flagValue) {
+  const label = flagLabels[flagName]
+  proxy.$modal.confirm(`確認將選中的 ${ids.value.length} 個商品設為「${label}」嗎？`).then(() => {
+    return updateProductFlag({ productIds: ids.value, flagName, flagValue })
+  }).then(() => {
+    getList()
+    proxy.$modal.msgSuccess('批量設定成功')
   }).catch(() => {})
 }
 

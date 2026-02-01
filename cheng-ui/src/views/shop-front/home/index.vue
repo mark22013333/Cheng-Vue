@@ -191,6 +191,45 @@
       </div>
     </section>
 
+    <!-- Articles Section -->
+    <section class="section article-section" v-if="latestArticles.length > 0">
+      <div class="section-header">
+        <div class="section-title-group">
+          <span class="section-tag" style="background: linear-gradient(135deg, #38b2ac 0%, #4299e1 100%);">BLOG</span>
+          <h2 class="section-title">文章精選</h2>
+        </div>
+        <p class="section-desc">探索最新的商品資訊與生活提案</p>
+        <router-link to="/mall/articles" class="section-link">
+          查看全部 <span class="link-arrow">→</span>
+        </router-link>
+      </div>
+
+      <div class="article-grid" v-loading="loading.article">
+        <div
+          v-for="(article, index) in latestArticles"
+          :key="article.articleId"
+          class="article-card"
+          :style="{ '--delay': index * 0.08 + 's' }"
+          @click="goArticleDetail(article.articleId)"
+        >
+          <div class="article-cover">
+            <img v-if="article.coverImage" :src="getImageUrl(article.coverImage)" :alt="article.title" />
+            <div class="article-cover-placeholder" v-else>
+              <span>文章</span>
+            </div>
+          </div>
+          <div class="article-info">
+            <h4 class="article-title">{{ article.title }}</h4>
+            <p class="article-summary" v-if="article.summary">{{ article.summary }}</p>
+            <div class="article-meta">
+              <span>{{ formatArticleDate(article.createTime) }}</span>
+              <span>{{ article.viewCount || 0 }} 次瀏覽</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Bottom CTA -->
     <section class="cta-section">
       <div class="cta-content">
@@ -212,7 +251,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { listFrontBanners, listHotProducts, listNewProducts, listRecommendProducts } from '@/api/shop/front'
+import { listFrontBanners, listHotProducts, listNewProducts, listRecommendProducts, listLatestArticles, getProductSkus } from '@/api/shop/front'
+import { addToCart as addToCartApi } from '@/api/shop/cart'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -221,12 +261,14 @@ const banners = ref([])
 const hotProducts = ref([])
 const newProducts = ref([])
 const recommendProducts = ref([])
+const latestArticles = ref([])
 
 const loading = ref({
   banner: false,
   hot: false,
   new: false,
-  recommend: false
+  recommend: false,
+  article: false
 })
 
 const features = [
@@ -252,13 +294,13 @@ function getEditorialClass(index) {
 }
 
 function handleBannerClick(banner) {
-  if (banner.linkUrl) {
+  if (banner.linkValue) {
     if (banner.linkType === 'PRODUCT') {
-      router.push(`/mall/product/${banner.linkUrl}`)
+      router.push(`/mall/product/${banner.linkValue}`)
     } else if (banner.linkType === 'CATEGORY') {
-      router.push(`/mall/products?categoryId=${banner.linkUrl}`)
+      router.push(`/mall/products?categoryId=${banner.linkValue}`)
     } else if (banner.linkType === 'URL') {
-      window.open(banner.linkUrl, '_blank')
+      window.open(banner.linkValue, '_blank')
     }
   }
 }
@@ -267,8 +309,38 @@ function goProductDetail(productId) {
   router.push(`/mall/product/${productId}`)
 }
 
-function addToCart(product) {
-  ElMessage.success(`已將「${product.title}」加入購物車`)
+function goArticleDetail(articleId) {
+  router.push(`/mall/article/${articleId}`)
+}
+
+function formatArticleDate(dateStr) {
+  if (!dateStr) return ''
+  return dateStr.substring(0, 10)
+}
+
+async function addToCart(product) {
+  try {
+    const res = await getProductSkus(product.productId)
+    const skus = res.data || []
+    if (skus.length === 0) {
+      ElMessage.warning('此商品暫無可購買的規格')
+      return
+    }
+    if (skus.length === 1) {
+      await addToCartApi({ skuId: skus[0].skuId, quantity: 1 })
+      ElMessage.success(`已將「${product.title}」加入購物車`)
+    } else {
+      ElMessage.info('此商品有多種規格，請至商品頁面選擇')
+      router.push(`/mall/product/${product.productId}`)
+    }
+  } catch (error) {
+    if (error?.response?.status === 401) {
+      ElMessage.warning('請先登入後再加入購物車')
+      router.push('/login')
+    } else {
+      ElMessage.error(error?.message || '加入購物車失敗')
+    }
+  }
 }
 
 async function loadBanners() {
@@ -319,11 +391,24 @@ async function loadRecommendProducts() {
   }
 }
 
+async function loadLatestArticles() {
+  loading.value.article = true
+  try {
+    const res = await listLatestArticles(6)
+    latestArticles.value = res.data || []
+  } catch (error) {
+    console.error('載入文章失敗', error)
+  } finally {
+    loading.value.article = false
+  }
+}
+
 onMounted(() => {
   loadBanners()
   loadHotProducts()
   loadNewProducts()
   loadRecommendProducts()
+  loadLatestArticles()
 })
 </script>
 
@@ -1175,6 +1260,92 @@ onMounted(() => {
   transform: translateX(4px);
 }
 
+/* ===== Article Section ===== */
+.article-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  min-height: 200px;
+}
+
+.article-card {
+  border-radius: var(--home-radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  animation: fadeUp 0.5s ease-out backwards;
+  animation-delay: var(--delay);
+  border: 1px solid var(--home-border);
+}
+
+.article-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--home-shadow-lg);
+  border-color: transparent;
+}
+
+.article-cover {
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+}
+
+.article-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.article-card:hover .article-cover img {
+  transform: scale(1.05);
+}
+
+.article-cover-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #38b2ac, #4299e1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.article-info {
+  padding: 16px;
+}
+
+.article-info .article-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--home-text);
+  margin: 0 0 6px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.article-summary {
+  font-size: 13px;
+  color: var(--home-text-secondary);
+  margin: 0 0 12px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.article-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #a0aec0;
+}
+
 /* ===== CTA Section ===== */
 .cta-section {
   position: relative;
@@ -1267,6 +1438,10 @@ onMounted(() => {
 
   .recommend-card {
     flex: 0 0 calc(33.333% - 14px);
+  }
+
+  .article-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -1397,6 +1572,10 @@ onMounted(() => {
   .editorial-item.featured .editorial-image,
   .editorial-image {
     min-height: 200px;
+  }
+
+  .article-grid {
+    grid-template-columns: 1fr;
   }
 
   .new-products-grid {

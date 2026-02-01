@@ -10,6 +10,7 @@
         <result property="skuImage"     column="sku_image"/>
         <result property="price"        column="price"/>
         <result property="originalPrice" column="original_price"/>
+        <result property="salePrice"    column="sale_price"/>
         <result property="costPrice"    column="cost_price"/>
         <result property="stockQuantity" column="stock_quantity"/>
         <result property="salesCount"   column="sales_count"/>
@@ -25,7 +26,7 @@
     </resultMap>
 
     <sql id="selectSkuVo">
-        select s.sku_id, s.product_id, s.sku_code, s.sku_name, s.sku_image, s.price, s.original_price,
+        select s.sku_id, s.product_id, s.sku_code, s.sku_name, s.sku_image, s.price, s.original_price, s.sale_price,
                s.cost_price, s.stock_quantity, s.sales_count, s.sort_order, s.inv_item_id, s.status,
                s.create_by, s.create_time, s.update_by, s.update_time,
                i.item_name as inv_item_name, i.item_code as inv_item_code
@@ -58,6 +59,7 @@
             <if test="skuImage != null">sku_image,</if>
             <if test="price != null">price,</if>
             <if test="originalPrice != null">original_price,</if>
+            <if test="salePrice != null">sale_price,</if>
             <if test="costPrice != null">cost_price,</if>
             <if test="stockQuantity != null">stock_quantity,</if>
             <if test="salesCount != null">sales_count,</if>
@@ -74,6 +76,7 @@
             <if test="skuImage != null">#{skuImage},</if>
             <if test="price != null">#{price},</if>
             <if test="originalPrice != null">#{originalPrice},</if>
+            <if test="salePrice != null">#{salePrice},</if>
             <if test="costPrice != null">#{costPrice},</if>
             <if test="stockQuantity != null">#{stockQuantity},</if>
             <if test="salesCount != null">#{salesCount},</if>
@@ -87,11 +90,11 @@
 
     <insert id="batchInsertSku" parameterType="java.util.List">
         insert into shop_product_sku (product_id, sku_code, sku_name, sku_image, price,
-            original_price, cost_price, stock_quantity, sales_count, sort_order, inv_item_id, status, create_by, create_time)
+            original_price, sale_price, cost_price, stock_quantity, sales_count, sort_order, inv_item_id, status, create_by, create_time)
         values
         <foreach collection="list" item="item" separator=",">
             (#{item.productId}, #{item.skuCode}, #{item.skuName}, #{item.skuImage},
-             #{item.price}, #{item.originalPrice}, #{item.costPrice}, #{item.stockQuantity}, #{item.salesCount},
+             #{item.price}, #{item.originalPrice}, #{item.salePrice}, #{item.costPrice}, #{item.stockQuantity}, #{item.salesCount},
              #{item.sortOrder}, #{item.invItemId}, #{item.status}, #{item.createBy}, now())
         </foreach>
     </insert>
@@ -104,6 +107,7 @@
             <if test="skuImage != null">sku_image = #{skuImage},</if>
             <if test="price != null">price = #{price},</if>
             <if test="originalPrice != null">original_price = #{originalPrice},</if>
+            <if test="salePrice != null">sale_price = #{salePrice},</if>
             <if test="costPrice != null">cost_price = #{costPrice},</if>
             <if test="stockQuantity != null">stock_quantity = #{stockQuantity},</if>
             <if test="salesCount != null">sales_count = #{salesCount},</if>

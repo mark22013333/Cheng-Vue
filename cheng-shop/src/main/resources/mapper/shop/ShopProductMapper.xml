@@ -25,11 +25,14 @@
         <result property="categoryName" column="category_name"/>
         <result property="price"        column="price"/>
         <result property="originalPrice" column="original_price"/>
+        <result property="salePrice"    column="sale_price"/>
+        <result property="saleEndDate"  column="sale_end_date"/>
     </resultMap>
 
     <sql id="selectProductVo">
         select p.product_id, p.category_id, p.title, p.sub_title, p.main_image, p.slider_images, p.video_url,
-               p.description, p.price, p.original_price, p.sales_count, p.view_count, p.is_hot, p.is_new, p.is_recommend, p.sort_order,
+               p.description, p.price, p.original_price, p.sale_price, p.sale_end_date,
+               p.sales_count, p.view_count, p.is_hot, p.is_new, p.is_recommend, p.sort_order,
                p.status, p.create_by, p.create_time, p.update_by, p.update_time,
                c.name as category_name
         from shop_product p
@@ -107,6 +110,8 @@
             <if test="description != null">description,</if>
             <if test="price != null">price,</if>
             <if test="originalPrice != null">original_price,</if>
+            <if test="salePrice != null">sale_price,</if>
+            <if test="saleEndDate != null">sale_end_date,</if>
             <if test="salesCount != null">sales_count,</if>
             <if test="viewCount != null">view_count,</if>
             <if test="isHot != null">is_hot,</if>
@@ -127,6 +132,8 @@
             <if test="description != null">#{description},</if>
             <if test="price != null">#{price},</if>
             <if test="originalPrice != null">#{originalPrice},</if>
+            <if test="salePrice != null">#{salePrice},</if>
+            <if test="saleEndDate != null">#{saleEndDate},</if>
             <if test="salesCount != null">#{salesCount},</if>
             <if test="viewCount != null">#{viewCount},</if>
             <if test="isHot != null">#{isHot},</if>
@@ -151,6 +158,8 @@
             <if test="description != null">description = #{description},</if>
             <if test="price != null">price = #{price},</if>
             <if test="originalPrice != null">original_price = #{originalPrice},</if>
+            <if test="salePrice != null">sale_price = #{salePrice},</if>
+            <if test="saleEndDate != null">sale_end_date = #{saleEndDate},</if>
             <if test="isHot != null">is_hot = #{isHot},</if>
             <if test="isNew != null">is_new = #{isNew},</if>
             <if test="isRecommend != null">is_recommend = #{isRecommend},</if>
@@ -179,6 +188,20 @@
 
     <update id="increaseSalesCount">
         update shop_product set sales_count = sales_count + #{count} where product_id = #{productId}
+    </update>
+
+    <update id="updateProductFlag">
+        update shop_product
+        <set>
+            <if test="flagName == 'is_hot'">is_hot = #{flagValue},</if>
+            <if test="flagName == 'is_new'">is_new = #{flagValue},</if>
+            <if test="flagName == 'is_recommend'">is_recommend = #{flagValue},</if>
+            update_time = now()
+        </set>
+        where product_id in
+        <foreach item="id" collection="productIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
     </update>
 
 </mapper>
