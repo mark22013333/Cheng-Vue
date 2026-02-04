@@ -65,7 +65,10 @@ router.beforeEach((to, from, next) => {
     if (to.path === '/login') {
       next({ path: '/' })
       NProgress.done()
-    } else if (isWhiteList(to.path)) {
+    } else if (to.path.startsWith('/mall')) {
+      // 商城路徑不需載入後台權限路由
+      next()
+    } else if (isWhiteList(to.path) || isMallPublicPath(to.path)) {
       next()
     } else {
       if (useUserStore().roles.length === 0) {
