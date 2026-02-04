@@ -80,7 +80,7 @@ public class EcpayPaymentGateway implements PaymentGateway {
         params.put("CustomField2", order.getOrderNo());
 
         // 計算 CheckMacValue
-        String checkMacValue = generateCheckMacValue(params, hashKey, hashIv);
+        String checkMacValue = generateCheckMacValue(params, hashKey, hashIv, params.get("EncryptType"));
         params.put("CheckMacValue", checkMacValue);
 
         log.info("ECPay 參數：MerchantTradeNo={}, TotalAmount={}, ReturnURL={}, CheckMacValue={}",
@@ -105,11 +105,15 @@ public class EcpayPaymentGateway implements PaymentGateway {
             return false;
         }
 
-        // 移除 CheckMacValue 後重新計算
+        // 移除 CheckMacValue 與 EncryptType 後重新計算（依 ECPay SDK 規則）
         TreeMap<String, String> paramsWithoutCheck = new TreeMap<>(params);
         paramsWithoutCheck.remove("CheckMacValue");
+        String encryptType = paramsWithoutCheck.remove("EncryptType");
+        if (encryptType == null || encryptType.isBlank()) {
+            encryptType = "1";
+        }
 
-        String calculated = generateCheckMacValue(paramsWithoutCheck, hashKey, hashIv);
+        String calculated = generateCheckMacValue(paramsWithoutCheck, hashKey, hashIv, encryptType);
         return calculated.equalsIgnoreCase(receivedCheckMac);
     }
 
@@ -166,7 +170,7 @@ public class EcpayPaymentGateway implements PaymentGateway {
      *   <li>SHA256 雜湊 → 轉大寫</li>
      * </ol>
      */
-    String generateCheckMacValue(Map<String, String> params, String hashKey, String hashIv) {
+    String generateCheckMacValue(Map<String, String> params, String hashKey, String hashIv, String encryptType) {
         // 1. 按 key 排序（不分大小寫）
         TreeMap<String, String> sorted = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         sorted.putAll(params);
@@ -192,7 +196,10 @@ public class EcpayPaymentGateway implements PaymentGateway {
                 .replace("%29", ")")
                 .replace("%20", "+");
 
-        // 5. SHA256 雜湊 → 轉大寫
+        // 5. 依 EncryptType 進行雜湊 → 轉大寫
+        if ("0".equals(encryptType)) {
+            return md5(encoded).toUpperCase();
+        }
         return sha256(encoded).toUpperCase();
     }
 
@@ -272,6 +279,27 @@ public class EcpayPaymentGateway implements PaymentGateway {
             return hexString.toString();
         } catch (Exception e) {
             throw new ServiceException("SHA256 計算失敗");
+        }
+    }
+
+    /**
+     * MD5 雜湊
+     */
+    private String md5(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            throw new ServiceException("MD5 計算失敗");
         }
     }
 

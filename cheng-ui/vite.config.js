@@ -12,6 +12,7 @@ const pathSrc = path.resolve(__dirname, 'src')
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   const baseUrl = 'http://localhost:8080'
+  const adminBaseApi = `/cadm${env.VITE_APP_BASE_API}`
 
   return {
     plugins: [
@@ -69,6 +70,12 @@ export default defineConfig(({ mode }) => {
       // 允許所有 hosts 連線 (解決 Ngrok 等外部通道被擋的問題)
       allowedHosts: true,
       proxy: {
+        // 後台 API 代理（/cadm + base api）
+        [adminBaseApi]: {
+          target: baseUrl,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(new RegExp('^' + adminBaseApi), '/cadm')
+        },
         // API 代理
         [env.VITE_APP_BASE_API]: {
           target: baseUrl,
@@ -76,6 +83,10 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(new RegExp('^' + env.VITE_APP_BASE_API), '')
         },
         // Springdoc API 文件代理
+        '^/cadm/v3/api-docs': {
+          target: baseUrl,
+          changeOrigin: true
+        },
         '^/v3/api-docs': {
           target: baseUrl,
           changeOrigin: true

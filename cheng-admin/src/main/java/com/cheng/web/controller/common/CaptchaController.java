@@ -1,5 +1,6 @@
 package com.cheng.web.controller.common;
 
+import com.cheng.common.annotation.PublicApi;
 import com.cheng.common.config.CoolAppsConfig;
 import com.cheng.common.constant.CacheConstants;
 import com.cheng.common.constant.Constants;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author cheng
  */
+@PublicApi
 @RestController
 public class CaptchaController {
     @Resource(name = "captchaProducer")
@@ -43,7 +45,7 @@ public class CaptchaController {
     /**
      * 產生驗證碼
      */
-    @GetMapping("/captchaImage")
+    @GetMapping({"/captchaImage", "/cadm/captchaImage"})
     public AjaxResult getCode(HttpServletResponse response) {
         AjaxResult ajax = AjaxResult.success();
         boolean captchaEnabled = configService.selectCaptchaEnabled();

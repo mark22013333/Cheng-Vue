@@ -1,6 +1,7 @@
 package com.cheng.shop.controller;
 
 import com.cheng.common.annotation.Anonymous;
+import com.cheng.common.annotation.PublicApi;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -32,6 +33,7 @@ import java.util.List;
  * @author cheng
  */
 @Anonymous
+@PublicApi
 @RestController
 @RequestMapping("/shop/front")
 @RequiredArgsConstructor

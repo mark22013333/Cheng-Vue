@@ -1,17 +1,22 @@
 package com.cheng.shop.controller;
 
 import com.cheng.common.annotation.Anonymous;
+import com.cheng.common.annotation.PublicApi;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.exception.ServiceException;
 import com.cheng.common.utils.SecurityUtils;
+import com.cheng.common.utils.JacksonUtil;
 import com.cheng.shop.domain.ShopOrder;
+import com.cheng.shop.domain.ShopPaymentCallbackLog;
+import com.cheng.shop.enums.PaymentMethod;
 import com.cheng.shop.payment.CallbackResult;
 import com.cheng.shop.payment.PaymentGateway;
 import com.cheng.shop.payment.PaymentGatewayRouter;
 import com.cheng.shop.payment.PaymentRequest;
 import com.cheng.shop.payment.PaymentResponse;
 import com.cheng.shop.service.IShopOrderService;
+import com.cheng.shop.service.IShopPaymentCallbackLogService;
 import com.cheng.system.service.ISysConfigService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,6 +38,7 @@ import java.util.Map;
  * @author cheng
  */
 @Slf4j
+@PublicApi
 @RestController
 @RequestMapping("/shop/payment")
 @RequiredArgsConstructor
@@ -41,6 +47,10 @@ public class ShopPaymentController extends BaseController {
     private final PaymentGatewayRouter gatewayRouter;
     private final IShopOrderService orderService;
     private final ISysConfigService configService;
+    private final IShopPaymentCallbackLogService callbackLogService;
+
+    private static final String CALLBACK_TYPE_SERVER = "SERVER";
+    private static final String CALLBACK_TYPE_BROWSER = "BROWSER";
 
     /**
      * 建立 ECPay 付款
@@ -105,8 +115,21 @@ public class ShopPaymentController extends BaseController {
         try {
             PaymentGateway gateway = gatewayRouter.getGateway("ECPAY");
 
+            boolean verifyOk = false;
+            String verifyMessage = null;
+            if (params.containsKey("CheckMacValue")) {
+                verifyOk = gateway.verifyCallback(params);
+                if (!verifyOk) {
+                    verifyMessage = "CheckMacValue verify fail";
+                }
+            } else {
+                verifyMessage = "Missing CheckMacValue";
+            }
+
+            recordCallbackLog(PaymentMethod.ECPAY.getCode(), CALLBACK_TYPE_SERVER, params, verifyOk, verifyMessage, null);
+
             // 1. 驗簽
-            if (!gateway.verifyCallback(params)) {
+            if (!verifyOk) {
                 log.error("ECPay 回調驗證失敗，參數：{}", params);
                 return "0|ErrorMessage=CheckMacValue Error";
             }
@@ -135,7 +158,49 @@ public class ShopPaymentController extends BaseController {
     @Anonymous
     @RequestMapping(value = "/ecpay/return", method = {RequestMethod.GET, RequestMethod.POST})
     public void ecpayReturn(@RequestParam(required = false) String orderNo,
+                            HttpServletRequest request,
                             HttpServletResponse response) throws IOException {
+        // 付款完成後，ECPay 會以瀏覽器 POST 回傳完整參數
+        // 若伺服器回調（ReturnURL）失敗，這裡作為補救更新訂單狀態
+        Map<String, String> params = extractParams(request);
+        if (!params.isEmpty()) {
+            log.info("ECPay 前端回傳參數：{}", params);
+            try {
+                PaymentGateway gateway = gatewayRouter.getGateway("ECPAY");
+                boolean verifyOk = false;
+                String verifyMessage = null;
+                if (params.containsKey("CheckMacValue")) {
+                    verifyOk = gateway.verifyCallback(params);
+                    if (!verifyOk) {
+                        verifyMessage = "CheckMacValue verify fail";
+                    }
+                } else {
+                    verifyMessage = "Missing CheckMacValue";
+                }
+
+                recordCallbackLog(PaymentMethod.ECPAY.getCode(), CALLBACK_TYPE_BROWSER, params, verifyOk, verifyMessage, orderNo);
+
+                if (verifyOk) {
+                    CallbackResult result = gateway.parseCallback(params);
+                    if ((result.getOrderNo() == null || result.getOrderNo().isBlank())
+                            && orderNo != null && !orderNo.isBlank()) {
+                        result = CallbackResult.builder()
+                                .paymentSuccess(result.isPaymentSuccess())
+                                .orderNo(orderNo)
+                                .tradeNo(result.getTradeNo())
+                                .responseBody(result.getResponseBody())
+                                .rawInfo(result.getRawInfo())
+                                .build();
+                    }
+                    orderService.handlePaymentCallback(result);
+                } else {
+                    log.warn("ECPay 前端回傳驗證失敗，orderNo={}", orderNo);
+                }
+            } catch (Exception e) {
+                log.error("ECPay 前端回傳處理異常", e);
+            }
+        }
+
         String targetUrl = getFrontendUrl() + "/mall/member/orders";
 
         log.info("ECPay 用戶返回（fallback），orderNo={}，重導向至：{}", orderNo, targetUrl);
@@ -171,6 +236,43 @@ public class ShopPaymentController extends BaseController {
             params.put(name, request.getParameter(name));
         }
         return params;
+    }
+
+    private void recordCallbackLog(String paymentMethod, String callbackType, Map<String, String> params,
+                                   boolean verifyOk, String verifyMessage, String orderNoFallback) {
+        if (params == null || params.isEmpty()) {
+            return;
+        }
+        try {
+            ShopPaymentCallbackLog logEntry = new ShopPaymentCallbackLog();
+            logEntry.setPaymentMethod(paymentMethod);
+            logEntry.setCallbackType(callbackType);
+            logEntry.setOrderNo(firstNonBlank(
+                    params.get("CustomField2"),
+                    params.get("MerchantTradeNo"),
+                    orderNoFallback
+            ));
+            logEntry.setTradeNo(params.get("TradeNo"));
+            logEntry.setRtnCode(params.get("RtnCode"));
+            logEntry.setVerifyStatus(verifyOk ? 1 : 0);
+            logEntry.setVerifyMessage(verifyMessage);
+            logEntry.setRawInfo(JacksonUtil.encodeToJson(params));
+            callbackLogService.logCallback(logEntry);
+        } catch (Exception e) {
+            log.warn("金流回調紀錄失敗", e);
+        }
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
     }
 
     /**

@@ -10,7 +10,7 @@ import java.util.TreeMap;
  * ECPay CheckMacValue 驗證測試
  * <p>
  * 使用官方範例數據驗證計算結果：
- * https://github.com/andy6804tw/ecpay-payment-demo/blob/master/Decode.md
+ * <a href="https://github.com/andy6804tw/ecpay-payment-demo/blob/master/Decode.md">github</a>
  */
 public class EcpayCheckMacValueTest {
 
@@ -35,7 +35,7 @@ public class EcpayCheckMacValueTest {
         String expected = "B4A5010C622CC8710182465D1A8CFFF29B9212264E679C8468893C4A6EBB716B";
 
         // 用我們的計算方法
-        String result = generateCheckMacValue(params, hashKey, hashIv);
+        String result = generateCheckMacValue(params, hashKey, hashIv, params.get("EncryptType"));
 
         System.out.println("=== ECPay CheckMacValue 驗證 ===");
         System.out.println("期望值: " + expected);
@@ -54,14 +54,14 @@ public class EcpayCheckMacValueTest {
         queryParams.put("TimeStamp", "1525410372");
 
         String expectedQuery = "48ABB4DBF2365897B2A17C48EBCBA82274E7D7DE79F1F955115C4258482A045B";
-        String resultQuery = generateCheckMacValue(queryParams, hashKey, hashIv);
+        String resultQuery = generateCheckMacValue(queryParams, hashKey, hashIv, "1");
 
         System.out.println("期望值: " + expectedQuery);
         System.out.println("計算值: " + resultQuery);
         System.out.println("結果:   " + (expectedQuery.equals(resultQuery) ? "✅ 通過" : "❌ 失敗"));
     }
 
-    static String generateCheckMacValue(Map<String, String> params, String hashKey, String hashIv) {
+    static String generateCheckMacValue(Map<String, String> params, String hashKey, String hashIv, String encryptType) {
         // 1. 按 key 排序（不分大小寫）
         TreeMap<String, String> sorted = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         sorted.putAll(params);
@@ -87,7 +87,10 @@ public class EcpayCheckMacValueTest {
                 .replace("%29", ")")
                 .replace("%20", "+");
 
-        // 5. SHA256 雜湊 → 轉大寫
+        // 5. 依 EncryptType 進行雜湊 → 轉大寫
+        if ("0".equals(encryptType)) {
+            return md5(encoded).toUpperCase();
+        }
         return sha256(encoded).toUpperCase();
     }
 
@@ -136,6 +139,24 @@ public class EcpayCheckMacValueTest {
             return hexString.toString();
         } catch (Exception e) {
             throw new RuntimeException("SHA256 計算失敗", e);
+        }
+    }
+
+    static String md5(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("MD5 計算失敗", e);
         }
     }
 }

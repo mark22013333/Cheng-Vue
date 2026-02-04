@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.shop.mapper.ShopPaymentCallbackLogMapper">
+
+    <resultMap id="ShopPaymentCallbackLogResult" type="com.cheng.shop.domain.ShopPaymentCallbackLog">
+        <id     property="logId"         column="log_id"/>
+        <result property="orderNo"       column="order_no"/>
+        <result property="paymentMethod" column="payment_method"/>
+        <result property="callbackType"  column="callback_type"/>
+        <result property="tradeNo"       column="trade_no"/>
+        <result property="rtnCode"       column="rtn_code"/>
+        <result property="verifyStatus"  column="verify_status"/>
+        <result property="verifyMessage" column="verify_message"/>
+        <result property="rawInfo"       column="raw_info"/>
+        <result property="createTime"    column="create_time"/>
+    </resultMap>
+
+    <sql id="selectLogVo">
+        select log_id, order_no, payment_method, callback_type, trade_no,
+               rtn_code, verify_status, verify_message, raw_info, create_time
+        from shop_payment_callback_log
+    </sql>
+
+    <select id="selectLogList" parameterType="com.cheng.shop.domain.ShopPaymentCallbackLog" resultMap="ShopPaymentCallbackLogResult">
+        <include refid="selectLogVo"/>
+        <where>
+            <if test="orderNo != null and orderNo != ''">
+                AND order_no like concat('%', #{orderNo}, '%')
+            </if>
+            <if test="paymentMethod != null and paymentMethod != ''">
+                AND payment_method = #{paymentMethod}
+            </if>
+            <if test="callbackType != null and callbackType != ''">
+                AND callback_type = #{callbackType}
+            </if>
+            <if test="tradeNo != null and tradeNo != ''">
+                AND trade_no like concat('%', #{tradeNo}, '%')
+            </if>
+            <if test="rtnCode != null and rtnCode != ''">
+                AND rtn_code = #{rtnCode}
+            </if>
+            <if test="verifyStatus != null">
+                AND verify_status = #{verifyStatus}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                AND create_time &gt;= #{params.beginTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND create_time &lt;= #{params.endTime}
+            </if>
+        </where>
+        order by create_time desc, log_id desc
+    </select>
+
+    <select id="selectLogById" parameterType="Long" resultMap="ShopPaymentCallbackLogResult">
+        <include refid="selectLogVo"/>
+        where log_id = #{logId}
+    </select>
+
+    <insert id="insertLog" parameterType="com.cheng.shop.domain.ShopPaymentCallbackLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into shop_payment_callback_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderNo != null and orderNo != ''">order_no,</if>
+            <if test="paymentMethod != null and paymentMethod != ''">payment_method,</if>
+            <if test="callbackType != null and callbackType != ''">callback_type,</if>
+            <if test="tradeNo != null and tradeNo != ''">trade_no,</if>
+            <if test="rtnCode != null and rtnCode != ''">rtn_code,</if>
+            <if test="verifyStatus != null">verify_status,</if>
+            <if test="verifyMessage != null and verifyMessage != ''">verify_message,</if>
+            <if test="rawInfo != null">raw_info,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderNo != null and orderNo != ''">#{orderNo},</if>
+            <if test="paymentMethod != null and paymentMethod != ''">#{paymentMethod},</if>
+            <if test="callbackType != null and callbackType != ''">#{callbackType},</if>
+            <if test="tradeNo != null and tradeNo != ''">#{tradeNo},</if>
+            <if test="rtnCode != null and rtnCode != ''">#{rtnCode},</if>
+            <if test="verifyStatus != null">#{verifyStatus},</if>
+            <if test="verifyMessage != null and verifyMessage != ''">#{verifyMessage},</if>
+            <if test="rawInfo != null">#{rawInfo},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+</mapper>
