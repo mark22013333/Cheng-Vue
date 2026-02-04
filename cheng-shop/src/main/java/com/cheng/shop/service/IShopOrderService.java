@@ -52,7 +52,7 @@ public interface IShopOrderService {
      * @param order 訂單
      * @return 訂單ID
      */
-    Long createOrder(ShopOrder order);
+    Long createOrder(ShopOrder order, Long operatorId);
 
     /**
      * 取消訂單
@@ -61,7 +61,7 @@ public interface IShopOrderService {
      * @param reason  取消原因
      * @return 影響行數
      */
-    int cancelOrder(Long orderId, String reason);
+    int cancelOrder(Long orderId, String reason, Long operatorId);
 
     /**
      * 支付訂單

@@ -204,7 +204,7 @@ public class ShopCheckoutServiceImpl implements IShopCheckoutService {
         }
 
         // 建立訂單（會自動扣減庫存）
-        orderService.createOrder(order);
+        orderService.createOrder(order, memberId);
 
         // 清除已結帳的購物車項目
         List<Long> cartIds = selectedItems.stream()

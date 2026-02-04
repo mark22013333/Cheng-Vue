@@ -106,6 +106,15 @@ token:
   # 令牌有效期（預設30分鐘）
   expireTime: 30
 
+# 商城會員 token 設定
+member-token:
+  # 令牌自定義標識
+  header: Member-Token
+  # 令牌密鑰（預設沿用後台 token.secret）
+  secret: ${token.secret}
+  # 令牌有效期（預設 7 天）
+  expireTime: 10080
+
 # MyBatis設定
 mybatis:
   # 搜尋指定包別名

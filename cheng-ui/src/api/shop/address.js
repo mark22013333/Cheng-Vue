@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '@/utils/requestShop'
 
 /**
  * 取得當前會員的地址列表

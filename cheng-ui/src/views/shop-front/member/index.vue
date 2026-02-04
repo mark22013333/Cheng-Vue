@@ -108,9 +108,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import useUserStore from '@/store/modules/user'
+import useMemberStore from '@/store/modules/member'
+import { getOrderStats } from '@/api/shop/order'
 import {
   Document,
   Location,
@@ -125,10 +126,10 @@ import {
 
 const router = useRouter()
 const route = useRoute()
-const userStore = useUserStore()
+const memberStore = useMemberStore()
 
-const userName = computed(() => userStore.name || '會員')
-const userAvatar = computed(() => userStore.avatar || '')
+const userName = computed(() => memberStore.nickname || '會員')
+const userAvatar = computed(() => memberStore.avatar || '')
 
 const activeMenu = computed(() => {
   const path = route.path
@@ -150,6 +151,21 @@ const orderStats = ref({
   completed: 0
 })
 
+async function loadOrderStats() {
+  try {
+    const res = await getOrderStats()
+    const stats = res.data || {}
+    orderStats.value = {
+      pending: stats.PENDING || 0,
+      paid: stats.PAID || 0,
+      shipped: stats.SHIPPED || 0,
+      completed: stats.COMPLETED || 0
+    }
+  } catch (error) {
+    console.error('載入訂單統計失敗', error)
+  }
+}
+
 function handleMenuSelect(index) {
   router.push(`/mall/member/${index}`)
 }
@@ -161,6 +177,10 @@ function goTo(page, status) {
     router.push(`/mall/member/${page}`)
   }
 }
+
+onMounted(() => {
+  loadOrderStats()
+})
 </script>
 
 <style scoped>

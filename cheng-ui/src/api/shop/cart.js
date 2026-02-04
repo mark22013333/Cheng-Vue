@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '@/utils/requestShop'
 
 // 使用會員端點（不需後台權限，只需登入）
 const BASE_URL = '/shop/member/cart'

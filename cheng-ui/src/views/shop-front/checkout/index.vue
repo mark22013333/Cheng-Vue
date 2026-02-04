@@ -229,7 +229,7 @@ import { CircleCheckFilled } from '@element-plus/icons-vue'
 import { getCheckoutPreview, submitOrder } from '@/api/shop/checkout'
 import { createEcpayPayment } from '@/api/shop/payment'
 import { addAddress } from '@/api/shop/address'
-import { getToken } from '@/utils/auth'
+import { getMemberToken } from '@/utils/memberAuth'
 
 const router = useRouter()
 const route = useRoute()
@@ -285,7 +285,7 @@ const checkoutData = reactive({
 
 onMounted(() => {
   // 檢查登入狀態，未登入則跳轉到商城登入頁
-  if (!getToken()) {
+  if (!getMemberToken()) {
     ElMessage.warning('請先登入後再結帳')
     router.push(`/mall/login?redirect=${route.fullPath}`)
     return

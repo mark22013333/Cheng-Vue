@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '@/utils/requestShop'
 
 /**
  * 查詢前台輪播圖（公開 API）

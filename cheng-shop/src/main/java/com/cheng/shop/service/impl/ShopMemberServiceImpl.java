@@ -2,6 +2,7 @@ package com.cheng.shop.service.impl;
 
 import com.cheng.common.utils.DateUtils;
 import com.cheng.common.utils.SecurityUtils;
+import com.cheng.common.utils.uuid.IdUtils;
 import com.cheng.shop.domain.ShopMember;
 import com.cheng.shop.enums.MemberStatus;
 import com.cheng.shop.mapper.ShopMemberMapper;
@@ -52,6 +53,9 @@ public class ShopMemberServiceImpl implements IShopMemberService {
         }
 
         // 設定預設值
+        if (member.getMemberNo() == null || member.getMemberNo().isBlank()) {
+            member.setMemberNo(IdUtils.generateCode("M"));
+        }
         if (member.getStatus() == null) {
             member.setStatus(MemberStatus.ACTIVE.getCode());
         }

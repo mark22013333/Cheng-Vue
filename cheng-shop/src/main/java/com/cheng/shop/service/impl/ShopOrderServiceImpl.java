@@ -8,7 +8,6 @@ import com.cheng.shop.domain.ShopOrderItem;
 import com.cheng.shop.enums.OrderStatus;
 import com.cheng.shop.enums.PayStatus;
 import com.cheng.shop.enums.ShipStatus;
-import com.cheng.common.utils.SecurityUtils;
 import com.cheng.shop.event.PaymentSuccessEvent;
 import com.cheng.shop.mapper.ShopOrderItemMapper;
 import com.cheng.shop.mapper.ShopOrderMapper;
@@ -85,7 +84,7 @@ public class ShopOrderServiceImpl implements IShopOrderService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long createOrder(ShopOrder order) {
+    public Long createOrder(ShopOrder order, Long operatorId) {
         // 產生訂單編號
         order.setOrderNo(generateOrderNo());
 
@@ -112,8 +111,8 @@ public class ShopOrderServiceImpl implements IShopOrderService {
             orderItemMapper.batchInsertOrderItems(order.getOrderItems());
 
             // 同步扣減庫存物品
-            Long operatorId = SecurityUtils.getUserId();
-            stockSyncService.deductStockForOrder(order.getOrderItems(), operatorId, order.getOrderNo());
+            Long syncOperatorId = operatorId != null ? operatorId : order.getMemberId();
+            stockSyncService.deductStockForOrder(order.getOrderItems(), syncOperatorId, order.getOrderNo());
         }
 
         log.info("建立訂單成功，訂單編號: {}", order.getOrderNo());
@@ -122,7 +121,7 @@ public class ShopOrderServiceImpl implements IShopOrderService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int cancelOrder(Long orderId, String reason) {
+    public int cancelOrder(Long orderId, String reason, Long operatorId) {
         ShopOrder order = orderMapper.selectOrderById(orderId);
         if (order == null) {
             throw new ServiceException("訂單不存在");
@@ -140,8 +139,8 @@ public class ShopOrderServiceImpl implements IShopOrderService {
         }
 
         // 同步恢復庫存物品
-        Long operatorId = SecurityUtils.getUserId();
-        stockSyncService.restoreStockForOrder(items, operatorId, order.getOrderNo());
+        Long syncOperatorId = operatorId != null ? operatorId : order.getMemberId();
+        stockSyncService.restoreStockForOrder(items, syncOperatorId, order.getOrderNo());
 
         // 更新訂單狀態
         ShopOrder updateOrder = new ShopOrder();

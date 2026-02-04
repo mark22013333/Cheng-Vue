@@ -119,14 +119,14 @@ import { ShoppingCart, Brush, Search, User } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useMallThemeStore, PRESET_THEMES } from '@/store/modules/mallTheme'
 import { useCartStore } from '@/store/modules/cart'
-import { getToken } from '@/utils/auth'
-import useUserStore from '@/store/modules/user'
+import { getMemberToken } from '@/utils/memberAuth'
+import useMemberStore from '@/store/modules/member'
 
 const router = useRouter()
 const route = useRoute()
 const themeStore = useMallThemeStore()
 const cartStore = useCartStore()
-const userStore = useUserStore()
+const memberStore = useMemberStore()
 const searchKeyword = ref('')
 const showThemePicker = ref(false)
 
@@ -134,7 +134,7 @@ const showThemePicker = ref(false)
 const cartCount = computed(() => cartStore.totalQuantity)
 
 // 是否已登入
-const isLoggedIn = computed(() => !!getToken())
+const isLoggedIn = computed(() => !!getMemberToken())
 
 function goHome() {
   router.push('/mall')
@@ -167,7 +167,7 @@ async function handleLogout() {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    await userStore.logOut()
+    await memberStore.logOut()
     // 登出後重新載入訪客購物車
     cartStore.loadGuestCart()
     ElMessage.success('已登出')
@@ -188,10 +188,14 @@ function selectTheme(key) {
   showThemePicker.value = false
 }
 
+
 onMounted(() => {
   themeStore.init()
   // 初始化購物車
   cartStore.init()
+  if (getMemberToken()) {
+    memberStore.getProfile().catch(() => {})
+  }
 })
 </script>
 

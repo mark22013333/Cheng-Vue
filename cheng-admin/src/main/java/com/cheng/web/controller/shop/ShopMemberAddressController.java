@@ -5,10 +5,10 @@ import com.cheng.common.annotation.PublicApi;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.enums.BusinessType;
-import com.cheng.common.utils.SecurityUtils;
 import com.cheng.shop.domain.ShopMemberAddress;
 import com.cheng.shop.domain.dto.AddressRequest;
 import com.cheng.shop.service.IShopMemberAddressService;
+import com.cheng.shop.utils.ShopMemberSecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -34,7 +34,7 @@ public class ShopMemberAddressController extends BaseController {
      */
     @GetMapping("/list")
     public AjaxResult list() {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         List<ShopMemberAddress> list = addressService.selectAddressListByMemberId(memberId);
         return success(list);
     }
@@ -46,7 +46,7 @@ public class ShopMemberAddressController extends BaseController {
     public AjaxResult getInfo(@PathVariable Long addressId) {
         ShopMemberAddress address = addressService.selectAddressById(addressId);
         // 檢查是否屬於當前會員
-        if (address != null && !address.getMemberId().equals(SecurityUtils.getUserId())) {
+        if (address != null && !address.getMemberId().equals(ShopMemberSecurityUtils.getMemberId())) {
             return error("無權限查看此地址");
         }
         return success(address);
@@ -57,7 +57,7 @@ public class ShopMemberAddressController extends BaseController {
      */
     @GetMapping("/default")
     public AjaxResult getDefault() {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         ShopMemberAddress address = addressService.selectDefaultAddress(memberId);
         return success(address);
     }
@@ -70,7 +70,7 @@ public class ShopMemberAddressController extends BaseController {
     public AjaxResult add(@Valid @RequestBody AddressRequest request) {
         ShopMemberAddress address = new ShopMemberAddress();
         BeanUtils.copyProperties(request, address);
-        address.setMemberId(SecurityUtils.getUserId());
+        address.setMemberId(ShopMemberSecurityUtils.getMemberId());
         return toAjax(addressService.insertAddress(address));
     }
 
@@ -86,7 +86,7 @@ public class ShopMemberAddressController extends BaseController {
 
         // 檢查是否屬於當前會員
         ShopMemberAddress existing = addressService.selectAddressById(request.getAddressId());
-        if (existing == null || !existing.getMemberId().equals(SecurityUtils.getUserId())) {
+        if (existing == null || !existing.getMemberId().equals(ShopMemberSecurityUtils.getMemberId())) {
             return error("無權限修改此地址");
         }
 
@@ -103,7 +103,7 @@ public class ShopMemberAddressController extends BaseController {
     public AjaxResult remove(@PathVariable Long addressId) {
         // 檢查是否屬於當前會員
         ShopMemberAddress existing = addressService.selectAddressById(addressId);
-        if (existing == null || !existing.getMemberId().equals(SecurityUtils.getUserId())) {
+        if (existing == null || !existing.getMemberId().equals(ShopMemberSecurityUtils.getMemberId())) {
             return error("無權限刪除此地址");
         }
 
@@ -116,7 +116,7 @@ public class ShopMemberAddressController extends BaseController {
     @Log(title = "會員地址", businessType = BusinessType.UPDATE)
     @PutMapping("/default/{addressId}")
     public AjaxResult setDefault(@PathVariable Long addressId) {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
 
         // 檢查是否屬於當前會員
         ShopMemberAddress existing = addressService.selectAddressById(addressId);

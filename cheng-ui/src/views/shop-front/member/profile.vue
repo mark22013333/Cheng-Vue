@@ -14,7 +14,7 @@
       <el-form-item label="頭像">
         <el-avatar :size="80" :src="userAvatar" />
       </el-form-item>
-      <el-form-item label="用戶名稱">
+      <el-form-item label="帳號">
         <el-input v-model="form.userName" disabled />
       </el-form-item>
       <el-form-item label="暱稱" prop="nickName">
@@ -43,14 +43,14 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import useUserStore from '@/store/modules/user'
+import useMemberStore from '@/store/modules/member'
 
-const userStore = useUserStore()
+const memberStore = useMemberStore()
 
 const formRef = ref(null)
 const saving = ref(false)
 
-const userAvatar = computed(() => userStore.avatar || '')
+const userAvatar = computed(() => memberStore.avatar || '')
 
 const form = reactive({
   userName: '',
@@ -71,8 +71,10 @@ const rules = {
 
 onMounted(() => {
   // 載入用戶資料
-  form.userName = userStore.name || ''
-  form.nickName = userStore.name || ''
+  form.userName = memberStore.mobile || memberStore.email || ''
+  form.nickName = memberStore.nickname || ''
+  form.phonenumber = memberStore.mobile || ''
+  form.email = memberStore.email || ''
 })
 
 async function handleSave() {
