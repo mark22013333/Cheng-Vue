@@ -3,6 +3,7 @@ import { ElMessage } from 'element-plus'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import { getToken } from '@/utils/auth'
+import { getMemberToken } from '@/utils/memberAuth'
 import { isHttp, isPathMatch } from '@/utils/validate'
 import { isRelogin } from '@/utils/request'
 import useUserStore from '@/store/modules/user'
@@ -42,36 +43,47 @@ const isMallPublicPath = (path) => {
 
 router.beforeEach((to, from, next) => {
   NProgress.start()
-  if (getToken()) {
-    to.meta.title && useSettingsStore().setTitle(to.meta.title)
-    /* has token*/
+  const isMallPath = to.path.startsWith('/mall')
+  const memberToken = getMemberToken()
+  const adminToken = getToken()
+
+  if (to.meta.title) {
+    useSettingsStore().setTitle(to.meta.title)
+  }
+
+  if (isMallPath) {
+    if (memberToken || isWhiteList(to.path) || isMallPublicPath(to.path)) {
+      next()
+    } else {
+      next(`/mall/login?redirect=${to.fullPath}`)
+      NProgress.done()
+    }
+    return
+  }
+
+  if (adminToken) {
     if (to.path === '/login') {
       next({ path: '/' })
       NProgress.done()
-    } else if (to.path.startsWith('/mall')) {
-      // 商城路徑不需載入後台權限路由
-      next()
-    } else if (isWhiteList(to.path) || isMallPublicPath(to.path)) {
+    } else if (isWhiteList(to.path)) {
       next()
     } else {
       if (useUserStore().roles.length === 0) {
         isRelogin.show = true
-        // 判斷當前使用者是否已拉取完user_info訊息
         useUserStore().getInfo().then(() => {
           isRelogin.show = false
           usePermissionStore().generateRoutes().then(accessRoutes => {
-            // 根據roles權限產生可訪問的路由表
             accessRoutes.forEach(route => {
               if (!isHttp(route.path)) {
-                router.addRoute(route) // 動態新增可訪問路由表
+                router.addRoute(route)
               }
             })
-            next({ ...to, replace: true }) // hack方法 確保addRoutes已完成
+            next({ ...to, replace: true })
           })
         }).catch(err => {
-          useUserStore().logOut().then(() => {
+          useUserStore().logOut().catch(() => {}).finally(() => {
             ElMessage.error(err)
-            next({ path: '/' })
+            next({ path: '/login' })
           })
         })
       } else {
@@ -79,17 +91,10 @@ router.beforeEach((to, from, next) => {
       }
     }
   } else {
-    // 沒有token
-    if (isWhiteList(to.path) || isMallPublicPath(to.path)) {
-      // 在免登入白名單，直接進入
+    if (isWhiteList(to.path)) {
       next()
     } else {
-      // 判斷是否在商城頁面，若是則重定向到商城登入頁
-      if (to.path.startsWith('/mall')) {
-        next(`/mall/login?redirect=${to.fullPath}`)
-      } else {
-        next(`/login?redirect=${to.fullPath}`) // 否則全部重定向到後台登入頁
-      }
+      next(`/login?redirect=${to.fullPath}`)
       NProgress.done()
     }
   }

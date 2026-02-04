@@ -5,6 +5,7 @@ import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
 import com.cheng.common.enums.BusinessType;
+import com.cheng.common.utils.SecurityUtils;
 import com.cheng.shop.domain.ShopOrder;
 import com.cheng.shop.service.IShopOrderService;
 import lombok.RequiredArgsConstructor;
@@ -80,7 +81,7 @@ public class ShopOrderController extends BaseController {
     @PutMapping("/cancel")
     public AjaxResult cancel(@RequestBody ShopOrder order) {
         ShopOrder existingOrder = orderService.selectOrderById(order.getOrderId());
-        int result = orderService.cancelOrder(order.getOrderId(), order.getCancelReason());
+        int result = orderService.cancelOrder(order.getOrderId(), order.getCancelReason(), SecurityUtils.getUserId());
         AjaxResult ajaxResult = toAjax(result);
         if (existingOrder != null) {
             ajaxResult.put("orderNo", existingOrder.getOrderNo());

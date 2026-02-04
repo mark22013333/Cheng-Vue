@@ -5,12 +5,12 @@ import com.cheng.common.annotation.PublicApi;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.enums.BusinessType;
-import com.cheng.common.utils.SecurityUtils;
 import com.cheng.shop.domain.ShopCart;
 import com.cheng.shop.domain.dto.AddCartRequest;
 import com.cheng.shop.domain.dto.UpdateCartRequest;
 import com.cheng.shop.domain.vo.CartVO;
 import com.cheng.shop.service.IShopCartService;
+import com.cheng.shop.utils.ShopMemberSecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +36,7 @@ public class ShopMemberCartController extends BaseController {
      */
     @GetMapping
     public AjaxResult getCart() {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         List<ShopCart> cartList = cartService.selectCartListByMemberId(memberId);
 
         // 計算統計資訊
@@ -72,7 +72,7 @@ public class ShopMemberCartController extends BaseController {
      */
     @GetMapping("/count")
     public AjaxResult getCartCount() {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         int count = cartService.countCartByMemberId(memberId);
         return success(count);
     }
@@ -83,7 +83,7 @@ public class ShopMemberCartController extends BaseController {
     @Log(title = "會員購物車", businessType = BusinessType.INSERT)
     @PostMapping("/add")
     public AjaxResult addToCart(@Valid @RequestBody AddCartRequest request) {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         int result = cartService.addToCart(memberId, request.getSkuId(), request.getQuantity());
         return toAjax(result);
     }
@@ -112,7 +112,7 @@ public class ShopMemberCartController extends BaseController {
      */
     @PutMapping("/selectAll")
     public AjaxResult selectAll(@RequestParam boolean selected) {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         int result = cartService.updateAllSelected(memberId, selected);
         return toAjax(result);
     }
@@ -143,7 +143,7 @@ public class ShopMemberCartController extends BaseController {
     @Log(title = "會員購物車", businessType = BusinessType.DELETE)
     @DeleteMapping("/clear")
     public AjaxResult clearCart() {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         int result = cartService.clearCart(memberId);
         return toAjax(result);
     }
@@ -154,7 +154,7 @@ public class ShopMemberCartController extends BaseController {
     @Log(title = "會員購物車", businessType = BusinessType.DELETE)
     @DeleteMapping("/removeSelected")
     public AjaxResult removeSelected() {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         int result = cartService.deleteSelectedCarts(memberId);
         return toAjax(result);
     }
@@ -164,7 +164,7 @@ public class ShopMemberCartController extends BaseController {
      */
     @GetMapping("/selected")
     public AjaxResult getSelectedItems() {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         List<ShopCart> items = cartService.selectSelectedCartsByMemberId(memberId);
         return success(items);
     }
@@ -175,7 +175,7 @@ public class ShopMemberCartController extends BaseController {
     @Log(title = "會員購物車", businessType = BusinessType.INSERT)
     @PostMapping("/merge")
     public AjaxResult mergeGuestCart(@RequestBody List<AddCartRequest> items) {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         int successCount = 0;
         for (AddCartRequest item : items) {
             try {

@@ -46,7 +46,7 @@
               <el-input
                 v-model="loginForm.username"
                 size="large"
-                placeholder="請輸入帳號 / Email"
+                placeholder="請輸入手機或 Email"
                 :prefix-icon="User"
               />
             </el-form-item>
@@ -146,12 +146,12 @@ import {
 import { getCodeImg } from '@/api/login'
 import { encrypt, decrypt } from '@/utils/jsencrypt'
 import Cookies from 'js-cookie'
-import useUserStore from '@/store/modules/user'
+import useMemberStore from '@/store/modules/member'
 import { useCartStore } from '@/store/modules/cart'
 
 const router = useRouter()
 const route = useRoute()
-const userStore = useUserStore()
+const memberStore = useMemberStore()
 const cartStore = useCartStore()
 
 const loginFormRef = ref(null)
@@ -172,7 +172,7 @@ const loginForm = ref({
 
 const loginRules = {
   username: [
-    { required: true, trigger: 'blur', message: '請輸入帳號' }
+    { required: true, trigger: 'blur', message: '請輸入手機或 Email' }
   ],
   password: [
     { required: true, trigger: 'blur', message: '請輸入密碼' }
@@ -226,7 +226,12 @@ async function handleLogin() {
       Cookies.remove('rememberMe')
     }
 
-    await userStore.login(loginForm.value)
+    await memberStore.login({
+      account: loginForm.value.username,
+      password: loginForm.value.password,
+      code: loginForm.value.code,
+      uuid: loginForm.value.uuid
+    })
 
     // 登入成功後合併訪客購物車
     try {

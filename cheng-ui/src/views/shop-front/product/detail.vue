@@ -131,6 +131,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getProduct, getProductSkus, listCategories } from '@/api/shop/front'
 import { useCartStore } from '@/store/modules/cart'
+import { getMemberToken } from '@/utils/memberAuth'
 
 const route = useRoute()
 const router = useRouter()
@@ -363,6 +364,11 @@ async function handleBuyNow() {
   }
 
   try {
+    if (!getMemberToken()) {
+      await cartStore.addToCart(sku.skuId, quantity.value, skuInfo)
+      router.push('/mall/login?redirect=/mall/checkout')
+      return
+    }
     // 先加入購物車並選中
     await cartStore.addToCart(sku.skuId, quantity.value, skuInfo)
     // 跳轉到結帳頁面

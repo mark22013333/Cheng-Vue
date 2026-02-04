@@ -42,23 +42,32 @@
           </div>
 
           <el-form ref="registerFormRef" :model="registerForm" :rules="registerRules" class="auth-form">
-            <el-form-item prop="username">
-              <el-input
-                v-model="registerForm.username"
-                size="large"
-                placeholder="請輸入帳號"
-                :prefix-icon="User"
-              />
-            </el-form-item>
+          <el-form-item prop="nickname">
+            <el-input
+              v-model="registerForm.nickname"
+              size="large"
+              placeholder="請輸入暱稱"
+              :prefix-icon="User"
+            />
+          </el-form-item>
 
-            <el-form-item prop="email">
-              <el-input
-                v-model="registerForm.email"
-                size="large"
-                placeholder="請輸入 Email"
-                :prefix-icon="Message"
-              />
-            </el-form-item>
+          <el-form-item prop="mobile">
+            <el-input
+              v-model="registerForm.mobile"
+              size="large"
+              placeholder="請輸入手機號碼（可擇一填寫）"
+              :prefix-icon="Iphone"
+            />
+          </el-form-item>
+
+          <el-form-item prop="email">
+            <el-input
+              v-model="registerForm.email"
+              size="large"
+              placeholder="請輸入 Email（可擇一填寫）"
+              :prefix-icon="Message"
+            />
+          </el-form-item>
 
             <el-form-item prop="password">
               <el-input
@@ -157,14 +166,19 @@ import {
   Key,
   Refresh,
   Message,
+  Iphone,
   Discount,
   Present,
   Star
 } from '@element-plus/icons-vue'
-import { getCodeImg, register } from '@/api/login'
+import { getCodeImg } from '@/api/login'
+import useMemberStore from '@/store/modules/member'
+import { useCartStore } from '@/store/modules/cart'
 
 const router = useRouter()
 const route = useRoute()
+const memberStore = useMemberStore()
+const cartStore = useCartStore()
 
 const registerFormRef = ref(null)
 const loading = ref(false)
@@ -176,7 +190,8 @@ const codeUrl = ref('')
 const redirect = computed(() => route.query.redirect || '/mall')
 
 const registerForm = ref({
-  username: '',
+  nickname: '',
+  mobile: '',
   email: '',
   password: '',
   confirmPassword: '',
@@ -186,6 +201,29 @@ const registerForm = ref({
 })
 
 // 自訂驗證規則
+const validateContact = (rule, value, callback) => {
+  const mobile = registerForm.value.mobile
+  const email = registerForm.value.email
+  if (!mobile && !email) {
+    callback(new Error('手機或 Email 必須擇一填寫'))
+    return
+  }
+  if (rule.field === 'mobile' && mobile) {
+    const mobileOk = /^[0-9]{8,15}$/.test(mobile)
+    if (!mobileOk) {
+      callback(new Error('請輸入正確的手機號碼'))
+      return
+    }
+  }
+  if (rule.field === 'email' && email) {
+    const emailOk = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)
+    if (!emailOk) {
+      callback(new Error('請輸入正確的 Email 格式'))
+      return
+    }
+  }
+  callback()
+}
 const validatePassword = (rule, value, callback) => {
   if (value.length < 6 || value.length > 20) {
     callback(new Error('密碼長度需在 6-20 字元之間'))
@@ -211,13 +249,15 @@ const validateAgreement = (rule, value, callback) => {
 }
 
 const registerRules = {
-  username: [
-    { required: true, trigger: 'blur', message: '請輸入帳號' },
-    { min: 4, max: 20, trigger: 'blur', message: '帳號長度需在 4-20 字元之間' }
+  nickname: [
+    { required: true, trigger: 'blur', message: '請輸入暱稱' },
+    { min: 2, max: 20, trigger: 'blur', message: '暱稱長度需在 2-20 字元之間' }
+  ],
+  mobile: [
+    { validator: validateContact, trigger: 'blur' }
   ],
   email: [
-    { required: true, trigger: 'blur', message: '請輸入 Email' },
-    { type: 'email', trigger: 'blur', message: '請輸入正確的 Email 格式' }
+    { validator: validateContact, trigger: 'blur' }
   ],
   password: [
     { required: true, trigger: 'blur', message: '請輸入密碼' },
@@ -255,13 +295,23 @@ async function handleRegister() {
     await registerFormRef.value.validate()
     loading.value = true
 
-    await register(registerForm.value)
-
-    ElMessage.success('註冊成功，請登入')
-    router.push({
-      path: '/mall/login',
-      query: { redirect: redirect.value }
+    await memberStore.register({
+      nickname: registerForm.value.nickname,
+      mobile: registerForm.value.mobile,
+      email: registerForm.value.email,
+      password: registerForm.value.password,
+      code: registerForm.value.code,
+      uuid: registerForm.value.uuid
     })
+
+    try {
+      await cartStore.mergeGuestCartOnLogin()
+    } catch (e) {
+      console.error('合併購物車失敗', e)
+    }
+
+    ElMessage.success('註冊成功')
+    router.push(redirect.value)
   } catch (error) {
     loading.value = false
     if (captchaEnabled.value) {

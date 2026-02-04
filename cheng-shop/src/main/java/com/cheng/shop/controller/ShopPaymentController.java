@@ -5,7 +5,6 @@ import com.cheng.common.annotation.PublicApi;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.exception.ServiceException;
-import com.cheng.common.utils.SecurityUtils;
 import com.cheng.common.utils.JacksonUtil;
 import com.cheng.shop.domain.ShopOrder;
 import com.cheng.shop.domain.ShopPaymentCallbackLog;
@@ -17,6 +16,7 @@ import com.cheng.shop.payment.PaymentRequest;
 import com.cheng.shop.payment.PaymentResponse;
 import com.cheng.shop.service.IShopOrderService;
 import com.cheng.shop.service.IShopPaymentCallbackLogService;
+import com.cheng.shop.utils.ShopMemberSecurityUtils;
 import com.cheng.system.service.ISysConfigService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -60,7 +60,7 @@ public class ShopPaymentController extends BaseController {
      */
     @PostMapping("/ecpay/create")
     public AjaxResult createEcpayPayment(@RequestParam String orderNo, HttpServletRequest request) {
-        Long memberId = SecurityUtils.getLoginUser().getUser().getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
 
         // 查詢訂單
         ShopOrder order = orderService.selectOrderByOrderNo(orderNo);
@@ -210,11 +210,11 @@ public class ShopPaymentController extends BaseController {
                 "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
                 + "<title>付款完成</title>"
                 + "<style>body{display:flex;justify-content:center;align-items:center;min-height:100vh;"
-                + "font-family:-apple-system,sans-serif;background:#f5f7fa;margin:0;}"
-                + ".card{text-align:center;padding:40px;background:#fff;border-radius:12px;"
-                + "box-shadow:0 2px 12px rgba(0,0,0,.1);}"
-                + "h2{color:#67c23a;margin:0 0 12px;}p{color:#606266;margin:0 0 20px;}"
-                + "a{color:#409eff;text-decoration:none;font-weight:500;}</style>"
+                + "font-family:-apple-system,sans-serif;background:#f5efe6;margin:0;}"
+                + ".card{text-align:center;padding:40px;background:#fffaf2;border-radius:16px;"
+                + "box-shadow:0 10px 24px rgba(44,29,21,.15);}"
+                + "h2{color:#8b5e3c;margin:0 0 12px;}p{color:#6b5a50;margin:0 0 20px;}"
+                + "a{color:#8b5e3c;text-decoration:none;font-weight:600;}</style>"
                 + "</head><body><div class='card'>"
                 + "<h2>付款完成</h2>"
                 + "<p>正在跳轉至訂單頁面...</p>"

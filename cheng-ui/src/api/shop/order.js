@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import requestShop from '@/utils/requestShop'
 
 // 查詢訂單列表
 export function listOrder(query) {
@@ -85,7 +86,7 @@ export function updateShipStatus(orderId, shipStatus) {
  * @param {string} status - 訂單狀態篩選（可選）
  */
 export function getMyOrders(status) {
-  return request({
+  return requestShop({
     url: '/shop/order/my/list',
     method: 'get',
     params: status ? { status } : {}
@@ -97,7 +98,7 @@ export function getMyOrders(status) {
  * @param {string} orderNo - 訂單編號
  */
 export function getMyOrderDetail(orderNo) {
-  return request({
+  return requestShop({
     url: `/shop/order/my/${orderNo}`,
     method: 'get'
   })
@@ -107,7 +108,7 @@ export function getMyOrderDetail(orderNo) {
  * 取得訂單狀態統計
  */
 export function getOrderStats() {
-  return request({
+  return requestShop({
     url: '/shop/order/my/stats',
     method: 'get'
   })
@@ -119,7 +120,7 @@ export function getOrderStats() {
  * @param {string} reason - 取消原因
  */
 export function memberCancelOrder(orderId, reason) {
-  return request({
+  return requestShop({
     url: `/shop/order/my/cancel/${orderId}`,
     method: 'post',
     params: reason ? { reason } : {}
@@ -131,7 +132,7 @@ export function memberCancelOrder(orderId, reason) {
  * @param {number} orderId - 訂單 ID
  */
 export function memberConfirmReceipt(orderId) {
-  return request({
+  return requestShop({
     url: `/shop/order/my/confirm/${orderId}`,
     method: 'post'
   })

@@ -11,7 +11,7 @@ import {
   clearCart as clearCartApi,
   mergeGuestCart as mergeGuestCartApi
 } from '@/api/shop/cart'
-import { getToken } from '@/utils/auth'
+import { getMemberToken } from '@/utils/memberAuth'
 import { getProduct, getProductSkus } from '@/api/shop/front'
 
 const GUEST_CART_KEY = 'guest_cart'
@@ -55,7 +55,7 @@ export const useCartStore = defineStore('cart', {
      * 判斷是否已登入
      */
     isLoggedIn() {
-      return !!getToken()
+      return !!getMemberToken()
     },
 
     /**

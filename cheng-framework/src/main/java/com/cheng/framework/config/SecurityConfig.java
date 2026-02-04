@@ -7,6 +7,7 @@ import com.cheng.framework.security.handle.LogoutSuccessHandlerImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -89,8 +90,9 @@ public class SecurityConfig {
      * permitAll           |   使用者可以任意訪問
      * rememberMe          |   允許通過remember-me登入的使用者訪問
      * authenticated       |   使用者登入後可訪問
-     */
+    */
     @Bean
+    @Order(2)
     protected SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 // CSRF禁用，因為不使用session

@@ -5,9 +5,9 @@ import com.cheng.common.annotation.PublicApi;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.enums.BusinessType;
-import com.cheng.common.utils.SecurityUtils;
 import com.cheng.shop.domain.ShopOrder;
 import com.cheng.shop.service.IShopOrderService;
+import com.cheng.shop.utils.ShopMemberSecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,7 +32,7 @@ public class ShopMemberOrderController extends BaseController {
      */
     @GetMapping("/list")
     public AjaxResult list(@RequestParam(required = false) String status) {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         List<ShopOrder> orders = orderService.selectOrdersByMemberId(memberId, status);
         return success(orders);
     }
@@ -42,7 +42,7 @@ public class ShopMemberOrderController extends BaseController {
      */
     @GetMapping("/{orderNo}")
     public AjaxResult getInfo(@PathVariable String orderNo) {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         ShopOrder order = orderService.selectOrderByOrderNo(orderNo);
 
         // 檢查是否屬於當前會員
@@ -58,7 +58,7 @@ public class ShopMemberOrderController extends BaseController {
      */
     @GetMapping("/stats")
     public AjaxResult getStats() {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
         Map<String, Integer> stats = orderService.countOrderByStatus(memberId);
         return success(stats);
     }
@@ -70,7 +70,7 @@ public class ShopMemberOrderController extends BaseController {
     @PostMapping("/cancel/{orderId}")
     public AjaxResult cancel(@PathVariable Long orderId,
                              @RequestParam(required = false, defaultValue = "會員主動取消") String reason) {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
 
         // 檢查訂單歸屬
         ShopOrder order = orderService.selectOrderById(orderId);
@@ -78,7 +78,7 @@ public class ShopMemberOrderController extends BaseController {
             return error("訂單不存在或無權操作");
         }
 
-        return toAjax(orderService.cancelOrder(orderId, reason));
+        return toAjax(orderService.cancelOrder(orderId, reason, memberId));
     }
 
     /**
@@ -87,7 +87,7 @@ public class ShopMemberOrderController extends BaseController {
     @Log(title = "會員確認收貨", businessType = BusinessType.UPDATE)
     @PostMapping("/confirm/{orderId}")
     public AjaxResult confirmReceipt(@PathVariable Long orderId) {
-        Long memberId = SecurityUtils.getUserId();
+        Long memberId = ShopMemberSecurityUtils.getMemberId();
 
         // 檢查訂單歸屬
         ShopOrder order = orderService.selectOrderById(orderId);

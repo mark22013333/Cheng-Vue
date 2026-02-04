@@ -97,7 +97,7 @@ public class SysLoginController {
      *
      * @return 路由訊息
      */
-    @GetMapping("/cadm/getRouters")
+    @GetMapping({"/getRouters", "/cadm/getRouters"})
     public AjaxResult getRouters() {
         Long userId = SecurityUtils.getUserId();
         List<SysMenu> menus = menuService.selectMenuTreeByUserId(userId);
