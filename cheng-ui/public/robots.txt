@@ -1,2 +1,9 @@
 User-agent: *
-Disallow: /
+Disallow: /cadm/
+Disallow: /prod-api/
+Disallow: /api/
+Disallow: /login
+Disallow: /system/
+Disallow: /monitor/
+Disallow: /tool/
+Allow: /mall/

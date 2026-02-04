@@ -25,6 +25,9 @@ import ShopLayout from '@/layout/ShopLayout.vue'
   }
  */
 
+const isAdminHost = typeof window !== 'undefined' && window.location.pathname.startsWith('/cadm')
+const defaultHomePath = isAdminHost ? '/index' : '/mall'
+
 // 公共路由
 export const constantRoutes = [
   {
@@ -61,7 +64,7 @@ export const constantRoutes = [
   {
     path: '',
     component: Layout,
-    redirect: '/index',
+    redirect: defaultHomePath,
     children: [
       {
         path: '/index',
@@ -286,8 +289,10 @@ export const dynamicRoutes = [
   }
 ]
 
+const routerBase = (typeof window !== 'undefined' && window.location.pathname.startsWith('/cadm')) ? '/cadm' : '/'
+
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(routerBase),
   routes: constantRoutes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
@@ -295,6 +300,24 @@ const router = createRouter({
     }
     return { top: 0 }
   },
+})
+
+// 非 /cadm 環境：強制只允許 /mall 路徑，避免直接看到後台登入頁
+router.beforeEach((to, from, next) => {
+  const adminHost = typeof window !== 'undefined' && window.location.pathname.startsWith('/cadm')
+  if (!adminHost) {
+    const isMallPath = to.path.startsWith('/mall')
+    const isAllowed = isMallPath || to.path === '/401' || to.path === '/404'
+    if (!isAllowed) {
+      return next('/mall')
+    }
+  } else {
+    // /cadm 環境下避免誤進商城路由
+    if (to.path.startsWith('/mall')) {
+      return next('/index')
+    }
+  }
+  next()
 })
 
 export default router

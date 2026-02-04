@@ -1,6 +1,7 @@
 package com.cheng.framework.config;
 
 import com.cheng.common.constant.Constants;
+import com.cheng.common.filter.CaptchaNoCacheFilter;
 import com.cheng.common.filter.RefererFilter;
 import com.cheng.common.filter.RepeatableFilter;
 import com.cheng.common.filter.XssFilter;
@@ -71,6 +72,17 @@ public class FilterConfig {
         registration.addUrlPatterns("/*");
         registration.setName("repeatableFilter");
         registration.setOrder(FilterRegistrationBean.LOWEST_PRECEDENCE);
+        return registration;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    @Bean
+    public FilterRegistrationBean captchaNoCacheFilterRegistration() {
+        FilterRegistrationBean registration = new FilterRegistrationBean();
+        registration.setFilter(new CaptchaNoCacheFilter());
+        registration.addUrlPatterns("/captchaImage", "/cadm/captchaImage");
+        registration.setName("captchaNoCacheFilter");
+        registration.setOrder(FilterRegistrationBean.HIGHEST_PRECEDENCE);
         return registration;
     }
 

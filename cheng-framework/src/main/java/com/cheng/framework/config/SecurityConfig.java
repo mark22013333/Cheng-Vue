@@ -12,6 +12,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -64,6 +65,17 @@ public class SecurityConfig {
     }
 
     /**
+     * Swagger / OpenAPI 路徑直接放行，避免被安全鏈阻擋
+     */
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers(
+                "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**",
+                "/cadm/swagger-ui.html", "/cadm/swagger-ui/**", "/cadm/v3/api-docs/**"
+        );
+    }
+
+    /**
      * anyRequest          |   匹配所有請求路徑
      * access              |   SpringEl表達式結果為true時可以訪問
      * anonymous           |   匿名可以訪問
@@ -96,10 +108,13 @@ public class SecurityConfig {
                     // 掃描 @Anonymous 註解的端點，自動允許匿名訪問
                     permitAllUrl.getUrls().forEach(url -> requests.requestMatchers(url).permitAll());
                     // 對於登入login 註冊register 驗證碼captchaImage 允許匿名訪問
-                    requests.requestMatchers("/login", "/register", "/captchaImage").permitAll()
+                    requests.requestMatchers("/login", "/register", "/captchaImage",
+                            "/cadm/login", "/cadm/register", "/cadm/captchaImage").permitAll()
                             // 靜態資源，可匿名訪問
                             .requestMatchers(HttpMethod.GET, "/", "/*.html", "/**.html", "/**.css", "/**.js", "/profile/**").permitAll()
-                            .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**", "/druid/**", "/mall/**", "/shop/front/**").permitAll()
+                            .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**",
+                                    "/cadm/swagger-ui.html", "/cadm/v3/api-docs/**", "/cadm/swagger-ui/**",
+                                    "/druid/**", "/mall/**", "/shop/front/**").permitAll()
                             // 除上面外的所有請求全部需要鑑權認證
                             .anyRequest().authenticated();
                 })

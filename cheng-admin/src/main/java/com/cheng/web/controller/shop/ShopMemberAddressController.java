@@ -1,6 +1,7 @@
 package com.cheng.web.controller.shop;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.annotation.PublicApi;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.enums.BusinessType;
@@ -20,6 +21,7 @@ import java.util.List;
  *
  * @author cheng
  */
+@PublicApi
 @RestController
 @RequestMapping("/shop/address")
 @RequiredArgsConstructor

@@ -15,7 +15,11 @@ axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
 // 建立axios實例
 const service = axios.create({
   // axios中請求配置有baseURL選項，表示請求URL公共部分
-  baseURL: import.meta.env.VITE_APP_BASE_API,
+  baseURL: (() => {
+    const baseApi = import.meta.env.VITE_APP_BASE_API
+    const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/cadm')
+    return isAdmin ? `/cadm${baseApi}` : baseApi
+  })(),
   // 逾時
   timeout: 10000
 })
@@ -86,8 +90,14 @@ service.interceptors.response.use(res => {
       isRelogin.show = true
       // 判斷當前是否在商城頁面
       const isMallPage = window.location.pathname.startsWith('/mall')
-      const loginPath = isMallPage ? `/mall/login?redirect=${encodeURIComponent(window.location.pathname)}` : '/index'
-      const message = isMallPage ? '登入狀態已過期，請重新登入' : '登入狀態已過期，您可以繼續留在該頁面，或者重新登入'
+      const isAdminPage = window.location.pathname.startsWith('/cadm')
+      const redirectPath = encodeURIComponent(window.location.pathname)
+      const loginPath = isMallPage
+        ? `/mall/login?redirect=${redirectPath}`
+        : (isAdminPage ? `/cadm/login?redirect=${redirectPath}` : '/login')
+      const message = isMallPage
+        ? '登入狀態已過期，請重新登入'
+        : '登入狀態已過期，您可以繼續留在該頁面，或者重新登入'
 
       ElMessageBox.confirm(message, '系統提示', { confirmButtonText: '重新登入', cancelButtonText: '取消', type: 'warning' }).then(() => {
         isRelogin.show = false

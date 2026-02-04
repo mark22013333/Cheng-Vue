@@ -23,11 +23,21 @@ const whiteList = [
   '/mall/products',
   '/mall/product/**',
   '/mall/category',
+  '/mall/articles',
+  '/mall/article/**',
   '/mall/cart'
 ]
 
 const isWhiteList = (path) => {
   return whiteList.some(pattern => isPathMatch(pattern, path))
+}
+
+// 商城：僅結帳與會員中心需要登入，其餘商城路徑直接放行
+const isMallPublicPath = (path) => {
+  if (!path.startsWith('/mall')) return false
+  if (path.startsWith('/mall/checkout')) return false
+  if (path.startsWith('/mall/member')) return false
+  return true
 }
 
 router.beforeEach((to, from, next) => {
@@ -38,7 +48,10 @@ router.beforeEach((to, from, next) => {
     if (to.path === '/login') {
       next({ path: '/' })
       NProgress.done()
-    } else if (isWhiteList(to.path)) {
+    } else if (to.path.startsWith('/mall')) {
+      // 商城路徑不需載入後台權限路由
+      next()
+    } else if (isWhiteList(to.path) || isMallPublicPath(to.path)) {
       next()
     } else {
       if (useUserStore().roles.length === 0) {
@@ -67,7 +80,7 @@ router.beforeEach((to, from, next) => {
     }
   } else {
     // 沒有token
-    if (isWhiteList(to.path)) {
+    if (isWhiteList(to.path) || isMallPublicPath(to.path)) {
       // 在免登入白名單，直接進入
       next()
     } else {

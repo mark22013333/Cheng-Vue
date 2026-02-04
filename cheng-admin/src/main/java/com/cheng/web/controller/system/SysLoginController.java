@@ -1,5 +1,6 @@
 package com.cheng.web.controller.system;
 
+import com.cheng.common.annotation.PublicApi;
 import com.cheng.common.constant.Constants;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.domain.entity.SysMenu;
@@ -31,6 +32,7 @@ import java.util.Set;
  *
  * @author cheng
  */
+@PublicApi
 @RestController
 public class SysLoginController {
     @Autowired
@@ -54,7 +56,7 @@ public class SysLoginController {
      * @param loginBody 登入訊息
      * @return 結果
      */
-    @PostMapping("/login")
+    @PostMapping({"/login", "/cadm/login"})
     public AjaxResult login(@RequestBody LoginBody loginBody) {
         AjaxResult ajax = AjaxResult.success();
         // 產生令牌
@@ -69,7 +71,7 @@ public class SysLoginController {
      *
      * @return 使用者訊息
      */
-    @GetMapping("getInfo")
+    @GetMapping({"/getInfo", "/cadm/getInfo"})
     public AjaxResult getInfo() {
         LoginUser loginUser = SecurityUtils.getLoginUser();
         SysUser user = loginUser.getUser();
@@ -95,7 +97,7 @@ public class SysLoginController {
      *
      * @return 路由訊息
      */
-    @GetMapping("getRouters")
+    @GetMapping("/cadm/getRouters")
     public AjaxResult getRouters() {
         Long userId = SecurityUtils.getUserId();
         List<SysMenu> menus = menuService.selectMenuTreeByUserId(userId);

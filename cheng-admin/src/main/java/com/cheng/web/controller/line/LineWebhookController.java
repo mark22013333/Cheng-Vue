@@ -1,6 +1,7 @@
 package com.cheng.web.controller.line;
 
 import com.cheng.common.annotation.Anonymous;
+import com.cheng.common.annotation.PublicApi;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.line.domain.LineConfig;
@@ -34,6 +35,7 @@ import java.util.List;
  * @author cheng
  */
 @Anonymous
+@PublicApi
 @LineMessageHandler
 @RestController
 @RequestMapping(ILineConfigService.WEBHOOK)
