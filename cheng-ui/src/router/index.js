@@ -136,6 +136,18 @@ export const constantRoutes = [
         meta: { title: '文章列表' }
       },
       {
+        path: 'terms',
+        component: () => import('@/views/shop-front/legal/terms.vue'),
+        name: 'MallTerms',
+        meta: { title: '服務條款' }
+      },
+      {
+        path: 'privacy',
+        component: () => import('@/views/shop-front/legal/privacy.vue'),
+        name: 'MallPrivacy',
+        meta: { title: '隱私政策' }
+      },
+      {
         path: 'article/:id',
         component: () => import('@/views/shop-front/article/detail.vue'),
         name: 'MallArticleDetail',
