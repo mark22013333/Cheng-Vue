@@ -6,10 +6,10 @@
       :sub-title="subTitle"
     >
       <template #extra>
-        <el-button type="primary" @click="$router.push(`/mall/member/order/${orderNo}`)">
+        <el-button type="primary" @click="$router.push(`/member/order/${orderNo}`)">
           查看訂單
         </el-button>
-        <el-button @click="$router.push('/mall/products')">繼續購物</el-button>
+        <el-button @click="$router.push('/products')">繼續購物</el-button>
         <el-button v-if="!isSuccess" type="warning" @click="retryPayment">
           重新付款
         </el-button>

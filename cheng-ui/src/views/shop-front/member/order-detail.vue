@@ -114,7 +114,7 @@
 
       <!-- 操作按鈕 -->
       <div class="action-section">
-        <el-button @click="$router.push('/mall/member/orders')">返回訂單列表</el-button>
+        <el-button @click="$router.push('/member/orders')">返回訂單列表</el-button>
         <el-button
           v-if="order.status === 'PENDING' && order.paymentMethod === 'ECPAY'"
           type="primary"
@@ -142,7 +142,7 @@
     </template>
 
     <el-empty v-else-if="!loading" description="訂單不存在">
-      <el-button type="primary" @click="$router.push('/mall/member/orders')">返回訂單列表</el-button>
+      <el-button type="primary" @click="$router.push('/member/orders')">返回訂單列表</el-button>
     </el-empty>
   </div>
 </template>
@@ -189,7 +189,8 @@ async function fetchOrderDetail() {
 function getImageUrl(url) {
   if (!url) return '/placeholder-image.png'
   if (url.startsWith('http')) return url
-  return import.meta.env.VITE_APP_BASE_API + url
+  if (url.startsWith('/profile')) return url
+  return '/profile' + (url.startsWith('/') ? url : '/' + url)
 }
 
 function formatPrice(price) {

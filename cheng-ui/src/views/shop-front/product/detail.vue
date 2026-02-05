@@ -3,11 +3,11 @@
     <!-- 麵包屑導覽列 -->
     <div class="breadcrumb-section" v-if="product">
       <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/mall' }">首頁</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/' }">首頁</el-breadcrumb-item>
         <el-breadcrumb-item
           v-for="category in categoryPath"
           :key="category.categoryId"
-          :to="{ path: '/mall/products', query: { categoryId: category.categoryId } }"
+          :to="{ path: '/products', query: { categoryId: category.categoryId } }"
         >
           {{ category.name }}
         </el-breadcrumb-item>
@@ -307,7 +307,8 @@ const allImages = computed(() => {
 function getImageUrl(url) {
   if (!url) return 'https://via.placeholder.com/600x600?text=No+Image'
   if (url.startsWith('http')) return url
-  return import.meta.env.VITE_APP_BASE_API + url
+  if (url.startsWith('/profile')) return url
+  return '/profile' + (url.startsWith('/') ? url : '/' + url)
 }
 
 async function handleAddToCart() {
@@ -366,13 +367,13 @@ async function handleBuyNow() {
   try {
     if (!getMemberToken()) {
       await cartStore.addToCart(sku.skuId, quantity.value, skuInfo)
-      router.push('/mall/login?redirect=/mall/checkout')
+      router.push('/login?redirect=/checkout')
       return
     }
     // 先加入購物車並選中
     await cartStore.addToCart(sku.skuId, quantity.value, skuInfo)
     // 跳轉到結帳頁面
-    router.push('/mall/checkout')
+    router.push('/checkout')
   } catch (error) {
     ElMessage.error(error.message || '操作失敗')
   }

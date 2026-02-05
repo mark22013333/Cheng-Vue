@@ -164,7 +164,8 @@ onMounted(() => {
 function getImageUrl(url) {
   if (!url) return '/placeholder-image.png'
   if (url.startsWith('http')) return url
-  return import.meta.env.VITE_APP_BASE_API + url
+  if (url.startsWith('/profile')) return url
+  return '/profile' + (url.startsWith('/') ? url : '/' + url)
 }
 
 function formatPrice(price) {
@@ -172,15 +173,15 @@ function formatPrice(price) {
 }
 
 function goShopping() {
-  router.push('/mall/products')
+  router.push('/products')
 }
 
 function goProductDetail(productId) {
-  router.push(`/mall/product/${productId}`)
+  router.push(`/product/${productId}`)
 }
 
 function goCheckout() {
-  router.push('/mall/checkout')
+  router.push('/checkout')
 }
 
 async function handleSelectAll(selected) {

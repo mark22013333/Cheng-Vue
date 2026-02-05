@@ -214,11 +214,11 @@
             <el-form-item prop="agreement">
               <el-checkbox v-model="registerForm.agreement" class="agreement">
                 我已閱讀並同意
-                <router-link class="inline-link" to="/mall/terms" target="_blank" rel="noopener noreferrer">
+                <router-link class="inline-link" to="/terms" target="_blank" rel="noopener noreferrer">
                   服務條款
                 </router-link>
                 與
-                <router-link class="inline-link" to="/mall/privacy" target="_blank" rel="noopener noreferrer">
+                <router-link class="inline-link" to="/privacy" target="_blank" rel="noopener noreferrer">
                   隱私政策
                 </router-link>
               </el-checkbox>
@@ -236,7 +236,7 @@
 
             <p class="form-footer">
               已經有帳號？
-              <router-link :to="{ path: '/mall/login', query: { redirect: redirect } }">
+              <router-link :to="{ path: '/login', query: { redirect: redirect } }">
                 立即登入
               </router-link>
             </p>
@@ -282,7 +282,7 @@ const captchaEnabled = ref(true)
 const codeUrl = ref('')
 const contactType = ref('email')
 
-const redirect = computed(() => route.query.redirect || '/mall')
+const redirect = computed(() => route.query.redirect || '/')
 const motionBackgroundStyle = computed(() => ({
   backgroundImage: `linear-gradient(160deg, rgba(6, 48, 104, 0.86), rgba(18, 97, 183, 0.7)), url(${loginBackground})`
 }))

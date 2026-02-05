@@ -7,9 +7,12 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
+    "dev:admin": "vite --mode development.admin",
     "build": "vite build",
     "build:prod": "vite build --mode production",
+    "build:admin": "vite build --mode production.admin --outDir dist-admin",
     "build:stage": "vite build --mode staging",
+    "build:all": "pnpm build:prod && pnpm build:admin",
     "preview": "vite preview",
     "preinstall": "node -e \"if(process.env.npm_config_user_agent.indexOf('pnpm')===-1){console.log('⚠️  請使用 pnpm install 代替 npm install');process.exit(1)}\"",
     "i": "echo '⚠️  請勿使用 npm i！使用 pnpm 代替' && exit 1"

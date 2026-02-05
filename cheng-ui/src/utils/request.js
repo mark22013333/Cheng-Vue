@@ -24,12 +24,8 @@ function normalizeApiBase(baseApi) {
   return withLeadingSlash.replace(/\/+$/, '')
 }
 
-function getBaseURL() {
-  const baseApi = normalizeApiBase(import.meta.env.VITE_APP_BASE_API)
-  // 當從 /cadm 路徑訪問時，API 請求需要加上 /cadm 前綴
-  const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/cadm')
-  return isAdmin ? `/cadm${baseApi}` : baseApi
-}
+// 統一使用 VITE_APP_BASE_API，不再根據路徑動態切換
+const BASE_URL = normalizeApiBase(import.meta.env.VITE_APP_BASE_API)
 
 function resolveRequestUrl(error) {
   const config = (error && error.config) ? error.config : {}
@@ -44,17 +40,14 @@ function resolveRequestUrl(error) {
   return `${baseURL}${path}`
 }
 
-// 建立axios實例（baseURL 會在請求攔截器中動態設定）
+// 建立axios實例，統一使用 BASE_URL
 const service = axios.create({
-  // 逾時
+  baseURL: BASE_URL,
   timeout: 10000
 })
 
 // request攔截器
 service.interceptors.request.use(config => {
-  // 動態設定 baseURL，確保每次請求都根據當前路徑計算
-  config.baseURL = getBaseURL()
-
   // 是否需要設定 token
   const isToken = (config.headers || {}).isToken === false
   // 是否需要防止資料重複提交
@@ -117,16 +110,10 @@ service.interceptors.response.use(res => {
   if (code === 401) {
     if (!isRelogin.show) {
       isRelogin.show = true
-      // 判斷當前是否在商城頁面
-      const isMallPage = window.location.pathname.startsWith('/mall')
-      const isAdminPage = window.location.pathname.startsWith('/cadm')
+      // 後台管理系統統一使用 /login
       const redirectPath = encodeURIComponent(window.location.pathname)
-      const loginPath = isMallPage
-        ? `/mall/login?redirect=${redirectPath}`
-        : (isAdminPage ? `/cadm/login?redirect=${redirectPath}` : '/login')
-      const message = isMallPage
-        ? '登入狀態已過期，請重新登入'
-        : '登入狀態已過期，您可以繼續留在該頁面，或者重新登入'
+      const loginPath = `/login?redirect=${redirectPath}`
+      const message = '登入狀態已過期，您可以繼續留在該頁面，或者重新登入'
 
       ElMessageBox.confirm(message, '系統提示', { confirmButtonText: '重新登入', cancelButtonText: '取消', type: 'warning' }).then(() => {
         isRelogin.show = false

@@ -91,11 +91,11 @@
                 <el-icon><User /></el-icon>
                 <span>個人資料</span>
               </div>
-              <div class="action-item" @click="$router.push('/mall/cart')">
+              <div class="action-item" @click="$router.push('/cart')">
                 <el-icon><ShoppingCart /></el-icon>
                 <span>購物車</span>
               </div>
-              <div class="action-item" @click="$router.push('/mall/products')">
+              <div class="action-item" @click="$router.push('/products')">
                 <el-icon><Goods /></el-icon>
                 <span>繼續購物</span>
               </div>
@@ -140,7 +140,7 @@ const activeMenu = computed(() => {
 })
 
 const isIndexPage = computed(() => {
-  return route.path === '/mall/member' || route.path === '/mall/member/'
+  return route.path === '/member' || route.path === '/member/'
 })
 
 // 訂單統計（模擬數據，之後接 API）
@@ -167,14 +167,14 @@ async function loadOrderStats() {
 }
 
 function handleMenuSelect(index) {
-  router.push(`/mall/member/${index}`)
+  router.push(`/member/${index}`)
 }
 
 function goTo(page, status) {
   if (status) {
-    router.push({ path: `/mall/member/${page}`, query: { status } })
+    router.push({ path: `/member/${page}`, query: { status } })
   } else {
-    router.push(`/mall/member/${page}`)
+    router.push(`/member/${page}`)
   }
 }
 

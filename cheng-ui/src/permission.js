@@ -12,63 +12,73 @@ import usePermissionStore from '@/store/modules/permission'
 
 NProgress.configure({ showSpinner: false })
 
-// 免登入白名單
-// 商城前台：首頁、商品列表、商品詳情、分類、購物車允許未登入訪問
-// 結帳和會員中心需要登入
-const whiteList = [
+// 建置時決定應用模式
+const appMode = import.meta.env.VITE_APP_MODE || 'shop'
+const isAdminMode = appMode === 'admin'
+
+// 後台管理白名單
+const adminWhiteList = ['/login', '/register']
+
+// 商城白名單（公開頁面，不需登入）
+const shopWhiteList = [
+  '/',
   '/login',
   '/register',
-  '/mall',
-  '/mall/login',
-  '/mall/register',
-  '/mall/products',
-  '/mall/product/**',
-  '/mall/category',
-  '/mall/articles',
-  '/mall/article/**',
-  '/mall/cart'
+  '/products',
+  '/product/**',
+  '/category',
+  '/articles',
+  '/article/**',
+  '/cart',
+  '/terms',
+  '/privacy'
 ]
 
+// 商城需要登入的路徑
+const shopProtectedPaths = ['/checkout', '/member', '/order-success']
+
 const isWhiteList = (path) => {
-  return whiteList.some(pattern => isPathMatch(pattern, path))
+  const list = isAdminMode ? adminWhiteList : shopWhiteList
+  return list.some(pattern => isPathMatch(pattern, path))
 }
 
-// 商城：僅結帳與會員中心需要登入，其餘商城路徑直接放行
-const isMallPublicPath = (path) => {
-  if (!path.startsWith('/mall')) return false
-  if (path.startsWith('/mall/checkout')) return false
-  if (path.startsWith('/mall/member')) return false
-  return true
+const isProtectedPath = (path) => {
+  return shopProtectedPaths.some(p => path.startsWith(p))
 }
 
 router.beforeEach((to, from, next) => {
   NProgress.start()
-  const isMallPath = to.path.startsWith('/mall')
-  const memberToken = getMemberToken()
-  const adminToken = getToken()
 
   if (to.meta.title) {
     useSettingsStore().setTitle(to.meta.title)
   }
 
-  if (isMallPath) {
-    if (memberToken || isWhiteList(to.path) || isMallPublicPath(to.path)) {
-      next()
+  // 商城模式
+  if (!isAdminMode) {
+    const memberToken = getMemberToken()
+    // 需要登入的頁面
+    if (isProtectedPath(to.path)) {
+      if (memberToken) {
+        next()
+      } else {
+        next(`/login?redirect=${to.fullPath}`)
+        NProgress.done()
+      }
     } else {
-      next(`/mall/login?redirect=${to.fullPath}`)
-      NProgress.done()
+      // 公開頁面直接放行
+      next()
     }
     return
   }
 
+  // 後台管理模式
+  const adminToken = getToken()
+
   if (adminToken) {
     if (to.path === '/login') {
-      next({ path: '/' })
+      next({ path: '/index' })
       NProgress.done()
-    } else if (to.path.startsWith('/mall')) {
-      // 商城路徑不需載入後台權限路由
-      next()
-    } else if (isWhiteList(to.path) || isMallPublicPath(to.path)) {
+    } else if (isWhiteList(to.path)) {
       next()
     } else {
       if (useUserStore().roles.length === 0) {

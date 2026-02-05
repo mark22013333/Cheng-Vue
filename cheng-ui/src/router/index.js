@@ -25,8 +25,10 @@ import ShopLayout from '@/layout/ShopLayout.vue'
   }
  */
 
-const isAdminHost = typeof window !== 'undefined' && window.location.pathname.startsWith('/cadm')
-const defaultHomePath = isAdminHost ? '/index' : '/mall'
+// 建置時決定應用模式（不再使用運行時判斷）
+const appMode = import.meta.env.VITE_APP_MODE || 'shop'
+const isAdminMode = appMode === 'admin'
+const defaultHomePath = isAdminMode ? '/index' : '/'
 
 // 公共路由
 export const constantRoutes = [
@@ -88,20 +90,36 @@ export const constantRoutes = [
       }
     ]
   },
+]
+
+// ============================================================================
+// 商城專用路由（僅在 shop 模式下使用）
+// ============================================================================
+export const shopRoutes = [
   {
-    path: '/mall/login',
+    path: '/login',
     component: () => import('@/views/shop-front/auth/login.vue'),
     hidden: true,
     meta: { title: '會員登入' }
   },
   {
-    path: '/mall/register',
+    path: '/register',
     component: () => import('@/views/shop-front/auth/register.vue'),
     hidden: true,
     meta: { title: '會員註冊' }
   },
   {
-    path: '/mall',
+    path: "/:pathMatch(.*)*",
+    component: () => import('@/views/error/404'),
+    hidden: true
+  },
+  {
+    path: '/401',
+    component: () => import('@/views/error/401'),
+    hidden: true
+  },
+  {
+    path: '/',
     component: ShopLayout,
     hidden: true,
     children: [
@@ -301,11 +319,15 @@ export const dynamicRoutes = [
   }
 ]
 
-const routerBase = (typeof window !== 'undefined' && window.location.pathname.startsWith('/cadm')) ? '/cadm' : '/'
+// 建置時決定路由基礎路徑
+const basePath = import.meta.env.VITE_BASE_PATH || '/'
+
+// 根據應用模式選擇路由
+const routes = isAdminMode ? constantRoutes : shopRoutes
 
 const router = createRouter({
-  history: createWebHistory(routerBase),
-  routes: constantRoutes,
+  history: createWebHistory(basePath),
+  routes: routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
@@ -314,22 +336,6 @@ const router = createRouter({
   },
 })
 
-// 非 /cadm 環境：強制只允許 /mall 路徑，避免直接看到後台登入頁
-router.beforeEach((to, from, next) => {
-  const adminHost = typeof window !== 'undefined' && window.location.pathname.startsWith('/cadm')
-  if (!adminHost) {
-    const isMallPath = to.path.startsWith('/mall')
-    const isAllowed = isMallPath || to.path === '/401' || to.path === '/404'
-    if (!isAllowed) {
-      return next('/mall')
-    }
-  } else {
-    // /cadm 環境下避免誤進商城路由
-    if (to.path.startsWith('/mall')) {
-      return next('/index')
-    }
-  }
-  next()
-})
+// 路由守衛不再需要判斷環境，因為建置時已經決定了應用類型
 
 export default router
