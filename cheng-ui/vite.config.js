@@ -13,6 +13,19 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   const baseUrl = 'http://localhost:8080'
   const adminBaseApi = `/cadm${env.VITE_APP_BASE_API}`
+  const normalizeContext = (ctx) => {
+    if (!ctx) return ''
+    const trimmed = String(ctx).trim()
+    if (!trimmed) return ''
+    const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+    return withLeadingSlash.replace(/\/+$/, '')
+  }
+  const backendContext = normalizeContext(env.VITE_BACKEND_CONTEXT)
+  const joinContext = (suffix) => {
+    if (!backendContext) return suffix
+    if (!suffix) return backendContext
+    return `${backendContext}${suffix.startsWith('/') ? '' : '/'}${suffix}`
+  }
 
   return {
     plugins: [
@@ -71,25 +84,28 @@ export default defineConfig(({ mode }) => {
       allowedHosts: true,
       proxy: {
         // 後台 API 代理（/cadm + base api）
+        // 將 /cadm/dev-api/xxx 轉發到後端 /cadm/xxx（後端有 AdminPathConfig 自動加 /cadm 前綴）
         [adminBaseApi]: {
           target: baseUrl,
           changeOrigin: true,
-          rewrite: (path) => path.replace(new RegExp('^' + adminBaseApi), '/cadm')
+          rewrite: (path) => path.replace(new RegExp('^' + adminBaseApi), backendContext ? `${backendContext}/cadm` : '/cadm')
         },
         // API 代理
         [env.VITE_APP_BASE_API]: {
           target: baseUrl,
           changeOrigin: true,
-          rewrite: (path) => path.replace(new RegExp('^' + env.VITE_APP_BASE_API), '')
+          rewrite: (path) => path.replace(new RegExp('^' + env.VITE_APP_BASE_API), backendContext || '')
         },
         // Springdoc API 文件代理
         '^/cadm/v3/api-docs': {
           target: baseUrl,
-          changeOrigin: true
+          changeOrigin: true,
+          rewrite: (path) => joinContext(path)
         },
         '^/v3/api-docs': {
           target: baseUrl,
-          changeOrigin: true
+          changeOrigin: true,
+          rewrite: (path) => joinContext(path)
         }
       }
     },
