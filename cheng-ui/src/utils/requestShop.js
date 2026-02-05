@@ -11,8 +11,19 @@ export let shopRelogin = { show: false }
 
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
 
+function normalizeApiBase(baseApi) {
+  if (!baseApi) return '/prod-api'
+  const value = String(baseApi).trim()
+  if (!value) return '/prod-api'
+  if (/^https?:\/\//i.test(value)) {
+    return value.replace(/\/+$/, '')
+  }
+  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
+  return withLeadingSlash.replace(/\/+$/, '')
+}
+
 const service = axios.create({
-  baseURL: import.meta.env.VITE_APP_BASE_API,
+  baseURL: normalizeApiBase(import.meta.env.VITE_APP_BASE_API),
   timeout: 10000
 })
 
