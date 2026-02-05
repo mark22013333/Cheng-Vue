@@ -12,14 +12,23 @@ let downloadLoadingInstance
 export let isRelogin = { show: false }
 
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
+
+function normalizeApiBase(baseApi) {
+  if (!baseApi) return '/prod-api'
+  const value = String(baseApi).trim()
+  if (!value) return '/prod-api'
+  if (/^https?:\/\//i.test(value)) {
+    return value.replace(/\/+$/, '')
+  }
+  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
+  return withLeadingSlash.replace(/\/+$/, '')
+}
+
 // 建立axios實例
 const service = axios.create({
   // axios中請求配置有baseURL選項，表示請求URL公共部分
-  baseURL: (() => {
-    const baseApi = import.meta.env.VITE_APP_BASE_API
-    const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/cadm')
-    return isAdmin ? `/cadm${baseApi}` : baseApi
-  })(),
+  // 一律正規化 API 前綴，避免 CI 環境漏掉開頭 "/" 時變成相對路徑（例如 cadm/prod-api）。
+  baseURL: normalizeApiBase(import.meta.env.VITE_APP_BASE_API),
   // 逾時
   timeout: 10000
 })
