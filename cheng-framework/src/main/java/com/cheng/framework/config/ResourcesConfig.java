@@ -32,9 +32,9 @@ public class ResourcesConfig implements WebMvcConfigurer {
         registry.addResourceHandler(Constants.RESOURCE_PREFIX + "/**")
                 .addResourceLocations("file:" + CoolAppsConfig.getProfile() + "/");
 
-        /* swagger設定 */
-        registry.addResourceHandler("/swagger-ui/**")
-                .addResourceLocations("classpath:/META-INF/resources/webjars/springfox-swagger-ui/")
+        /* Swagger (springdoc) 靜態資源設定 */
+        registry.addResourceHandler("/swagger-ui/**", "/cadm/swagger-ui/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/swagger-ui/")
                 .setCacheControl(CacheControl.maxAge(5, TimeUnit.HOURS).cachePublic());
     }
 
