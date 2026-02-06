@@ -24,17 +24,37 @@ function normalizeApiBase(baseApi) {
   return withLeadingSlash.replace(/\/+$/, '')
 }
 
-// 建立axios實例
+function getBaseURL() {
+  const baseApi = normalizeApiBase(import.meta.env.VITE_APP_BASE_API)
+  // 當從 /cadm 路徑訪問時，API 請求需要加上 /cadm 前綴
+  const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/cadm')
+  return isAdmin ? `/cadm${baseApi}` : baseApi
+}
+
+function resolveRequestUrl(error) {
+  const config = (error && error.config) ? error.config : {}
+  const responseURL = error && error.request && error.request.responseURL
+  if (responseURL) return responseURL
+
+  const baseURL = (config.baseURL || '').replace(/\/+$/, '')
+  const url = config.url || ''
+  if (!baseURL) return url
+  if (/^https?:\/\//i.test(url)) return url
+  const path = url.startsWith('/') ? url : `/${url}`
+  return `${baseURL}${path}`
+}
+
+// 建立axios實例（baseURL 會在請求攔截器中動態設定）
 const service = axios.create({
-  // axios中請求配置有baseURL選項，表示請求URL公共部分
-  // 一律正規化 API 前綴，避免 CI 環境漏掉開頭 "/" 時變成相對路徑（例如 cadm/prod-api）。
-  baseURL: normalizeApiBase(import.meta.env.VITE_APP_BASE_API),
   // 逾時
   timeout: 10000
 })
 
 // request攔截器
 service.interceptors.request.use(config => {
+  // 動態設定 baseURL，確保每次請求都根據當前路徑計算
+  config.baseURL = getBaseURL()
+
   // 是否需要設定 token
   const isToken = (config.headers || {}).isToken === false
   // 是否需要防止資料重複提交
@@ -141,6 +161,15 @@ service.interceptors.response.use(res => {
 },
   error => {
     console.log('err' + error)
+    try {
+      const method = (error && error.config && error.config.method) ? String(error.config.method).toUpperCase() : 'UNKNOWN'
+      const resolvedUrl = resolveRequestUrl(error)
+      console.warn('[API ERROR]', method, resolvedUrl, {
+        status: error && error.response ? error.response.status : undefined
+      })
+    } catch (e) {
+      // 避免錯誤處理本身再拋出
+    }
     let { message } = error
     if (message == "Network Error") {
       message = "後端API連接異常"

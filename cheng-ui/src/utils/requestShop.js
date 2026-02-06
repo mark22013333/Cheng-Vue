@@ -22,12 +22,20 @@ function normalizeApiBase(baseApi) {
   return withLeadingSlash.replace(/\/+$/, '')
 }
 
+function getShopBaseURL() {
+  // 商城 API 統一使用 /dev-api 或 /prod-api，不需要 /cadm 前綴
+  return normalizeApiBase(import.meta.env.VITE_APP_BASE_API)
+}
+
+// 建立axios實例（baseURL 會在請求攔截器中動態設定）
 const service = axios.create({
-  baseURL: normalizeApiBase(import.meta.env.VITE_APP_BASE_API),
   timeout: 10000
 })
 
 service.interceptors.request.use(config => {
+  // 動態設定 baseURL
+  config.baseURL = getShopBaseURL()
+
   const isToken = (config.headers || {}).isToken === false
   const isRepeatSubmit = (config.headers || {}).repeatSubmit === false
   if (getMemberToken() && !isToken) {

@@ -25,6 +25,15 @@ public class MemberAuthenticationTokenFilter extends OncePerRequestFilter {
     @Autowired
     private MemberTokenService tokenService;
 
+    /**
+     * 只對 /shop/** 路徑生效，避免影響後台管理 API
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return !path.startsWith("/shop/");
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
