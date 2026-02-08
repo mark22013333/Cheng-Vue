@@ -39,10 +39,10 @@ public class ShopSecurityConfig {
      * - /shop/member/cart/** : 會員購物車 - 需要 Member-Token
      * - /shop/checkout/** : 結帳流程 - 需要 Member-Token
      * - /shop/address/** : 會員地址管理 - 需要 Member-Token
-     * - /shop/payment/** : 付款流程 - 需要 Member-Token（callback/return 除外）
+     * - /shop/payment/ecpay/** : ECPay 付款流程（callback/return permitAll，其他需 Member-Token）
      * - /shop/order/my/** : 會員訂單 - 需要 Member-Token
      *
-     * 注意：其他 /shop/** API（如 /shop/banner/list、/shop/member/list）
+     * 注意：其他 /shop/** API（如 /shop/banner/list、/shop/member/list、/shop/payment/callback/log/**）
      * 屬於後台管理，由主 SecurityConfig 處理，使用 Admin Token
      */
     @Bean
@@ -57,7 +57,7 @@ public class ShopSecurityConfig {
                         "/shop/member/cart/**",
                         "/shop/checkout/**",
                         "/shop/address/**",
-                        "/shop/payment/**",
+                        "/shop/payment/ecpay/**",
                         "/shop/order/my/**"
                 )
                 .csrf(AbstractHttpConfigurer::disable)
@@ -75,7 +75,7 @@ public class ShopSecurityConfig {
                         .requestMatchers("/shop/member/cart/**").authenticated()
                         .requestMatchers("/shop/checkout/**").authenticated()
                         .requestMatchers("/shop/address/**").authenticated()
-                        .requestMatchers("/shop/payment/**").authenticated()
+                        .requestMatchers("/shop/payment/ecpay/**").authenticated()
                         .requestMatchers("/shop/order/my/**").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(memberAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
