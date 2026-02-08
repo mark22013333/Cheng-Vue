@@ -13,15 +13,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   const baseUrl = 'http://localhost:8080'
 
-  // 從環境變數取得部署路徑（建置時決定）
-  const basePath = env.VITE_BASE_PATH || '/'
-
   // 後端 context path（如果有的話）
   const backendContext = env.VITE_BACKEND_CONTEXT || ''
 
   return {
-    // 關鍵：建置時決定所有靜態資源的路徑前綴
-    base: basePath,
+    // 單一應用程式，base 永遠是 /
+    base: '/',
 
     plugins: [
       vue(),

@@ -17,8 +17,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOCAL_FRONTEND_DIR="${LOCAL_FRONTEND_DIR:-frontend-dist}"
 LOCAL_NGINX_CONFIG="${LOCAL_NGINX_CONFIG:-$SCRIPT_DIR/nginx/proxy-ssl-corrected.conf}"
+SKIP_NGINX_CONFIG="${SKIP_NGINX_CONFIG:-false}"
 
-echo "🚀 開始部署 Cheng-Vue 前端到伺服器..."
+APP_TYPE="${APP_TYPE:-前端}"
+echo "🚀 開始部署 Cheng-Vue ${APP_TYPE} 到伺服器..."
 
 # 檢查本機檔案是否存在
 if [ ! -d "$LOCAL_FRONTEND_DIR" ]; then
@@ -26,7 +28,7 @@ if [ ! -d "$LOCAL_FRONTEND_DIR" ]; then
     exit 1
 fi
 
-if [ ! -f "$LOCAL_NGINX_CONFIG" ]; then
+if [ "$SKIP_NGINX_CONFIG" != "true" ] && [ ! -f "$LOCAL_NGINX_CONFIG" ]; then
     echo "❌ 錯誤: 找不到 Nginx 設定檔案"
     exit 1
 fi
@@ -54,84 +56,93 @@ echo "📤 上傳前端檔案..."
 rsync -avz --delete -e "ssh -p $SERVER_PORT -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
   "$LOCAL_FRONTEND_DIR/" "$SERVER_USER@$SERVER_HOST:$FRONTEND_DIR/"
 
-# 上傳 Nginx 設定（以環境變數套版）
-echo "⚙️ 準備並上傳 Nginx 設定（注入 DEPLOY_HOST）..."
-TMP_NGINX_FILE="$(mktemp)"
-trap 'rm -f "$TMP_NGINX_FILE"' EXIT
-if command -v envsubst >/dev/null 2>&1; then
-  DEPLOY_HOST="$SERVER_HOST" FRONTEND_DIR="$FRONTEND_DIR" \
-    envsubst '${DEPLOY_HOST} ${FRONTEND_DIR}' < "$LOCAL_NGINX_CONFIG" > "$TMP_NGINX_FILE"
+# 上傳 Nginx 設定（以環境變數套版）- 可透過 SKIP_NGINX_CONFIG 跳過
+if [ "$SKIP_NGINX_CONFIG" = "true" ]; then
+  echo "⏭️ 跳過 Nginx 設定（SKIP_NGINX_CONFIG=true）"
 else
-  # 簡易後備：處理 ${DEPLOY_HOST} 與 ${FRONTEND_DIR}
-  sed "s#\${DEPLOY_HOST}#${SERVER_HOST}#g; s#\${FRONTEND_DIR}#${FRONTEND_DIR}#g" \
-    "$LOCAL_NGINX_CONFIG" > "$TMP_NGINX_FILE"
-fi
+  echo "⚙️ 準備並上傳 Nginx 設定（注入 DEPLOY_HOST）..."
+  TMP_NGINX_FILE="$(mktemp)"
+  trap 'rm -f "$TMP_NGINX_FILE"' EXIT
+  if command -v envsubst >/dev/null 2>&1; then
+    DEPLOY_HOST="$SERVER_HOST" FRONTEND_DIR="$FRONTEND_DIR" \
+      envsubst '${DEPLOY_HOST} ${FRONTEND_DIR}' < "$LOCAL_NGINX_CONFIG" > "$TMP_NGINX_FILE"
+  else
+    # 簡易後備：處理 ${DEPLOY_HOST} 與 ${FRONTEND_DIR}
+    sed "s#\${DEPLOY_HOST}#${SERVER_HOST}#g; s#\${FRONTEND_DIR}#${FRONTEND_DIR}#g" \
+      "$LOCAL_NGINX_CONFIG" > "$TMP_NGINX_FILE"
+  fi
 
-scp -P "$SERVER_PORT" -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-  "$TMP_NGINX_FILE" "$SERVER_USER@$SERVER_HOST:/tmp/proxy-ssl-new.conf"
+  scp -P "$SERVER_PORT" -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+    "$TMP_NGINX_FILE" "$SERVER_USER@$SERVER_HOST:/tmp/proxy-ssl-new.conf"
 
-# 在伺服器上執行設定
-echo "🔧 設定 Nginx..."
-ssh -p "$SERVER_PORT" -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-  "$SERVER_USER@$SERVER_HOST" << EOF
-    # 備份現有設定
-    if [ -f "$NGINX_CONFIG_DIR/proxy-ssl.conf" ]; then
-      sudo cp "$NGINX_CONFIG_DIR/proxy-ssl.conf" "$NGINX_CONFIG_DIR/proxy-ssl.conf.backup.$(date +%Y%m%d_%H%M%S)"
-    fi
-    
-    # 移動新設定到正確位置
-    sudo mv /tmp/proxy-ssl-new.conf "$NGINX_CONFIG_DIR/proxy-ssl.conf"
-    sudo chown root:root "$NGINX_CONFIG_DIR/proxy-ssl.conf"
-    sudo chmod 644 "$NGINX_CONFIG_DIR/proxy-ssl.conf"
-    
-    # 測試 Nginx 設定
-    echo "🧪 測試 Nginx 設定..."
-    sudo nginx -t
-    
-    if [ $? -eq 0 ]; then
-        echo "✅ Nginx 設定測試通過"
-        
-        # 重新載入 Nginx
-        echo "🔄 重新載入 Nginx..."
-        sudo systemctl reload nginx
-        
-        # 確認 Nginx 開機自動啟動
-        sudo systemctl enable nginx
-        
-        echo "✅ Nginx 已重新載入"
-    else
-        echo "❌ Nginx 設定測試失敗"
-        exit 1
-    fi
-    
-    # 檢查服務狀態
-    echo "📊 檢查服務狀態..."
-    echo "Nginx 狀態:"
-    sudo systemctl status nginx --no-pager -l
-    
-    echo "Tomcat 狀態:"
-    sudo systemctl status tomcat10 --no-pager -l || echo "請確認 Tomcat10 正在執行"
+  # 在伺服器上執行設定
+  echo "🔧 設定 Nginx..."
+  ssh -p "$SERVER_PORT" -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+    "$SERVER_USER@$SERVER_HOST" << EOF
+      # 備份現有設定
+      if [ -f "$NGINX_CONFIG_DIR/proxy-ssl.conf" ]; then
+        sudo cp "$NGINX_CONFIG_DIR/proxy-ssl.conf" "$NGINX_CONFIG_DIR/proxy-ssl.conf.backup.$(date +%Y%m%d_%H%M%S)"
+      fi
+
+      # 移動新設定到正確位置
+      sudo mv /tmp/proxy-ssl-new.conf "$NGINX_CONFIG_DIR/proxy-ssl.conf"
+      sudo chown root:root "$NGINX_CONFIG_DIR/proxy-ssl.conf"
+      sudo chmod 644 "$NGINX_CONFIG_DIR/proxy-ssl.conf"
+
+      # 測試 Nginx 設定
+      echo "🧪 測試 Nginx 設定..."
+      sudo nginx -t
+
+      if [ $? -eq 0 ]; then
+          echo "✅ Nginx 設定測試通過"
+
+          # 重新載入 Nginx
+          echo "🔄 重新載入 Nginx..."
+          sudo systemctl reload nginx
+
+          # 確認 Nginx 開機自動啟動
+          sudo systemctl enable nginx
+
+          echo "✅ Nginx 已重新載入"
+      else
+          echo "❌ Nginx 設定測試失敗"
+          exit 1
+      fi
+
+      # 檢查服務狀態
+      echo "📊 檢查服務狀態..."
+      echo "Nginx 狀態:"
+      sudo systemctl status nginx --no-pager -l
+
+      echo "Tomcat 狀態:"
+      sudo systemctl status tomcat10 --no-pager -l || echo "請確認 Tomcat10 正在執行"
 EOF
+fi
 
 if [ $? -eq 0 ]; then
     echo ""
     echo "🎉 部署完成！"
     echo ""
-    echo "📍 訪問地址:"
-    echo "  🌐 前端應用: https://$SERVER_HOST"
-    echo "  🔧 後端 API: https://$SERVER_HOST/prod-api"
-    echo "  📚 API 文檔: https://$SERVER_HOST/prod-api/swagger-ui/index.html"
-    echo ""
-    echo "📋 後續步驟:"
-    echo "  1. 確認 Tomcat10 正在執行並已部署 apps WAR"
-    echo "  2. 檢查防火牆設定 (開放 80, 443 埠號)"
-    echo "  3. SSL 憑證已設定 (Let's Encrypt)"
-    echo "  4. 域名 DNS 解析已設定"
-    echo ""
-    echo "🔍 故障排除:"
-    echo "  - 檢查 Nginx 日誌: sudo tail -f /var/log/nginx/cheng_vue_error.log"
-    echo "  - 檢查 Tomcat 日誌: sudo tail -f /usr/libexec/tomcat10/logs/catalina.out"
-    echo "  - 測試後端 API: curl https://localhost/prod-api/system/user/profile"
+    echo "📁 部署目錄: $FRONTEND_DIR"
+    if [ "$SKIP_NGINX_CONFIG" != "true" ]; then
+      echo ""
+      echo "📍 訪問地址:"
+      echo "  🏪 商城前端: https://$SERVER_HOST"
+      echo "  🔧 後台管理: https://$SERVER_HOST/cadm/"
+      echo "  📡 後端 API: https://$SERVER_HOST/prod-api"
+      echo "  📚 API 文檔: https://$SERVER_HOST/prod-api/swagger-ui/index.html"
+      echo ""
+      echo "📋 後續步驟:"
+      echo "  1. 確認 Tomcat10 正在執行並已部署 apps WAR"
+      echo "  2. 檢查防火牆設定 (開放 80, 443 埠號)"
+      echo "  3. SSL 憑證已設定 (Let's Encrypt)"
+      echo "  4. 域名 DNS 解析已設定"
+      echo ""
+      echo "🔍 故障排除:"
+      echo "  - 檢查 Nginx 日誌: sudo tail -f /var/log/nginx/cheng_vue_error.log"
+      echo "  - 檢查 Tomcat 日誌: sudo tail -f /usr/libexec/tomcat10/logs/catalina.out"
+      echo "  - 測試後端 API: curl https://localhost/prod-api/system/user/profile"
+    fi
 else
     echo "❌ 部署過程中發生錯誤"
     exit 1

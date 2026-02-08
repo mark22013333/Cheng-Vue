@@ -110,9 +110,10 @@ service.interceptors.response.use(res => {
   if (code === 401) {
     if (!isRelogin.show) {
       isRelogin.show = true
-      // 後台管理系統統一使用 /login
-      const redirectPath = encodeURIComponent(window.location.pathname)
-      const loginPath = `/login?redirect=${redirectPath}`
+      // 後台管理 401 跳轉到 /cadm/login
+      const currentPath = window.location.pathname
+      const redirectPath = encodeURIComponent(currentPath)
+      const loginPath = `/cadm/login?redirect=${redirectPath}`
       const message = '登入狀態已過期，您可以繼續留在該頁面，或者重新登入'
 
       ElMessageBox.confirm(message, '系統提示', { confirmButtonText: '重新登入', cancelButtonText: '取消', type: 'warning' }).then(() => {

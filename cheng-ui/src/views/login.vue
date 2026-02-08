@@ -119,7 +119,6 @@ import Cookies from "js-cookie";
 import {decrypt, encrypt} from '@/utils/jsencrypt';
 import {Connection, User, Lock, View, Hide, Key, Refresh, Right} from '@element-plus/icons-vue'
 import useUserStore from '@/store/modules/user'
-import {useCartStore} from '@/store/modules/cart'
 
 export default {
   name: "Login",
@@ -235,15 +234,9 @@ export default {
             Cookies.remove('rememberMe');
           }
           const userStore = useUserStore();
-          const cartStore = useCartStore();
-          userStore.login(this.loginForm).then(async () => {
-            // 登入成功後合併訪客購物車
-            try {
-              await cartStore.mergeGuestCartOnLogin();
-            } catch (e) {
-              console.error('合併購物車失敗', e);
-            }
-            this.$router.push({path: this.redirect || "/"}).catch(() => {
+          userStore.login(this.loginForm).then(() => {
+            // 後台登入預設跳轉到後台首頁
+            this.$router.push({path: this.redirect || "/cadm/index"}).catch(() => {
             });
           }).catch(() => {
             this.loading = false;

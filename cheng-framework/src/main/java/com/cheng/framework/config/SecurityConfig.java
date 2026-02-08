@@ -116,7 +116,9 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.GET, "/", "/*.html", "/**.html", "/**.css", "/**.js", "/profile/**").permitAll()
                             .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**",
                                     "/cadm/swagger-ui.html", "/cadm/v3/api-docs/**", "/cadm/swagger-ui/**",
-                                    "/druid/**", "/mall/**", "/shop/front/**").permitAll()
+                                    "/druid/**", "/mall/**", "/shop/front/**",
+                                    // 支付回調（第三方呼叫，無 token）
+                                    "/shop/payment/ecpay/callback", "/shop/payment/ecpay/return").permitAll()
                             // 除上面外的所有請求全部需要鑑權認證
                             .anyRequest().authenticated();
                 })

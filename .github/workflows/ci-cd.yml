@@ -11,16 +11,28 @@ on:
     branches:
       - 'main'
       - 'master'
+  # 手動觸發，可選擇環境
   workflow_dispatch:
+    inputs:
+      environment:
+        description: '部署環境'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
 
 concurrency:
-  group: cheng-vue-deploy-${{ github.ref }}
+  group: cheng-vue-deploy-${{ github.ref }}-${{ inputs.environment || 'production' }}
   cancel-in-progress: true
 
 env:
   NODE_VERSION: '18'
   JAVA_VERSION: '25'
   PYTHON_VERSION: '3.9'
+  # 根據觸發方式決定環境：手動觸發用 input，push 到 main 用 production
+  DEPLOY_ENV: ${{ github.event.inputs.environment || 'production' }}
 
 jobs:
   validate-mappers:
@@ -80,28 +92,61 @@ jobs:
         working-directory: cheng-ui
         run: pnpm install
 
-      - name: Build frontend production
+      - name: Build frontend (Shop + Admin)
         working-directory: cheng-ui
-        run: pnpm run build:prod
+        env:
+          BUILD_ENV: ${{ env.DEPLOY_ENV }}
+        run: |
+          echo "🌍 建置環境: $BUILD_ENV"
+          if [ "$BUILD_ENV" = "staging" ]; then
+            echo "🏪 建置商城前端 (Staging)..."
+            pnpm run build:stage
+            echo "🔧 建置後台管理前端 (Staging)..."
+            pnpm run build:stage:admin
+          else
+            echo "🏪 建置商城前端 (Production)..."
+            pnpm run build:prod
+            echo "🔧 建置後台管理前端 (Production)..."
+            pnpm run build:admin
+          fi
 
       - name: Verify build output
         run: |
+          echo "🔍 驗證商城建置..."
           if [ ! -d "cheng-ui/dist" ]; then
-            echo "❌ Error: Build failed - dist directory not found"
+            echo "❌ Error: Shop build failed - dist directory not found"
             exit 1
           fi
           if [ ! -f "cheng-ui/dist/index.html" ]; then
-            echo "❌ Error: Build failed - index.html not found"
+            echo "❌ Error: Shop build failed - index.html not found"
             exit 1
           fi
-          echo "✅ Build verification passed"
+          echo "✅ Shop build verification passed"
           ls -la cheng-ui/dist/
 
-      - name: Upload frontend artifact
+          echo "🔍 驗證後台管理建置..."
+          if [ ! -d "cheng-ui/dist-admin" ]; then
+            echo "❌ Error: Admin build failed - dist-admin directory not found"
+            exit 1
+          fi
+          if [ ! -f "cheng-ui/dist-admin/index.html" ]; then
+            echo "❌ Error: Admin build failed - index.html not found"
+            exit 1
+          fi
+          echo "✅ Admin build verification passed"
+          ls -la cheng-ui/dist-admin/
+
+      - name: Upload shop frontend artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-dist
+          name: frontend-shop-dist
           path: cheng-ui/dist/
+
+      - name: Upload admin frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-admin-dist
+          path: cheng-ui/dist-admin/
 
   build-backend:
     name: Build Backend (Maven)
@@ -132,20 +177,27 @@ jobs:
           path: cheng-admin/target/apps.war
 
   deploy:
-    name: Deploy (needs build jobs)
+    name: Deploy (${{ github.event.inputs.environment || 'production' }})
     needs: [ build-frontend, build-backend ]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment: production                   # <- 可選：若要使用 Environment 的審核機制
+    # push 到 main 自動部署 production，或手動觸發時部署選定的環境
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    environment: ${{ github.event.inputs.environment || 'production' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download frontend artifact
+      - name: Download shop frontend artifact
         uses: actions/download-artifact@v4
         with:
-          name: frontend-dist
-          path: cheng.deploy/frontend-dist
+          name: frontend-shop-dist
+          path: cheng.deploy/frontend-shop-dist
+
+      - name: Download admin frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-admin-dist
+          path: cheng.deploy/frontend-admin-dist
 
       - name: Download backend artifact
         uses: actions/download-artifact@v4
@@ -183,14 +235,27 @@ jobs:
           APP_NAME: apps
           WAR_FILE: backend-wars/apps.war
           HEALTH_PROTOCOL: https
-          HEALTH_PATH: /prod-api/system/user/profile
+          # staging 用 /stage-api，production 用 /prod-api
+          HEALTH_PATH: ${{ env.DEPLOY_ENV == 'staging' && '/stage-api/system/user/profile' || '/prod-api/system/user/profile' }}
         run: bash cheng.deploy/deploy-backend.sh
 
-      - name: Deploy frontend static files (script)
+      - name: Deploy shop frontend (商城)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
-          LOCAL_FRONTEND_DIR: cheng.deploy/frontend-dist
+          LOCAL_FRONTEND_DIR: cheng.deploy/frontend-shop-dist
           FRONTEND_DIR: /var/www/cheng-vue/frontend
+          APP_TYPE: 商城前端
+        run: bash cheng.deploy/deploy-to-server.sh
+
+      - name: Deploy admin frontend (後台管理)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          LOCAL_FRONTEND_DIR: cheng.deploy/frontend-admin-dist
+          FRONTEND_DIR: /var/www/cheng-vue/frontend/cadm
+          SKIP_NGINX_CONFIG: "true"
+          APP_TYPE: 後台管理前端
         run: bash cheng.deploy/deploy-to-server.sh
