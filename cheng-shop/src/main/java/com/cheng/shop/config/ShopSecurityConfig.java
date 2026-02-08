@@ -36,6 +36,7 @@ public class ShopSecurityConfig {
      * - /shop/front/** : 商城前台公開 API（商品列表、文章等）
      * - /shop/auth/** : 會員認證（登入、註冊）
      * - /shop/my/** : 會員個人資料（訂單、地址等）- 需要 Member-Token
+     * - /shop/member/cart/** : 會員購物車 - 需要 Member-Token
      *
      * 注意：其他 /shop/** API（如 /shop/banner/list、/shop/member/list）
      * 屬於後台管理，由主 SecurityConfig 處理，使用 Admin Token
@@ -48,7 +49,8 @@ public class ShopSecurityConfig {
                 .securityMatcher(
                         "/shop/front/**",
                         "/shop/auth/**",
-                        "/shop/my/**"
+                        "/shop/my/**",
+                        "/shop/member/cart/**"
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers((headersCustomizer) -> headersCustomizer
@@ -59,6 +61,7 @@ public class ShopSecurityConfig {
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers("/shop/front/**").permitAll()
                         .requestMatchers("/shop/auth/**").permitAll()
+                        .requestMatchers("/shop/member/cart/**").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(memberAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(corsFilter, MemberAuthenticationTokenFilter.class)
