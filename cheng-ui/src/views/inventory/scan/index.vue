@@ -590,7 +590,7 @@ export default {
         // 由於是行動端，彈出對話框可能更好，或者跳轉
         // 這裡暫時跳轉到管理頁面並帶上查詢參數
         this.$router.push({
-          path: '/inventory/management',
+          path: '/cadm/inventory/management',
           query: { itemCode: this.scanResult.itemCode }
         });
       }

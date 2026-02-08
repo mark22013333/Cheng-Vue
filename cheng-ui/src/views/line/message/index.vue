@@ -380,7 +380,7 @@ const handleSend = async () => {
 }
 
 const goToTemplateManagement = () => {
-  router.push('/line/template')
+  router.push('/cadm/line/template')
 }
 
 onMounted(async () => {

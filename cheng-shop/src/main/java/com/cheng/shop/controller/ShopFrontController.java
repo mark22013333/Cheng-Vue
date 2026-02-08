@@ -22,10 +22,13 @@ import com.cheng.system.service.ISysConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import com.cheng.shop.enums.PaymentMethod;
+
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 商城前台 Controller（消費者端）
@@ -194,5 +197,23 @@ public class ShopFrontController extends BaseController {
     public AjaxResult listLatestArticles(@RequestParam(defaultValue = "6") Integer limit) {
         List<ShopArticle> list = articleService.selectLatestArticles(limit);
         return success(list);
+    }
+
+    /**
+     * 查詢可用付款方式
+     */
+    @GetMapping("/payment-methods")
+    public AjaxResult listPaymentMethods() {
+        String configValue = configService.selectConfigByKey("shop.payment.methods");
+        List<PaymentMethod> methods = PaymentMethod.fromConfigValue(configValue);
+        // 轉換為前端需要的格式
+        List<Map<String, String>> result = methods.stream()
+                .map(pm -> Map.of(
+                        "code", pm.getCode(),
+                        "name", pm.getName(),
+                        "description", pm.getDescription()
+                ))
+                .toList();
+        return success(result);
     }
 }

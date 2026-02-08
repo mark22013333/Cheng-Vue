@@ -372,7 +372,7 @@ function handleCommand(command, row) {
 
 /** 分配使用者 */
 function handleAuthUser(row) {
-  router.push("/system/role-auth/user/" + row.roleId)
+  router.push("/cadm/system/role-auth/user/" + row.roleId)
 }
 
 /** 查詢選單樹結構 */

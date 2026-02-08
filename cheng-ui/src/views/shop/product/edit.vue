@@ -533,7 +533,7 @@ function submitForm() {
 }
 
 function handleCancel() {
-  router.push('/shop/product/list')
+  router.push('/cadm/shop/product')
 }
 </script>
 

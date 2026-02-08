@@ -202,7 +202,7 @@ public class ShopPaymentController extends BaseController {
             }
         }
 
-        String targetUrl = getFrontendUrl() + "/mall/member/orders";
+        String targetUrl = getFrontendUrl() + "/member/orders";
 
         log.info("ECPay 用戶返回（fallback），orderNo={}，重導向至：{}", orderNo, targetUrl);
 

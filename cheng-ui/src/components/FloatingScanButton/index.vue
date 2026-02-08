@@ -660,7 +660,7 @@ export default {
 
     /** 前往完整掃描頁面 */
     goToFullScan() {
-      this.$router.push('/inventory/scan');
+      this.$router.push('/cadm/inventory/scan');
       this.closeQuickScan();
     },
 
