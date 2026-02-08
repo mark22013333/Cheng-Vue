@@ -739,7 +739,7 @@ const handlePreview = () => {
 
 const handleUseTemplate = () => {
   if (!selectedTemplate.value) return
-  router.push({ path: '/line/message', query: { templateId: selectedTemplate.value.templateId } })
+  router.push({ path: '/cadm/line/message', query: { templateId: selectedTemplate.value.templateId } })
 }
 
 const handleDuplicate = async () => {

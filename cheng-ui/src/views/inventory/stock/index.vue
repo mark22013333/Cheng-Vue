@@ -411,7 +411,7 @@ export default {
     },
     /** 入庫按鈕操作 */
     handleStockIn() {
-      this.$router.push('/inventory/stock/in');
+      this.$router.push('/cadm/inventory/stock/in');
     },
     /** 出庫按鈕操作 */
     handleStockOut() {
@@ -419,7 +419,7 @@ export default {
         this.$message.warning('請選擇要出庫的物品');
         return;
       }
-      this.$router.push('/inventory/stock/out?ids=' + this.ids.join(','));
+      this.$router.push('/cadm/inventory/stock/out?ids=' + this.ids.join(','));
     },
     /** 單個物品入庫 */
     handleStockInItem(row) {
@@ -505,7 +505,7 @@ export default {
     },
     /** 查看詳情 */
     handleDetail(row) {
-      this.$router.push('/inventory/stock/detail/' + row.stockId);
+      this.$router.push('/cadm/inventory/stock/detail/' + row.stockId);
     },
     /** 匯出按鈕操作 */
     handleExport() {

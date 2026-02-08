@@ -880,7 +880,7 @@ export default {
     },
     /** 逾期提醒 */
     handleOverdue() {
-      this.$router.push('/inventory/borrow/overdue');
+      this.$router.push('/cadm/inventory/borrow/overdue');
     },
     /** 匯出按鈕操作 */
     handleExport() {

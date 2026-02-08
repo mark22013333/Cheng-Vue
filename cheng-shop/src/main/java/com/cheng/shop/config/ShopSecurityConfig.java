@@ -35,8 +35,12 @@ public class ShopSecurityConfig {
      * 路徑規則：
      * - /shop/front/** : 商城前台公開 API（商品列表、文章等）
      * - /shop/auth/** : 會員認證（登入、註冊）
-     * - /shop/my/** : 會員個人資料（訂單、地址等）- 需要 Member-Token
+     * - /shop/my/** : 會員個人資料 - 需要 Member-Token
      * - /shop/member/cart/** : 會員購物車 - 需要 Member-Token
+     * - /shop/checkout/** : 結帳流程 - 需要 Member-Token
+     * - /shop/address/** : 會員地址管理 - 需要 Member-Token
+     * - /shop/payment/** : 付款流程 - 需要 Member-Token（callback/return 除外）
+     * - /shop/order/my/** : 會員訂單 - 需要 Member-Token
      *
      * 注意：其他 /shop/** API（如 /shop/banner/list、/shop/member/list）
      * 屬於後台管理，由主 SecurityConfig 處理，使用 Admin Token
@@ -50,7 +54,11 @@ public class ShopSecurityConfig {
                         "/shop/front/**",
                         "/shop/auth/**",
                         "/shop/my/**",
-                        "/shop/member/cart/**"
+                        "/shop/member/cart/**",
+                        "/shop/checkout/**",
+                        "/shop/address/**",
+                        "/shop/payment/**",
+                        "/shop/order/my/**"
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers((headersCustomizer) -> headersCustomizer
@@ -61,7 +69,14 @@ public class ShopSecurityConfig {
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers("/shop/front/**").permitAll()
                         .requestMatchers("/shop/auth/**").permitAll()
+                        // ECPay 回調端點 - 綠界伺服器呼叫，無需認證
+                        .requestMatchers("/shop/payment/ecpay/callback").permitAll()
+                        .requestMatchers("/shop/payment/ecpay/return").permitAll()
                         .requestMatchers("/shop/member/cart/**").authenticated()
+                        .requestMatchers("/shop/checkout/**").authenticated()
+                        .requestMatchers("/shop/address/**").authenticated()
+                        .requestMatchers("/shop/payment/**").authenticated()
+                        .requestMatchers("/shop/order/my/**").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(memberAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(corsFilter, MemberAuthenticationTokenFilter.class)

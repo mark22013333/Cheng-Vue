@@ -541,11 +541,11 @@ export default {
     },
     /** 掃描按鈕操作 */
     handleScan() {
-      this.$router.push('/inventory/scan');
+      this.$router.push('/cadm/inventory/scan');
     },
     /** 詳情按鈕操作 */
     handleDetail(row) {
-      this.$router.push('/inventory/item/detail/' + row.itemId);
+      this.$router.push('/cadm/inventory/item/detail/' + row.itemId);
     }
   }
 };

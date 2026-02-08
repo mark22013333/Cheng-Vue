@@ -89,21 +89,12 @@ service.interceptors.response.use(res => {
     return res.data
   }
   if (code === 401) {
-    if (!shopRelogin.show) {
-      shopRelogin.show = true
-      ElMessageBox.confirm('登入狀態已過期，請重新登入', '系統提示', {
-        confirmButtonText: '重新登入',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        shopRelogin.show = false
-        removeMemberToken()
-        location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
-      }).catch(() => {
-        shopRelogin.show = false
-      })
-    }
-    return Promise.reject('無效的Session，或者Session已過期，請重新登入。')
+    // 商城前台：靜默處理登入過期，不打斷使用者體驗
+    // 只清除 token，讓使用者以訪客身份繼續瀏覽
+    removeMemberToken()
+    // 不顯示彈窗，只在 console 記錄
+    console.log('[Shop] 會員登入狀態已過期，已切換為訪客模式')
+    return Promise.reject({ silent: true, message: '登入狀態已過期' })
   } else if (code === 500) {
     if (typeof msg === 'string' && msg.includes('<div')) {
       ElMessageBox.alert(msg, '系統提示', {

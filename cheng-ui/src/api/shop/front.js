@@ -116,3 +116,13 @@ export function listLatestArticles(limit = 6) {
     params: { limit }
   })
 }
+
+/**
+ * 查詢可用付款方式
+ */
+export function listPaymentMethods() {
+  return request({
+    url: '/shop/front/payment-methods',
+    method: 'get'
+  })
+}

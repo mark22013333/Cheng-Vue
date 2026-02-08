@@ -88,19 +88,18 @@
       </div>
 
       <!-- 付款方式 -->
-      <div class="checkout-section">
+      <div class="checkout-section" v-if="availablePaymentMethods.length > 0">
         <h2>付款方式</h2>
         <el-radio-group v-model="paymentMethod" class="payment-group">
-          <el-radio value="COD" size="large">
+          <el-radio
+            v-for="method in availablePaymentMethods"
+            :key="method.code"
+            :value="method.code"
+            size="large"
+          >
             <div class="payment-option">
-              <span class="payment-name">貨到付款</span>
-              <span class="payment-desc">收到商品後現金支付</span>
-            </div>
-          </el-radio>
-          <el-radio value="ECPAY" size="large">
-            <div class="payment-option">
-              <span class="payment-name">綠界金流</span>
-              <span class="payment-desc">支援信用卡、ATM、超商付款</span>
+              <span class="payment-name">{{ method.name }}</span>
+              <span class="payment-desc">{{ method.description }}</span>
             </div>
           </el-radio>
         </el-radio-group>
@@ -229,6 +228,7 @@ import { CircleCheckFilled } from '@element-plus/icons-vue'
 import { getCheckoutPreview, submitOrder } from '@/api/shop/checkout'
 import { createEcpayPayment } from '@/api/shop/payment'
 import { addAddress } from '@/api/shop/address'
+import { listPaymentMethods } from '@/api/shop/front'
 import { getMemberToken } from '@/utils/memberAuth'
 
 const router = useRouter()
@@ -240,7 +240,8 @@ const showAddressDialog = ref(false)
 const showAddAddressDialog = ref(false)
 const addingAddress = ref(false)
 const remark = ref('')
-const paymentMethod = ref('COD')
+const paymentMethod = ref('')
+const availablePaymentMethods = ref([])
 const selectedAddress = ref(null)
 const selectedGiftId = ref(null)
 const addressFormRef = ref(null)
@@ -283,15 +284,32 @@ const checkoutData = reactive({
   availableGifts: []
 })
 
-onMounted(() => {
+onMounted(async () => {
   // 檢查登入狀態，未登入則跳轉到商城登入頁
   if (!getMemberToken()) {
     ElMessage.warning('請先登入後再結帳')
     router.push(`/login?redirect=${route.fullPath}`)
     return
   }
+  // 載入付款方式
+  await fetchPaymentMethods()
   fetchCheckoutPreview()
 })
+
+async function fetchPaymentMethods() {
+  try {
+    const response = await listPaymentMethods()
+    if (response.code === 200 && response.data) {
+      availablePaymentMethods.value = response.data
+      // 預設選擇第一個付款方式
+      if (response.data.length > 0) {
+        paymentMethod.value = response.data[0].code
+      }
+    }
+  } catch (error) {
+    console.error('載入付款方式失敗', error)
+  }
+}
 
 async function fetchCheckoutPreview(addressId) {
   loading.value = true

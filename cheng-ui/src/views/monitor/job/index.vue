@@ -868,7 +868,7 @@ export default {
     /** 任務日誌列表查詢 */
     handleJobLog(row) {
       const jobId = row.jobId || 0
-      this.$router.push('/monitor/job-log/index/' + jobId)
+      this.$router.push('/cadm/monitor/job-log/index/' + jobId)
     },
     /** 新增按鈕操作 */
     handleAdd() {

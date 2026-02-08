@@ -314,11 +314,11 @@ function handleSelectionChange(selection) {
 }
 
 function handleAdd() {
-  router.push('/shop/product-edit/index')
+  router.push('/cadm/shop/product-edit/index')
 }
 
 function handleUpdate(row) {
-  router.push(`/shop/product-edit/index/${row.productId}`)
+  router.push(`/cadm/shop/product-edit/index/${row.productId}`)
 }
 
 function handleOnSale(row) {
