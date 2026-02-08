@@ -23,7 +23,7 @@
         </div>
 
         <div class="action-buttons">
-          <router-link to="/" class="btn-home">
+          <router-link :to="homePath" class="btn-home">
             返回首頁
           </router-link>
           <button @click="back" class="btn-back">
@@ -38,9 +38,13 @@
 <script setup>
 import {ref, computed} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
+import {isAdminPath} from '@/router'
 
 const router = useRouter()
 const route = useRoute()
+
+// 根據當前路徑判斷首頁位置
+const homePath = computed(() => isAdminPath(route.path) ? '/cadm/index' : '/')
 
 // === 視差效果邏輯 ===
 const mouseX = ref(0)
@@ -71,7 +75,7 @@ const iconStyle = computed(() => {
 // === 導航邏輯 ===
 function back() {
   if (route.query.noGoBack) {
-    router.push({path: "/"})
+    router.push({path: homePath.value})
   } else {
     router.go(-1)
   }

@@ -61,7 +61,7 @@
           <h2 class="section-title">熱門精選</h2>
         </div>
         <p class="section-desc">當季最受歡迎的人氣商品</p>
-        <router-link to="/mall/products?isHot=true" class="section-link">
+        <router-link to="/products?isHot=true" class="section-link">
           探索更多 <span class="link-arrow">→</span>
         </router-link>
       </div>
@@ -105,7 +105,7 @@
           <span class="vertical-tag">NEW ARRIVALS</span>
           <h2 class="sidebar-title">新品<br/>上市</h2>
           <p class="sidebar-desc">搶先體驗最新商品，掌握潮流脈動</p>
-          <router-link to="/mall/products?isNew=true" class="sidebar-link">
+          <router-link to="/products?isNew=true" class="sidebar-link">
             查看全部新品
             <span class="link-icon">→</span>
           </router-link>
@@ -184,7 +184,7 @@
       </div>
 
       <div class="recommend-footer">
-        <router-link to="/mall/products?isRecommend=true" class="explore-all-btn">
+        <router-link to="/products?isRecommend=true" class="explore-all-btn">
           探索所有推薦商品
           <span class="btn-arrow">→</span>
         </router-link>
@@ -199,7 +199,7 @@
           <h2 class="section-title">文章精選</h2>
         </div>
         <p class="section-desc">探索最新的商品資訊與生活提案</p>
-        <router-link to="/mall/articles" class="section-link">
+        <router-link to="/articles" class="section-link">
           查看全部 <span class="link-arrow">→</span>
         </router-link>
       </div>
@@ -235,7 +235,7 @@
       <div class="cta-content">
         <h3 class="cta-title">加入會員享專屬優惠</h3>
         <p class="cta-desc">立即註冊，搶先獲得新品資訊與限定折扣</p>
-        <router-link to="/mall/register" class="cta-button">
+        <router-link to="/register" class="cta-button">
           立即加入
         </router-link>
       </div>
@@ -281,7 +281,9 @@ const features = [
 function getImageUrl(url) {
   if (!url) return ''
   if (url.startsWith('http')) return url
-  return import.meta.env.VITE_APP_BASE_API + url
+  // 圖片路徑由 Nginx 處理，不需要加 API 前綴
+  if (url.startsWith('/profile')) return url
+  return '/profile' + (url.startsWith('/') ? url : '/' + url)
 }
 
 function formatPrice(price) {
@@ -296,9 +298,9 @@ function getEditorialClass(index) {
 function handleBannerClick(banner) {
   if (banner.linkValue) {
     if (banner.linkType === 'PRODUCT') {
-      router.push(`/mall/product/${banner.linkValue}`)
+      router.push(`/product/${banner.linkValue}`)
     } else if (banner.linkType === 'CATEGORY') {
-      router.push(`/mall/products?categoryId=${banner.linkValue}`)
+      router.push(`/products?categoryId=${banner.linkValue}`)
     } else if (banner.linkType === 'URL') {
       window.open(banner.linkValue, '_blank')
     }
@@ -306,11 +308,11 @@ function handleBannerClick(banner) {
 }
 
 function goProductDetail(productId) {
-  router.push(`/mall/product/${productId}`)
+  router.push(`/product/${productId}`)
 }
 
 function goArticleDetail(articleId) {
-  router.push(`/mall/article/${articleId}`)
+  router.push(`/article/${articleId}`)
 }
 
 function formatArticleDate(dateStr) {
@@ -331,7 +333,7 @@ async function addToCart(product) {
       ElMessage.success(`已將「${product.title}」加入購物車`)
     } else {
       ElMessage.info('此商品有多種規格，請至商品頁面選擇')
-      router.push(`/mall/product/${product.productId}`)
+      router.push(`/product/${product.productId}`)
     }
   } catch (error) {
     if (error?.response?.status === 401) {

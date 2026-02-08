@@ -123,18 +123,18 @@
 
             <div class="form-footer">
               <span>還沒有帳號？</span>
-              <router-link :to="{ path: '/mall/register', query: { redirect: redirect } }">
+              <router-link :to="{ path: '/register', query: { redirect: redirect } }">
                 立即註冊
               </router-link>
             </div>
 
             <p class="policy-note">
               登入即表示同意
-              <router-link class="inline-link" to="/mall/terms" target="_blank" rel="noopener noreferrer">
+              <router-link class="inline-link" to="/terms" target="_blank" rel="noopener noreferrer">
                 服務條款
               </router-link>
               與
-              <router-link class="inline-link" to="/mall/privacy" target="_blank" rel="noopener noreferrer">
+              <router-link class="inline-link" to="/privacy" target="_blank" rel="noopener noreferrer">
                 隱私政策
               </router-link>
             </p>
@@ -191,7 +191,7 @@ const showPassword = ref(false)
 const captchaEnabled = ref(true)
 const codeUrl = ref('')
 
-const redirect = computed(() => route.query.redirect || '/mall')
+const redirect = computed(() => route.query.redirect || '/')
 const motionBackgroundStyle = computed(() => ({
   backgroundImage: `linear-gradient(160deg, rgba(7, 42, 104, 0.84), rgba(22, 108, 205, 0.66)), url(${loginBackground})`
 }))

@@ -48,7 +48,8 @@ const article = ref(null)
 function getImageUrl(url) {
   if (!url) return ''
   if (url.startsWith('http')) return url
-  return import.meta.env.VITE_APP_BASE_API + url
+  if (url.startsWith('/profile')) return url
+  return '/profile' + (url.startsWith('/') ? url : '/' + url)
 }
 
 function formatDate(dateStr) {
@@ -57,11 +58,11 @@ function formatDate(dateStr) {
 }
 
 function goProduct(productId) {
-  router.push(`/mall/product/${productId}`)
+  router.push(`/product/${productId}`)
 }
 
 function goBack() {
-  router.push('/mall/articles')
+  router.push('/articles')
 }
 
 async function loadArticle() {

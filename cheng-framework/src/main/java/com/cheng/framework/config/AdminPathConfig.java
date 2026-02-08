@@ -9,13 +9,14 @@ import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * 後台 API 統一前綴設定
+ * 後台 API 統一前綴設定（已禁用）
  *
- * <p>對所有非 @PublicApi 的 Controller 加上 /cadm 前綴</p>
+ * <p>原本對所有非 @PublicApi 的 Controller 加上 /cadm 前綴</p>
+ * <p>為簡化架構，已禁用此配置，改由 nginx 統一處理路由</p>
  *
  * @author cheng
  */
-@Configuration
+// @Configuration  // 已禁用：簡化架構，後端 Controller 保持原始路徑
 public class AdminPathConfig implements WebMvcConfigurer {
 
     private static final String ADMIN_PREFIX = "/cadm";

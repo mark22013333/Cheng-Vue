@@ -64,7 +64,8 @@ const pageSize = 12
 function getImageUrl(url) {
   if (!url) return ''
   if (url.startsWith('http')) return url
-  return import.meta.env.VITE_APP_BASE_API + url
+  if (url.startsWith('/profile')) return url
+  return '/profile' + (url.startsWith('/') ? url : '/' + url)
 }
 
 function formatDate(dateStr) {
@@ -73,7 +74,7 @@ function formatDate(dateStr) {
 }
 
 function goDetail(articleId) {
-  router.push(`/mall/article/${articleId}`)
+  router.push(`/article/${articleId}`)
 }
 
 async function loadArticles() {

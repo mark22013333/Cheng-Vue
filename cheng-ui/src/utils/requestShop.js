@@ -98,7 +98,7 @@ service.interceptors.response.use(res => {
       }).then(() => {
         shopRelogin.show = false
         removeMemberToken()
-        location.href = `/mall/login?redirect=${encodeURIComponent(window.location.pathname)}`
+        location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
       }).catch(() => {
         shopRelogin.show = false
       })

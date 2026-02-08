@@ -28,11 +28,28 @@ public class ShopSecurityConfig {
     private final MemberAuthenticationTokenFilter memberAuthenticationTokenFilter;
     private final CorsFilter corsFilter;
 
+    /**
+     * 商城前台安全鏈 - 僅處理會員端請求
+     * 使用 Member-Token 進行認證
+     *
+     * 路徑規則：
+     * - /shop/front/** : 商城前台公開 API（商品列表、文章等）
+     * - /shop/auth/** : 會員認證（登入、註冊）
+     * - /shop/my/** : 會員個人資料（訂單、地址等）- 需要 Member-Token
+     *
+     * 注意：其他 /shop/** API（如 /shop/banner/list、/shop/member/list）
+     * 屬於後台管理，由主 SecurityConfig 處理，使用 Admin Token
+     */
     @Bean
     @Order(1)
     public SecurityFilterChain shopFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-                .securityMatcher("/shop/**")
+                // 只匹配商城前台會員端路徑
+                .securityMatcher(
+                        "/shop/front/**",
+                        "/shop/auth/**",
+                        "/shop/my/**"
+                )
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers((headersCustomizer) -> headersCustomizer
                         .cacheControl(HeadersConfigurer.CacheControlConfig::disable)
@@ -42,7 +59,6 @@ public class ShopSecurityConfig {
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers("/shop/front/**").permitAll()
                         .requestMatchers("/shop/auth/**").permitAll()
-                        .requestMatchers("/shop/payment/ecpay/callback", "/shop/payment/ecpay/return").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(memberAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(corsFilter, MemberAuthenticationTokenFilter.class)

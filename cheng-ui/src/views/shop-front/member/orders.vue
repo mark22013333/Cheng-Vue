@@ -148,7 +148,8 @@ async function fetchOrders() {
 function getImageUrl(url) {
   if (!url) return '/placeholder-image.png'
   if (url.startsWith('http')) return url
-  return import.meta.env.VITE_APP_BASE_API + url
+  if (url.startsWith('/profile')) return url
+  return '/profile' + (url.startsWith('/') ? url : '/' + url)
 }
 
 function formatPrice(price) {
@@ -166,7 +167,7 @@ function getTotalQuantity(order) {
 }
 
 function viewDetail(orderNo) {
-  router.push(`/mall/member/order/${orderNo}`)
+  router.push(`/member/order/${orderNo}`)
 }
 
 function getStatusType(status) {

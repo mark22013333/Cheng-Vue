@@ -2,8 +2,8 @@
   <div class="order-success-page">
     <el-result icon="success" title="訂單提交成功" :sub-title="`訂單編號：${orderNo}`">
       <template #extra>
-        <el-button type="primary" @click="$router.push('/mall/member/orders')">查看訂單</el-button>
-        <el-button @click="$router.push('/mall/products')">繼續購物</el-button>
+        <el-button type="primary" @click="$router.push('/member/orders')">查看訂單</el-button>
+        <el-button @click="$router.push('/products')">繼續購物</el-button>
       </template>
     </el-result>
   </div>

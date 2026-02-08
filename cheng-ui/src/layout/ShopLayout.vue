@@ -9,9 +9,9 @@
         </div>
         
         <nav class="nav-menu">
-          <router-link to="/mall" class="nav-item">首頁</router-link>
-          <router-link to="/mall/products" class="nav-item">全部商品</router-link>
-          <router-link to="/mall/category" class="nav-item">商品分類</router-link>
+          <router-link to="/" class="nav-item">首頁</router-link>
+          <router-link to="/products" class="nav-item">全部商品</router-link>
+          <router-link to="/category" class="nav-item">商品分類</router-link>
         </nav>
         
         <div class="header-right">
@@ -137,27 +137,27 @@ const cartCount = computed(() => cartStore.totalQuantity)
 const isLoggedIn = computed(() => !!getMemberToken())
 
 function goHome() {
-  router.push('/mall')
+  router.push('/')
 }
 
 function goCart() {
-  router.push('/mall/cart')
+  router.push('/cart')
 }
 
 function goLogin() {
-  router.push(`/mall/login?redirect=${route.fullPath}`)
+  router.push(`/login?redirect=${route.fullPath}`)
 }
 
 function goRegister() {
-  router.push(`/mall/register?redirect=${route.fullPath}`)
+  router.push(`/register?redirect=${route.fullPath}`)
 }
 
 function goMember() {
-  router.push('/mall/member')
+  router.push('/member')
 }
 
 function goOrders() {
-  router.push('/mall/member/orders')
+  router.push('/member/orders')
 }
 
 async function handleLogout() {
@@ -178,7 +178,7 @@ async function handleLogout() {
 
 function handleSearch() {
   if (searchKeyword.value.trim()) {
-    router.push({ path: '/mall/products', query: { title: searchKeyword.value.trim() } })
+    router.push({ path: '/products', query: { title: searchKeyword.value.trim() } })
     searchKeyword.value = ''
   }
 }

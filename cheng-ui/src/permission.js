@@ -1,4 +1,4 @@
-import router from './router'
+import router, { isAdminPath } from './router'
 import { ElMessage } from 'element-plus'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
@@ -12,94 +12,132 @@ import usePermissionStore from '@/store/modules/permission'
 
 NProgress.configure({ showSpinner: false })
 
-// 免登入白名單
-// 商城前台：首頁、商品列表、商品詳情、分類、購物車允許未登入訪問
-// 結帳和會員中心需要登入
-const whiteList = [
+// ============================================================================
+// 白名單配置
+// ============================================================================
+
+// 後台管理白名單（不需登入）
+const adminWhiteList = ['/cadm/login', '/cadm/register']
+
+// 商城白名單（公開頁面）
+const shopWhiteList = [
+  '/',
   '/login',
   '/register',
-  '/mall',
-  '/mall/login',
-  '/mall/register',
-  '/mall/products',
-  '/mall/product/**',
-  '/mall/category',
-  '/mall/articles',
-  '/mall/article/**',
-  '/mall/cart'
+  '/products',
+  '/product/**',
+  '/category',
+  '/articles',
+  '/article/**',
+  '/cart',
+  '/terms',
+  '/privacy'
 ]
 
-const isWhiteList = (path) => {
-  return whiteList.some(pattern => isPathMatch(pattern, path))
+// 商城需要登入的路徑
+const shopProtectedPaths = ['/checkout', '/member', '/order-success', '/payment-result']
+
+// ============================================================================
+// 輔助函數
+// ============================================================================
+
+const isInWhiteList = (path) => {
+  if (isAdminPath(path)) {
+    return adminWhiteList.includes(path)
+  }
+  return shopWhiteList.some(pattern => isPathMatch(pattern, path))
 }
 
-// 商城：僅結帳與會員中心需要登入，其餘商城路徑直接放行
-const isMallPublicPath = (path) => {
-  if (!path.startsWith('/mall')) return false
-  if (path.startsWith('/mall/checkout')) return false
-  if (path.startsWith('/mall/member')) return false
-  return true
+const isShopProtectedPath = (path) => {
+  return shopProtectedPaths.some(p => path.startsWith(p))
 }
+
+// ============================================================================
+// 路由守衛
+// ============================================================================
 
 router.beforeEach((to, from, next) => {
   NProgress.start()
-  const isMallPath = to.path.startsWith('/mall')
-  const memberToken = getMemberToken()
-  const adminToken = getToken()
 
+  // 設定頁面標題
   if (to.meta.title) {
     useSettingsStore().setTitle(to.meta.title)
   }
 
-  if (isMallPath) {
-    if (memberToken || isWhiteList(to.path) || isMallPublicPath(to.path)) {
-      next()
+  const targetPath = to.path
+
+  // ========================================
+  // 後台管理路由 (/cadm/*)
+  // ========================================
+  if (isAdminPath(targetPath)) {
+    const adminToken = getToken()
+
+    if (adminToken) {
+      // 已登入
+      if (targetPath === '/cadm/login') {
+        // 已登入但訪問登入頁，跳轉到首頁
+        next({ path: '/cadm/index' })
+        NProgress.done()
+      } else if (isInWhiteList(targetPath)) {
+        next()
+      } else {
+        // 需要載入動態路由
+        if (useUserStore().roles.length === 0) {
+          isRelogin.show = true
+          useUserStore().getInfo().then(() => {
+            isRelogin.show = false
+            usePermissionStore().generateRoutes().then(accessRoutes => {
+              // 動態路由需要加上 /cadm 前綴
+              accessRoutes.forEach(route => {
+                if (!isHttp(route.path)) {
+                  // 將原始路由路徑轉換為 /cadm 前綴
+                  const adminRoute = {
+                    ...route,
+                    path: route.path.startsWith('/cadm') ? route.path : `/cadm${route.path}`
+                  }
+                  router.addRoute(adminRoute)
+                }
+              })
+              next({ ...to, replace: true })
+            })
+          }).catch(err => {
+            useUserStore().logOut().catch(() => {}).finally(() => {
+              ElMessage.error(err)
+              next({ path: '/cadm/login' })
+            })
+          })
+        } else {
+          next()
+        }
+      }
     } else {
-      next(`/mall/login?redirect=${to.fullPath}`)
-      NProgress.done()
+      // 未登入
+      if (isInWhiteList(targetPath)) {
+        next()
+      } else {
+        next(`/cadm/login?redirect=${encodeURIComponent(to.fullPath)}`)
+        NProgress.done()
+      }
     }
     return
   }
 
-  if (adminToken) {
-    if (to.path === '/login') {
-      next({ path: '/' })
-      NProgress.done()
-    } else if (to.path.startsWith('/mall')) {
-      // 商城路徑不需載入後台權限路由
-      next()
-    } else if (isWhiteList(to.path) || isMallPublicPath(to.path)) {
+  // ========================================
+  // 商城路由 (非 /cadm/*)
+  // ========================================
+  const memberToken = getMemberToken()
+
+  if (isShopProtectedPath(targetPath)) {
+    // 需要登入的頁面
+    if (memberToken) {
       next()
     } else {
-      if (useUserStore().roles.length === 0) {
-        isRelogin.show = true
-        useUserStore().getInfo().then(() => {
-          isRelogin.show = false
-          usePermissionStore().generateRoutes().then(accessRoutes => {
-            accessRoutes.forEach(route => {
-              if (!isHttp(route.path)) {
-                router.addRoute(route)
-              }
-            })
-            next({ ...to, replace: true })
-          })
-        }).catch(err => {
-          useUserStore().logOut().catch(() => {}).finally(() => {
-            ElMessage.error(err)
-            next({ path: '/login' })
-          })
-        })
-      } else {
-        next()
-      }
+      next(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
+      NProgress.done()
     }
   } else {
-    if (isWhiteList(to.path)) {
-      next()
-    } else {
-      next(`/login?redirect=${to.fullPath}`)
-      NProgress.done()
-    }
+    // 公開頁面，直接放行
+    next()
   }
 })
 

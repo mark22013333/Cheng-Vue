@@ -287,7 +287,7 @@ onMounted(() => {
   // 檢查登入狀態，未登入則跳轉到商城登入頁
   if (!getMemberToken()) {
     ElMessage.warning('請先登入後再結帳')
-    router.push(`/mall/login?redirect=${route.fullPath}`)
+    router.push(`/login?redirect=${route.fullPath}`)
     return
   }
   fetchCheckoutPreview()
@@ -323,13 +323,13 @@ async function fetchCheckoutPreview(addressId) {
       // 如果沒有商品，跳回購物車
       if (checkoutData.items.length === 0) {
         ElMessage.warning('請先選擇要結帳的商品')
-        router.push('/mall/cart')
+        router.push('/cart')
       }
     }
   } catch (error) {
     console.error('載入結帳資訊失敗', error)
     ElMessage.error('載入結帳資訊失敗')
-    router.push('/mall/cart')
+    router.push('/cart')
   } finally {
     loading.value = false
   }
@@ -338,7 +338,8 @@ async function fetchCheckoutPreview(addressId) {
 function getImageUrl(url) {
   if (!url) return '/placeholder-image.png'
   if (url.startsWith('http')) return url
-  return import.meta.env.VITE_APP_BASE_API + url
+  if (url.startsWith('/profile')) return url
+  return '/profile' + (url.startsWith('/') ? url : '/' + url)
 }
 
 function formatPrice(price) {
@@ -419,11 +420,11 @@ async function handleEcpayPayment(orderNo) {
       }
     } else {
       ElMessage.error(res.msg || '建立付款失敗，請至訂單頁面重新付款')
-      router.push(`/mall/member/order/${orderNo}`)
+      router.push(`/member/order/${orderNo}`)
     }
   } catch (error) {
     ElMessage.error('建立付款失敗，請至訂單頁面重新付款')
-    router.push(`/mall/member/order/${orderNo}`)
+    router.push(`/member/order/${orderNo}`)
   }
 }
 
@@ -463,7 +464,7 @@ async function handleSubmit() {
         await handleEcpayPayment(result.orderNo)
       } else {
         ElMessage.success('訂單提交成功')
-        router.push(`/mall/order-success/${result.orderNo}`)
+        router.push(`/order-success/${result.orderNo}`)
       }
     } else {
       ElMessage.error(response.msg || '訂單提交失敗')

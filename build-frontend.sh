@@ -16,6 +16,8 @@ IMAGE_NAME="coolapps-frontend"
 BASE_VERSION="v1.3.1"
 DOCKERFILE="cheng-ui/Dockerfile"
 BUILD_CONTEXT="cheng-ui"
+# 建置環境：production（預設）或 staging
+BUILD_ENV="${BUILD_ENV:-production}"
 
 # ============================================
 # 顏色輸出
@@ -126,6 +128,7 @@ confirm_build() {
     echo "  映像名稱: ${REGISTRY}/${IMAGE_NAME}"
     echo "  版本標籤: ${VERSION_TAG}"
     echo "  額外標籤: latest"
+    echo "  建置環境: ${BUILD_ENV}"
     echo "  平台架構: linux/amd64"
     echo "  Dockerfile: ${DOCKERFILE}"
     print_separator
@@ -145,21 +148,28 @@ confirm_build() {
 # ============================================
 build_image() {
     print_separator
-    print_info "開始建置前端映像（使用詳細輸出模式）..."
+    print_info "開始建置前端映像（環境: ${BUILD_ENV}）..."
     print_separator
-    
+
     local BUILD_ARGS=""
     BUILD_ARGS="--build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
     BUILD_ARGS="$BUILD_ARGS --build-arg VCS_REF=$(git rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
     BUILD_ARGS="$BUILD_ARGS --build-arg VERSION=${VERSION_TAG}"
-    
+    BUILD_ARGS="$BUILD_ARGS --build-arg BUILD_ENV=${BUILD_ENV}"
+
+    # 根據環境決定標籤
+    local LATEST_TAG="latest"
+    if [ "$BUILD_ENV" = "staging" ]; then
+        LATEST_TAG="staging"
+    fi
+
     docker buildx build \
         -f "$DOCKERFILE" \
         --platform linux/amd64 \
         --progress=plain \
         $BUILD_ARGS \
         -t "${REGISTRY}/${IMAGE_NAME}:${VERSION_TAG}" \
-        -t "${REGISTRY}/${IMAGE_NAME}:latest" \
+        -t "${REGISTRY}/${IMAGE_NAME}:${LATEST_TAG}" \
         "$BUILD_CONTEXT" \
         --push
     
@@ -175,13 +185,18 @@ build_image() {
 # 顯示建置資訊
 # ============================================
 show_build_info() {
+    local LATEST_TAG="latest"
+    if [ "$BUILD_ENV" = "staging" ]; then
+        LATEST_TAG="staging"
+    fi
+
     print_separator
-    print_success "🎉 前端映像建置完成！"
+    print_success "🎉 前端映像建置完成！（環境: ${BUILD_ENV}）"
     print_separator
     echo ""
     echo "📦 映像資訊："
     echo "  - ${REGISTRY}/${IMAGE_NAME}:${VERSION_TAG}"
-    echo "  - ${REGISTRY}/${IMAGE_NAME}:latest"
+    echo "  - ${REGISTRY}/${IMAGE_NAME}:${LATEST_TAG}"
     echo ""
     echo "🚀 部署指令："
     echo "  docker pull ${REGISTRY}/${IMAGE_NAME}:${VERSION_TAG}"

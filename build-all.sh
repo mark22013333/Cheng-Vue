@@ -130,15 +130,23 @@ main() {
     MINUTES=$((DURATION / 60))
     SECONDS=$((DURATION % 60))
     
+    # 決定環境標籤
+    local ENV_TAG="latest"
+    local ENV_NAME="Production"
+    if [ "${BUILD_ENV}" = "staging" ]; then
+        ENV_TAG="staging"
+        ENV_NAME="Staging/UAT"
+    fi
+
     # 顯示總結
     print_separator
-    print_success "🎉 全部建置完成！"
+    print_success "🎉 全部建置完成！（環境: ${ENV_NAME}）"
     print_separator
     echo ""
     echo "⏱️  總耗時: ${MINUTES} 分 ${SECONDS} 秒"
     echo ""
     echo "📦 建置的映像："
-    echo "  - android106/coolapps-frontend:latest"
+    echo "  - android106/coolapps-frontend:${ENV_TAG}"
     echo "  - android106/coolapps-backend:latest"
     echo ""
     echo "🚀 後續步驟："
@@ -147,6 +155,11 @@ main() {
     echo "  3. 等待服務啟動完成"
     echo "  4. 測試應用功能是否正常"
     echo ""
+    if [ "${BUILD_ENV}" != "staging" ]; then
+        echo "💡 提示：如需建置 UAT/Staging 版本，請執行："
+        echo "   BUILD_ENV=staging ./build-all.sh"
+        echo ""
+    fi
     print_separator
 }
 
