@@ -92,48 +92,35 @@ jobs:
         working-directory: cheng-ui
         run: pnpm install
 
-      - name: Build frontend (Shop + Admin)
+      - name: Build frontend (統一 SPA)
         working-directory: cheng-ui
         env:
           BUILD_ENV: ${{ env.DEPLOY_ENV }}
         run: |
           echo "🌍 建置環境: $BUILD_ENV"
           if [ "$BUILD_ENV" = "staging" ]; then
-            echo "🏪 建置商城前端 (Staging)..."
+            echo "🏪 建置前端 (Staging)..."
             pnpm run build:stage
-            echo "🔧 建置後台管理前端 (Staging)..."
-            pnpm run build:stage:admin
           else
-            echo "🏪 建置商城前端 (Production)..."
+            echo "🏪 建置前端 (Production)..."
             pnpm run build:prod
-            echo "🔧 建置後台管理前端 (Production)..."
-            pnpm run build:admin
           fi
+          echo "📋 複製到 dist-admin（統一 SPA，兩個目錄使用相同檔案）"
+          cp -r dist dist-admin
 
       - name: Verify build output
         run: |
-          echo "🔍 驗證商城建置..."
+          echo "🔍 驗證前端建置..."
           if [ ! -d "cheng-ui/dist" ]; then
-            echo "❌ Error: Shop build failed - dist directory not found"
+            echo "❌ Error: Build failed - dist directory not found"
             exit 1
           fi
           if [ ! -f "cheng-ui/dist/index.html" ]; then
-            echo "❌ Error: Shop build failed - index.html not found"
+            echo "❌ Error: Build failed - index.html not found"
             exit 1
           fi
-          echo "✅ Shop build verification passed"
+          echo "✅ Frontend build verification passed"
           ls -la cheng-ui/dist/
-
-          echo "🔍 驗證後台管理建置..."
-          if [ ! -d "cheng-ui/dist-admin" ]; then
-            echo "❌ Error: Admin build failed - dist-admin directory not found"
-            exit 1
-          fi
-          if [ ! -f "cheng-ui/dist-admin/index.html" ]; then
-            echo "❌ Error: Admin build failed - index.html not found"
-            exit 1
-          fi
-          echo "✅ Admin build verification passed"
           ls -la cheng-ui/dist-admin/
 
       - name: Upload shop frontend artifact
