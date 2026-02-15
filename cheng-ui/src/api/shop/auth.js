@@ -41,3 +41,21 @@ export function getMemberProfile() {
     method: 'get'
   })
 }
+
+// 更新會員資訊
+export function updateMemberProfile(data) {
+  return requestShop({
+    url: '/shop/auth/profile',
+    method: 'put',
+    data
+  })
+}
+
+// 更新會員頭像
+export function updateMemberAvatar(avatar) {
+  return requestShop({
+    url: '/shop/auth/profile/avatar',
+    method: 'put',
+    data: { avatar }
+  })
+}

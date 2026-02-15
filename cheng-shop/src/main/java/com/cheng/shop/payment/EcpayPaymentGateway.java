@@ -1,23 +1,19 @@
 package com.cheng.shop.payment;
 
 import com.cheng.common.exception.ServiceException;
+import com.cheng.common.utils.uuid.IdUtils;
+import com.cheng.shop.config.ShopConfigService;
 import com.cheng.shop.domain.ShopOrder;
 import com.cheng.shop.domain.ShopOrderItem;
-import com.cheng.system.service.ISysConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import com.cheng.common.utils.uuid.IdUtils;
-
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 import java.util.TreeMap;
+import java.util.Map;
 
 /**
  * ECPay 綠界金流閘道實作
@@ -35,7 +31,7 @@ import java.util.TreeMap;
 @RequiredArgsConstructor
 public class EcpayPaymentGateway implements PaymentGateway {
 
-    private final ISysConfigService configService;
+    private final ShopConfigService shopConfig;
 
     private static final String TEST_SERVICE_URL = "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5";
     private static final String PROD_SERVICE_URL = "https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5";
@@ -51,14 +47,13 @@ public class EcpayPaymentGateway implements PaymentGateway {
             throw new ServiceException("訂單資訊無效");
         }
 
-        String merchantId = getConfig("shop.ecpay.merchant_id");
-        String hashKey = getConfig("shop.ecpay.hash_key");
-        String hashIv = getConfig("shop.ecpay.hash_iv");
-        String mode = getConfig("shop.ecpay.mode");
-        String serviceUrl = "prod".equals(mode) ? PROD_SERVICE_URL : TEST_SERVICE_URL;
+        String merchantId = shopConfig.getEcpayMerchantId();
+        String hashKey = shopConfig.getEcpayHashKey();
+        String hashIv = shopConfig.getEcpayHashIv();
+        String serviceUrl = shopConfig.isEcpayProdMode() ? PROD_SERVICE_URL : TEST_SERVICE_URL;
 
         log.info("ECPay 建立付款：orderNo={}, mode={}, merchantId={}, serviceUrl={}",
-                order.getOrderNo(), mode, merchantId, serviceUrl);
+                order.getOrderNo(), shopConfig.getEcpayMode(), merchantId, serviceUrl);
 
         // 組裝 ECPay 參數（TreeMap 自動按 key 排序）
         TreeMap<String, String> params = new TreeMap<>();
@@ -80,7 +75,7 @@ public class EcpayPaymentGateway implements PaymentGateway {
         params.put("CustomField2", order.getOrderNo());
 
         // 計算 CheckMacValue
-        String checkMacValue = generateCheckMacValue(params, hashKey, hashIv, params.get("EncryptType"));
+        String checkMacValue = EcpaySignatureUtils.generateCheckMacValue(params, hashKey, hashIv, params.get("EncryptType"));
         params.put("CheckMacValue", checkMacValue);
 
         log.info("ECPay 參數：MerchantTradeNo={}, TotalAmount={}, ReturnURL={}, CheckMacValue={}",
@@ -88,7 +83,7 @@ public class EcpayPaymentGateway implements PaymentGateway {
                 params.get("ReturnURL"), checkMacValue);
 
         // 產生自動提交 HTML form
-        String formHtml = buildAutoSubmitForm(serviceUrl, params);
+        String formHtml = EcpaySignatureUtils.buildAutoSubmitForm(serviceUrl, params);
 
         return PaymentResponse.builder()
                 .formHtml(formHtml)
@@ -97,24 +92,9 @@ public class EcpayPaymentGateway implements PaymentGateway {
 
     @Override
     public boolean verifyCallback(Map<String, String> params) {
-        String hashKey = getConfig("shop.ecpay.hash_key");
-        String hashIv = getConfig("shop.ecpay.hash_iv");
-
-        String receivedCheckMac = params.get("CheckMacValue");
-        if (receivedCheckMac == null) {
-            return false;
-        }
-
-        // 移除 CheckMacValue 與 EncryptType 後重新計算（依 ECPay SDK 規則）
-        TreeMap<String, String> paramsWithoutCheck = new TreeMap<>(params);
-        paramsWithoutCheck.remove("CheckMacValue");
-        String encryptType = paramsWithoutCheck.remove("EncryptType");
-        if (encryptType == null || encryptType.isBlank()) {
-            encryptType = "1";
-        }
-
-        String calculated = generateCheckMacValue(paramsWithoutCheck, hashKey, hashIv, encryptType);
-        return calculated.equalsIgnoreCase(receivedCheckMac);
+        String hashKey = shopConfig.getEcpayHashKey();
+        String hashIv = shopConfig.getEcpayHashIv();
+        return EcpaySignatureUtils.verifyCheckMacValue(params, hashKey, hashIv);
     }
 
     @Override
@@ -159,51 +139,6 @@ public class EcpayPaymentGateway implements PaymentGateway {
     }
 
     /**
-     * 產生 CheckMacValue（SHA256）
-     * <p>
-     * 演算法：
-     * <ol>
-     *   <li>按 key 字母排序（不分大小寫）</li>
-     *   <li>組合: "HashKey={key}&amp;k1=v1&amp;k2=v2&amp;...&amp;HashIV={iv}"</li>
-     *   <li>URL encode → 轉小寫</li>
-     *   <li>特殊字元替換（ECPay 規範）</li>
-     *   <li>SHA256 雜湊 → 轉大寫</li>
-     * </ol>
-     */
-    String generateCheckMacValue(Map<String, String> params, String hashKey, String hashIv, String encryptType) {
-        // 1. 按 key 排序（不分大小寫）
-        TreeMap<String, String> sorted = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        sorted.putAll(params);
-
-        // 2. 組合字串
-        StringBuilder sb = new StringBuilder();
-        sb.append("HashKey=").append(hashKey).append("&");
-        for (Map.Entry<String, String> entry : sorted.entrySet()) {
-            sb.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
-        }
-        sb.append("HashIV=").append(hashIv);
-
-        // 3. URL encode → 轉小寫
-        String encoded = URLEncoder.encode(sb.toString(), StandardCharsets.UTF_8).toLowerCase();
-
-        // 4. 特殊字元替換（ECPay .NET URLEncode 規範）
-        encoded = encoded.replace("%2d", "-")
-                .replace("%5f", "_")
-                .replace("%2e", ".")
-                .replace("%21", "!")
-                .replace("%2a", "*")
-                .replace("%28", "(")
-                .replace("%29", ")")
-                .replace("%20", "+");
-
-        // 5. 依 EncryptType 進行雜湊 → 轉大寫
-        if ("0".equals(encryptType)) {
-            return md5(encoded).toUpperCase();
-        }
-        return sha256(encoded).toUpperCase();
-    }
-
-    /**
      * 組裝商品名稱（ECPay 限制 200 字元，多商品用 # 分隔）
      */
     private String buildItemName(ShopOrder order) {
@@ -231,79 +166,6 @@ public class EcpayPaymentGateway implements PaymentGateway {
     }
 
     /**
-     * 產生自動提交的 HTML form（值經 HTML entity 跳脫）
-     */
-    private String buildAutoSubmitForm(String actionUrl, Map<String, String> params) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head>");
-        sb.append("<body onload=\"document.forms[0].submit()\">");
-        sb.append("<form method=\"post\" action=\"").append(htmlEscape(actionUrl))
-                .append("\" accept-charset=\"UTF-8\">");
-        for (Map.Entry<String, String> entry : params.entrySet()) {
-            sb.append("<input type=\"hidden\" name=\"").append(htmlEscape(entry.getKey()))
-                    .append("\" value=\"").append(htmlEscape(entry.getValue())).append("\">");
-        }
-        sb.append("</form></body></html>");
-        return sb.toString();
-    }
-
-    /**
-     * HTML entity 跳脫
-     */
-    private String htmlEscape(String input) {
-        if (input == null) {
-            return "";
-        }
-        return input.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
-    }
-
-    /**
-     * SHA256 雜湊
-     */
-    private String sha256(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (Exception e) {
-            throw new ServiceException("SHA256 計算失敗");
-        }
-    }
-
-    /**
-     * MD5 雜湊
-     */
-    private String md5(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (Exception e) {
-            throw new ServiceException("MD5 計算失敗");
-        }
-    }
-
-    /**
      * Map 轉 JSON 字串
      */
     private String mapToJson(Map<String, String> params) {
@@ -321,14 +183,4 @@ public class EcpayPaymentGateway implements PaymentGateway {
         return sb.toString();
     }
 
-    /**
-     * 讀取系統設定
-     */
-    private String getConfig(String key) {
-        String value = configService.selectConfigByKey(key);
-        if (value == null || value.isBlank()) {
-            throw new ServiceException("缺少系統設定：" + key);
-        }
-        return value;
-    }
 }

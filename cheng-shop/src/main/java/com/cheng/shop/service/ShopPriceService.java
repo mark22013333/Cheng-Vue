@@ -1,9 +1,9 @@
 package com.cheng.shop.service;
 
+import com.cheng.shop.config.ShopConfigService;
 import com.cheng.shop.domain.ShopProduct;
 import com.cheng.shop.domain.ShopProductSku;
 import com.cheng.shop.domain.vo.PriceResult;
-import com.cheng.system.service.ISysConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ShopPriceService {
 
-    private final ISysConfigService configService;
+    private final ShopConfigService shopConfig;
 
     /**
      * 計算商品最終售價
@@ -59,20 +59,10 @@ public class ShopPriceService {
         }
 
         // 2. 檢查全站折扣
-        String mode = configService.selectConfigByKey("shop.discount.mode");
-        String rateStr = configService.selectConfigByKey("shop.discount.rate");
+        String mode = shopConfig.getDiscountMode();
+        BigDecimal rate = shopConfig.getDiscountRate();
 
-        if (mode != null && rateStr != null) {
-            BigDecimal rate;
-            try {
-                rate = new BigDecimal(rateStr);
-            } catch (NumberFormatException e) {
-                return PriceResult.noDiscount(price);
-            }
-
-            if (rate.compareTo(BigDecimal.ZERO) <= 0) {
-                return PriceResult.noDiscount(price);
-            }
+        if (mode != null && !mode.isBlank() && rate.compareTo(BigDecimal.ZERO) > 0) {
 
             if ("1".equals(mode)) {
                 // 加價模式：計算加價後的「原價」，實際以 price 賣出

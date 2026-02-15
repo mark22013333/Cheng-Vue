@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.shop.mapper.ShopCvsStoreTempMapper">
+
+    <resultMap type="com.cheng.shop.domain.ShopCvsStoreTemp" id="ShopCvsStoreTempResult">
+        <id     property="id"            column="id"/>
+        <result property="storeKey"      column="store_key"/>
+        <result property="memberId"      column="member_id"/>
+        <result property="logisticsSub"  column="logistics_sub"/>
+        <result property="storeId"       column="store_id"/>
+        <result property="storeName"     column="store_name"/>
+        <result property="storeAddress"  column="store_address"/>
+        <result property="storeTel"      column="store_tel"/>
+        <result property="cvsOutside"    column="cvs_outside"/>
+        <result property="expireTime"    column="expire_time"/>
+        <result property="createTime"    column="create_time"/>
+    </resultMap>
+
+    <sql id="selectColumns">
+        id, store_key, member_id, logistics_sub, store_id, store_name,
+        store_address, store_tel, cvs_outside, expire_time, create_time
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO shop_cvs_store_temp (
+            store_key, member_id, logistics_sub, store_id, store_name,
+            store_address, store_tel, cvs_outside, expire_time, create_time
+        ) VALUES (
+            #{storeKey}, #{memberId}, #{logisticsSub}, #{storeId}, #{storeName},
+            #{storeAddress}, #{storeTel}, #{cvsOutside}, #{expireTime}, #{createTime}
+        )
+    </insert>
+
+    <select id="selectByStoreKey" resultMap="ShopCvsStoreTempResult">
+        SELECT <include refid="selectColumns"/>
+        FROM shop_cvs_store_temp
+        WHERE store_key = #{storeKey}
+    </select>
+
+    <select id="selectByStoreKeyAndMemberId" resultMap="ShopCvsStoreTempResult">
+        SELECT <include refid="selectColumns"/>
+        FROM shop_cvs_store_temp
+        WHERE store_key = #{storeKey}
+          AND member_id = #{memberId}
+    </select>
+
+    <update id="updateByStoreKey">
+        UPDATE shop_cvs_store_temp
+        SET logistics_sub = #{logisticsSub},
+            store_id      = #{storeId},
+            store_name    = #{storeName},
+            store_address = #{storeAddress},
+            store_tel     = #{storeTel},
+            cvs_outside   = #{cvsOutside},
+            expire_time   = #{expireTime}
+        WHERE store_key = #{storeKey}
+    </update>
+
+    <delete id="deleteByStoreKey">
+        DELETE FROM shop_cvs_store_temp
+        WHERE store_key = #{storeKey}
+    </delete>
+
+    <delete id="deleteExpired">
+        DELETE FROM shop_cvs_store_temp
+        WHERE expire_time &lt; NOW()
+    </delete>
+
+</mapper>

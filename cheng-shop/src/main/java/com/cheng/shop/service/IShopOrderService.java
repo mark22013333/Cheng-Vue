@@ -139,6 +139,15 @@ public interface IShopOrderService {
     int updateShipStatus(Long orderId, String shipStatus);
 
     /**
+     * 更新物流單號
+     *
+     * @param orderId    訂單ID
+     * @param shippingNo 物流單號（ECPay AllPayLogisticsID）
+     * @return 影響行數
+     */
+    int updateShippingNo(Long orderId, String shippingNo);
+
+    /**
      * 處理金流回調
      * <p>
      * 使用悲觀鎖（FOR UPDATE）確保併發安全，在事務內執行：
@@ -148,10 +157,20 @@ public interface IShopOrderService {
      *     <li>更新訂單狀態</li>
      *     <li>發布 {@link com.cheng.shop.event.PaymentSuccessEvent} 事件</li>
      * </ol>
-     * 銷量更新等副作用由事件監聽器在事務提交後異步處理。
+     * 銷量更新等副作用由事件監聯器在事務提交後異步處理。
      *
      * @param result 金流回調結果
      * @return 處理結果訊息（回傳給金流平台）
      */
     String handlePaymentCallback(CallbackResult result);
+
+    /**
+     * 重新建立物流訂單
+     * <p>
+     * 用於超商取貨訂單物流單號產生失敗時，手動觸發重新建立。
+     *
+     * @param orderId 訂單ID
+     * @return 新的物流單號
+     */
+    String recreateLogistics(Long orderId);
 }

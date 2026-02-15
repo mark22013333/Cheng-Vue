@@ -18,7 +18,7 @@ import com.cheng.shop.service.IShopGiftService;
 import com.cheng.shop.service.IShopProductService;
 import com.cheng.shop.service.IShopProductSkuService;
 import com.cheng.shop.service.ShopPriceService;
-import com.cheng.system.service.ISysConfigService;
+import com.cheng.shop.config.ShopConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,7 +49,7 @@ public class ShopFrontController extends BaseController {
     private final IShopBannerService bannerService;
     private final IShopGiftService giftService;
     private final ShopPriceService priceService;
-    private final ISysConfigService configService;
+    private final ShopConfigService shopConfig;
 
     /**
      * 查詢有效輪播（前台首頁用）
@@ -160,7 +160,7 @@ public class ShopFrontController extends BaseController {
      */
     @GetMapping("/gifts")
     public AjaxResult listAvailableGifts(@RequestParam BigDecimal amount) {
-        if (!"1".equals(configService.selectConfigByKey("shop.gift.enabled"))) {
+        if (!shopConfig.isGiftEnabled()) {
             return success(Collections.emptyList());
         }
         List<ShopGift> list = giftService.selectAvailableGifts(amount);
@@ -204,7 +204,7 @@ public class ShopFrontController extends BaseController {
      */
     @GetMapping("/payment-methods")
     public AjaxResult listPaymentMethods() {
-        String configValue = configService.selectConfigByKey("shop.payment.methods");
+        String configValue = shopConfig.getPaymentMethods();
         List<PaymentMethod> methods = PaymentMethod.fromConfigValue(configValue);
         // 轉換為前端需要的格式
         List<Map<String, String>> result = methods.stream()

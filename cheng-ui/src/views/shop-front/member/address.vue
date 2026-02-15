@@ -65,30 +65,66 @@
         @submit.prevent
       >
         <el-form-item label="收件人" prop="receiverName">
-          <el-input v-model="form.receiverName" placeholder="請輸入收件人姓名" />
+          <el-input v-model="form.receiverName" placeholder="中文 2~5 字 / 英文 4~10 字" maxlength="10" show-word-limit />
         </el-form-item>
         <el-form-item label="手機號碼" prop="receiverPhone">
-          <el-input v-model="form.receiverPhone" placeholder="請輸入手機號碼" />
+          <el-input v-model="form.receiverPhone" placeholder="09 開頭，共 10 碼" maxlength="10" />
         </el-form-item>
         <el-form-item label="縣市" prop="province">
-          <el-input v-model="form.province" placeholder="請輸入縣市" />
+          <el-select
+            v-model="selectedCityCode"
+            placeholder="輸入或選擇縣市"
+            filterable
+            clearable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="city in cityList"
+              :key="city.code"
+              :label="city.name"
+              :value="city.code"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="區域" prop="city">
-          <el-input v-model="form.city" placeholder="請輸入市/區" />
+          <el-select
+            v-model="form.city"
+            placeholder="輸入或選擇區域"
+            filterable
+            clearable
+            :disabled="!selectedCityCode"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="district in districtList"
+              :key="district.name"
+              :label="district.name"
+              :value="district.name"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item label="鄉鎮" prop="district">
-          <el-input v-model="form.district" placeholder="請輸入區/鄉鎮" />
+        <el-form-item label="路/街">
+          <el-input v-model="form.street" placeholder="例：中山路、忠孝東路四段" maxlength="30" />
         </el-form-item>
-        <el-form-item label="詳細地址" prop="detailAddress">
-          <el-input
-            v-model="form.detailAddress"
-            type="textarea"
-            :rows="2"
-            placeholder="請輸入詳細地址"
-          />
+        <el-form-item label="巷弄號樓" class="address-detail-row">
+          <div class="address-inputs">
+            <el-input v-model="form.lane" placeholder="巷" style="width: 70px">
+              <template #append>巷</template>
+            </el-input>
+            <el-input v-model="form.alley" placeholder="弄" style="width: 70px">
+              <template #append>弄</template>
+            </el-input>
+            <el-input v-model="form.number" placeholder="號" style="width: 70px">
+              <template #append>號</template>
+            </el-input>
+            <el-input v-model="form.floor" placeholder="樓" style="width: 70px">
+              <template #append>樓</template>
+            </el-input>
+          </div>
         </el-form-item>
-        <el-form-item label="郵遞區號" prop="postalCode">
-          <el-input v-model="form.postalCode" placeholder="請輸入郵遞區號" style="width: 120px" />
+        <el-form-item label="郵遞區號">
+          <el-input v-model="form.postalCode" disabled style="width: 100px" />
+          <span class="postal-hint">（自動帶入）</span>
         </el-form-item>
         <el-form-item label="設為預設">
           <el-switch v-model="form.isDefault" />
@@ -105,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import {
@@ -115,6 +151,7 @@ import {
   deleteAddress,
   setDefaultAddress
 } from '@/api/shop/address'
+import { getCityList, getDistrictList, getCityCodeByName, getPostalCode } from '@/utils/taiwan-address'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -123,6 +160,16 @@ const isEdit = ref(false)
 const addressList = ref([])
 const formRef = ref(null)
 
+// 縣市區資料
+const cityList = getCityList()
+const selectedCityCode = ref('')
+
+// 根據選擇的縣市取得區域列表
+const districtList = computed(() => {
+  if (!selectedCityCode.value) return []
+  return getDistrictList(selectedCityCode.value)
+})
+
 const form = reactive({
   addressId: null,
   receiverName: '',
@@ -130,23 +177,90 @@ const form = reactive({
   province: '',
   city: '',
   district: '',
+  street: '',      // 路/街
+  lane: '',        // 巷
+  alley: '',       // 弄
+  number: '',      // 號
+  floor: '',       // 樓
   detailAddress: '',
   postalCode: '',
   isDefault: false
 })
 
+// 當縣市變更時，清空區域和郵遞區號
+watch(selectedCityCode, (newVal, oldVal) => {
+  if (oldVal && newVal !== oldVal) {
+    form.city = ''
+    form.postalCode = ''
+  }
+  // 更新 province 欄位
+  const city = cityList.find(c => c.code === newVal)
+  if (city) {
+    form.province = city.name
+  }
+})
+
+// 當區域變更時，自動填入郵遞區號
+watch(() => form.city, (newVal) => {
+  if (newVal && selectedCityCode.value) {
+    const zip = getPostalCode(selectedCityCode.value, newVal)
+    if (zip) {
+      form.postalCode = zip
+    }
+  }
+})
+
+// 計算字串的位元組長度（中文字 2 位元組，英文字 1 位元組）
+function getByteLength(str) {
+  if (!str) return 0
+  let len = 0
+  for (let i = 0; i < str.length; i++) {
+    // 中文字元（基本漢字區塊）
+    if (str.charCodeAt(i) > 127) {
+      len += 2
+    } else {
+      len += 1
+    }
+  }
+  return len
+}
+
+// ECPay 收件人姓名驗證器
+function validateReceiverName(rule, value, callback) {
+  if (!value) {
+    callback(new Error('請輸入收件人姓名'))
+    return
+  }
+
+  const byteLen = getByteLength(value)
+
+  if (byteLen < 4) {
+    callback(new Error('姓名太短，中文至少 2 個字，英文至少 4 個字'))
+    return
+  }
+
+  if (byteLen > 10) {
+    callback(new Error('姓名太長，中文最多 5 個字，英文最多 10 個字'))
+    return
+  }
+
+  callback()
+}
+
 const rules = {
   receiverName: [
     { required: true, message: '請輸入收件人姓名', trigger: 'blur' },
-    { max: 50, message: '姓名長度不能超過 50 字元', trigger: 'blur' }
+    { validator: validateReceiverName, trigger: 'blur' }
   ],
   receiverPhone: [
     { required: true, message: '請輸入手機號碼', trigger: 'blur' },
-    { pattern: /^09\d{8}$/, message: '請輸入正確的手機號碼', trigger: 'blur' }
+    { pattern: /^09\d{8}$/, message: '請輸入正確的手機號碼（09 開頭共 10 碼）', trigger: 'blur' }
   ],
-  detailAddress: [
-    { required: true, message: '請輸入詳細地址', trigger: 'blur' },
-    { max: 200, message: '地址長度不能超過 200 字元', trigger: 'blur' }
+  province: [
+    { required: true, message: '請選擇縣市', trigger: 'change' }
+  ],
+  city: [
+    { required: true, message: '請選擇區域', trigger: 'change' }
   ]
 }
 
@@ -175,15 +289,47 @@ function resetForm() {
   form.province = ''
   form.city = ''
   form.district = ''
+  form.street = ''
+  form.lane = ''
+  form.alley = ''
+  form.number = ''
+  form.floor = ''
   form.detailAddress = ''
   form.postalCode = ''
   form.isDefault = false
+  selectedCityCode.value = ''
 }
 
 function handleAdd() {
   resetForm()
   isEdit.value = false
   dialogVisible.value = true
+}
+
+// 解析詳細地址到各欄位
+function parseDetailAddress(detailAddress) {
+  if (!detailAddress) return { street: '', lane: '', alley: '', number: '', floor: '' }
+
+  const result = { street: '', lane: '', alley: '', number: '', floor: '' }
+
+  // 嘗試解析格式：XX路XX巷XX弄XX號XX樓
+  const floorMatch = detailAddress.match(/(\d+)\s*樓/)
+  if (floorMatch) result.floor = floorMatch[1]
+
+  const numberMatch = detailAddress.match(/(\d+)\s*號/)
+  if (numberMatch) result.number = numberMatch[1]
+
+  const alleyMatch = detailAddress.match(/(\d+)\s*弄/)
+  if (alleyMatch) result.alley = alleyMatch[1]
+
+  const laneMatch = detailAddress.match(/(\d+)\s*巷/)
+  if (laneMatch) result.lane = laneMatch[1]
+
+  // 路/街：取到第一個數字前的部分
+  const streetMatch = detailAddress.match(/^([^\d]+?)(?:\d|$)/)
+  if (streetMatch) result.street = streetMatch[1].trim()
+
+  return result
 }
 
 function handleEdit(address) {
@@ -193,11 +339,32 @@ function handleEdit(address) {
   form.province = address.province || ''
   form.city = address.city || ''
   form.district = address.district || ''
-  form.detailAddress = address.detailAddress
   form.postalCode = address.postalCode || ''
   form.isDefault = address.isDefault || false
+
+  // 解析詳細地址
+  const parsed = parseDetailAddress(address.detailAddress)
+  form.street = parsed.street
+  form.lane = parsed.lane
+  form.alley = parsed.alley
+  form.number = parsed.number
+  form.floor = parsed.floor
+  form.detailAddress = address.detailAddress || ''
+
+  // 根據縣市名稱找到對應的代碼
+  selectedCityCode.value = getCityCodeByName(address.province) || ''
   isEdit.value = true
   dialogVisible.value = true
+}
+
+// 組合詳細地址
+function composeDetailAddress() {
+  let address = form.street || ''
+  if (form.lane) address += form.lane + '巷'
+  if (form.alley) address += form.alley + '弄'
+  if (form.number) address += form.number + '號'
+  if (form.floor) address += form.floor + '樓'
+  return address
 }
 
 async function handleSubmit() {
@@ -207,7 +374,20 @@ async function handleSubmit() {
     await formRef.value.validate()
     submitting.value = true
 
-    const data = { ...form }
+    // 組合詳細地址
+    const detailAddress = composeDetailAddress()
+
+    const data = {
+      addressId: form.addressId,
+      receiverName: form.receiverName,
+      receiverPhone: form.receiverPhone,
+      province: form.province,
+      city: form.city,
+      district: form.district,
+      detailAddress: detailAddress,
+      postalCode: form.postalCode,
+      isDefault: form.isDefault
+    }
 
     if (isEdit.value) {
       await updateAddress(data)
@@ -334,6 +514,31 @@ async function handleSetDefault(address) {
   font-size: 12px;
   color: #909399;
   margin-top: 8px;
+}
+
+.postal-hint {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #909399;
+}
+
+.address-inputs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.address-inputs :deep(.el-input) {
+  width: auto;
+}
+
+.address-inputs :deep(.el-input__wrapper) {
+  padding-right: 0;
+}
+
+.address-inputs :deep(.el-input-group__append) {
+  padding: 0 8px;
+  background: #f5f7fa;
 }
 
 .address-actions {

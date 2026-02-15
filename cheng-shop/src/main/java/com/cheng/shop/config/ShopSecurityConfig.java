@@ -37,9 +37,11 @@ public class ShopSecurityConfig {
      * - /shop/auth/** : 會員認證（登入、註冊）
      * - /shop/my/** : 會員個人資料 - 需要 Member-Token
      * - /shop/member/cart/** : 會員購物車 - 需要 Member-Token
+     * - /shop/member/upload/** : 會員檔案上傳 - 需要 Member-Token
      * - /shop/checkout/** : 結帳流程 - 需要 Member-Token
      * - /shop/address/** : 會員地址管理 - 需要 Member-Token
      * - /shop/payment/ecpay/** : ECPay 付款流程（callback/return permitAll，其他需 Member-Token）
+     * - /shop/logistics/** : 物流服務（methods/shipping-fee permitAll，callback permitAll，其他需 Member-Token）
      * - /shop/order/my/** : 會員訂單 - 需要 Member-Token
      *
      * 注意：其他 /shop/** API（如 /shop/banner/list、/shop/member/list、/shop/payment/callback/log/**）
@@ -55,9 +57,11 @@ public class ShopSecurityConfig {
                         "/shop/auth/**",
                         "/shop/my/**",
                         "/shop/member/cart/**",
+                        "/shop/member/upload/**",
                         "/shop/checkout/**",
                         "/shop/address/**",
                         "/shop/payment/ecpay/**",
+                        "/shop/logistics/**",
                         "/shop/order/my/**"
                 )
                 .csrf(AbstractHttpConfigurer::disable)
@@ -72,10 +76,16 @@ public class ShopSecurityConfig {
                         // ECPay 回調端點 - 綠界伺服器呼叫，無需認證
                         .requestMatchers("/shop/payment/ecpay/callback").permitAll()
                         .requestMatchers("/shop/payment/ecpay/return").permitAll()
+                        // 物流公開端點
+                        .requestMatchers("/shop/logistics/methods").permitAll()
+                        .requestMatchers("/shop/logistics/shipping-fee").permitAll()
+                        .requestMatchers("/shop/logistics/cvs/store/callback").permitAll()
                         .requestMatchers("/shop/member/cart/**").authenticated()
+                        .requestMatchers("/shop/member/upload/**").authenticated()
                         .requestMatchers("/shop/checkout/**").authenticated()
                         .requestMatchers("/shop/address/**").authenticated()
                         .requestMatchers("/shop/payment/ecpay/**").authenticated()
+                        .requestMatchers("/shop/logistics/**").authenticated()
                         .requestMatchers("/shop/order/my/**").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(memberAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)

@@ -8,7 +8,10 @@ import com.cheng.shop.domain.ShopOrderItem;
 import com.cheng.shop.enums.OrderStatus;
 import com.cheng.shop.enums.PayStatus;
 import com.cheng.shop.enums.ShipStatus;
+import com.cheng.shop.enums.ShippingMethod;
 import com.cheng.shop.event.PaymentSuccessEvent;
+import com.cheng.shop.logistics.EcpayLogisticsGateway;
+import com.cheng.shop.logistics.LogisticsResult;
 import com.cheng.shop.mapper.ShopOrderItemMapper;
 import com.cheng.shop.mapper.ShopOrderMapper;
 import com.cheng.shop.mapper.ShopProductSkuMapper;
@@ -46,6 +49,7 @@ public class ShopOrderServiceImpl implements IShopOrderService {
     private final IShopGiftService giftService;
     private final IShopProductService productService;
     private final ApplicationEventPublisher eventPublisher;
+    private final EcpayLogisticsGateway logisticsGateway;
 
     @Override
     public List<ShopOrder> selectOrderList(ShopOrder order) {
@@ -363,6 +367,12 @@ public class ShopOrderServiceImpl implements IShopOrderService {
     }
 
     @Override
+    public int updateShippingNo(Long orderId, String shippingNo) {
+        log.info("更新訂單物流單號，訂單ID: {}, 物流單號: {}", orderId, shippingNo);
+        return orderMapper.updateShippingNo(orderId, shippingNo);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public String handlePaymentCallback(CallbackResult result) {
         String orderNo = result.getOrderNo();
@@ -397,11 +407,57 @@ public class ShopOrderServiceImpl implements IShopOrderService {
             // 4. 發布支付成功事件（銷量更新等副作用由 Listener 在事務提交後處理）
             // 注意：傳遞的是 updateOrder（含 orderId），Listener 會重新載入完整訂單
             updateOrder.setOrderNo(orderNo); // 補上 orderNo 供 Listener 記錄日誌
+            updateOrder.setShippingMethod(order.getShippingMethod()); // 供物流建立判斷
             eventPublisher.publishEvent(new PaymentSuccessEvent(this, updateOrder));
         } else {
             log.warn("金流回調：付款未成功，orderNo={}", orderNo);
         }
 
         return result.getResponseBody();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String recreateLogistics(Long orderId) {
+        ShopOrder order = selectOrderById(orderId);
+        if (order == null) {
+            throw new ServiceException("訂單不存在");
+        }
+
+        // 驗證訂單狀態：必須是已付款
+        if (order.getStatusEnum() != OrderStatus.PAID) {
+            throw new ServiceException("只有已付款的訂單才能建立物流");
+        }
+
+        // 驗證是否為超商取貨訂單
+        if (order.getShippingMethod() == null) {
+            throw new ServiceException("訂單缺少物流方式");
+        }
+
+        ShippingMethod shippingMethod;
+        try {
+            shippingMethod = ShippingMethod.fromCode(order.getShippingMethod());
+        } catch (Exception e) {
+            throw new ServiceException("無效的物流方式：" + order.getShippingMethod());
+        }
+
+        if (!shippingMethod.isCvs()) {
+            throw new ServiceException("只有超商取貨訂單才能使用此功能");
+        }
+
+        // 呼叫 ECPay 建立物流訂單
+        log.info("手動重建物流訂單，訂單ID: {}, 訂單編號: {}", orderId, order.getOrderNo());
+        LogisticsResult result = logisticsGateway.createShipment(order);
+
+        if (!result.isSuccess()) {
+            throw new ServiceException("物流訂單建立失敗：" + result.getErrorMessage());
+        }
+
+        // 更新訂單物流單號
+        String logisticsId = result.getLogisticsId();
+        updateShippingNo(orderId, logisticsId);
+
+        log.info("物流訂單重建成功，訂單ID: {}, 物流單號: {}", orderId, logisticsId);
+        return logisticsId;
     }
 }

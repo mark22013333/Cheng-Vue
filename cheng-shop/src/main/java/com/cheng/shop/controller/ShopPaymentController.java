@@ -18,7 +18,7 @@ import com.cheng.shop.payment.PaymentResponse;
 import com.cheng.shop.service.IShopOrderService;
 import com.cheng.shop.service.IShopPaymentCallbackLogService;
 import com.cheng.shop.utils.ShopMemberSecurityUtils;
-import com.cheng.system.service.ISysConfigService;
+import com.cheng.shop.config.ShopConfigService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +47,7 @@ public class ShopPaymentController extends BaseController {
 
     private final PaymentGatewayRouter gatewayRouter;
     private final IShopOrderService orderService;
-    private final ISysConfigService configService;
+    private final ShopConfigService shopConfig;
     private final IShopPaymentCallbackLogService callbackLogService;
 
     private static final String CALLBACK_TYPE_SERVER = "SERVER";
@@ -280,12 +280,7 @@ public class ShopPaymentController extends BaseController {
      * 取得前端基礎 URL（用於 JS 跳轉目標）
      */
     private String getFrontendUrl() {
-        String url = configService.selectConfigByKey("shop.payment.frontend_url");
-        if (url != null && !url.isBlank()) {
-            url = url.trim();
-            return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
-        }
-        return "";
+        return shopConfig.getPaymentFrontendUrl();
     }
 
     /**
@@ -298,10 +293,9 @@ public class ShopPaymentController extends BaseController {
      * </ul>
      */
     private String getBrowserBaseUrl(String fallbackBaseUrl) {
-        String url = configService.selectConfigByKey("shop.payment.browser_base_url");
-        if (url != null && !url.isBlank()) {
-            url = url.trim();
-            return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+        String url = shopConfig.getPaymentBrowserBaseUrl();
+        if (!url.isBlank()) {
+            return url;
         }
         return fallbackBaseUrl;
     }
@@ -315,12 +309,9 @@ public class ShopPaymentController extends BaseController {
      */
     private String getBaseUrl(HttpServletRequest request) {
         // 1. 優先使用 sys_config 設定的 base URL（本地 ngrok 或正式域名）
-        String configuredUrl = configService.selectConfigByKey("shop.payment.base_url");
-        if (configuredUrl != null && !configuredUrl.isBlank()) {
-            configuredUrl = configuredUrl.trim(); // 移除前後空格
-            return configuredUrl.endsWith("/")
-                    ? configuredUrl.substring(0, configuredUrl.length() - 1)
-                    : configuredUrl;
+        String configuredUrl = shopConfig.getPaymentBaseUrl();
+        if (!configuredUrl.isBlank()) {
+            return configuredUrl;
         }
 
         // 2. 嘗試讀取反向代理標頭（Nginx / ngrok 等）

@@ -27,6 +27,10 @@
         <result property="giftName"        column="gift_name"/>
         <result property="paidTime"         column="paid_time"/>
         <result property="shippingMethod"   column="shipping_method"/>
+        <result property="cvsStoreId"       column="cvs_store_id"/>
+        <result property="cvsStoreName"     column="cvs_store_name"/>
+        <result property="cvsStoreAddress"  column="cvs_store_address"/>
+        <result property="logisticsSubType" column="logistics_sub_type"/>
         <result property="shippingNo"       column="shipping_no"/>
         <result property="shippedTime"      column="shipped_time"/>
         <result property="receivedTime"     column="received_time"/>
@@ -46,7 +50,8 @@
                o.status, o.pay_status, o.ship_status,
                o.payment_method, o.payment_no, o.ecpay_trade_no, o.ecpay_info,
                o.gift_id, o.gift_name, o.paid_time,
-               o.shipping_method, o.shipping_no, o.shipped_time, o.received_time,
+               o.shipping_method, o.cvs_store_id, o.cvs_store_name, o.cvs_store_address, o.logistics_sub_type,
+               o.shipping_no, o.shipped_time, o.received_time,
                o.buyer_remark, o.seller_remark, o.cancel_reason, o.cancel_time, o.complete_time,
                o.create_time, o.update_time
         from shop_order o
@@ -117,7 +122,7 @@
             <if test="totalAmount != null">total_amount,</if>
             <if test="paidAmount != null">paid_amount,</if>
             <if test="receiverName != null and receiverName != ''">receiver_name,</if>
-            <if test="receiverMobile != null and receiverMobile != ''">receiver_mobile,</if>
+            receiver_mobile,
             <if test="receiverAddress != null and receiverAddress != ''">receiver_address,</if>
             <if test="receiverZip != null">receiver_zip,</if>
             <if test="status != null and status != ''">status,</if>
@@ -125,6 +130,10 @@
             <if test="shipStatus != null and shipStatus != ''">ship_status,</if>
             <if test="paymentMethod != null and paymentMethod != ''">payment_method,</if>
             <if test="shippingMethod != null and shippingMethod != ''">shipping_method,</if>
+            <if test="cvsStoreId != null">cvs_store_id,</if>
+            <if test="cvsStoreName != null">cvs_store_name,</if>
+            <if test="cvsStoreAddress != null">cvs_store_address,</if>
+            <if test="logisticsSubType != null">logistics_sub_type,</if>
             <if test="giftId != null">gift_id,</if>
             <if test="giftName != null">gift_name,</if>
             <if test="buyerRemark != null">buyer_remark,</if>
@@ -140,7 +149,7 @@
             <if test="totalAmount != null">#{totalAmount},</if>
             <if test="paidAmount != null">#{paidAmount},</if>
             <if test="receiverName != null and receiverName != ''">#{receiverName},</if>
-            <if test="receiverMobile != null and receiverMobile != ''">#{receiverMobile},</if>
+            #{receiverMobile},
             <if test="receiverAddress != null and receiverAddress != ''">#{receiverAddress},</if>
             <if test="receiverZip != null">#{receiverZip},</if>
             <if test="status != null and status != ''">#{status},</if>
@@ -148,6 +157,10 @@
             <if test="shipStatus != null and shipStatus != ''">#{shipStatus},</if>
             <if test="paymentMethod != null and paymentMethod != ''">#{paymentMethod},</if>
             <if test="shippingMethod != null and shippingMethod != ''">#{shippingMethod},</if>
+            <if test="cvsStoreId != null">#{cvsStoreId},</if>
+            <if test="cvsStoreName != null">#{cvsStoreName},</if>
+            <if test="cvsStoreAddress != null">#{cvsStoreAddress},</if>
+            <if test="logisticsSubType != null">#{logisticsSubType},</if>
             <if test="giftId != null">#{giftId},</if>
             <if test="giftName != null">#{giftName},</if>
             <if test="buyerRemark != null">#{buyerRemark},</if>
@@ -213,6 +226,17 @@
         <include refid="selectOrderVo"/>
         where o.order_no = #{orderNo}
         FOR UPDATE
+    </select>
+
+    <update id="updateShippingNo">
+        UPDATE shop_order
+        SET shipping_no = #{shippingNo}, update_time = NOW()
+        WHERE order_id = #{orderId}
+    </update>
+
+    <select id="selectOrderByShippingNo" parameterType="String" resultMap="ShopOrderResult">
+        <include refid="selectOrderVo"/>
+        where o.shipping_no = #{shippingNo}
     </select>
 
 </mapper>
