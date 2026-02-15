@@ -37,9 +37,52 @@
             <span class="label">聯繫電話：</span>
             <span class="value">{{ order.receiverMobile }}</span>
           </div>
+          <!-- 超商取貨資訊 -->
+          <template v-if="order.cvsStoreName">
+            <div class="info-row">
+              <span class="label">取貨門市：</span>
+              <span class="value cvs-store">
+                <el-tag type="primary" size="small">{{ getShippingMethodText(order.shippingMethod) }}</el-tag>
+                {{ order.cvsStoreName }}
+              </span>
+            </div>
+            <div class="info-row" v-if="order.cvsStoreId">
+              <span class="label">門市代號：</span>
+              <span class="value">{{ order.cvsStoreId }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">門市地址：</span>
+              <span class="value">{{ order.cvsStoreAddress || order.receiverAddress }}</span>
+            </div>
+          </template>
+          <!-- 宅配地址 -->
+          <template v-else>
+            <div class="info-row">
+              <span class="label">收貨地址：</span>
+              <span class="value">{{ order.receiverAddress }}</span>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- 物流資訊（有物流單號時顯示） -->
+      <div class="info-section" v-if="order.shippingNo || order.shippingMethod">
+        <h3><el-icon><Van /></el-icon> 物流資訊</h3>
+        <div class="info-content">
           <div class="info-row">
-            <span class="label">收貨地址：</span>
-            <span class="value">{{ order.receiverAddress }}</span>
+            <span class="label">配送方式：</span>
+            <span class="value">{{ getShippingMethodText(order.shippingMethod) }}</span>
+          </div>
+          <div class="info-row" v-if="order.shippingNo">
+            <span class="label">物流單號：</span>
+            <span class="value shipping-no">
+              {{ order.shippingNo }}
+              <el-button text type="primary" size="small" @click="copyShippingNo">複製</el-button>
+            </span>
+          </div>
+          <div class="info-row" v-else-if="order.status === 'PAID' && order.cvsStoreName">
+            <span class="label">物流狀態：</span>
+            <span class="value pending-logistics">物流單建立中，請稍候...</span>
           </div>
         </div>
       </div>
@@ -151,7 +194,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Location, ShoppingBag, Document, Tickets } from '@element-plus/icons-vue'
+import { ArrowLeft, Location, ShoppingBag, Document, Tickets, Van } from '@element-plus/icons-vue'
 import { getMyOrderDetail, memberCancelOrder, memberConfirmReceipt } from '@/api/shop/order'
 import { createEcpayPayment } from '@/api/shop/payment'
 
@@ -264,6 +307,25 @@ function getPaymentMethodText(method) {
     BANK_TRANSFER: '銀行轉帳'
   }
   return map[method] || method || '未指定'
+}
+
+function getShippingMethodText(method) {
+  const map = {
+    HOME_DELIVERY: '宅配到府',
+    CVS_711: '7-ELEVEN 超取',
+    CVS_FAMILY: '全家超取',
+    CVS_HILIFE: '萊爾富超取',
+    STORE_PICKUP: '門市自取'
+  }
+  return map[method] || method || '未指定'
+}
+
+function copyShippingNo() {
+  if (order.value?.shippingNo) {
+    navigator.clipboard.writeText(order.value.shippingNo)
+      .then(() => ElMessage.success('已複製物流單號'))
+      .catch(() => ElMessage.error('複製失敗'))
+  }
 }
 
 async function handlePayment() {
@@ -407,6 +469,25 @@ async function handleConfirm() {
 
 .info-row .value {
   color: #303133;
+}
+
+.info-row .value.cvs-store {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-row .value.shipping-no {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.info-row .value.pending-logistics {
+  color: #e6a23c;
+  font-style: italic;
 }
 
 /* 商品列表 */

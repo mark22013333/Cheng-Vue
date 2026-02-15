@@ -19,7 +19,14 @@
       <!-- 商品圖片區 -->
       <div class="product-gallery">
         <div class="main-image">
-          <el-image :src="getImageUrl(currentImage)" fit="contain" :preview-src-list="allImages" preview-teleported />
+          <el-image
+            :src="getImageUrl(currentImage)"
+            fit="contain"
+            :preview-src-list="previewImages"
+            :initial-index="currentImageIndex"
+            preview-teleported
+            hide-on-click-modal
+          />
         </div>
         <div class="thumbnail-list" v-if="allImages.length > 1">
           <div
@@ -302,6 +309,17 @@ const allImages = computed(() => {
     }
   }
   return images
+})
+
+// 預覽用的圖片列表（經過 URL 處理）
+const previewImages = computed(() => {
+  return allImages.value.map(img => getImageUrl(img))
+})
+
+// 當前圖片在列表中的索引
+const currentImageIndex = computed(() => {
+  const index = allImages.value.indexOf(currentImage.value)
+  return index >= 0 ? index : 0
 })
 
 function getImageUrl(url) {

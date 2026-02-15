@@ -1,25 +1,28 @@
 package com.cheng.shop.service.impl;
 
 import com.cheng.common.exception.ServiceException;
+import com.cheng.shop.config.ShopConfigService;
 import com.cheng.shop.domain.ShopCart;
+import com.cheng.shop.domain.ShopCvsStoreTemp;
 import com.cheng.shop.domain.ShopGift;
+import com.cheng.shop.domain.ShopMember;
 import com.cheng.shop.domain.ShopMemberAddress;
 import com.cheng.shop.domain.ShopOrder;
 import com.cheng.shop.domain.ShopOrderItem;
-import com.cheng.shop.domain.ShopProductSku;
-import com.cheng.shop.domain.ShopProduct;
 import com.cheng.shop.domain.dto.CheckoutSubmitRequest;
 import com.cheng.shop.domain.vo.CheckoutPreviewVO;
 import com.cheng.shop.domain.vo.CheckoutResultVO;
 import com.cheng.shop.domain.vo.PriceResult;
 import com.cheng.shop.enums.PaymentMethod;
+import com.cheng.shop.enums.ShippingMethod;
+import com.cheng.shop.logistics.IShopLogisticsService;
 import com.cheng.shop.service.IShopCartService;
 import com.cheng.shop.service.IShopCheckoutService;
 import com.cheng.shop.service.IShopGiftService;
 import com.cheng.shop.service.IShopMemberAddressService;
+import com.cheng.shop.service.IShopMemberService;
 import com.cheng.shop.service.IShopOrderService;
 import com.cheng.shop.service.ShopPriceService;
-import com.cheng.system.service.ISysConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -43,10 +47,12 @@ public class ShopCheckoutServiceImpl implements IShopCheckoutService {
 
     private final IShopCartService cartService;
     private final IShopMemberAddressService addressService;
+    private final IShopMemberService memberService;
     private final IShopOrderService orderService;
     private final IShopGiftService giftService;
     private final ShopPriceService priceService;
-    private final ISysConfigService configService;
+    private final ShopConfigService shopConfig;
+    private final IShopLogisticsService logisticsService;
 
     /**
      * 離島地區關鍵字
@@ -108,7 +114,7 @@ public class ShopCheckoutServiceImpl implements IShopCheckoutService {
 
         // 查詢可用禮物
         List<ShopGift> availableGifts = Collections.emptyList();
-        if (isGiftEnabled()) {
+        if (shopConfig.isGiftEnabled()) {
             availableGifts = giftService.selectAvailableGifts(payableAmount);
         }
 
@@ -134,10 +140,38 @@ public class ShopCheckoutServiceImpl implements IShopCheckoutService {
             throw new ServiceException("請先選擇要結帳的商品");
         }
 
-        // 取得收貨地址
-        ShopMemberAddress address = addressService.selectAddressById(request.getAddressId());
-        if (address == null || !address.getMemberId().equals(memberId)) {
-            throw new ServiceException("收貨地址無效");
+        // 解析物流方式
+        ShippingMethod shippingMethod;
+        try {
+            shippingMethod = ShippingMethod.fromCode(request.getShippingMethod());
+        } catch (Exception e) {
+            throw new ServiceException("無效的物流方式");
+        }
+
+        // 超商取貨 + 貨到付款不允許
+        if (shippingMethod.isCvs() && "COD".equals(request.getPaymentMethod())) {
+            throw new ServiceException("超商取貨不支援貨到付款");
+        }
+
+        // 根據物流方式取得收貨資訊
+        ShopMemberAddress address = null;
+        ShopCvsStoreTemp cvsStore = null;
+
+        if (shippingMethod.isCvs()) {
+            // 超商取貨：從暫存表取得門市資訊
+            if (request.getCvsStoreKey() == null || request.getCvsStoreKey().isBlank()) {
+                throw new ServiceException("請選擇取貨門市");
+            }
+            cvsStore = logisticsService.getCvsStore(request.getCvsStoreKey(), memberId);
+            if (cvsStore == null) {
+                throw new ServiceException("門市資訊已過期，請重新選擇");
+            }
+        } else {
+            // 宅配：需要收貨地址
+            address = addressService.selectAddressById(request.getAddressId());
+            if (address == null || !address.getMemberId().equals(memberId)) {
+                throw new ServiceException("收貨地址無效");
+            }
         }
 
         // 計算金額（含折扣）
@@ -171,8 +205,9 @@ public class ShopCheckoutServiceImpl implements IShopCheckoutService {
             orderItems.add(orderItem);
         }
 
-        // 計算運費（從系統設定讀取）
-        BigDecimal shippingFee = calculateShippingFee(productAmount, address);
+        // 計算運費（使用物流服務）
+        BigDecimal shippingFee = logisticsService.calculateShippingFee(
+                request.getShippingMethod(), productAmount);
 
         // 總金額
         BigDecimal totalAmount = productAmount.add(shippingFee);
@@ -184,16 +219,48 @@ public class ShopCheckoutServiceImpl implements IShopCheckoutService {
         order.setShippingAmount(shippingFee);
         order.setDiscountAmount(discountAmount);
         order.setTotalAmount(totalAmount);
-        order.setReceiverName(address.getReceiverName());
-        order.setReceiverMobile(address.getReceiverPhone());
-        order.setReceiverAddress(address.getFullAddress());
-        order.setReceiverZip(address.getPostalCode());
+        order.setShippingMethod(request.getShippingMethod());
         order.setPaymentMethod(request.getPaymentMethod());
         order.setBuyerRemark(request.getRemark());
         order.setOrderItems(orderItems);
 
+        // 根據物流方式設定收貨資訊
+        ShopMember member = memberService.selectMemberById(memberId);
+        // 設定會員暱稱（用於後台顯示）
+        if (member != null && member.getNickname() != null) {
+            order.setMemberNickname(member.getNickname());
+        }
+
+        if (shippingMethod.isCvs()) {
+            // 超商取貨：使用前端傳入的收件人資訊（物流出貨單必填）
+            String receiverName = request.getReceiverName();
+            String receiverMobile = request.getReceiverPhone();
+
+            // 驗證收件人資訊
+            if (receiverName == null || receiverName.isBlank()) {
+                throw new ServiceException("請填寫取貨人姓名");
+            }
+            if (receiverMobile == null || !receiverMobile.matches("^09\\d{8}$")) {
+                throw new ServiceException("請填寫正確的取貨人手機號碼");
+            }
+
+            order.setReceiverName(receiverName);
+            order.setReceiverMobile(receiverMobile);
+            order.setReceiverAddress(cvsStore.getStoreAddress());
+            order.setCvsStoreId(cvsStore.getStoreId());
+            order.setCvsStoreName(cvsStore.getStoreName());
+            order.setCvsStoreAddress(cvsStore.getStoreAddress());
+            order.setLogisticsSubType(cvsStore.getLogisticsSub());
+        } else {
+            // 宅配：使用收貨地址
+            order.setReceiverName(address.getReceiverName());
+            order.setReceiverMobile(address.getReceiverPhone());
+            order.setReceiverAddress(address.getFullAddress());
+            order.setReceiverZip(address.getPostalCode());
+        }
+
         // 設定禮物（如果有選擇且功能啟用）
-        if (request.getGiftId() != null && isGiftEnabled()) {
+        if (request.getGiftId() != null && shopConfig.isGiftEnabled()) {
             ShopGift gift = giftService.selectGiftById(request.getGiftId());
             if (gift != null && "ENABLED".equals(gift.getStatus())
                     && gift.getStockQuantity() > 0
@@ -212,7 +279,13 @@ public class ShopCheckoutServiceImpl implements IShopCheckoutService {
                 .toList();
         cartService.deleteCartByIds(cartIds.toArray(new Long[0]));
 
-        log.info("結帳成功，會員ID: {}, 訂單編號: {}", memberId, order.getOrderNo());
+        // 清除 CVS 門市暫存（如果有）
+        if (request.getCvsStoreKey() != null && !request.getCvsStoreKey().isBlank()) {
+            logisticsService.deleteCvsStore(request.getCvsStoreKey());
+        }
+
+        log.info("結帳成功，會員ID: {}, 訂單編號: {}, 物流方式: {}",
+                memberId, order.getOrderNo(), request.getShippingMethod());
 
         // 判斷是否需要線上付款
         boolean needOnlinePayment = false;
@@ -266,9 +339,9 @@ public class ShopCheckoutServiceImpl implements IShopCheckoutService {
      * 計算運費（從系統設定讀取）
      */
     private BigDecimal calculateShippingFee(BigDecimal productAmount, ShopMemberAddress address) {
-        BigDecimal freeThreshold = getConfigDecimal("shop.shipping.free_threshold", "1000");
-        BigDecimal domesticFee = getConfigDecimal("shop.shipping.domestic_fee", "60");
-        BigDecimal islandFee = getConfigDecimal("shop.shipping.island_fee", "150");
+        BigDecimal freeThreshold = shopConfig.getShippingFreeThreshold();
+        BigDecimal domesticFee = shopConfig.getShippingDomesticFee();
+        BigDecimal islandFee = shopConfig.getShippingIslandFee();
 
         // 滿額免運
         if (freeThreshold.compareTo(BigDecimal.ZERO) > 0 && productAmount.compareTo(freeThreshold) >= 0) {
@@ -286,29 +359,5 @@ public class ShopCheckoutServiceImpl implements IShopCheckoutService {
         }
 
         return domesticFee;
-    }
-
-    /**
-     * 檢查禮物功能是否啟用
-     */
-    private boolean isGiftEnabled() {
-        String value = configService.selectConfigByKey("shop.gift.enabled");
-        return "1".equals(value);
-    }
-
-    /**
-     * 從系統設定讀取 BigDecimal 值
-     */
-    private BigDecimal getConfigDecimal(String key, String defaultValue) {
-        String value = configService.selectConfigByKey(key);
-        if (value == null || value.isBlank()) {
-            value = defaultValue;
-        }
-        try {
-            return new BigDecimal(value);
-        } catch (NumberFormatException e) {
-            log.warn("系統設定 {} 值無效：{}，使用預設值：{}", key, value, defaultValue);
-            return new BigDecimal(defaultValue);
-        }
     }
 }

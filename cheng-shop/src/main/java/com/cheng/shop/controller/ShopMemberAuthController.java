@@ -129,6 +129,64 @@ public class ShopMemberAuthController extends BaseController {
         return success(loginUser.getMember());
     }
 
+    @PutMapping("/profile/avatar")
+    public AjaxResult updateAvatar(@RequestBody AvatarBody body) {
+        ShopMemberLoginUser loginUser = ShopMemberSecurityUtils.getLoginUser();
+        ShopMember member = loginUser.getMember();
+
+        // 更新頭像
+        ShopMember updateMember = new ShopMember();
+        updateMember.setMemberId(member.getMemberId());
+        updateMember.setAvatar(body.getAvatar());
+
+        int result = memberService.updateMember(updateMember);
+        if (result > 0) {
+            member.setAvatar(body.getAvatar());
+            memberTokenService.refreshToken(loginUser);
+            return success(member);
+        }
+        return error("更新失敗");
+    }
+
+    @PutMapping("/profile")
+    public AjaxResult updateProfile(@RequestBody MemberProfileBody body) {
+        ShopMemberLoginUser loginUser = ShopMemberSecurityUtils.getLoginUser();
+        ShopMember member = loginUser.getMember();
+
+        // 更新會員資料
+        ShopMember updateMember = new ShopMember();
+        updateMember.setMemberId(member.getMemberId());
+        updateMember.setNickname(body.getNickname());
+        updateMember.setMobile(body.getMobile());
+        updateMember.setEmail(body.getEmail());
+        updateMember.setGender(body.getGender());
+
+        // 檢查手機唯一性（如果有變更）
+        if (StringUtils.isNotEmpty(body.getMobile()) && !body.getMobile().equals(member.getMobile())) {
+            if (!memberService.checkMobileUnique(updateMember)) {
+                throw new ServiceException("手機號碼已被使用");
+            }
+        }
+        // 檢查 Email 唯一性（如果有變更）
+        if (StringUtils.isNotEmpty(body.getEmail()) && !body.getEmail().equals(member.getEmail())) {
+            if (!memberService.checkEmailUnique(updateMember)) {
+                throw new ServiceException("Email 已被使用");
+            }
+        }
+
+        int result = memberService.updateMember(updateMember);
+        if (result > 0) {
+            // 更新 LoginUser 中的會員資訊
+            member.setNickname(body.getNickname());
+            member.setMobile(body.getMobile());
+            member.setEmail(body.getEmail());
+            member.setGender(body.getGender());
+            memberTokenService.refreshToken(loginUser);
+            return success(member);
+        }
+        return error("更新失敗");
+    }
+
     private ShopMember findMemberByAccount(String account) {
         if (StringUtils.isEmpty(account)) {
             return null;
@@ -181,5 +239,20 @@ public class ShopMemberAuthController extends BaseController {
         private String password;
         private String code;
         private String uuid;
+    }
+
+    @Data
+    public static class MemberProfileBody {
+        @NotBlank(message = "請輸入暱稱")
+        private String nickname;
+        private String mobile;
+        private String email;
+        private String gender;
+    }
+
+    @Data
+    public static class AvatarBody {
+        @NotBlank(message = "請選擇頭像")
+        private String avatar;
     }
 }

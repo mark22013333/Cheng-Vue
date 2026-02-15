@@ -12,7 +12,21 @@
       style="max-width: 500px"
     >
       <el-form-item label="頭像">
-        <el-avatar :size="80" :src="userAvatar" />
+        <div class="avatar-uploader" @click="triggerFileInput">
+          <el-avatar :size="80" :src="displayAvatar" />
+          <div class="avatar-overlay">
+            <el-icon><Camera /></el-icon>
+            <span>更換頭像</span>
+          </div>
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept="image/png, image/jpeg, image/gif"
+            style="display: none"
+            @change="handleFileChange"
+          />
+        </div>
+        <div class="avatar-tip">點擊頭像更換，支援 JPG、PNG、GIF 格式</div>
       </el-form-item>
       <el-form-item label="帳號">
         <el-input v-model="form.userName" disabled />
@@ -42,15 +56,21 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElLoading } from 'element-plus'
+import { Camera } from '@element-plus/icons-vue'
 import useMemberStore from '@/store/modules/member'
+import { updateMemberProfile, updateMemberAvatar } from '@/api/shop/auth'
+import requestShop from '@/utils/requestShop'
 
 const memberStore = useMemberStore()
 
 const formRef = ref(null)
+const fileInputRef = ref(null)
 const saving = ref(false)
+const tempAvatar = ref('')
 
 const userAvatar = computed(() => memberStore.avatar || '')
+const displayAvatar = computed(() => tempAvatar.value || userAvatar.value)
 
 const form = reactive({
   userName: '',
@@ -77,6 +97,73 @@ onMounted(() => {
   form.email = memberStore.email || ''
 })
 
+function triggerFileInput() {
+  fileInputRef.value?.click()
+}
+
+async function handleFileChange(event) {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // 驗證檔案類型
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
+  if (!allowedTypes.includes(file.type)) {
+    ElMessage.error('只支援 JPG、PNG、GIF 格式的圖片')
+    return
+  }
+
+  // 驗證檔案大小（最大 2MB）
+  const maxSize = 2 * 1024 * 1024
+  if (file.size > maxSize) {
+    ElMessage.error('圖片大小不能超過 2MB')
+    return
+  }
+
+  const loading = ElLoading.service({
+    text: '上傳中...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
+
+  try {
+    // 上傳圖片
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('category', 'member/avatar')
+
+    const uploadRes = await requestShop({
+      url: '/shop/member/upload',
+      method: 'post',
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+
+    if (uploadRes.code === 200) {
+      const avatarPath = uploadRes.fileName
+      tempAvatar.value = uploadRes.url
+
+      // 更新會員頭像
+      const updateRes = await updateMemberAvatar(avatarPath)
+      if (updateRes.code === 200) {
+        memberStore.setMember(updateRes.data)
+        tempAvatar.value = ''
+        ElMessage.success('頭像更新成功')
+      } else {
+        tempAvatar.value = ''
+        ElMessage.error(updateRes.msg || '頭像更新失敗')
+      }
+    } else {
+      ElMessage.error(uploadRes.msg || '圖片上傳失敗')
+    }
+  } catch (error) {
+    tempAvatar.value = ''
+    ElMessage.error('上傳失敗，請稍後再試')
+  } finally {
+    loading.close()
+    // 清空 input 以便再次選擇同一檔案
+    event.target.value = ''
+  }
+}
+
 async function handleSave() {
   if (!formRef.value) return
 
@@ -85,10 +172,23 @@ async function handleSave() {
     saving.value = true
 
     // 呼叫 API 儲存用戶資料
-    ElMessage.success('儲存成功')
+    const response = await updateMemberProfile({
+      nickname: form.nickName,
+      mobile: form.phonenumber,
+      email: form.email,
+      gender: form.sex
+    })
+
+    if (response.code === 200) {
+      // 更新 store 中的會員資訊
+      memberStore.setMember(response.data)
+      ElMessage.success('儲存成功')
+    } else {
+      ElMessage.error(response.msg || '儲存失敗')
+    }
   } catch (error) {
     if (error !== false) {
-      ElMessage.error('儲存失敗')
+      ElMessage.error(error.message || '儲存失敗')
     }
   } finally {
     saving.value = false
@@ -109,5 +209,50 @@ async function handleSave() {
   margin: 0;
   font-size: 18px;
   color: #303133;
+}
+
+.avatar-uploader {
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.avatar-uploader:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.avatar-overlay .el-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.avatar-overlay span {
+  font-size: 12px;
+}
+
+.avatar-tip {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #909399;
 }
 </style>

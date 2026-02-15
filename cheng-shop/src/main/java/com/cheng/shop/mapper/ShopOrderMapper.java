@@ -117,4 +117,21 @@ public interface ShopOrderMapper {
      * @return 訂單（已鎖定）
      */
     ShopOrder selectOrderByOrderNoForUpdate(String orderNo);
+
+    /**
+     * 更新物流單號
+     *
+     * @param orderId    訂單ID
+     * @param shippingNo 物流單號
+     * @return 影響行數
+     */
+    int updateShippingNo(@Param("orderId") Long orderId, @Param("shippingNo") String shippingNo);
+
+    /**
+     * 根據物流單號查詢訂單
+     *
+     * @param shippingNo 物流單號（ECPay AllPayLogisticsID）
+     * @return 訂單
+     */
+    ShopOrder selectOrderByShippingNo(String shippingNo);
 }

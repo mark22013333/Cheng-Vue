@@ -24,7 +24,7 @@
         </div>
 
         <div class="action-buttons">
-          <router-link to="/index" class="btn-home">返回首頁</router-link>
+          <router-link to="/" class="btn-home">返回首頁</router-link>
           <button @click="goBack" class="btn-back">回上一頁</button>
         </div>
       </div>

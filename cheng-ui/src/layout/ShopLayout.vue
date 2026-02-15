@@ -36,8 +36,9 @@
           <!-- 登入/使用者入口 -->
           <div v-if="isLoggedIn" class="user-menu">
             <el-dropdown trigger="click">
-              <div class="user-avatar">
-                <el-icon :size="20"><User /></el-icon>
+              <div class="user-avatar" :class="{ 'has-avatar': memberAvatar }">
+                <img v-if="memberAvatar" :src="memberAvatar" alt="頭像" class="avatar-img" />
+                <el-icon v-else :size="20"><User /></el-icon>
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
@@ -136,6 +137,9 @@ const cartCount = computed(() => cartStore.totalQuantity)
 // 是否已登入
 const isLoggedIn = computed(() => !!getMemberToken())
 
+// 會員頭像
+const memberAvatar = computed(() => memberStore.avatar)
+
 function goHome() {
   router.push('/')
 }
@@ -171,6 +175,8 @@ async function handleLogout() {
     // 登出後重新載入訪客購物車
     cartStore.loadGuestCart()
     ElMessage.success('已登出')
+    // 跳轉到登入頁面
+    router.push('/login')
   } catch (e) {
     // 取消登出
   }
@@ -327,6 +333,19 @@ onMounted(() => {
 .user-avatar:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: scale(1.05);
+}
+
+.user-avatar.has-avatar {
+  padding: 0;
+  overflow: hidden;
+}
+
+.user-avatar .avatar-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
 }
 
 .auth-buttons {

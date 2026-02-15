@@ -37,6 +37,30 @@ public enum ShippingMethod implements CodedEnum<String> {
         return this == CVS_711 || this == CVS_FAMILY || this == CVS_HILIFE;
     }
 
+    /**
+     * 取得綠界 LogisticsSubType
+     *
+     * @return 綠界物流子類型代碼，若非超商/宅配則返回 null
+     */
+    public String getEcpayLogisticsSubType() {
+        return switch (this) {
+            case CVS_711 -> "UNIMART";
+            case CVS_FAMILY -> "FAMI";
+            case CVS_HILIFE -> "HILIFE";
+            case HOME_DELIVERY -> "TCAT";
+            default -> null;
+        };
+    }
+
+    /**
+     * 取得綠界 LogisticsType
+     *
+     * @return CVS 或 HOME
+     */
+    public String getEcpayLogisticsType() {
+        return isCvs() ? "CVS" : "HOME";
+    }
+
     public static ShippingMethod fromCode(String code) {
         return EnumUtils.fromCodeOrThrow(ShippingMethod.class, code);
     }

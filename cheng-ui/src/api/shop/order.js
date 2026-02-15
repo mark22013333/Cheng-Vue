@@ -79,6 +79,14 @@ export function updateShipStatus(orderId, shipStatus) {
   })
 }
 
+// 重新建立物流訂單（超商取貨）
+export function recreateLogistics(orderId) {
+  return request({
+    url: `/shop/order/${orderId}/recreate-logistics`,
+    method: 'post'
+  })
+}
+
 // ============ 會員前台訂單 API ============
 
 /**

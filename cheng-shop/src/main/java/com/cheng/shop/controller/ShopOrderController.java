@@ -171,4 +171,23 @@ public class ShopOrderController extends BaseController {
         }
         return ajaxResult;
     }
+
+    /**
+     * 重新建立物流訂單
+     * <p>
+     * 用於超商取貨訂單物流單號產生失敗時，手動觸發重新建立。
+     */
+    @PreAuthorize("@ss.hasPermi('shop:order:ship')")
+    @Log(title = "訂單管理", businessType = BusinessType.UPDATE)
+    @PostMapping("/{orderId}/recreate-logistics")
+    public AjaxResult recreateLogistics(@PathVariable Long orderId) {
+        ShopOrder existingOrder = orderService.selectOrderById(orderId);
+        String shippingNo = orderService.recreateLogistics(orderId);
+        AjaxResult ajaxResult = success("物流訂單建立成功");
+        ajaxResult.put("shippingNo", shippingNo);
+        if (existingOrder != null) {
+            ajaxResult.put("orderNo", existingOrder.getOrderNo());
+        }
+        return ajaxResult;
+    }
 }

@@ -144,6 +144,26 @@ public class ShopOrder extends BaseEntity {
     private String shippingMethod;
 
     /**
+     * 超商門市代號
+     */
+    private String cvsStoreId;
+
+    /**
+     * 超商門市名稱
+     */
+    private String cvsStoreName;
+
+    /**
+     * 超商門市地址
+     */
+    private String cvsStoreAddress;
+
+    /**
+     * 物流子類型（FAMI/UNIMART/HILIFE/TCAT）
+     */
+    private String logisticsSubType;
+
+    /**
      * 物流單號
      */
     private String shippingNo;
