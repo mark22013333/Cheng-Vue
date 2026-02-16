@@ -1,6 +1,7 @@
 package com.cheng.shop.security;
 
 import com.cheng.common.utils.StringUtils;
+import com.cheng.common.utils.http.PathUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,8 +31,7 @@ public class MemberAuthenticationTokenFilter extends OncePerRequestFilter {
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return !path.startsWith("/shop/");
+        return !PathUtils.pathStartsWith(request, "/shop/");
     }
 
     @Override

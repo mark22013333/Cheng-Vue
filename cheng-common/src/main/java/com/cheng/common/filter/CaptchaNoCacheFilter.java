@@ -1,5 +1,6 @@
 package com.cheng.common.filter;
 
+import com.cheng.common.utils.http.PathUtils;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,8 +26,7 @@ public class CaptchaNoCacheFilter implements Filter {
         if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             HttpServletResponse httpResponse = (HttpServletResponse) response;
-            String requestPath = httpRequest.getRequestURI();
-            if (CAPTCHA_PATHS.contains(requestPath)) {
+            if (PathUtils.isPathInWhitelist(httpRequest, CAPTCHA_PATHS)) {
                 httpResponse.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
                 httpResponse.setHeader("Pragma", "no-cache");
                 httpResponse.setDateHeader("Expires", 0);

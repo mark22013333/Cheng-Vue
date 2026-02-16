@@ -12,6 +12,7 @@ import com.cheng.common.utils.ExceptionUtil;
 import com.cheng.common.utils.SecurityUtils;
 import com.cheng.common.utils.ServletUtils;
 import com.cheng.common.utils.StringUtils;
+import com.cheng.common.utils.http.PathUtils;
 import com.cheng.common.utils.ip.IpUtils;
 import com.cheng.framework.manager.AsyncManager;
 import com.cheng.framework.manager.factory.AsyncFactory;
@@ -94,7 +95,7 @@ public class LogAspect {
             // 請求的地址
             String ip = IpUtils.getIpAddr();
             operLog.setOperIp(ip);
-            operLog.setOperUrl(StringUtils.substring(ServletUtils.getRequest().getRequestURI(), 0, 255));
+            operLog.setOperUrl(StringUtils.substring(PathUtils.getFullRequestURI(ServletUtils.getRequest()), 0, 255));
             if (loginUser != null) {
                 operLog.setOperName(loginUser.getUsername());
                 SysUser currentUser = loginUser.getUser();

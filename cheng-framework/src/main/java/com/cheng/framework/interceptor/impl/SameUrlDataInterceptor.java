@@ -7,6 +7,7 @@ import com.cheng.common.core.redis.RedisCache;
 import com.cheng.common.filter.RepeatedlyRequestWrapper;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.http.HttpHelper;
+import com.cheng.common.utils.http.PathUtils;
 import com.cheng.framework.interceptor.RepeatSubmitInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,8 +53,8 @@ public class SameUrlDataInterceptor extends RepeatSubmitInterceptor {
         nowDataMap.put(REPEAT_PARAMS, nowParams);
         nowDataMap.put(REPEAT_TIME, System.currentTimeMillis());
 
-        // 請求地址（作為存放cache的key值）
-        String url = request.getRequestURI();
+        // 請求地址（作為存放 cache 的 key 值，使用 servlet path 排除 context path）
+        String url = PathUtils.getServletPath(request);
 
         // 唯一值（沒有訊息頭則使用請求地址）
         String submitKey = StringUtils.trimToEmpty(request.getHeader(header));
