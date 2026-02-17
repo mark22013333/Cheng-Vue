@@ -696,10 +696,7 @@ function getImageUrl(url) {
   font-size: 12px;
   color: #909399;
   margin-top: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100px;
+  text-align: center;
 }
 
 /* 詳情中的超商資訊 */
