@@ -108,6 +108,21 @@
             <artifactId>line-bot-spring-boot-webmvc</artifactId>
         </dependency>
 
+        <!-- 測試框架 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ArchUnit 架構測試：自動偵測 getRequestURI() 誤用 -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.4.1</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

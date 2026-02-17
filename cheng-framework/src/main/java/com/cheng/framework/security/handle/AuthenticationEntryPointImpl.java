@@ -5,6 +5,7 @@ import com.cheng.common.constant.HttpStatus;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.utils.ServletUtils;
 import com.cheng.common.utils.StringUtils;
+import com.cheng.common.utils.http.PathUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.AuthenticationException;
@@ -29,7 +30,7 @@ public class AuthenticationEntryPointImpl implements AuthenticationEntryPoint, S
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException e)
             throws IOException {
         int code = HttpStatus.UNAUTHORIZED;
-        String msg = StringUtils.format("請求訪問：{}，認證失敗，無法訪問系統資源", request.getRequestURI());
+        String msg = StringUtils.format("請求訪問：{}，認證失敗，無法訪問系統資源", PathUtils.getFullRequestURI(request));
         ServletUtils.renderString(response, JSON.toJSONString(AjaxResult.error(code, msg)));
     }
 }

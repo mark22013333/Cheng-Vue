@@ -7,6 +7,7 @@ import com.cheng.common.exception.DemoModeException;
 import com.cheng.common.exception.ServiceException;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.html.EscapeUtil;
+import com.cheng.common.utils.http.PathUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AccessDeniedException.class)
     public AjaxResult handleAccessDeniedException(AccessDeniedException e, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
+        String requestURI = PathUtils.getFullRequestURI(request);
         log.error("請求網址'{}',權限校驗失敗'{}'", requestURI, e.getMessage());
         return AjaxResult.error(HttpStatus.FORBIDDEN, "沒有權限，請聯絡管理員授權");
     }
@@ -47,7 +48,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public AjaxResult handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException e,
                                                           HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
+        String requestURI = PathUtils.getFullRequestURI(request);
         log.error("請求網址'{}',不支援'{}'請求", requestURI, e.getMethod());
         return AjaxResult.error(e.getMessage());
     }
@@ -67,7 +68,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(MissingPathVariableException.class)
     public AjaxResult handleMissingPathVariableException(MissingPathVariableException e, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
+        String requestURI = PathUtils.getFullRequestURI(request);
         log.error("請求路徑中缺少必需的路徑變數'{}',發生系統異常.", requestURI, e);
         return AjaxResult.error(String.format("請求路徑中缺少必需的路徑變數[%s]", e.getVariableName()));
     }
@@ -77,7 +78,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public AjaxResult handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
+        String requestURI = PathUtils.getFullRequestURI(request);
         String value = Convert.toStr(e.getValue());
         if (StringUtils.isNotEmpty(value)) {
             value = EscapeUtil.clean(value);
@@ -91,7 +92,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public AjaxResult handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
+        String requestURI = PathUtils.getFullRequestURI(request);
         log.error("請求網址'{}',上傳檔案大小超過限制", requestURI, e);
         
         // 動態取得並格式化檔案大小限制
@@ -140,7 +141,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     public AjaxResult handleRuntimeException(RuntimeException e, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
+        String requestURI = PathUtils.getFullRequestURI(request);
         log.error("請求網址'{}',發生未知異常.", requestURI, e);
         return AjaxResult.error(e.getMessage());
     }
@@ -150,7 +151,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public AjaxResult handleException(Exception e, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
+        String requestURI = PathUtils.getFullRequestURI(request);
         log.error("請求網址'{}',發生系統異常.", requestURI, e);
         return AjaxResult.error(e.getMessage());
     }
