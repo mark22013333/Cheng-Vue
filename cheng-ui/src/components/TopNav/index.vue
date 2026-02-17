@@ -44,7 +44,7 @@ const visibleNumber = ref(null)
 // 當前啟用選單的 index
 const currentIndex = ref(null)
 // 隱藏側邊欄路由
-const hideList = ['/index', '/user/profile']
+const hideList = ['/index', '/cadm/user/profile']
 
 const appStore = useAppStore()
 const settingsStore = useSettingsStore()
