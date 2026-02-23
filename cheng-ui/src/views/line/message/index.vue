@@ -143,7 +143,7 @@
             <!-- 發送按鈕 -->
             <el-form-item>
               <el-button
-                v-hasPermi="['line:message:send']"
+                v-hasPermi="[LINE_MESSAGE_SEND]"
                 type="primary"
                 :icon="Promotion"
                 :loading="sending"
@@ -154,7 +154,7 @@
               >
                 {{ sending ? '發送中...' : '發送訊息' }}
               </el-button>
-              <div v-if="!hasPermission('line:message:send')" class="no-permission-tip">
+              <div v-if="!hasPermission(LINE_MESSAGE_SEND)" class="no-permission-tip">
                 您沒有發送訊息的權限，請聯繫管理員
               </div>
             </el-form-item>
@@ -193,6 +193,9 @@
 </template>
 
 <script setup name="LineMessage">
+import {
+  LINE_MESSAGE_SEND
+} from '@/constants/permissions'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'

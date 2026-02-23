@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import com.cheng.common.constant.PermConstants;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +35,7 @@ public class InvStockController extends BaseController {
     /**
      * 查詢庫存列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stock:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Stock.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(InvStock invStock) {
         startPage();
@@ -45,7 +46,7 @@ public class InvStockController extends BaseController {
     /**
      * 查詢低庫存列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stock:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Stock.LIST + "')")
     @GetMapping("/lowStock")
     public TableDataInfo lowStockList() {
         startPage();
@@ -56,7 +57,7 @@ public class InvStockController extends BaseController {
     /**
      * 查詢庫存統計資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stock:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Stock.LIST + "')")
     @GetMapping("/statistics")
     public AjaxResult statistics() {
         List<InvStockStatisticsDTO> list = invStockService.selectStockStatistics();
@@ -66,7 +67,7 @@ public class InvStockController extends BaseController {
     /**
      * 匯出庫存列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stock:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Stock.EXPORT + "')")
     @Log(title = "庫存", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, InvStock invStock) {
@@ -78,7 +79,7 @@ public class InvStockController extends BaseController {
     /**
      * 取得庫存詳細訊息
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stock:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Stock.QUERY + "')")
     @GetMapping(value = "/{stockId:\\d+}")
     public AjaxResult getInfo(@PathVariable("stockId") Long stockId) {
         return success(invStockService.selectInvStockByStockId(stockId));
@@ -87,7 +88,7 @@ public class InvStockController extends BaseController {
     /**
      * 根據物品ID取得庫存訊息
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stock:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Stock.QUERY + "')")
     @GetMapping(value = "/item/{itemId}")
     public AjaxResult getInfoByItemId(@PathVariable("itemId") Long itemId) {
         InvStock stock = invStockService.selectInvStockByItemId(itemId);
@@ -101,7 +102,7 @@ public class InvStockController extends BaseController {
     /**
      * 新增庫存
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stock:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Stock.ADD + "')")
     @Log(title = "庫存", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody InvStock invStock) {
@@ -111,7 +112,7 @@ public class InvStockController extends BaseController {
     /**
      * 修改庫存
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stock:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Stock.EDIT + "')")
     @Log(title = "庫存", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody InvStock invStock) {
@@ -121,7 +122,7 @@ public class InvStockController extends BaseController {
     /**
      * 入庫操作
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stock:in')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Stock.IN + "')")
     @Log(title = "入庫", businessType = BusinessType.UPDATE)
     @PostMapping("/in")
     public AjaxResult stockIn(@RequestBody StockOperationRequest request) {
@@ -137,7 +138,7 @@ public class InvStockController extends BaseController {
     /**
      * 出庫操作
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stock:out')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Stock.OUT + "')")
     @Log(title = "出庫", businessType = BusinessType.UPDATE)
     @PostMapping("/out")
     public AjaxResult stockOut(@RequestBody StockOperationRequest request) {
@@ -153,7 +154,7 @@ public class InvStockController extends BaseController {
     /**
      * 盤點操作
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stock:check')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Stock.CHECK + "')")
     @Log(title = "盤點", businessType = BusinessType.UPDATE)
     @PostMapping("/check")
     public AjaxResult stockCheck(@RequestBody StockCheckRequest request) {
@@ -169,7 +170,7 @@ public class InvStockController extends BaseController {
     /**
      * 刪除庫存
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stock:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Stock.REMOVE + "')")
     @Log(title = "庫存", businessType = BusinessType.DELETE)
     @DeleteMapping("/{stockIds:(?:\\d+,)*\\d+}")
     public AjaxResult remove(@PathVariable Long[] stockIds) {

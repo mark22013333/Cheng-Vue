@@ -1,6 +1,7 @@
 package com.cheng.web.controller.line;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -30,7 +31,7 @@ public class LineUserController extends BaseController {
     /**
      * 查詢 LINE 使用者列表
      */
-    @PreAuthorize("@ss.hasPermi('line:user:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(LineUser lineUser) {
         startPage();
@@ -41,7 +42,7 @@ public class LineUserController extends BaseController {
     /**
      * 查詢所有關注中的使用者
      */
-    @PreAuthorize("@ss.hasPermi('line:user:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.LIST + "')")
     @GetMapping("/following")
     public AjaxResult getFollowingUsers() {
         List<LineUser> list = lineUserService.selectFollowingUsers();
@@ -51,7 +52,7 @@ public class LineUserController extends BaseController {
     /**
      * 匯出 LINE 使用者列表
      */
-    @PreAuthorize("@ss.hasPermi('line:user:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.EXPORT + "')")
     @Log(title = "LINE使用者", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, LineUser lineUser) {
@@ -63,7 +64,7 @@ public class LineUserController extends BaseController {
     /**
      * 取得 LINE 使用者詳細資訊
      */
-    @PreAuthorize("@ss.hasPermi('line:user:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.QUERY + "')")
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id) {
         return success(lineUserService.selectLineUserById(id));
@@ -72,7 +73,7 @@ public class LineUserController extends BaseController {
     /**
      * 根據 LINE 使用者 ID 查詢
      */
-    @PreAuthorize("@ss.hasPermi('line:user:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.QUERY + "')")
     @GetMapping("/lineUserId/{lineUserId}")
     public AjaxResult getByLineUserId(@PathVariable("lineUserId") String lineUserId) {
         return success(lineUserService.selectLineUserByLineUserId(lineUserId));
@@ -81,7 +82,7 @@ public class LineUserController extends BaseController {
     /**
      * 綁定系統使用者
      */
-    @PreAuthorize("@ss.hasPermi('line:user:bind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.BIND + "')")
     @Log(title = "綁定LINE使用者", businessType = BusinessType.UPDATE)
     @PutMapping("/bind/{lineUserId}/{sysUserId}")
     public AjaxResult bind(@PathVariable("lineUserId") String lineUserId, @PathVariable("sysUserId") Long sysUserId) {
@@ -96,7 +97,7 @@ public class LineUserController extends BaseController {
     /**
      * 解除綁定系統使用者
      */
-    @PreAuthorize("@ss.hasPermi('line:user:bind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.BIND + "')")
     @Log(title = "解除綁定LINE使用者", businessType = BusinessType.UPDATE)
     @PutMapping("/unbind/{lineUserId}")
     public AjaxResult unbind(@PathVariable("lineUserId") String lineUserId) {
@@ -111,7 +112,7 @@ public class LineUserController extends BaseController {
     /**
      * 更新使用者個人資料（從 LINE API 取得）
      */
-    @PreAuthorize("@ss.hasPermi('line:user:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.EDIT + "')")
     @Log(title = "更新LINE使用者資料", businessType = BusinessType.UPDATE)
     @PutMapping("/updateProfile/{lineUserId}")
     public AjaxResult updateProfile(@PathVariable("lineUserId") String lineUserId, @RequestParam(required = false) Integer configId) {
@@ -126,7 +127,7 @@ public class LineUserController extends BaseController {
     /**
      * 刪除 LINE 使用者
      */
-    @PreAuthorize("@ss.hasPermi('line:user:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.REMOVE + "')")
     @Log(title = "LINE使用者", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids) {
@@ -136,7 +137,7 @@ public class LineUserController extends BaseController {
     /**
      * 取得使用者統計資料
      */
-    @PreAuthorize("@ss.hasPermi('line:user:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.LIST + "')")
     @GetMapping("/stats")
     public AjaxResult getStats() {
         return success(lineUserService.getUserStats());
@@ -145,7 +146,7 @@ public class LineUserController extends BaseController {
     /**
      * 取得每月加入統計資料
      */
-    @PreAuthorize("@ss.hasPermi('line:user:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.LIST + "')")
     @GetMapping("/monthlyStats")
     public AjaxResult getMonthlyStats(@RequestParam("startTime") String startTime, @RequestParam("endTime") String endTime) {
         return success(lineUserService.getMonthlyJoinStats(startTime, endTime));
@@ -154,7 +155,7 @@ public class LineUserController extends BaseController {
     /**
      * 匯入 LINE 使用者
      */
-    @PreAuthorize("@ss.hasPermi('line:user:import')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.IMPORT + "')")
     @Log(title = "匯入LINE使用者", businessType = BusinessType.IMPORT)
     @PostMapping("/import")
     public AjaxResult importUsers(@RequestParam("file") org.springframework.web.multipart.MultipartFile file,
@@ -175,7 +176,7 @@ public class LineUserController extends BaseController {
     /**
      * 下載匯入範本
      */
-    @PreAuthorize("@ss.hasPermi('line:user:import')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.IMPORT + "')")
     @PostMapping("/importTemplate")
     public void importTemplate(HttpServletResponse response) {
         com.cheng.common.utils.poi.ExcelUtil<com.cheng.line.domain.LineUser> util = 
@@ -186,7 +187,7 @@ public class LineUserController extends BaseController {
     /**
      * 將使用者加入黑名單
      */
-    @PreAuthorize("@ss.hasPermi('line:user:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.EDIT + "')")
     @Log(title = "加入黑名單", businessType = BusinessType.UPDATE)
     @PutMapping("/blacklist/add/{lineUserId}")
     public AjaxResult addToBlacklist(@PathVariable("lineUserId") String lineUserId) {
@@ -201,7 +202,7 @@ public class LineUserController extends BaseController {
     /**
      * 將使用者從黑名單移除
      */
-    @PreAuthorize("@ss.hasPermi('line:user:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.EDIT + "')")
     @Log(title = "移除黑名單", businessType = BusinessType.UPDATE)
     @PutMapping("/blacklist/remove/{lineUserId}")
     public AjaxResult removeFromBlacklist(@PathVariable("lineUserId") String lineUserId) {
@@ -216,7 +217,7 @@ public class LineUserController extends BaseController {
     /**
      * 批次將使用者加入黑名單
      */
-    @PreAuthorize("@ss.hasPermi('line:user:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.EDIT + "')")
     @Log(title = "批次加入黑名單", businessType = BusinessType.UPDATE)
     @PutMapping("/blacklist/batchAdd")
     public AjaxResult batchAddToBlacklist(@RequestBody String[] lineUserIds) {
@@ -232,7 +233,7 @@ public class LineUserController extends BaseController {
     /**
      * 批次將使用者從黑名單移除
      */
-    @PreAuthorize("@ss.hasPermi('line:user:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.User.EDIT + "')")
     @Log(title = "批次移除黑名單", businessType = BusinessType.UPDATE)
     @PutMapping("/blacklist/batchRemove")
     public AjaxResult batchRemoveFromBlacklist(@RequestBody String[] lineUserIds) {

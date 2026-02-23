@@ -63,7 +63,7 @@
             <el-row :gutter="10" class="mb8">
               <el-col :span="1.5">
                 <el-button type="primary" plain @click="handleAdd"
-                           v-hasPermi="['system:user:add']">
+                           v-hasPermi="[SYSTEM_USER_ADD]">
                   <el-icon class="el-icon--left">
                     <Plus/>
                   </el-icon>
@@ -72,7 +72,7 @@
               </el-col>
               <el-col :span="1.5">
                 <el-button type="success" plain :disabled="single" @click="handleUpdate"
-                           v-hasPermi="['system:user:edit']">
+                           v-hasPermi="[SYSTEM_USER_EDIT]">
                   <el-icon class="el-icon--left">
                     <Edit/>
                   </el-icon>
@@ -80,7 +80,7 @@
                 </el-button>
               </el-col>
               <el-col :span="1.5">
-                <el-button v-hasPermi="['system:user:remove']" :disabled="multiple" plain
+                <el-button v-hasPermi="[SYSTEM_USER_REMOVE]" :disabled="multiple" plain
                            type="danger" @click="handleDelete">
                   <el-icon class="el-icon--left">
                     <Delete/>
@@ -89,7 +89,7 @@
                 </el-button>
               </el-col>
               <el-col :span="1.5">
-                <el-button v-hasPermi="['system:user:import']" plain type="info"
+                <el-button v-hasPermi="[SYSTEM_USER_IMPORT]" plain type="info"
                            @click="handleImport">
                   <el-icon class="el-icon--left">
                     <Upload/>
@@ -98,7 +98,7 @@
                 </el-button>
               </el-col>
               <el-col :span="1.5">
-                <el-button v-hasPermi="['system:user:export']" plain type="warning"
+                <el-button v-hasPermi="[SYSTEM_USER_EXPORT]" plain type="warning"
                            @click="handleExport">
                   <el-icon class="el-icon--left">
                     <Download/>
@@ -106,7 +106,8 @@
                   匯出
                 </el-button>
               </el-col>
-              <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns" pageKey="system_user"></right-toolbar>
+              <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns" pageKey="system_user"
+                :canCustomize="tableConfigPerms.canCustomize" :canManageTemplate="tableConfigPerms.canManageTemplate"></right-toolbar>
             </el-row>
 
             <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange"
@@ -141,21 +142,21 @@
                 <template #default="scope">
                   <span v-if="scope.row.userId !== 1">
                   <el-button type="primary" link icon="Edit" @click="handleUpdate(scope.row)"
-                             v-hasPermi="['system:user:edit']">修改
+                             v-hasPermi="[SYSTEM_USER_EDIT]">修改
                   </el-button>
-                  <el-button v-hasPermi="['system:user:remove']" icon="Delete" type="primary" link
+                  <el-button v-hasPermi="[SYSTEM_USER_REMOVE]" icon="Delete" type="primary" link
                              @click="handleDelete(scope.row)">刪除
                   </el-button>
                   <el-dropdown @command="(command) => handleCommand(command, scope.row)"
-                               v-if="checkPermi(['system:user:resetPwd', 'system:user:edit'])">
+                               v-if="checkPermi([SYSTEM_USER_RESET_PWD, SYSTEM_USER_EDIT])">
                     <el-button type="primary" link icon="DArrowRight">更多</el-button>
                     <template #dropdown>
                         <el-dropdown-menu>
-                          <el-dropdown-item v-if="checkPermi(['system:user:resetPwd'])" command="handleResetPwd"
+                          <el-dropdown-item v-if="checkPermi([SYSTEM_USER_RESET_PWD])" command="handleResetPwd"
                                             icon="Key">重置密碼
                           </el-dropdown-item>
                           <el-dropdown-item command="handleAuthRole" icon="CircleCheck"
-                                            v-if="checkPermi(['system:user:edit'])">分配角色
+                                            v-if="checkPermi([SYSTEM_USER_EDIT])">分配角色
                           </el-dropdown-item>
                         </el-dropdown-menu>
                     </template>
@@ -297,6 +298,16 @@
 </template>
 
 <script>
+import {
+  SYSTEM_USER_ADD,
+  SYSTEM_USER_EDIT,
+  SYSTEM_USER_EXPORT,
+  SYSTEM_USER_IMPORT,
+  SYSTEM_USER_REMOVE,
+  SYSTEM_USER_RESET_PWD,
+  SYSTEM_TABLE_CONFIG_CUSTOMIZE,
+  SYSTEM_TABLE_CONFIG_TEMPLATE
+} from '@/constants/permissions'
 // 1. 引入需要的 Icons
 import {
   Search, Plus, Edit, Delete, Refresh, Upload, Download,
@@ -320,6 +331,7 @@ import {
 } from "@/api/system/user"
 import {getToken} from "@/utils/auth"
 import {getTableConfig, saveTableConfig} from "@/api/system/tableConfig"
+import auth from '@/plugins/auth'
 import Treeselect from "vue3-treeselect"
 import "vue3-treeselect/dist/vue3-treeselect.css"
 import {Pane, Splitpanes} from "splitpanes"
@@ -338,6 +350,7 @@ export default {
   setup() {
     const { sys_normal_disable, sys_user_sex } = useDict('sys_normal_disable', 'sys_user_sex')
     return {
+      SYSTEM_USER_ADD, SYSTEM_USER_EDIT, SYSTEM_USER_EXPORT, SYSTEM_USER_IMPORT, SYSTEM_USER_REMOVE, SYSTEM_USER_RESET_PWD,
       dict: {
         type: reactive({
           sys_normal_disable,
@@ -348,6 +361,11 @@ export default {
   },
   data() {
     return {
+      // 表格欄位配置權限
+      tableConfigPerms: {
+        canCustomize: false,
+        canManageTemplate: false
+      },
       // 遮罩層
       loading: true,
       // 選中陣列
@@ -471,6 +489,10 @@ export default {
     }
   },
   async created() {
+    this.tableConfigPerms = {
+      canCustomize: auth.hasPermi(SYSTEM_TABLE_CONFIG_CUSTOMIZE),
+      canManageTemplate: auth.hasPermi(SYSTEM_TABLE_CONFIG_TEMPLATE)
+    }
     await this.loadTableConfig()
     this.getList()
     this.getDeptTree()
@@ -510,17 +532,23 @@ export default {
     getList() {
       this.loading = true
       listUser(this.addDateRange(this.queryParams, this.dateRange)).then(response => {
-          this.userList = response.rows
-          this.total = response.total
-          this.loading = false
-        }
-      )
+        this.userList = response.rows
+        this.total = response.total
+        this.loading = false
+      }).catch(() => {
+        this.userList = []
+        this.total = 0
+        this.loading = false
+      })
     },
     /** 查詢部門下拉樹結構 */
     getDeptTree() {
       deptTreeSelect().then(response => {
         this.deptOptions = response.data
         this.enabledDeptOptions = this.filterDisabledDept(JSON.parse(JSON.stringify(response.data)))
+      }).catch(() => {
+        this.deptOptions = []
+        this.enabledDeptOptions = []
       })
     },
     // 過濾禁用的部門

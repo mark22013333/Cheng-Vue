@@ -13,6 +13,24 @@ export let isRelogin = { show: false }
 
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
 
+// === 403 權限不足通知 — 防重複合併機制 ===
+let pending403Msgs = []
+let pending403Timer = null
+
+function show403Notification() {
+  if (pending403Msgs.length === 0) return
+  const uniqueMsgs = [...new Set(pending403Msgs)]
+  const body = uniqueMsgs.join('\n')
+  ElNotification({
+    title: '權限不足',
+    message: body,
+    type: 'warning',
+    duration: 4500
+  })
+  pending403Msgs = []
+  pending403Timer = null
+}
+
 function normalizeApiBase(baseApi) {
   if (!baseApi) return '/prod-api'
   const value = String(baseApi).trim()
@@ -140,6 +158,13 @@ service.interceptors.response.use(res => {
   } else if (code === 601) {
     ElMessage({ message: msg, type: 'warning' })
     return Promise.reject(new Error(msg))
+  } else if (code === 403) {
+    // 收集 403 訊息，短暫延遲後合併為一個通知
+    pending403Msgs.push(msg)
+    if (!pending403Timer) {
+      pending403Timer = setTimeout(show403Notification, 300)
+    }
+    return Promise.reject('error')
   } else if (code !== 200) {
     ElNotification.error({ title: msg })
     return Promise.reject('error')

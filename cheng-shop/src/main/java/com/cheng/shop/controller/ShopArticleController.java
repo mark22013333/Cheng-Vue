@@ -4,6 +4,7 @@ import com.cheng.common.annotation.Log;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.SecurityUtils;
 import com.cheng.shop.domain.ShopArticle;
@@ -30,7 +31,7 @@ public class ShopArticleController extends BaseController {
     /**
      * 查詢文章列表
      */
-    @PreAuthorize("@ss.hasPermi('shop:article:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Article.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(ShopArticle article) {
         startPage();
@@ -41,7 +42,7 @@ public class ShopArticleController extends BaseController {
     /**
      * 查詢文章詳情
      */
-    @PreAuthorize("@ss.hasPermi('shop:article:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Article.QUERY + "')")
     @GetMapping("/{articleId}")
     public AjaxResult getInfo(@PathVariable Long articleId) {
         return success(articleService.selectArticleById(articleId));
@@ -50,7 +51,7 @@ public class ShopArticleController extends BaseController {
     /**
      * 新增文章
      */
-    @PreAuthorize("@ss.hasPermi('shop:article:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Article.ADD + "')")
     @Log(title = "文章管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody ShopArticle article) {
@@ -61,7 +62,7 @@ public class ShopArticleController extends BaseController {
     /**
      * 修改文章
      */
-    @PreAuthorize("@ss.hasPermi('shop:article:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Article.EDIT + "')")
     @Log(title = "文章管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody ShopArticle article) {
@@ -72,7 +73,7 @@ public class ShopArticleController extends BaseController {
     /**
      * 刪除文章
      */
-    @PreAuthorize("@ss.hasPermi('shop:article:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Article.REMOVE + "')")
     @Log(title = "文章管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{articleIds}")
     public AjaxResult remove(@PathVariable Long[] articleIds) {

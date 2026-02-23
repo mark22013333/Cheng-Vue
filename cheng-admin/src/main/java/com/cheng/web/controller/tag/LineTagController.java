@@ -1,6 +1,7 @@
 package com.cheng.web.controller.tag;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -38,7 +39,7 @@ public class LineTagController extends BaseController {
     /**
      * 查詢 LINE 標籤列表
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysTag sysTag) {
         startPage();
@@ -56,7 +57,7 @@ public class LineTagController extends BaseController {
     /**
      * 查詢 LINE 標籤下拉選項（不分頁）
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.QUERY + "')")
     @GetMapping("/options")
     public AjaxResult options(@RequestParam(required = false) Integer status) {
         List<SysTag> list = sysTagService.selectLineTagList(status);
@@ -66,7 +67,7 @@ public class LineTagController extends BaseController {
     /**
      * 取得標籤詳情
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.QUERY + "')")
     @GetMapping("/{tagId}")
     public AjaxResult getInfo(@PathVariable Long tagId) {
         return success(sysTagService.selectSysTagByTagId(tagId));
@@ -75,7 +76,7 @@ public class LineTagController extends BaseController {
     /**
      * 新增 LINE 標籤
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.ADD + "')")
     @Log(title = "LINE 標籤", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody SysTag sysTag) {
@@ -98,7 +99,7 @@ public class LineTagController extends BaseController {
     /**
      * 修改 LINE 標籤
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.EDIT + "')")
     @Log(title = "LINE 標籤", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysTag sysTag) {
@@ -118,7 +119,7 @@ public class LineTagController extends BaseController {
     /**
      * 刪除 LINE 標籤
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.REMOVE + "')")
     @Log(title = "LINE 標籤", businessType = BusinessType.DELETE)
     @DeleteMapping("/{tagIds}")
     public AjaxResult remove(@PathVariable Long[] tagIds) {
@@ -149,7 +150,7 @@ public class LineTagController extends BaseController {
     /**
      * 查詢使用者標籤關聯列表
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:bindUser')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.BIND_USER + "')")
     @GetMapping("/relation/list")
     public TableDataInfo relationList(LineUserTagRelation relation) {
         startPage();
@@ -160,7 +161,7 @@ public class LineTagController extends BaseController {
     /**
      * 查詢指定使用者的標籤
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:bindQuery')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.BIND_QUERY + "')")
     @GetMapping("/relation/user/{lineUserId}")
     public AjaxResult getUserTags(@PathVariable String lineUserId) {
         List<LineUserTagRelation> list = lineUserTagRelationService.selectByLineUserId(lineUserId);
@@ -170,7 +171,7 @@ public class LineTagController extends BaseController {
     /**
      * 查詢指定標籤的使用者
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:bindQuery')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.BIND_QUERY + "')")
     @GetMapping("/relation/tag/{tagId}")
     public AjaxResult getTagUsers(@PathVariable Long tagId) {
         List<LineUserTagRelation> list = lineUserTagRelationService.selectByTagId(tagId);
@@ -180,7 +181,7 @@ public class LineTagController extends BaseController {
     /**
      * 為使用者貼標（單一使用者，單一標籤）
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:batchBind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.BATCH_BIND + "')")
     @Log(title = "LINE 使用者貼標", businessType = BusinessType.INSERT)
     @PostMapping("/relation/bind")
     public AjaxResult bindTag(@RequestBody BindTagRequest request) {
@@ -199,7 +200,7 @@ public class LineTagController extends BaseController {
     /**
      * 批次為使用者貼標（支援多標籤）
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:batchBind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.BATCH_BIND + "')")
     @Log(title = "LINE 批次貼標", businessType = BusinessType.INSERT)
     @PostMapping("/relation/batchBind")
     public AjaxResult batchBindTag(@RequestBody BatchBindTagRequest request) {
@@ -231,7 +232,7 @@ public class LineTagController extends BaseController {
     /**
      * 移除使用者標籤
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:unbind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.UNBIND + "')")
     @Log(title = "LINE 移除標籤", businessType = BusinessType.DELETE)
     @DeleteMapping("/relation/unbind")
     public AjaxResult unbindTag(@RequestBody BindTagRequest request) {
@@ -249,7 +250,7 @@ public class LineTagController extends BaseController {
     /**
      * 批次刪除關聯
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:unbind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.UNBIND + "')")
     @Log(title = "LINE 批次移除標籤", businessType = BusinessType.DELETE)
     @DeleteMapping("/relation/{ids}")
     public AjaxResult removeRelations(@PathVariable Long[] ids) {
@@ -259,7 +260,7 @@ public class LineTagController extends BaseController {
     /**
      * 更新使用者標籤（支援多標籤，可選擇替換現有標籤）
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:batchBind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.BATCH_BIND + "')")
     @Log(title = "LINE 更新使用者標籤", businessType = BusinessType.UPDATE)
     @PostMapping("/relation/updateTags")
     public AjaxResult updateUserTags(@RequestBody UpdateTagsRequest request) {
@@ -289,7 +290,7 @@ public class LineTagController extends BaseController {
      * 批次為使用者貼標（含驗證和額外標籤支援）
      * 支援大量資料分批處理，會驗證使用者是否存在，並自動建立不存在的標籤
      */
-    @PreAuthorize("@ss.hasPermi('tag:line:batchBind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Line.BATCH_BIND + "')")
     @Log(title = "LINE 批次貼標（含驗證）", businessType = BusinessType.INSERT)
     @PostMapping("/relation/batchBindWithValidation")
     public AjaxResult batchBindWithValidation(@RequestBody BatchBindWithValidationRequest request) {

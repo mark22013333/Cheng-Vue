@@ -60,9 +60,35 @@ public interface ISysUserTableConfigService {
 
     /**
      * 刪除使用者表格欄位配置資訊
-     * 
+     *
      * @param configId 配置ID
      * @return 結果
      */
     int deleteSysUserTableConfigByConfigId(Long configId);
+
+    /**
+     * 智慧取得有效配置（根據權限決定讀取來源）
+     * <p>有自訂權限 → 讀個人配置（fallback 模版）；無自訂權限 → 讀模版</p>
+     *
+     * @param pageKey 頁面標識
+     * @return 欄位配置（JSON字串），若不存在返回null
+     */
+    String getEffectiveConfig(String pageKey);
+
+    /**
+     * 取得全域模版配置
+     *
+     * @param pageKey 頁面標識
+     * @return 模版欄位配置（JSON字串），若不存在返回null
+     */
+    String getTemplateConfig(String pageKey);
+
+    /**
+     * 儲存全域模版配置
+     *
+     * @param pageKey 頁面標識
+     * @param columnConfig 欄位配置（JSON字串）
+     * @return 結果
+     */
+    int saveTemplateConfig(String pageKey, String columnConfig);
 }

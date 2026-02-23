@@ -38,27 +38,27 @@
     <!-- 操作按鈕 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['shop:product:add']">
+        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="[SHOP_PRODUCT_ADD]">
           新增
         </el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['shop:product:remove']">
+        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="[SHOP_PRODUCT_REMOVE]">
           刪除
         </el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="Star" :disabled="multiple" @click="handleBatchFlag('is_hot', true)" v-hasPermi="['shop:product:edit']">
+        <el-button type="warning" plain icon="Star" :disabled="multiple" @click="handleBatchFlag('is_hot', true)" v-hasPermi="[SHOP_PRODUCT_EDIT]">
           設為熱門
         </el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="success" plain icon="Promotion" :disabled="multiple" @click="handleBatchFlag('is_new', true)" v-hasPermi="['shop:product:edit']">
+        <el-button type="success" plain icon="Promotion" :disabled="multiple" @click="handleBatchFlag('is_new', true)" v-hasPermi="[SHOP_PRODUCT_EDIT]">
           設為新品
         </el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="info" plain icon="Pointer" :disabled="multiple" @click="handleBatchFlag('is_recommend', true)" v-hasPermi="['shop:product:edit']">
+        <el-button type="info" plain icon="Pointer" :disabled="multiple" @click="handleBatchFlag('is_recommend', true)" v-hasPermi="[SHOP_PRODUCT_EDIT]">
           設為推薦
         </el-button>
       </el-col>
@@ -89,7 +89,7 @@
             :active-value="true"
             :inactive-value="false"
             @change="handleFlagChange(scope.row, 'is_hot', scope.row.isHot)"
-            v-hasPermi="['shop:product:edit']"
+            v-hasPermi="[SHOP_PRODUCT_EDIT]"
           />
         </template>
       </el-table-column>
@@ -100,7 +100,7 @@
             :active-value="true"
             :inactive-value="false"
             @change="handleFlagChange(scope.row, 'is_new', scope.row.isNew)"
-            v-hasPermi="['shop:product:edit']"
+            v-hasPermi="[SHOP_PRODUCT_EDIT]"
           />
         </template>
       </el-table-column>
@@ -111,7 +111,7 @@
             :active-value="true"
             :inactive-value="false"
             @change="handleFlagChange(scope.row, 'is_recommend', scope.row.isRecommend)"
-            v-hasPermi="['shop:product:edit']"
+            v-hasPermi="[SHOP_PRODUCT_EDIT]"
           />
         </template>
       </el-table-column>
@@ -123,16 +123,16 @@
       <el-table-column prop="createTime" label="建立時間" width="160" align="center" />
       <el-table-column label="操作" width="180" align="center" fixed="right">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['shop:product:edit']">
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="[SHOP_PRODUCT_EDIT]">
             編輯
           </el-button>
-          <el-button v-if="scope.row.status !== 'ON_SALE'" link type="success" icon="Top" @click="handleOnSale(scope.row)" v-hasPermi="['shop:product:edit']">
+          <el-button v-if="scope.row.status !== 'ON_SALE'" link type="success" icon="Top" @click="handleOnSale(scope.row)" v-hasPermi="[SHOP_PRODUCT_EDIT]">
             上架
           </el-button>
-          <el-button v-if="scope.row.status === 'ON_SALE'" link type="warning" icon="Bottom" @click="handleOffSale(scope.row)" v-hasPermi="['shop:product:edit']">
+          <el-button v-if="scope.row.status === 'ON_SALE'" link type="warning" icon="Bottom" @click="handleOffSale(scope.row)" v-hasPermi="[SHOP_PRODUCT_EDIT]">
             下架
           </el-button>
-          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['shop:product:remove']">
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[SHOP_PRODUCT_REMOVE]">
             刪除
           </el-button>
         </template>
@@ -220,6 +220,11 @@
 </template>
 
 <script setup name="ShopProduct">
+import {
+  SHOP_PRODUCT_ADD,
+  SHOP_PRODUCT_EDIT,
+  SHOP_PRODUCT_REMOVE
+} from '@/constants/permissions'
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { listProduct, getProduct, addProduct, updateProduct, delProduct, onSaleProduct, offSaleProduct, updateProductFlag } from '@/api/shop/product'

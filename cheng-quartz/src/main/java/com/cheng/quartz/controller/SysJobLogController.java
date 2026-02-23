@@ -1,6 +1,7 @@
 package com.cheng.quartz.controller;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -29,7 +30,7 @@ public class SysJobLogController extends BaseController {
     /**
      * 查詢定時任務呼叫日誌列表
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysJobLog sysJobLog) {
         startPage();
@@ -40,7 +41,7 @@ public class SysJobLogController extends BaseController {
     /**
      * 匯出定時任務呼叫日誌列表
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.EXPORT + "')")
     @Log(title = "任務呼叫日誌", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysJobLog sysJobLog) {
@@ -52,7 +53,7 @@ public class SysJobLogController extends BaseController {
     /**
      * 根據呼叫編號取得詳細訊息
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.QUERY + "')")
     @GetMapping(value = "/{jobLogId}")
     public AjaxResult getInfo(@PathVariable Long jobLogId) {
         return success(jobLogService.selectJobLogById(jobLogId));
@@ -62,7 +63,7 @@ public class SysJobLogController extends BaseController {
     /**
      * 刪除定時任務呼叫日誌
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.REMOVE + "')")
     @Log(title = "定時任務呼叫日誌", businessType = BusinessType.DELETE)
     @DeleteMapping("/{jobLogIds}")
     public AjaxResult remove(@PathVariable Long[] jobLogIds) {
@@ -72,7 +73,7 @@ public class SysJobLogController extends BaseController {
     /**
      * 清除定時任務呼叫日誌
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.REMOVE + "')")
     @Log(title = "呼叫日誌", businessType = BusinessType.CLEAN)
     @DeleteMapping("/clean")
     public AjaxResult clean() {

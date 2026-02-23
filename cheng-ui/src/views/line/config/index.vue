@@ -153,7 +153,7 @@
               size="default"
               :icon="Plus"
               @click="handleAdd(channel.type)"
-              v-hasPermi="['line:config:add']"
+              v-hasPermi="[LINE_CONFIG_ADD]"
             >
               立即設定
             </el-button>
@@ -177,6 +177,9 @@
 </template>
 
 <script>
+import {
+  LINE_CONFIG_ADD
+} from '@/constants/permissions'
 import { listConfig, delConfig, setDefaultChannel, testConnection } from '@/api/line/config'
 import ConfigForm from './components/ConfigForm'
 import ConnectionTest from './components/ConnectionTest'
@@ -230,6 +233,7 @@ export default {
   },
   setup() {
     return {
+      LINE_CONFIG_ADD,
       Refresh, Edit, Connection, Delete, Setting, Plus
     }
   },

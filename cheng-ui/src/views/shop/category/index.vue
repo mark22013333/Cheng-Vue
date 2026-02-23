@@ -26,7 +26,7 @@
     <!-- 操作按鈕 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['shop:category:add']">
+        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="[SHOP_CATEGORY_ADD]">
           新增
         </el-button>
       </el-col>
@@ -65,13 +65,13 @@
       <el-table-column prop="createTime" label="建立時間" width="180" align="center" />
       <el-table-column label="操作" width="200" align="center">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['shop:category:edit']">
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="[SHOP_CATEGORY_EDIT]">
             修改
           </el-button>
-          <el-button link type="primary" icon="Plus" @click="handleAdd(scope.row)" v-hasPermi="['shop:category:add']">
+          <el-button link type="primary" icon="Plus" @click="handleAdd(scope.row)" v-hasPermi="[SHOP_CATEGORY_ADD]">
             新增
           </el-button>
-          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['shop:category:remove']">
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[SHOP_CATEGORY_REMOVE]">
             刪除
           </el-button>
         </template>
@@ -118,6 +118,11 @@
 </template>
 
 <script setup name="ShopCategory">
+import {
+  SHOP_CATEGORY_ADD,
+  SHOP_CATEGORY_EDIT,
+  SHOP_CATEGORY_REMOVE
+} from '@/constants/permissions'
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { listCategory, getCategory, addCategory, updateCategory, delCategory, treeCategory } from '@/api/shop/category'
 

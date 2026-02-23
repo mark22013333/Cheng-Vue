@@ -4,6 +4,7 @@ import com.cheng.common.annotation.Log;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.SecurityUtils;
 import com.cheng.shop.domain.ShopProduct;
@@ -32,7 +33,7 @@ public class ShopProductController extends BaseController {
     /**
      * 查詢商品列表
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(ShopProduct product,
                               @RequestParam(required = false) String categoryIds) {
@@ -56,7 +57,7 @@ public class ShopProductController extends BaseController {
     /**
      * 查詢商品詳情
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.QUERY + "')")
     @GetMapping("/{productId}")
     public AjaxResult getInfo(@PathVariable Long productId) {
         return success(productService.selectProductById(productId));
@@ -65,7 +66,7 @@ public class ShopProductController extends BaseController {
     /**
      * 新增商品
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.ADD + "')")
     @Log(title = "商品管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody ShopProduct product) {
@@ -81,7 +82,7 @@ public class ShopProductController extends BaseController {
     /**
      * 修改商品
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.EDIT + "')")
     @Log(title = "商品管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody ShopProduct product) {
@@ -95,7 +96,7 @@ public class ShopProductController extends BaseController {
     /**
      * 刪除商品
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.REMOVE + "')")
     @Log(title = "商品管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{productIds}")
     public AjaxResult remove(@PathVariable Long[] productIds) {
@@ -122,7 +123,7 @@ public class ShopProductController extends BaseController {
     /**
      * 上架商品
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.EDIT + "')")
     @Log(title = "商品管理", businessType = BusinessType.UPDATE)
     @PutMapping("/onSale/{productId}")
     public AjaxResult onSale(@PathVariable Long productId) {
@@ -139,7 +140,7 @@ public class ShopProductController extends BaseController {
     /**
      * 下架商品
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.EDIT + "')")
     @Log(title = "商品管理", businessType = BusinessType.UPDATE)
     @PutMapping("/offSale/{productId}")
     public AjaxResult offSale(@PathVariable Long productId) {
@@ -156,7 +157,7 @@ public class ShopProductController extends BaseController {
     /**
      * 批量更新商品標記（熱門/新品/推薦）
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.EDIT + "')")
     @Log(title = "商品管理", businessType = BusinessType.UPDATE)
     @PutMapping("/flag")
     public AjaxResult updateFlag(@RequestBody Map<String, Object> params) {

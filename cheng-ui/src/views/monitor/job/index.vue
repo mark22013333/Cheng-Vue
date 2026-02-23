@@ -47,7 +47,7 @@
           type="primary"
           plain
           @click="handleAdd"
-          v-hasPermi="['monitor:job:add']"
+          v-hasPermi="[MONITOR_JOB_ADD]"
         >
           <el-icon class="el-icon--left"><Plus /></el-icon>
           新增
@@ -59,7 +59,7 @@
           plain
           :disabled="single"
           @click="handleUpdate"
-          v-hasPermi="['monitor:job:edit']"
+          v-hasPermi="[MONITOR_JOB_EDIT]"
         >
           <el-icon class="el-icon--left"><Edit /></el-icon>
           修改
@@ -71,7 +71,7 @@
           plain
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['monitor:job:remove']"
+          v-hasPermi="[MONITOR_JOB_REMOVE]"
         >
           <el-icon class="el-icon--left"><Delete /></el-icon>
           刪除
@@ -82,7 +82,7 @@
           type="warning"
           plain
           @click="handleExport"
-          v-hasPermi="['monitor:job:export']"
+          v-hasPermi="[MONITOR_JOB_EXPORT]"
         >
           <el-icon class="el-icon--left"><Download /></el-icon>
           匯出
@@ -93,7 +93,7 @@
           type="info"
           plain
           @click="handleJobLog"
-          v-hasPermi="['monitor:job:query']"
+          v-hasPermi="[MONITOR_JOB_QUERY]"
         >
           <el-icon class="el-icon--left"><Document /></el-icon>
           日誌
@@ -129,7 +129,7 @@
             type="primary"
             link
             @click="handleUpdate(scope.row)"
-            v-hasPermi="['monitor:job:edit']"
+            v-hasPermi="[MONITOR_JOB_EDIT]"
           >
             <el-icon><Edit /></el-icon>
             修改
@@ -138,13 +138,13 @@
             type="primary"
             link
             @click="handleDelete(scope.row)"
-            v-hasPermi="['monitor:job:remove']"
+            v-hasPermi="[MONITOR_JOB_REMOVE]"
           >
             <el-icon><Delete /></el-icon>
             刪除
           </el-button>
           <el-dropdown @command="(command) => handleCommand(command, scope.row)"
-                       v-if="checkPermi(['monitor:job:changeStatus', 'monitor:job:query'])">
+                       v-if="checkPermi([MONITOR_JOB_CHANGE_STATUS, MONITOR_JOB_QUERY])">
             <el-button type="primary" link>
               <el-icon><DArrowRight /></el-icon>
               更多
@@ -152,21 +152,21 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="handleRun"
-                                  v-if="checkPermi(['monitor:job:changeStatus'])">
+                                  v-if="checkPermi([MONITOR_JOB_CHANGE_STATUS])">
                   <span>
                     <el-icon><CaretRight /></el-icon>
                     執行一次
                   </span>
                 </el-dropdown-item>
                 <el-dropdown-item command="handleView"
-                                  v-if="checkPermi(['monitor:job:query'])">
+                                  v-if="checkPermi([MONITOR_JOB_QUERY])">
                   <span>
                     <el-icon><View /></el-icon>
                     任務詳細
                   </span>
                 </el-dropdown-item>
                 <el-dropdown-item command="handleJobLog"
-                                  v-if="checkPermi(['monitor:job:query'])">
+                                  v-if="checkPermi([MONITOR_JOB_QUERY])">
                   <span>
                     <el-icon><Document /></el-icon>
                     呼叫日誌
@@ -473,6 +473,14 @@
 </template>
 
 <script>
+import {
+  MONITOR_JOB_ADD,
+  MONITOR_JOB_CHANGE_STATUS,
+  MONITOR_JOB_EDIT,
+  MONITOR_JOB_EXPORT,
+  MONITOR_JOB_QUERY,
+  MONITOR_JOB_REMOVE
+} from '@/constants/permissions'
 import { Search, Refresh, Plus, Edit, Delete, Download, Document, DArrowRight, CaretRight, View } from '@element-plus/icons-vue'
 import {addJob, changeJobStatus, delJob, getJob, listJob, runJob, updateJob} from "@/api/monitor/job"
 import {listJobTypes, getJobTypeByCode, getTaskTypesByJobGroup} from "@/api/monitor/jobType"
@@ -481,6 +489,9 @@ import { checkPermi } from '@/utils/permission'
 import Crontab from '@/components/Crontab'
 
 export default {
+  setup() {
+    return { MONITOR_JOB_ADD, MONITOR_JOB_CHANGE_STATUS, MONITOR_JOB_EDIT, MONITOR_JOB_EXPORT, MONITOR_JOB_QUERY, MONITOR_JOB_REMOVE }
+  },
   components: { Search, Refresh, Plus, Edit, Delete, Download, Document, DArrowRight, CaretRight, View, Crontab },
   name: "Job",
   data() {

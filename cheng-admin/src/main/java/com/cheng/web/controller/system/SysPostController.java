@@ -1,6 +1,7 @@
 package com.cheng.web.controller.system;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -30,7 +31,7 @@ public class SysPostController extends BaseController {
     /**
      * 取得職位列表
      */
-    @PreAuthorize("@ss.hasPermi('system:post:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Post.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysPost post) {
         startPage();
@@ -39,7 +40,7 @@ public class SysPostController extends BaseController {
     }
 
     @Log(title = "職位管理", businessType = BusinessType.EXPORT)
-    @PreAuthorize("@ss.hasPermi('system:post:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Post.EXPORT + "')")
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysPost post) {
         List<SysPost> list = postService.selectPostList(post);
@@ -50,7 +51,7 @@ public class SysPostController extends BaseController {
     /**
      * 根據職位編號取得詳細訊息
      */
-    @PreAuthorize("@ss.hasPermi('system:post:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Post.QUERY + "')")
     @GetMapping(value = "/{postId}")
     public AjaxResult getInfo(@PathVariable Long postId) {
         return success(postService.selectPostById(postId));
@@ -59,7 +60,7 @@ public class SysPostController extends BaseController {
     /**
      * 新增職位
      */
-    @PreAuthorize("@ss.hasPermi('system:post:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Post.ADD + "')")
     @Log(title = "職位管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody SysPost post) {
@@ -75,7 +76,7 @@ public class SysPostController extends BaseController {
     /**
      * 修改職位
      */
-    @PreAuthorize("@ss.hasPermi('system:post:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Post.EDIT + "')")
     @Log(title = "職位管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysPost post) {
@@ -91,7 +92,7 @@ public class SysPostController extends BaseController {
     /**
      * 刪除職位
      */
-    @PreAuthorize("@ss.hasPermi('system:post:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Post.REMOVE + "')")
     @Log(title = "職位管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{postIds}")
     public AjaxResult remove(@PathVariable Long[] postIds) {

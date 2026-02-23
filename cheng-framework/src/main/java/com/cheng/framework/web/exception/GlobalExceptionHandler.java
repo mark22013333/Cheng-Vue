@@ -8,6 +8,7 @@ import com.cheng.common.exception.ServiceException;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.common.utils.html.EscapeUtil;
 import com.cheng.common.utils.http.PathUtils;
+import com.cheng.framework.security.context.PermissionContextHolder;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +39,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public AjaxResult handleAccessDeniedException(AccessDeniedException e, HttpServletRequest request) {
         String requestURI = PathUtils.getFullRequestURI(request);
-        log.error("請求網址'{}',權限校驗失敗'{}'", requestURI, e.getMessage());
-        return AjaxResult.error(HttpStatus.FORBIDDEN, "沒有權限，請聯絡管理員授權");
+        String permission = PermissionContextHolder.getContext();
+        log.error("請求網址'{}',權限校驗失敗'{}',所需權限'{}'", requestURI, e.getMessage(), permission);
+
+        String msg;
+        if (StringUtils.isNotEmpty(permission)) {
+            msg = "沒有權限【" + permission + "】，請聯絡管理員授權";
+        } else {
+            msg = "沒有權限，請聯絡管理員授權";
+        }
+        return AjaxResult.error(HttpStatus.FORBIDDEN, msg);
     }
 
     /**

@@ -1,4 +1,13 @@
 import { createWebHistory, createRouter } from 'vue-router'
+import {
+  MONITOR_JOB_LIST,
+  SHOP_PRODUCT_ADD,
+  SHOP_PRODUCT_EDIT,
+  SYSTEM_DICT_LIST,
+  SYSTEM_ROLE_EDIT,
+  SYSTEM_USER_EDIT,
+  TOOL_GEN_EDIT
+} from '@/constants/permissions'
 
 /**
  * 單一應用程式包含商城和後台管理
@@ -82,7 +91,7 @@ export const adminDynamicRoutes = [
     path: '/cadm/system/user-auth',
     component: () => import('@/layout/index.vue'),
     hidden: true,
-    permissions: ['system:user:edit'],
+    permissions: [SYSTEM_USER_EDIT],
     children: [
       {
         path: 'role/:userId(\\d+)',
@@ -96,7 +105,7 @@ export const adminDynamicRoutes = [
     path: '/cadm/system/role-auth',
     component: () => import('@/layout/index.vue'),
     hidden: true,
-    permissions: ['system:role:edit'],
+    permissions: [SYSTEM_ROLE_EDIT],
     children: [
       {
         path: 'user/:roleId(\\d+)',
@@ -110,7 +119,7 @@ export const adminDynamicRoutes = [
     path: '/cadm/system/dict-data',
     component: () => import('@/layout/index.vue'),
     hidden: true,
-    permissions: ['system:dict:list'],
+    permissions: [SYSTEM_DICT_LIST],
     children: [
       {
         path: 'index/:dictId(\\d+)',
@@ -124,7 +133,7 @@ export const adminDynamicRoutes = [
     path: '/cadm/monitor/job-log',
     component: () => import('@/layout/index.vue'),
     hidden: true,
-    permissions: ['monitor:job:list'],
+    permissions: [MONITOR_JOB_LIST],
     children: [
       {
         path: 'index/:jobId(\\d+)',
@@ -138,7 +147,7 @@ export const adminDynamicRoutes = [
     path: '/cadm/tool/gen-edit',
     component: () => import('@/layout/index.vue'),
     hidden: true,
-    permissions: ['tool:gen:edit'],
+    permissions: [TOOL_GEN_EDIT],
     children: [
       {
         path: 'index/:tableId(\\d+)',
@@ -152,7 +161,7 @@ export const adminDynamicRoutes = [
     path: '/cadm/shop/product-edit',
     component: () => import('@/layout/index.vue'),
     hidden: true,
-    permissions: ['shop:product:add', 'shop:product:edit'],
+    permissions: [SHOP_PRODUCT_ADD, SHOP_PRODUCT_EDIT],
     children: [
       {
         path: 'index/:productId?',

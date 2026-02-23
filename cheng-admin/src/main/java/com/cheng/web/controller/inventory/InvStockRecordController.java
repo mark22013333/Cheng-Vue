@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import com.cheng.common.constant.PermConstants;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,7 +38,7 @@ public class InvStockRecordController extends BaseController {
     /**
      * 查詢庫存異動記錄列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stockRecord:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.StockRecord.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(InvStockRecord invStockRecord) {
         startPage();
@@ -48,7 +49,7 @@ public class InvStockRecordController extends BaseController {
     /**
      * 匯出庫存異動記錄列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stockRecord:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.StockRecord.EXPORT + "')")
     @Log(title = "庫存異動記錄", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, InvStockRecord invStockRecord) {
@@ -60,7 +61,7 @@ public class InvStockRecordController extends BaseController {
     /**
      * 取得庫存異動記錄詳細資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stockRecord:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.StockRecord.QUERY + "')")
     @GetMapping(value = "/{recordId}")
     public AjaxResult getInfo(@PathVariable("recordId") Long recordId) {
         return success(invStockRecordService.selectInvStockRecordByRecordId(recordId));
@@ -69,7 +70,7 @@ public class InvStockRecordController extends BaseController {
     /**
      * 新增庫存異動記錄
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stockRecord:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.StockRecord.ADD + "')")
     @Log(title = "庫存異動記錄", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody InvStockRecord invStockRecord) {
@@ -79,7 +80,7 @@ public class InvStockRecordController extends BaseController {
     /**
      * 修改庫存異動記錄
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stockRecord:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.StockRecord.EDIT + "')")
     @Log(title = "庫存異動記錄", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody InvStockRecord invStockRecord) {
@@ -89,7 +90,7 @@ public class InvStockRecordController extends BaseController {
     /**
      * 刪除庫存異動記錄
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stockRecord:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.StockRecord.REMOVE + "')")
     @Log(title = "庫存異動記錄", businessType = BusinessType.DELETE)
     @DeleteMapping("/{recordIds}")
     public AjaxResult remove(@PathVariable Long[] recordIds) {
@@ -99,7 +100,7 @@ public class InvStockRecordController extends BaseController {
     /**
      * 根據物品ID查詢異動記錄
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stockRecord:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.StockRecord.QUERY + "')")
     @GetMapping("/item/{itemId}")
     public AjaxResult getRecordsByItemId(@PathVariable("itemId") Long itemId) {
         List<InvStockRecord> list = invStockRecordService.selectInvStockRecordByItemId(itemId);
@@ -109,7 +110,7 @@ public class InvStockRecordController extends BaseController {
     /**
      * 根據操作人員ID查詢異動記錄
      */
-    @PreAuthorize("@ss.hasPermi('inventory:stockRecord:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.StockRecord.QUERY + "')")
     @GetMapping("/operator/{operatorId}")
     public AjaxResult getRecordsByOperatorId(@PathVariable("operatorId") Long operatorId) {
         List<InvStockRecord> list = invStockRecordService.selectInvStockRecordByOperatorId(operatorId);

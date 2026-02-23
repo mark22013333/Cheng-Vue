@@ -28,7 +28,7 @@
           :show-file-list="false"
           :before-upload="handleBeforeUpload"
           :http-request="handleHttpUpload"
-          v-hasPermi="['system:material:audio:upload']"
+          v-hasPermi="[SYSTEM_MATERIAL_AUDIO_UPLOAD]"
         >
           <el-button type="primary" plain :icon="Upload">上傳</el-button>
         </el-upload>
@@ -39,7 +39,7 @@
           plain
           :icon="Microphone"
           @click="openRecordDialog"
-          v-hasPermi="['system:material:audio:upload']"
+          v-hasPermi="[SYSTEM_MATERIAL_AUDIO_UPLOAD]"
         >
           錄音
         </el-button>
@@ -51,7 +51,7 @@
           :icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['system:material:audio:remove']"
+          v-hasPermi="[SYSTEM_MATERIAL_AUDIO_REMOVE]"
         >
           刪除
         </el-button>
@@ -84,7 +84,7 @@
             type="danger"
             :icon="Delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['system:material:audio:remove']"
+            v-hasPermi="[SYSTEM_MATERIAL_AUDIO_REMOVE]"
           >
             刪除
           </el-button>
@@ -139,6 +139,10 @@
 </template>
 
 <script setup name="MaterialAudio">
+import {
+  SYSTEM_MATERIAL_AUDIO_REMOVE,
+  SYSTEM_MATERIAL_AUDIO_UPLOAD
+} from '@/constants/permissions'
 import { listMaterialAudio, delMaterialAudio, existsMaterialAudio, uploadMaterialAudio } from '@/api/system/material'
 import { getProfileApiUrl, getProfileStaticUrl } from '@/utils/image'
 import { convertToMp3, needsConversion } from '@/utils/audioConverter'

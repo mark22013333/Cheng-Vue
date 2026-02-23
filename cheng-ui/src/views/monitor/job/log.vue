@@ -70,7 +70,7 @@
           plain
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['monitor:job:remove']"
+          v-hasPermi="[MONITOR_JOB_REMOVE]"
         >
           <el-icon class="el-icon--left"><Delete /></el-icon>
           刪除
@@ -81,7 +81,7 @@
           type="danger"
           plain
           @click="handleClean"
-          v-hasPermi="['monitor:job:remove']"
+          v-hasPermi="[MONITOR_JOB_REMOVE]"
         >
           <el-icon class="el-icon--left"><Delete /></el-icon>
           清除
@@ -92,7 +92,7 @@
           type="warning"
           plain
           @click="handleExport"
-          v-hasPermi="['monitor:job:export']"
+          v-hasPermi="[MONITOR_JOB_EXPORT]"
         >
           <el-icon class="el-icon--left"><Download /></el-icon>
           匯出
@@ -138,7 +138,7 @@
             type="primary"
             link
             @click="handleView(scope.row)"
-            v-hasPermi="['monitor:job:query']"
+            v-hasPermi="[MONITOR_JOB_QUERY]"
           >
             <el-icon><View /></el-icon>
             詳細
@@ -194,6 +194,11 @@
 </template>
 
 <script setup name="JobLog">
+import {
+  MONITOR_JOB_EXPORT,
+  MONITOR_JOB_QUERY,
+  MONITOR_JOB_REMOVE
+} from '@/constants/permissions'
 import { ref, reactive, onMounted, getCurrentInstance } from 'vue'
 import { Search, Refresh, Delete, Download, Close, View } from '@element-plus/icons-vue'
 import { getJob } from "@/api/monitor/job"

@@ -52,7 +52,7 @@
     <!-- 操作按鈕 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['shop:order:export']">
+        <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="[SHOP_ORDER_EXPORT]">
           匯出
         </el-button>
       </el-col>
@@ -124,13 +124,13 @@
       <el-table-column prop="createTime" label="下單時間" min-width="160" align="center" />
       <el-table-column label="操作" min-width="150" align="center" fixed="right">
         <template #default="scope">
-          <el-button link type="primary" icon="View" @click="handleDetail(scope.row)" v-hasPermi="['shop:order:query']">
+          <el-button link type="primary" icon="View" @click="handleDetail(scope.row)" v-hasPermi="[SHOP_ORDER_QUERY]">
             詳情
           </el-button>
-          <el-button v-if="canShip(scope.row)" link type="success" icon="Van" @click="handleShip(scope.row)" v-hasPermi="['shop:order:ship']">
+          <el-button v-if="canShip(scope.row)" link type="success" icon="Van" @click="handleShip(scope.row)" v-hasPermi="[SHOP_ORDER_SHIP]">
             出貨
           </el-button>
-          <el-button v-if="canCancel(scope.row)" link type="danger" icon="Close" @click="handleCancel(scope.row)" v-hasPermi="['shop:order:cancel']">
+          <el-button v-if="canCancel(scope.row)" link type="danger" icon="Close" @click="handleCancel(scope.row)" v-hasPermi="[SHOP_ORDER_CANCEL]">
             取消
           </el-button>
         </template>
@@ -324,6 +324,14 @@
 </template>
 
 <script setup name="ShopOrder">
+import {
+  SHOP_ORDER_CANCEL,
+  SHOP_ORDER_EXPORT,
+  SHOP_ORDER_QUERY,
+  SHOP_ORDER_SHIP,
+  SHOP_ORDER_UPDATE_PAY_STATUS,
+  SHOP_ORDER_UPDATE_SHIP_STATUS
+} from '@/constants/permissions'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { listOrder, getOrder, shipOrder, cancelOrder, updateOrderRemark, updatePayStatus, updateShipStatus, recreateLogistics } from '@/api/shop/order'
@@ -486,12 +494,12 @@ function canCancel(row) {
 
 // 檢查是否有修改付款狀態的權限
 function hasPayStatusPermission() {
-  return userStore.permissions.includes('*:*:*') || userStore.permissions.includes('shop:order:updatePayStatus')
+  return userStore.permissions.includes('*:*:*') || userStore.permissions.includes(SHOP_ORDER_UPDATE_PAY_STATUS)
 }
 
 // 檢查是否有修改物流狀態的權限
 function hasShipStatusPermission() {
-  return userStore.permissions.includes('*:*:*') || userStore.permissions.includes('shop:order:updateShipStatus')
+  return userStore.permissions.includes('*:*:*') || userStore.permissions.includes(SHOP_ORDER_UPDATE_SHIP_STATUS)
 }
 
 // 可以更新付款狀態（訂單未完成且有權限）

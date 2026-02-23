@@ -75,7 +75,7 @@
           plain
           :icon="Upload"
           @click="handleImport"
-          v-hasPermi="['line:user:import']"
+          v-hasPermi="[LINE_USER_IMPORT]"
         >
           匯入
         </el-button>
@@ -86,7 +86,7 @@
           plain
           :icon="Download"
           @click="handleExport"
-          v-hasPermi="['line:user:export']"
+          v-hasPermi="[LINE_USER_EXPORT]"
         >
           匯出
         </el-button>
@@ -98,7 +98,7 @@
           :icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['line:user:remove']"
+          v-hasPermi="[LINE_USER_REMOVE]"
         >
           刪除
         </el-button>
@@ -110,7 +110,7 @@
           :icon="Remove"
           :disabled="multiple"
           @click="handleBatchAddBlacklist"
-          v-hasPermi="['line:user:edit']"
+          v-hasPermi="[LINE_USER_EDIT]"
         >
           批次加入黑名單
         </el-button>
@@ -122,7 +122,7 @@
           :icon="CircleCheck"
           :disabled="multiple"
           @click="handleBatchRemoveBlacklist"
-          v-hasPermi="['line:user:edit']"
+          v-hasPermi="[LINE_USER_EDIT]"
         >
           批次移除黑名單
         </el-button>
@@ -224,23 +224,23 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="220" class-name="small-padding fixed-width operation-column" fixed="right">
         <template #default="scope">
-          <el-button v-if="checkPermi(['line:user:query'])" link type="primary" :icon="View" @click="handleDetail(scope.row)">詳情</el-button>
-          <el-button v-if="checkPermi(['line:user:edit'])" link type="primary" :icon="Edit" @click="handleEdit(scope.row)">編輯</el-button>
+          <el-button v-if="checkPermi([LINE_USER_QUERY])" link type="primary" :icon="View" @click="handleDetail(scope.row)">詳情</el-button>
+          <el-button v-if="checkPermi([LINE_USER_EDIT])" link type="primary" :icon="Edit" @click="handleEdit(scope.row)">編輯</el-button>
           <el-dropdown @command="(command) => handleCommand(command, scope.row)">
             <el-button link type="primary" :icon="DArrowRight">更多</el-button>
             <template #dropdown>
               <el-dropdown-menu>
-              <el-dropdown-item v-if="checkPermi(['line:user:bind'])" command="bind" :icon="Link">
+              <el-dropdown-item v-if="checkPermi([LINE_USER_BIND])" command="bind" :icon="Link">
                 綁定
               </el-dropdown-item>
-              <el-dropdown-item v-if="checkPermi(['line:user:bind']) && scope.row.bindStatus === 'BOUND'" command="unbind" :icon="Unlock">
+              <el-dropdown-item v-if="checkPermi([LINE_USER_BIND]) && scope.row.bindStatus === 'BOUND'" command="unbind" :icon="Unlock">
                 解綁
               </el-dropdown-item>
-              <el-dropdown-item v-if="checkPermi(['line:user:edit'])" command="sync" :icon="Refresh">
+              <el-dropdown-item v-if="checkPermi([LINE_USER_EDIT])" command="sync" :icon="Refresh">
                 同步資料
               </el-dropdown-item>
               <el-dropdown-item
-                v-if="checkPermi(['line:user:edit']) && scope.row.followStatus !== 'BLACKLISTED'"
+                v-if="checkPermi([LINE_USER_EDIT]) && scope.row.followStatus !== 'BLACKLISTED'"
                 command="addBlacklist"
                 :icon="Remove"
                 divided
@@ -248,13 +248,13 @@
                 加入黑名單
               </el-dropdown-item>
               <el-dropdown-item
-                v-if="checkPermi(['line:user:edit']) && scope.row.followStatus === 'BLACKLISTED'"
+                v-if="checkPermi([LINE_USER_EDIT]) && scope.row.followStatus === 'BLACKLISTED'"
                 command="removeBlacklist"
                 :icon="CircleCheck"
               >
                 移除黑名單
               </el-dropdown-item>
-              <el-dropdown-item v-if="checkPermi(['line:user:remove'])" command="delete" :icon="Delete" divided>
+              <el-dropdown-item v-if="checkPermi([LINE_USER_REMOVE])" command="delete" :icon="Delete" divided>
                 刪除
               </el-dropdown-item>
               </el-dropdown-menu>
@@ -346,6 +346,14 @@
 </template>
 
 <script>
+import {
+  LINE_USER_BIND,
+  LINE_USER_EDIT,
+  LINE_USER_EXPORT,
+  LINE_USER_IMPORT,
+  LINE_USER_QUERY,
+  LINE_USER_REMOVE
+} from '@/constants/permissions'
 import { h } from 'vue'
 import { listUser, delUser, getUserStats, unbindUser, syncUserProfile, exportUser, addToBlacklist, removeFromBlacklist, batchAddToBlacklist, batchRemoveFromBlacklist } from '@/api/line/user'
 import { getLineTagOptions, getUserTags, updateLineUserTags } from '@/api/tag/line'
@@ -372,6 +380,7 @@ export default {
   },
   setup() {
     return {
+      LINE_USER_BIND, LINE_USER_EDIT, LINE_USER_EXPORT, LINE_USER_IMPORT, LINE_USER_QUERY, LINE_USER_REMOVE,
       Search, Refresh, Upload, Download, Delete, Remove, CircleCheck,
       UserFilled, DocumentCopy, Comment, View, DArrowRight, Link, Unlock, RemoveFilled, Edit
     }

@@ -1,6 +1,7 @@
 package com.cheng.web.controller.tag;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -34,7 +35,7 @@ public class TagGroupController extends BaseController {
     /**
      * 查詢 LINE 標籤群組列表
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:line:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupLine.LIST + "')")
     @GetMapping("/line/list")
     public TableDataInfo lineList(SysTagGroup sysTagGroup) {
         sysTagGroup.setPlatformScope(SysTagGroup.SCOPE_LINE);
@@ -46,7 +47,7 @@ public class TagGroupController extends BaseController {
     /**
      * 取得 LINE 標籤群組詳情
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:line:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupLine.QUERY + "')")
     @GetMapping("/line/{groupId}")
     public AjaxResult lineGetInfo(@PathVariable Long groupId) {
         SysTagGroup group = sysTagGroupService.selectSysTagGroupById(groupId);
@@ -59,7 +60,7 @@ public class TagGroupController extends BaseController {
     /**
      * 新增 LINE 標籤群組
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:line:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupLine.ADD + "')")
     @Log(title = "LINE 標籤群組", businessType = BusinessType.INSERT)
     @PostMapping("/line")
     public AjaxResult lineAdd(@Validated @RequestBody SysTagGroup sysTagGroup) {
@@ -71,7 +72,7 @@ public class TagGroupController extends BaseController {
     /**
      * 修改 LINE 標籤群組
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:line:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupLine.EDIT + "')")
     @Log(title = "LINE 標籤群組", businessType = BusinessType.UPDATE)
     @PutMapping("/line")
     public AjaxResult lineEdit(@Validated @RequestBody SysTagGroup sysTagGroup) {
@@ -83,7 +84,7 @@ public class TagGroupController extends BaseController {
     /**
      * 刪除 LINE 標籤群組
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:line:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupLine.REMOVE + "')")
     @Log(title = "LINE 標籤群組", businessType = BusinessType.DELETE)
     @DeleteMapping("/line/{groupIds}")
     public AjaxResult lineRemove(@PathVariable Long[] groupIds) {
@@ -93,7 +94,7 @@ public class TagGroupController extends BaseController {
     /**
      * 執行 LINE 群組運算
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:line:calc')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupLine.CALC + "')")
     @Log(title = "LINE 群組運算", businessType = BusinessType.OTHER)
     @PostMapping("/line/calc/{groupId}")
     public AjaxResult lineCalc(@PathVariable Long groupId) {
@@ -104,7 +105,7 @@ public class TagGroupController extends BaseController {
     /**
      * 預覽 LINE 群組運算結果
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:line:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupLine.QUERY + "')")
     @GetMapping("/line/preview/{groupId}")
     public AjaxResult linePreview(@PathVariable Long groupId,
                                   @RequestParam(defaultValue = "10") int limit) {
@@ -117,7 +118,7 @@ public class TagGroupController extends BaseController {
     /**
      * 查詢庫存標籤群組列表
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:inventory:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupInventory.LIST + "')")
     @GetMapping("/inventory/list")
     public TableDataInfo inventoryList(SysTagGroup sysTagGroup) {
         sysTagGroup.setPlatformScope(SysTagGroup.SCOPE_INVENTORY);
@@ -129,7 +130,7 @@ public class TagGroupController extends BaseController {
     /**
      * 取得庫存標籤群組詳情
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:inventory:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupInventory.QUERY + "')")
     @GetMapping("/inventory/{groupId}")
     public AjaxResult inventoryGetInfo(@PathVariable Long groupId) {
         SysTagGroup group = sysTagGroupService.selectSysTagGroupById(groupId);
@@ -142,7 +143,7 @@ public class TagGroupController extends BaseController {
     /**
      * 新增庫存標籤群組
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:inventory:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupInventory.ADD + "')")
     @Log(title = "庫存標籤群組", businessType = BusinessType.INSERT)
     @PostMapping("/inventory")
     public AjaxResult inventoryAdd(@Validated @RequestBody SysTagGroup sysTagGroup) {
@@ -154,7 +155,7 @@ public class TagGroupController extends BaseController {
     /**
      * 修改庫存標籤群組
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:inventory:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupInventory.EDIT + "')")
     @Log(title = "庫存標籤群組", businessType = BusinessType.UPDATE)
     @PutMapping("/inventory")
     public AjaxResult inventoryEdit(@Validated @RequestBody SysTagGroup sysTagGroup) {
@@ -166,7 +167,7 @@ public class TagGroupController extends BaseController {
     /**
      * 刪除庫存標籤群組
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:inventory:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupInventory.REMOVE + "')")
     @Log(title = "庫存標籤群組", businessType = BusinessType.DELETE)
     @DeleteMapping("/inventory/{groupIds}")
     public AjaxResult inventoryRemove(@PathVariable Long[] groupIds) {
@@ -176,7 +177,7 @@ public class TagGroupController extends BaseController {
     /**
      * 執行庫存群組運算
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:inventory:calc')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupInventory.CALC + "')")
     @Log(title = "庫存群組運算", businessType = BusinessType.OTHER)
     @PostMapping("/inventory/calc/{groupId}")
     public AjaxResult inventoryCalc(@PathVariable Long groupId) {
@@ -187,7 +188,7 @@ public class TagGroupController extends BaseController {
     /**
      * 預覽庫存群組運算結果
      */
-    @PreAuthorize("@ss.hasPermi('tag:group:inventory:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.GroupInventory.QUERY + "')")
     @GetMapping("/inventory/preview/{groupId}")
     public AjaxResult inventoryPreview(@PathVariable Long groupId,
                                        @RequestParam(defaultValue = "10") int limit) {

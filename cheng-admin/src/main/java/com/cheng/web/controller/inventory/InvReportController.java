@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import com.cheng.common.core.page.TableDataInfo;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import com.cheng.common.constant.PermConstants;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,7 +52,7 @@ public class InvReportController extends BaseController {
     /**
      * 取得庫存報表資料
      */
-    @PreAuthorize("@ss.hasPermi('inventory:report:view')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Report.VIEW + "')")
     @GetMapping("/stock")
     public TableDataInfo getStockReport(InvStock invStock) {
         startPage();
@@ -79,7 +80,7 @@ public class InvReportController extends BaseController {
     /**
      * 取得借出報表資料
      */
-    @PreAuthorize("@ss.hasPermi('inventory:report:view')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Report.VIEW + "')")
     @GetMapping("/borrow")
     public TableDataInfo getBorrowReport(InvBorrow invBorrow) {
         startPage();
@@ -102,7 +103,7 @@ public class InvReportController extends BaseController {
     /**
      * 取得庫存異動報表資料
      */
-    @PreAuthorize("@ss.hasPermi('inventory:report:view')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Report.VIEW + "')")
     @GetMapping("/movement")
     public TableDataInfo getMovementReport(InvStockRecord invStockRecord) {
         startPage();
@@ -125,7 +126,7 @@ public class InvReportController extends BaseController {
     /**
      * 匯出庫存報表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:report:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Report.EXPORT + "')")
     @Log(title = "庫存報表", businessType = BusinessType.EXPORT)
     @PostMapping("/stock/export")
     public void exportStockReport(HttpServletResponse response, InvStock invStock) {
@@ -137,7 +138,7 @@ public class InvReportController extends BaseController {
     /**
      * 匯出借出報表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:report:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Report.EXPORT + "')")
     @Log(title = "借出報表", businessType = BusinessType.EXPORT)
     @PostMapping("/borrow/export")
     public void exportBorrowReport(HttpServletResponse response, InvBorrow invBorrow) {
@@ -149,7 +150,7 @@ public class InvReportController extends BaseController {
     /**
      * 匯出異動報表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:report:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Report.EXPORT + "')")
     @Log(title = "異動報表", businessType = BusinessType.EXPORT)
     @PostMapping("/movement/export")
     public void exportMovementReport(HttpServletResponse response, InvStockRecord invStockRecord) {
@@ -161,7 +162,7 @@ public class InvReportController extends BaseController {
     /**
      * 取得掃描記錄報表資料
      */
-    @PreAuthorize("@ss.hasPermi('inventory:report:view')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Report.VIEW + "')")
     @GetMapping("/scan")
     public TableDataInfo getScanReport(InvScanLog invScanLog) {
         startPage();
@@ -184,7 +185,7 @@ public class InvReportController extends BaseController {
     /**
      * 匯出掃描報表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:report:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Report.EXPORT + "')")
     @Log(title = "掃描報表", businessType = BusinessType.EXPORT)
     @PostMapping("/scan/export")
     public void exportScanReport(HttpServletResponse response, InvScanLog invScanLog) {
@@ -197,7 +198,7 @@ public class InvReportController extends BaseController {
     /**
      * 取得儀表板統計資料
      */
-    @PreAuthorize("@ss.hasPermi('inventory:report:view')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Report.VIEW + "')")
     @GetMapping("/dashboard")
     public AjaxResult getDashboardData() {
         Map<String, Object> dashboard = new HashMap<>();

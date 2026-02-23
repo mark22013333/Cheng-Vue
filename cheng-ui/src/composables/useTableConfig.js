@@ -1,4 +1,4 @@
-import {getTableConfig, saveTableConfig} from '@/api/system/tableConfig'
+import {getTableConfig, saveTableConfig, getTemplateConfig as getTemplateConfigApi, saveTemplateConfig as saveTemplateConfigApi} from '@/api/system/tableConfig'
 
 /**
  * 表格欄位配置 Composable
@@ -81,9 +81,46 @@ export function useTableConfig() {
     return merged
   }
 
+  /**
+   * 載入全域模版配置
+   * @param {string} pageKey 頁面標識
+   * @param {object} defaultColumns 預設欄位配置
+   * @returns {Promise<object>} 合併後的模版配置
+   */
+  async function loadTemplateConfig(pageKey, defaultColumns) {
+    try {
+      const response = await getTemplateConfigApi(pageKey)
+      if (!response.data) {
+        return { ...defaultColumns }
+      }
+      const savedConfig = JSON.parse(response.data)
+      return mergeConfig(defaultColumns, savedConfig)
+    } catch (error) {
+      console.error('載入模版配置失敗：', error)
+      return { ...defaultColumns }
+    }
+  }
+
+  /**
+   * 儲存全域模版配置
+   * @param {string} pageKey 頁面標識
+   * @param {object} columns 欄位配置
+   * @returns {Promise}
+   */
+  async function saveTemplate(pageKey, columns) {
+    try {
+      await saveTemplateConfigApi(pageKey, columns)
+    } catch (error) {
+      console.error('儲存模版配置失敗：', error)
+      throw error
+    }
+  }
+
   return {
     loadConfig,
     saveConfig,
-    mergeConfig
+    mergeConfig,
+    loadTemplateConfig,
+    saveTemplate
   }
 }

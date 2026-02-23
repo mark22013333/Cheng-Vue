@@ -1,6 +1,7 @@
 package com.cheng.web.controller.system;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.constant.UserConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
@@ -29,7 +30,7 @@ public class SysMenuController extends BaseController {
     /**
      * 取得選單列表
      */
-    @PreAuthorize("@ss.hasPermi('system:menu:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Menu.LIST + "')")
     @GetMapping("/list")
     public AjaxResult list(SysMenu menu) {
         List<SysMenu> menus = menuService.selectMenuList(menu, getUserId());
@@ -39,7 +40,7 @@ public class SysMenuController extends BaseController {
     /**
      * 根據選單編號取得詳細訊息
      */
-    @PreAuthorize("@ss.hasPermi('system:menu:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Menu.QUERY + "')")
     @GetMapping(value = "/{menuId}")
     public AjaxResult getInfo(@PathVariable Long menuId) {
         return success(menuService.selectMenuById(menuId));
@@ -69,7 +70,7 @@ public class SysMenuController extends BaseController {
     /**
      * 新增選單
      */
-    @PreAuthorize("@ss.hasPermi('system:menu:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Menu.ADD + "')")
     @Log(title = "選單管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody SysMenu menu) {
@@ -85,7 +86,7 @@ public class SysMenuController extends BaseController {
     /**
      * 修改選單
      */
-    @PreAuthorize("@ss.hasPermi('system:menu:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Menu.EDIT + "')")
     @Log(title = "選單管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysMenu menu) {
@@ -103,7 +104,7 @@ public class SysMenuController extends BaseController {
     /**
      * 刪除選單
      */
-    @PreAuthorize("@ss.hasPermi('system:menu:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Menu.REMOVE + "')")
     @Log(title = "選單管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{menuId}")
     public AjaxResult remove(@PathVariable("menuId") Long menuId) {

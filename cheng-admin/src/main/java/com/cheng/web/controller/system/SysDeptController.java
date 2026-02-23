@@ -1,6 +1,7 @@
 package com.cheng.web.controller.system;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.constant.UserConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
@@ -30,7 +31,7 @@ public class SysDeptController extends BaseController {
     /**
      * 取得部門列表
      */
-    @PreAuthorize("@ss.hasPermi('system:dept:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dept.LIST + "')")
     @GetMapping("/list")
     public AjaxResult list(SysDept dept) {
         List<SysDept> depts = deptService.selectDeptList(dept);
@@ -40,7 +41,7 @@ public class SysDeptController extends BaseController {
     /**
      * 查詢部門列表（排除節點）
      */
-    @PreAuthorize("@ss.hasPermi('system:dept:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dept.LIST + "')")
     @GetMapping("/list/exclude/{deptId}")
     public AjaxResult excludeChild(@PathVariable(value = "deptId", required = false) Long deptId) {
         List<SysDept> depts = deptService.selectDeptList(new SysDept());
@@ -51,7 +52,7 @@ public class SysDeptController extends BaseController {
     /**
      * 根據部門編號取得詳細訊息
      */
-    @PreAuthorize("@ss.hasPermi('system:dept:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dept.QUERY + "')")
     @GetMapping(value = "/{deptId}")
     public AjaxResult getInfo(@PathVariable Long deptId) {
         deptService.checkDeptDataScope(deptId);
@@ -61,7 +62,7 @@ public class SysDeptController extends BaseController {
     /**
      * 新增部門
      */
-    @PreAuthorize("@ss.hasPermi('system:dept:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dept.ADD + "')")
     @Log(title = "部門管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody SysDept dept) {
@@ -75,7 +76,7 @@ public class SysDeptController extends BaseController {
     /**
      * 修改部門
      */
-    @PreAuthorize("@ss.hasPermi('system:dept:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dept.EDIT + "')")
     @Log(title = "部門管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysDept dept) {
@@ -95,7 +96,7 @@ public class SysDeptController extends BaseController {
     /**
      * 刪除部門
      */
-    @PreAuthorize("@ss.hasPermi('system:dept:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dept.REMOVE + "')")
     @Log(title = "部門管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{deptId}")
     public AjaxResult remove(@PathVariable Long deptId) {

@@ -7,7 +7,8 @@
       <el-tooltip class="item" effect="dark" content="重新整理" placement="top">
         <el-button circle icon="Refresh" @click="refresh()" />
       </el-tooltip>
-      <el-tooltip class="item" effect="dark" content="顯示/隱藏(欄位)" placement="top" v-if="Object.keys(columns).length > 0">
+      <!-- 列展示按鈕：僅有 canCustomize 權限時顯示 -->
+      <el-tooltip class="item" effect="dark" content="顯示/隱藏(欄位)" placement="top" v-if="Object.keys(columns).length > 0 && canCustomize">
         <el-button circle icon="Menu" @click="showColumn()" v-if="showColumnsType == 'transfer'"/>
         <el-dropdown trigger="click" :hide-on-click="false" style="padding-left: 12px" v-if="showColumnsType == 'checkbox'">
           <el-button circle icon="Menu" />
@@ -25,16 +26,20 @@
               <div ref="sortableContainer" class="sortable-container">
                 <div v-for="item in sortedColumns" :key="item.key" :data-key="item.key" class="sortable-item">
                   <el-icon class="drag-handle"><Rank /></el-icon>
-                  <el-checkbox 
-                    :model-value="columns[item.key]?.visible" 
-                    @change="checkboxChange($event, item.key)" 
-                    :label="item.label" 
+                  <el-checkbox
+                    :model-value="columns[item.key]?.visible"
+                    @change="checkboxChange($event, item.key)"
+                    :label="item.label"
                   />
                 </div>
               </div>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
+      </el-tooltip>
+      <!-- 模版管理按鈕：僅有 canManageTemplate 權限時顯示 -->
+      <el-tooltip class="item" effect="dark" content="設定欄位模版" placement="top" v-if="canManageTemplate && pageKey">
+        <el-button circle icon="Setting" @click="openTemplateDialog()" style="margin-left: 12px" />
       </el-tooltip>
     </el-row>
     <el-dialog :title="title" v-model="open" append-to-body>
@@ -45,12 +50,37 @@
         @change="dataChange"
       ></el-transfer>
     </el-dialog>
+    <!-- 模版設定 Dialog -->
+    <el-dialog title="設定欄位模版" v-model="templateDialogOpen" append-to-body width="480px">
+      <p class="template-hint">
+        模版配置將套用到所有沒有「自訂欄位」權限的使用者
+      </p>
+      <div class="drag-tip">
+        <el-icon><Rank /></el-icon>
+        <span>拖曳調整欄位順序</span>
+      </div>
+      <div ref="templateSortableContainer" class="sortable-container">
+        <div v-for="item in sortedTemplateColumns" :key="item.key" :data-key="item.key" class="sortable-item">
+          <el-icon class="drag-handle"><Rank /></el-icon>
+          <el-checkbox
+            :model-value="templateColumns[item.key]?.visible"
+            @change="templateCheckboxChange($event, item.key)"
+            :label="item.label"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="templateDialogOpen = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveTemplate" :loading="templateSaving">儲存模版</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useTableConfig } from '@/composables/useTableConfig'
+import { getTemplateConfig } from '@/api/system/tableConfig'
 import { ElMessage } from 'element-plus'
 import { Rank } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
@@ -90,6 +120,16 @@ const props = defineProps({
   autoSave: {
     type: Boolean,
     default: true
+  },
+  /* 是否允許自訂欄位（由父元件根據權限傳入） */
+  canCustomize: {
+    type: Boolean,
+    default: true
+  },
+  /* 是否允許管理模版（由父元件根據權限傳入） */
+  canManageTemplate: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -139,7 +179,6 @@ function toggleSearch() {
 
 // 重新整理
 function refresh() {
-  console.log('🔄 RightToolbar: 點擊重新整理按鈕，發送 queryTable 事件')
   emits("queryTable")
 }
 
@@ -208,22 +247,22 @@ function toggleCheckAll() {
 // 表格欄位配置自動儲存功能
 // ============================================================
 
-const { saveConfig } = useTableConfig()
+const { saveConfig, saveTemplate } = useTableConfig()
 
 // 防抖計時器
 let saveTimer = null
 
 // 觸發自動儲存（防抖 2 秒）
 function triggerAutoSave() {
-  if (!props.autoSave || !props.pageKey) {
+  if (!props.autoSave || !props.pageKey || !props.canCustomize) {
     return
   }
-  
+
   // 清除之前的計時器
   if (saveTimer) {
     clearTimeout(saveTimer)
   }
-  
+
   // 設定新的計時器
   saveTimer = setTimeout(() => {
     handleSaveConfig()
@@ -235,12 +274,12 @@ async function handleSaveConfig() {
   if (!props.pageKey || Object.keys(props.columns).length === 0) {
     return
   }
-  
+
   try {
     await saveConfig(props.pageKey, props.columns)
-    console.log(`✅ 表格欄位配置已自動儲存：${props.pageKey}`)
+    console.log(`表格欄位配置已自動儲存：${props.pageKey}`)
   } catch (error) {
-    console.error('❌ 儲存表格欄位配置失敗：', error)
+    console.error('儲存表格欄位配置失敗：', error)
   }
 }
 
@@ -253,12 +292,8 @@ watch(
   { deep: true }
 )
 
-// 組件掛載時，如果有 pageKey，載入配置
+// 組件掛載時初始化
 onMounted(() => {
-  if (props.pageKey) {
-    console.log(`📋 表格欄位配置功能已啟用：${props.pageKey}`)
-    console.log('💡 提示：修改欄位顯示/隱藏後，會在 2 秒後自動儲存')
-  }
   // 初始化拖曳排序
   nextTick(() => {
     initSortable()
@@ -281,14 +316,14 @@ function initSortable() {
 function handleSortEnd(evt) {
   const { oldIndex, newIndex } = evt
   if (oldIndex === newIndex) return
-  
+
   // 取得新的順序
   const items = sortableContainer.value.querySelectorAll('.sortable-item')
   const newOrder = Array.from(items).map((item, index) => ({
     key: item.dataset.key,
     order: index
   }))
-  
+
   // 更新 columns 的 order 屬性
   if (!Array.isArray(props.columns)) {
     newOrder.forEach(({ key, order }) => {
@@ -297,14 +332,116 @@ function handleSortEnd(evt) {
       }
     })
   }
-  
+
   // 發送事件通知父組件
   emits('columnsOrderChange', newOrder)
-  
+
   // 觸發自動儲存
   triggerAutoSave()
-  
-  console.log('🔄 欄位順序已更新:', newOrder)
+}
+
+// ============================================================
+// 模版管理功能
+// ============================================================
+
+const templateDialogOpen = ref(false)
+const templateColumns = ref({})
+const templateSaving = ref(false)
+const templateSortableContainer = ref(null)
+let templateSortableInstance = null
+
+// 排序後的模版欄位列表
+const sortedTemplateColumns = computed(() => {
+  return Object.entries(templateColumns.value)
+    .map(([key, col]) => ({ ...col, key, order: col.order ?? 999 }))
+    .sort((a, b) => a.order - b.order)
+})
+
+// 打開模版設定 Dialog
+async function openTemplateDialog() {
+  try {
+    const res = await getTemplateConfig(props.pageKey)
+    if (res.data) {
+      const saved = JSON.parse(res.data)
+      // 合併：以當前 columns 的 key 為基準
+      const merged = {}
+      for (const key in props.columns) {
+        if (saved[key]) {
+          merged[key] = {
+            label: props.columns[key].label,
+            visible: saved[key].visible,
+            order: saved[key].order ?? props.columns[key].order ?? 999
+          }
+        } else {
+          merged[key] = {
+            label: props.columns[key].label,
+            visible: props.columns[key].visible,
+            order: props.columns[key].order ?? 999
+          }
+        }
+      }
+      templateColumns.value = merged
+    } else {
+      // 沒有模版，使用當前 columns 深拷貝
+      templateColumns.value = JSON.parse(JSON.stringify(props.columns))
+    }
+  } catch {
+    templateColumns.value = JSON.parse(JSON.stringify(props.columns))
+  }
+  templateDialogOpen.value = true
+  // 初始化模版拖曳排序
+  nextTick(() => {
+    initTemplateSortable()
+  })
+}
+
+// 模版欄位勾選變更
+function templateCheckboxChange(event, key) {
+  templateColumns.value[key].visible = event
+}
+
+// 儲存模版
+async function handleSaveTemplate() {
+  templateSaving.value = true
+  try {
+    await saveTemplate(props.pageKey, templateColumns.value)
+    ElMessage.success('模版儲存成功')
+    templateDialogOpen.value = false
+  } catch (error) {
+    ElMessage.error('模版儲存失敗')
+  } finally {
+    templateSaving.value = false
+  }
+}
+
+// 初始化模版 Sortable
+function initTemplateSortable() {
+  if (templateSortableInstance) {
+    templateSortableInstance.destroy()
+    templateSortableInstance = null
+  }
+  if (templateSortableContainer.value) {
+    templateSortableInstance = Sortable.create(templateSortableContainer.value, {
+      animation: 150,
+      handle: '.drag-handle',
+      ghostClass: 'sortable-ghost',
+      onEnd: handleTemplateSortEnd
+    })
+  }
+}
+
+// 模版拖曳結束處理
+function handleTemplateSortEnd(evt) {
+  const { oldIndex, newIndex } = evt
+  if (oldIndex === newIndex) return
+
+  const items = templateSortableContainer.value.querySelectorAll('.sortable-item')
+  Array.from(items).forEach((item, index) => {
+    const key = item.dataset.key
+    if (templateColumns.value[key]) {
+      templateColumns.value[key].order = index
+    }
+  })
 }
 </script>
 
@@ -366,5 +503,13 @@ function handleSortEnd(evt) {
 }
 :deep(.column-dropdown-menu) {
   min-width: 200px;
+}
+.template-hint {
+  color: #909399;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  padding: 8px 12px;
+  background: #f5f7fa;
+  border-radius: 4px;
 }
 </style>

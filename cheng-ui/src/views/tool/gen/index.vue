@@ -43,7 +43,7 @@
           icon="Download"
           :disabled="multiple"
           @click="handleGenTable"
-          v-hasPermi="['tool:gen:code']"
+          v-hasPermi="[TOOL_GEN_CODE]"
         >產生</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -61,7 +61,7 @@
           plain
           icon="Upload"
           @click="openImportTable"
-          v-hasPermi="['tool:gen:import']"
+          v-hasPermi="[TOOL_GEN_IMPORT]"
         >匯入</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -71,7 +71,7 @@
           icon="Edit"
           :disabled="single"
           @click="handleEditTable"
-          v-hasPermi="['tool:gen:edit']"
+          v-hasPermi="[TOOL_GEN_EDIT]"
         >修改</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -81,7 +81,7 @@
           icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['tool:gen:remove']"
+          v-hasPermi="[TOOL_GEN_REMOVE]"
         >刪除</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -102,19 +102,19 @@
       <el-table-column label="操作" align="center" width="330" class-name="small-padding fixed-width" fixed="right">
         <template #default="scope">
           <el-tooltip content="預覽" placement="top">
-            <el-button link type="primary" icon="View" @click="handlePreview(scope.row)" v-hasPermi="['tool:gen:preview']"></el-button>
+            <el-button link type="primary" icon="View" @click="handlePreview(scope.row)" v-hasPermi="[TOOL_GEN_PREVIEW]"></el-button>
           </el-tooltip>
           <el-tooltip content="編輯" placement="top">
-            <el-button link type="primary" icon="Edit" @click="handleEditTable(scope.row)" v-hasPermi="['tool:gen:edit']"></el-button>
+            <el-button link type="primary" icon="Edit" @click="handleEditTable(scope.row)" v-hasPermi="[TOOL_GEN_EDIT]"></el-button>
           </el-tooltip>
           <el-tooltip content="刪除" placement="top">
-            <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['tool:gen:remove']"></el-button>
+            <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[TOOL_GEN_REMOVE]"></el-button>
           </el-tooltip>
           <el-tooltip content="同步" placement="top">
-            <el-button link type="primary" icon="Refresh" @click="handleSynchDb(scope.row)" v-hasPermi="['tool:gen:edit']"></el-button>
+            <el-button link type="primary" icon="Refresh" @click="handleSynchDb(scope.row)" v-hasPermi="[TOOL_GEN_EDIT]"></el-button>
           </el-tooltip>
           <el-tooltip content="產生代碼" placement="top">
-            <el-button link type="primary" icon="Download" @click="handleGenTable(scope.row)" v-hasPermi="['tool:gen:code']"></el-button>
+            <el-button link type="primary" icon="Download" @click="handleGenTable(scope.row)" v-hasPermi="[TOOL_GEN_CODE]"></el-button>
           </el-tooltip>
         </template>
       </el-table-column>
@@ -146,6 +146,13 @@
 </template>
 
 <script setup name="Gen">
+import {
+  TOOL_GEN_CODE,
+  TOOL_GEN_EDIT,
+  TOOL_GEN_IMPORT,
+  TOOL_GEN_PREVIEW,
+  TOOL_GEN_REMOVE
+} from '@/constants/permissions'
 import { listTable, previewTable, delTable, genCode, synchDb } from "@/api/tool/gen"
 import router from "@/router"
 import importTable from "./importTable"

@@ -2,6 +2,7 @@ package com.cheng.quartz.controller;
 
 import com.cheng.common.annotation.Log;
 import com.cheng.common.constant.Constants;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.domain.TaskParamMetadata;
@@ -50,7 +51,7 @@ public class SysJobController extends BaseController {
      *
      * @return 任務類型選項，按分類分組
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.LIST + "')")
     public AjaxResult getTaskTypes() {
         Map<String, Object> result = new LinkedHashMap<>();
 
@@ -99,7 +100,7 @@ public class SysJobController extends BaseController {
      * @param category 任務分類代碼（例如：crawler, notification）
      * @return 任務類型選項列表
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.LIST + "')")
     @GetMapping("/taskTypes/{category}")
     public AjaxResult getTaskTypesByCategory(@PathVariable String category) {
         if (taskTypeProviders == null || taskTypeProviders.isEmpty()) {
@@ -118,7 +119,7 @@ public class SysJobController extends BaseController {
     /**
      * 查詢定時任務列表
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysJob sysJob) {
         startPage();
@@ -129,7 +130,7 @@ public class SysJobController extends BaseController {
     /**
      * 匯出定時任務列表
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.EXPORT + "')")
     @Log(title = "定時任務", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysJob sysJob) {
@@ -141,7 +142,7 @@ public class SysJobController extends BaseController {
     /**
      * 取得定時任務詳細訊息
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.QUERY + "')")
     @GetMapping(value = "/{jobId}")
     public AjaxResult getInfo(@PathVariable("jobId") Long jobId) {
         return success(jobService.selectJobById(jobId));
@@ -150,7 +151,7 @@ public class SysJobController extends BaseController {
     /**
      * 新增定時任務
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.ADD + "')")
     @Log(title = "定時任務", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody SysJob job) throws SchedulerException, TaskException {
@@ -174,7 +175,7 @@ public class SysJobController extends BaseController {
     /**
      * 修改定時任務
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.EDIT + "')")
     @Log(title = "定時任務", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody SysJob job) throws SchedulerException, TaskException {
@@ -198,7 +199,7 @@ public class SysJobController extends BaseController {
     /**
      * 定時任務狀態修改
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:changeStatus')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.CHANGE_STATUS + "')")
     @Log(title = "定時任務", businessType = BusinessType.UPDATE)
     @PutMapping("/changeStatus")
     public AjaxResult changeStatus(@RequestBody SysJob job) throws SchedulerException {
@@ -210,7 +211,7 @@ public class SysJobController extends BaseController {
     /**
      * 定時任務立即執行一次
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:changeStatus')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.CHANGE_STATUS + "')")
     @Log(title = "定時任務", businessType = BusinessType.UPDATE)
     @PutMapping("/run")
     public AjaxResult run(@RequestBody SysJob job) throws SchedulerException {
@@ -221,7 +222,7 @@ public class SysJobController extends BaseController {
     /**
      * 刪除定時任務
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Job.REMOVE + "')")
     @Log(title = "定時任務", businessType = BusinessType.DELETE)
     @DeleteMapping("/{jobIds}")
     public AjaxResult remove(@PathVariable Long[] jobIds) throws SchedulerException {

@@ -72,7 +72,7 @@
           plain
           icon="Plus"
           @click="handleBatchBind"
-          v-hasPermi="['tag:inventory:batchBind']"
+          v-hasPermi="[TAG_INVENTORY_BATCH_BIND]"
         >批次貼標</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -82,7 +82,7 @@
           icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['tag:inventory:unbind']"
+          v-hasPermi="[TAG_INVENTORY_UNBIND]"
         >移除標籤</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
@@ -101,7 +101,7 @@
       <el-table-column label="建立時間" align="center" prop="createTime" width="160" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="120">
         <template #default="scope">
-          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['tag:inventory:unbind']">移除</el-button>
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[TAG_INVENTORY_UNBIND]">移除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -196,6 +196,10 @@
 </template>
 
 <script setup name="InventoryBindItem">
+import {
+  TAG_INVENTORY_BATCH_BIND,
+  TAG_INVENTORY_UNBIND
+} from '@/constants/permissions'
 import { ref, reactive, toRefs, onMounted, getCurrentInstance } from 'vue'
 import { listInvItemTagRelations, delInvItemTagRelations, getInventoryTagOptions, batchBindInvItemTagWithValidation } from '@/api/tag/inventory'
 

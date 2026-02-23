@@ -33,7 +33,7 @@
                plain
                icon="Plus"
                @click="handleAdd"
-               v-hasPermi="['system:dept:add']"
+               v-hasPermi="[SYSTEM_DEPT_ADD]"
             >新增</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -69,9 +69,9 @@
          </el-table-column>
          <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width" fixed="right">
             <template #default="scope">
-               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:dept:edit']">修改</el-button>
-               <el-button link type="primary" icon="Plus" @click="handleAdd(scope.row)" v-hasPermi="['system:dept:add']">新增</el-button>
-               <el-button v-if="scope.row.parentId != 0" link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:dept:remove']">刪除</el-button>
+               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="[SYSTEM_DEPT_EDIT]">修改</el-button>
+               <el-button link type="primary" icon="Plus" @click="handleAdd(scope.row)" v-hasPermi="[SYSTEM_DEPT_ADD]">新增</el-button>
+               <el-button v-if="scope.row.parentId != 0" link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[SYSTEM_DEPT_REMOVE]">刪除</el-button>
             </template>
          </el-table-column>
       </el-table>
@@ -141,6 +141,11 @@
 </template>
 
 <script setup name="Dept">
+import {
+  SYSTEM_DEPT_ADD,
+  SYSTEM_DEPT_EDIT,
+  SYSTEM_DEPT_REMOVE
+} from '@/constants/permissions'
 import { listDept, getDept, delDept, addDept, updateDept, listDeptExcludeChild } from "@/api/system/dept"
 
 const { proxy } = getCurrentInstance()

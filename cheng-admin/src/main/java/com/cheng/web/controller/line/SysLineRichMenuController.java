@@ -2,6 +2,7 @@ package com.cheng.web.controller.line;
 
 import com.cheng.common.annotation.Log;
 import com.cheng.common.config.CoolAppsConfig;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -52,7 +53,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 查詢 Rich Menu 列表
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysLineRichMenu richMenu) {
         startPage();
@@ -63,7 +64,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 匯出 Rich Menu 列表
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.EXPORT + "')")
     @Log(title = "Rich Menu 管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysLineRichMenu richMenu) {
@@ -75,7 +76,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 取得 Rich Menu 詳細資訊
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.QUERY + "')")
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id) {
         return success(richMenuService.selectRichMenuById(id));
@@ -84,7 +85,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 根據 LINE richMenuId 查詢
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.QUERY + "')")
     @GetMapping("/byRichMenuId/{richMenuId}")
     public AjaxResult getByRichMenuId(@PathVariable("richMenuId") String richMenuId) {
         return success(richMenuService.selectRichMenuByRichMenuId(richMenuId));
@@ -93,7 +94,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 根據頻道 ID 查詢預設選單
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.QUERY + "')")
     @GetMapping("/default/{configId}")
     public AjaxResult getDefaultByConfigId(@PathVariable("configId") Integer configId) {
         return success(richMenuService.selectDefaultRichMenuByConfigId(configId));
@@ -102,7 +103,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 新增 Rich Menu
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.ADD + "')")
     @Log(title = "Rich Menu 管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody SysLineRichMenu richMenu) {
@@ -112,7 +113,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 修改 Rich Menu
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.EDIT + "')")
     @Log(title = "Rich Menu 管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysLineRichMenu richMenu) {
@@ -122,7 +123,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 刪除 Rich Menu
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.REMOVE + "')")
     @Log(title = "Rich Menu 管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids) {
@@ -137,7 +138,7 @@ public class SysLineRichMenuController extends BaseController {
      * @param taskId 任務 ID（可選，提供時使用異步 + SSE 模式）
      * @return AjaxResult
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:publish')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.PUBLISH + "')")
     @Log(title = "Rich Menu 管理", businessType = BusinessType.UPDATE)
     @PostMapping("/publish/{id}")
     public AjaxResult publish(@PathVariable Long id, @RequestParam(required = false) String taskId) {
@@ -156,7 +157,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 設定為預設選單
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:setDefault')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.SET_DEFAULT + "')")
     @Log(title = "Rich Menu 管理", businessType = BusinessType.UPDATE)
     @PostMapping("/setDefault/{id}")
     public AjaxResult setDefault(@PathVariable Long id) {
@@ -166,7 +167,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 從 LINE 平台刪除 Rich Menu
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:publish')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.PUBLISH + "')")
     @Log(title = "Rich Menu 管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/deleteFromLine/{id}")
     public AjaxResult deleteFromLine(@PathVariable Long id) {
@@ -176,7 +177,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 綁定 Rich Menu 到使用者
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:publish')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.PUBLISH + "')")
     @Log(title = "Rich Menu 管理", businessType = BusinessType.UPDATE)
     @PostMapping("/linkToUser")
     public AjaxResult linkToUser(@RequestParam String userId, @RequestParam String richMenuId) {
@@ -186,7 +187,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 解除使用者的 Rich Menu 綁定
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:publish')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.PUBLISH + "')")
     @Log(title = "Rich Menu 管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/unlinkFromUser/{userId}")
     public AjaxResult unlinkFromUser(@PathVariable String userId) {
@@ -354,7 +355,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 刪除已上傳的圖片檔案
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:add') or @ss.hasPermi('line:richMenu:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.ADD + "') or @ss.hasPermi('" + PermConstants.Line.RichMenu.EDIT + "')")
     @DeleteMapping("/deleteImage")
     public AjaxResult deleteImage(@RequestParam String fileName) {
         try {
@@ -393,7 +394,7 @@ public class SysLineRichMenuController extends BaseController {
     /**
      * 重新下載並更新預覽圖
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenu:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenu.EDIT + "')")
     @Log(title = "Rich Menu 管理", businessType = BusinessType.UPDATE)
     @PostMapping("/refreshPreviewImage/{id}")
     public AjaxResult refreshPreviewImage(@PathVariable Long id) {

@@ -3,6 +3,7 @@ package com.cheng.shop.controller;
 import com.cheng.common.annotation.Log;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.shop.domain.ShopProductSku;
 import com.cheng.shop.service.IShopProductSkuService;
@@ -28,7 +29,7 @@ public class ShopProductSkuController extends BaseController {
     /**
      * 根據商品ID查詢SKU列表
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.QUERY + "')")
     @GetMapping("/list/{productId}")
     public AjaxResult list(@PathVariable Long productId) {
         List<ShopProductSku> list = skuService.selectSkuListByProductId(productId);
@@ -38,7 +39,7 @@ public class ShopProductSkuController extends BaseController {
     /**
      * 查詢SKU詳細
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.QUERY + "')")
     @GetMapping("/{skuId}")
     public AjaxResult getInfo(@PathVariable Long skuId) {
         return success(skuService.selectSkuById(skuId));
@@ -47,7 +48,7 @@ public class ShopProductSkuController extends BaseController {
     /**
      * 新增SKU
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.EDIT + "')")
     @Log(title = "商品SKU", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody ShopProductSku sku) {
@@ -60,7 +61,7 @@ public class ShopProductSkuController extends BaseController {
     /**
      * 修改SKU
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.EDIT + "')")
     @Log(title = "商品SKU", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody ShopProductSku sku) {
@@ -73,7 +74,7 @@ public class ShopProductSkuController extends BaseController {
     /**
      * 刪除SKU
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.EDIT + "')")
     @Log(title = "商品SKU", businessType = BusinessType.DELETE)
     @DeleteMapping("/{skuId}")
     public AjaxResult remove(@PathVariable Long skuId) {
@@ -83,7 +84,7 @@ public class ShopProductSkuController extends BaseController {
     /**
      * 批量儲存SKU
      */
-    @PreAuthorize("@ss.hasPermi('shop:product:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.EDIT + "')")
     @Log(title = "商品SKU", businessType = BusinessType.UPDATE)
     @PostMapping("/batch/{productId}")
     public AjaxResult batchSave(@PathVariable Long productId, @RequestBody List<ShopProductSku> skuList) {

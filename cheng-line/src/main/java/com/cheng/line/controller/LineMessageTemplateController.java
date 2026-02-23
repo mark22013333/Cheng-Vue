@@ -1,6 +1,7 @@
 package com.cheng.line.controller;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -58,7 +59,7 @@ public class LineMessageTemplateController extends BaseController {
      * 上傳 Imagemap 圖片
      * 自動產生 240, 300, 460, 700, 1040 五種尺寸
      */
-    @PreAuthorize("@ss.hasPermi('line:template:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.ADD + "')")
     @Log(title = "Imagemap圖片上傳", businessType = BusinessType.UPDATE)
     @PostMapping("/upload/imagemap")
     public AjaxResult uploadImagemap(@RequestParam("file") MultipartFile file) {
@@ -110,7 +111,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 刪除 Imagemap 圖片
      */
-    @PreAuthorize("@ss.hasPermi('line:template:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.REMOVE + "')")
     @Log(title = "Imagemap圖片刪除", businessType = BusinessType.DELETE)
     @DeleteMapping("/imagemap/{uuid}")
     public AjaxResult deleteImagemap(@PathVariable String uuid) {
@@ -135,7 +136,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 查詢範本列表
      */
-    @PreAuthorize("@ss.hasPermi('line:template:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(LineMessageTemplate lineMessageTemplate) {
         startPage();
@@ -146,7 +147,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 匯出範本列表
      */
-    @PreAuthorize("@ss.hasPermi('line:template:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.EXPORT + "')")
     @Log(title = "訊息範本", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, LineMessageTemplate lineMessageTemplate) {
@@ -158,7 +159,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 取得範本詳細資訊
      */
-    @PreAuthorize("@ss.hasPermi('line:template:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.QUERY + "')")
     @GetMapping("/{templateId}")
     public AjaxResult getInfo(@PathVariable Long templateId) {
         return success(lineMessageTemplateService.selectLineMessageTemplateById(templateId));
@@ -167,7 +168,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 根據範本代碼取得範本
      */
-    @PreAuthorize("@ss.hasPermi('line:template:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.QUERY + "')")
     @GetMapping("/code/{templateCode}")
     public AjaxResult getByCode(@PathVariable String templateCode) {
         return success(lineMessageTemplateService.selectLineMessageTemplateByCode(templateCode));
@@ -176,7 +177,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 根據訊息類型取得範本列表
      */
-    @PreAuthorize("@ss.hasPermi('line:template:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.QUERY + "')")
     @GetMapping("/type/{msgType}")
     public AjaxResult getByType(@PathVariable String msgType) {
         return success(lineMessageTemplateService.selectLineMessageTemplateByType(msgType));
@@ -185,7 +186,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 新增範本
      */
-    @PreAuthorize("@ss.hasPermi('line:template:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.ADD + "')")
     @Log(title = "訊息範本", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody Map<String, Object> params) {
@@ -214,7 +215,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 修改範本
      */
-    @PreAuthorize("@ss.hasPermi('line:template:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.EDIT + "')")
     @Log(title = "訊息範本", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody Map<String, Object> params) {
@@ -253,7 +254,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 刪除範本
      */
-    @PreAuthorize("@ss.hasPermi('line:template:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.REMOVE + "')")
     @Log(title = "訊息範本", businessType = BusinessType.DELETE)
     @DeleteMapping("/{templateIds}")
     public AjaxResult remove(@PathVariable Long[] templateIds) {
@@ -263,7 +264,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 變更範本狀態
      */
-    @PreAuthorize("@ss.hasPermi('line:template:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.EDIT + "')")
     @Log(title = "訊息範本", businessType = BusinessType.UPDATE)
     @PutMapping("/changeStatus")
     public AjaxResult changeStatus(@RequestBody Map<String, Object> params) {
@@ -281,7 +282,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 驗證 Flex Message JSON
      */
-    @PreAuthorize("@ss.hasPermi('line:template:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.QUERY + "')")
     @PostMapping("/validate/flex")
     public AjaxResult validateFlexJson(@RequestBody Map<String, String> params) {
         String jsonContent = params.get("content");
@@ -297,7 +298,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 格式化 JSON
      */
-    @PreAuthorize("@ss.hasPermi('line:template:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.QUERY + "')")
     @PostMapping("/format/json")
     public AjaxResult formatJson(@RequestBody Map<String, String> params) {
         String jsonContent = params.get("content");
@@ -308,7 +309,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 預覽範本（替換變數後的內容）
      */
-    @PreAuthorize("@ss.hasPermi('line:template:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.QUERY + "')")
     @PostMapping("/preview")
     public AjaxResult preview(@RequestBody Map<String, Object> params) {
         Long templateId = Long.valueOf(params.get("templateId").toString());
@@ -325,7 +326,7 @@ public class LineMessageTemplateController extends BaseController {
      * 發送測試推播（單人推播）
      * 支援單一訊息和多訊息組合格式
      */
-    @PreAuthorize("@ss.hasPermi('line:template:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.EDIT + "')")
     @Log(title = "範本測試推播", businessType = BusinessType.OTHER)
     @PostMapping("/sendTest")
     public AjaxResult sendTestMessage(@RequestBody Map<String, Object> params) {
@@ -584,7 +585,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 取得預設 Flex 範本列表
      */
-    @PreAuthorize("@ss.hasPermi('line:template:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.QUERY + "')")
     @GetMapping("/flex/presets")
     public AjaxResult getFlexPresets() {
         return success(lineMessageTemplateService.getFlexPresetTemplates());
@@ -593,7 +594,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 取得指定 Flex 範本內容
      */
-    @PreAuthorize("@ss.hasPermi('line:template:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.QUERY + "')")
     @GetMapping("/flex/presets/{templateName}")
     public AjaxResult getFlexPresetContent(@PathVariable String templateName) {
         String content = lineMessageTemplateService.getFlexPresetContent(templateName);
@@ -1100,7 +1101,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 查詢圖文範本被哪些訊息範本引用
      */
-    @PreAuthorize("@ss.hasPermi('line:template:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.QUERY + "')")
     @GetMapping("/imagemap/{imagemapId}/references")
     public AjaxResult getImagemapReferences(@PathVariable Long imagemapId) {
         return success(imagemapRefService.selectRefsByImagemapId(imagemapId));
@@ -1109,7 +1110,7 @@ public class LineMessageTemplateController extends BaseController {
     /**
      * 同步更新引用的訊息範本
      */
-    @PreAuthorize("@ss.hasPermi('line:template:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.EDIT + "')")
     @Log(title = "同步圖文範本引用", businessType = BusinessType.UPDATE)
     @PostMapping("/imagemap/{imagemapId}/sync-references")
     public AjaxResult syncImagemapReferences(

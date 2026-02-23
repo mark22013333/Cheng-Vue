@@ -1,6 +1,7 @@
 package com.cheng.web.controller.system;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -26,7 +27,7 @@ public class SysMaterialController extends BaseController {
     @Autowired
     private ISysMaterialAssetService materialAssetService;
 
-    @PreAuthorize("@ss.hasPermi('system:material:audio:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialAudio.LIST + "')")
     @GetMapping("/audio/list")
     public TableDataInfo listAudio(SysMaterialAsset asset) {
         asset.setAssetType("AUDIO");
@@ -35,7 +36,7 @@ public class SysMaterialController extends BaseController {
         return getDataTable(list);
     }
 
-    @PreAuthorize("@ss.hasPermi('system:material:video:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialVideo.LIST + "')")
     @GetMapping("/video/list")
     public TableDataInfo listVideo(SysMaterialAsset asset) {
         asset.setAssetType("VIDEO");
@@ -44,7 +45,7 @@ public class SysMaterialController extends BaseController {
         return getDataTable(list);
     }
 
-    @PreAuthorize("@ss.hasPermi('system:material:image:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialImage.LIST + "')")
     @GetMapping("/image/list")
     public TableDataInfo listImage(SysMaterialAsset asset) {
         asset.setAssetType("IMAGE");
@@ -53,13 +54,13 @@ public class SysMaterialController extends BaseController {
         return getDataTable(list);
     }
 
-    @PreAuthorize("@ss.hasPermi('system:material:audio:query') or @ss.hasPermi('system:material:video:query') or @ss.hasPermi('system:material:image:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialAudio.QUERY + "') or @ss.hasPermi('" + PermConstants.System.MaterialVideo.QUERY + "') or @ss.hasPermi('" + PermConstants.System.MaterialImage.QUERY + "')")
     @GetMapping(value = "/{assetId}")
     public AjaxResult getInfo(@PathVariable Long assetId) {
         return success(materialAssetService.selectSysMaterialAssetById(assetId));
     }
 
-    @PreAuthorize("@ss.hasPermi('system:material:audio:upload')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialAudio.UPLOAD + "')")
     @Log(title = "素材管理-音檔", businessType = BusinessType.INSERT)
     @PostMapping("/audio/upload")
     public AjaxResult uploadAudio(@RequestParam("file") MultipartFile file,
@@ -69,7 +70,7 @@ public class SysMaterialController extends BaseController {
         return success(buildUploadResult(asset));
     }
 
-    @PreAuthorize("@ss.hasPermi('system:material:video:upload')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialVideo.UPLOAD + "')")
     @Log(title = "素材管理-影片", businessType = BusinessType.INSERT)
     @PostMapping("/video/upload")
     public AjaxResult uploadVideo(@RequestParam("file") MultipartFile file,
@@ -79,7 +80,7 @@ public class SysMaterialController extends BaseController {
         return success(buildUploadResult(asset));
     }
 
-    @PreAuthorize("@ss.hasPermi('system:material:image:upload')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialImage.UPLOAD + "')")
     @Log(title = "素材管理-圖片", businessType = BusinessType.INSERT)
     @PostMapping("/image/upload")
     public AjaxResult uploadImage(@RequestParam("file") MultipartFile file,
@@ -88,21 +89,21 @@ public class SysMaterialController extends BaseController {
         return success(buildUploadResult(asset));
     }
 
-    @PreAuthorize("@ss.hasPermi('system:material:audio:upload')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialAudio.UPLOAD + "')")
     @GetMapping("/audio/exists")
     public AjaxResult existsAudio(@RequestParam("originalName") String originalName) {
         String storedFileName = buildStoredFileName(originalName);
         return success(materialAssetService.selectByTypeAndFileName("AUDIO", storedFileName) != null);
     }
 
-    @PreAuthorize("@ss.hasPermi('system:material:video:upload')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialVideo.UPLOAD + "')")
     @GetMapping("/video/exists")
     public AjaxResult existsVideo(@RequestParam("originalName") String originalName) {
         String storedFileName = buildStoredFileName(originalName);
         return success(materialAssetService.selectByTypeAndFileName("VIDEO", storedFileName) != null);
     }
 
-    @PreAuthorize("@ss.hasPermi('system:material:image:upload')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialImage.UPLOAD + "')")
     @GetMapping("/image/exists")
     public AjaxResult existsImage(@RequestParam("originalName") String originalName) {
         String storedFileName = buildStoredFileName(originalName);
@@ -127,21 +128,21 @@ public class SysMaterialController extends BaseController {
         return yyyyMMdd + "_" + safeBaseName + "." + fileExt;
     }
 
-    @PreAuthorize("@ss.hasPermi('system:material:audio:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialAudio.REMOVE + "')")
     @Log(title = "素材管理-音檔", businessType = BusinessType.DELETE)
     @DeleteMapping("/audio/{assetIds}")
     public AjaxResult removeAudio(@PathVariable Long[] assetIds) {
         return toAjax(materialAssetService.deleteSysMaterialAssetByIds(assetIds));
     }
 
-    @PreAuthorize("@ss.hasPermi('system:material:video:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialVideo.REMOVE + "')")
     @Log(title = "素材管理-影片", businessType = BusinessType.DELETE)
     @DeleteMapping("/video/{assetIds}")
     public AjaxResult removeVideo(@PathVariable Long[] assetIds) {
         return toAjax(materialAssetService.deleteSysMaterialAssetByIds(assetIds));
     }
 
-    @PreAuthorize("@ss.hasPermi('system:material:image:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.MaterialImage.REMOVE + "')")
     @Log(title = "素材管理-圖片", businessType = BusinessType.DELETE)
     @DeleteMapping("/image/{assetIds}")
     public AjaxResult removeImage(@PathVariable Long[] assetIds) {

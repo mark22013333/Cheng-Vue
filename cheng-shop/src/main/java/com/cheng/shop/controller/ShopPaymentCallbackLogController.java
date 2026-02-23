@@ -1,5 +1,6 @@
 package com.cheng.shop.controller;
 
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -26,7 +27,7 @@ public class ShopPaymentCallbackLogController extends BaseController {
     /**
      * 查詢金流回調紀錄列表
      */
-    @PreAuthorize("@ss.hasPermi('shop:payment:callback:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.PaymentCallback.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(ShopPaymentCallbackLog log) {
         startPage();
@@ -37,7 +38,7 @@ public class ShopPaymentCallbackLogController extends BaseController {
     /**
      * 查詢金流回調紀錄詳情
      */
-    @PreAuthorize("@ss.hasPermi('shop:payment:callback:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.PaymentCallback.QUERY + "')")
     @GetMapping("/{logId}")
     public AjaxResult getInfo(@PathVariable Long logId) {
         return success(logService.selectLogById(logId));

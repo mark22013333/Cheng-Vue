@@ -2,6 +2,7 @@ package com.cheng.web.controller.monitor;
 
 import com.cheng.common.annotation.Log;
 import com.cheng.common.constant.CacheConstants;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.domain.model.LoginUser;
@@ -34,7 +35,7 @@ public class SysUserOnlineController extends BaseController {
     @Autowired
     private RedisCache redisCache;
 
-    @PreAuthorize("@ss.hasPermi('monitor:online:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Online.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(String ipaddr, String userName) {
         Collection<String> keys = redisCache.keys(CacheConstants.LOGIN_TOKEN_KEY + "*");
@@ -59,7 +60,7 @@ public class SysUserOnlineController extends BaseController {
     /**
      * 強制登出使用者
      */
-    @PreAuthorize("@ss.hasPermi('monitor:online:forceLogout')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Online.FORCE_LOGOUT + "')")
     @Log(title = "線上使用者", businessType = BusinessType.FORCE)
     @DeleteMapping("/{tokenId}")
     public AjaxResult forceLogout(@PathVariable String tokenId) {

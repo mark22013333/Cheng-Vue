@@ -29,7 +29,7 @@
           :before-upload="handleBeforeUpload"
           :http-request="handleHttpUpload"
           accept="image/*"
-          v-hasPermi="['system:material:image:upload']"
+          v-hasPermi="[SYSTEM_MATERIAL_IMAGE_UPLOAD]"
         >
           <el-button type="primary" plain :icon="Upload">上傳</el-button>
         </el-upload>
@@ -40,7 +40,7 @@
           plain
           :icon="Camera"
           @click="openCamera"
-          v-hasPermi="['system:material:image:upload']"
+          v-hasPermi="[SYSTEM_MATERIAL_IMAGE_UPLOAD]"
         >
           拍照
         </el-button>
@@ -52,7 +52,7 @@
           :icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['system:material:image:remove']"
+          v-hasPermi="[SYSTEM_MATERIAL_IMAGE_REMOVE]"
         >
           刪除
         </el-button>
@@ -98,7 +98,7 @@
             type="danger"
             :icon="Delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['system:material:image:remove']"
+            v-hasPermi="[SYSTEM_MATERIAL_IMAGE_REMOVE]"
           >
             刪除
           </el-button>
@@ -134,6 +134,10 @@
 </template>
 
 <script setup name="MaterialImage">
+import {
+  SYSTEM_MATERIAL_IMAGE_REMOVE,
+  SYSTEM_MATERIAL_IMAGE_UPLOAD
+} from '@/constants/permissions'
 import { listMaterialImage, delMaterialImage, existsMaterialImage, uploadMaterialImage } from '@/api/system/material'
 import { getProfileApiUrl, getProfileStaticUrl } from '@/utils/image'
 import { Search, Refresh, Upload, Delete, DocumentCopy, Camera } from '@element-plus/icons-vue'

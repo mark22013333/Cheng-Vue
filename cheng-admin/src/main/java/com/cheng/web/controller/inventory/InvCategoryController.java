@@ -9,6 +9,7 @@ import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.system.domain.InvCategory;
 import com.cheng.system.service.IInvCategoryService;
 import lombok.RequiredArgsConstructor;
+import com.cheng.common.constant.PermConstants;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +32,7 @@ public class InvCategoryController extends BaseController {
     /**
      * 查詢物品分類列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:category:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Category.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(InvCategory invCategory) {
         startPage();
@@ -51,7 +52,7 @@ public class InvCategoryController extends BaseController {
     /**
      * 取得物品分類詳細訊息
      */
-    @PreAuthorize("@ss.hasPermi('inventory:category:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Category.QUERY + "')")
     @GetMapping(value = "/{categoryId}")
     public AjaxResult getInfo(@PathVariable("categoryId") Long categoryId) {
         return success(invCategoryService.selectInvCategoryByCategoryId(categoryId));
@@ -60,7 +61,7 @@ public class InvCategoryController extends BaseController {
     /**
      * 新增物品分類
      */
-    @PreAuthorize("@ss.hasPermi('inventory:category:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Category.ADD + "')")
     @Log(title = "物品分類", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody InvCategory invCategory) {
@@ -70,7 +71,7 @@ public class InvCategoryController extends BaseController {
     /**
      * 修改物品分類
      */
-    @PreAuthorize("@ss.hasPermi('inventory:category:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Category.EDIT + "')")
     @Log(title = "物品分類", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody InvCategory invCategory) {
@@ -80,7 +81,7 @@ public class InvCategoryController extends BaseController {
     /**
      * 刪除物品分類
      */
-    @PreAuthorize("@ss.hasPermi('inventory:category:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Category.REMOVE + "')")
     @Log(title = "物品分類", businessType = BusinessType.DELETE)
     @DeleteMapping("/{categoryIds}")
     public AjaxResult remove(@PathVariable Long[] categoryIds) {
@@ -90,7 +91,7 @@ public class InvCategoryController extends BaseController {
     /**
      * 匯出物品分類列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:category:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Category.EXPORT + "')")
     @Log(title = "物品分類", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, InvCategory invCategory) {

@@ -32,7 +32,7 @@
           plain
           icon="Plus"
           @click="openSelectUser"
-          v-hasPermi="['system:role:add']"
+          v-hasPermi="[SYSTEM_ROLE_ADD]"
         >新增使用者
         </el-button>
       </el-col>
@@ -43,7 +43,7 @@
           icon="CircleClose"
           :disabled="multiple"
           @click="cancelAuthUserAll"
-          v-hasPermi="['system:role:remove']"
+          v-hasPermi="[SYSTEM_ROLE_REMOVE]"
         >批量取消授權
         </el-button>
       </el-col>
@@ -78,7 +78,7 @@
       <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width" fixed="right">
         <template #default="scope">
           <el-button link type="primary" icon="CircleClose" @click="cancelAuthUser(scope.row)"
-                     v-hasPermi="['system:role:remove']">取消授權
+                     v-hasPermi="[SYSTEM_ROLE_REMOVE]">取消授權
           </el-button>
         </template>
       </el-table-column>
@@ -96,6 +96,10 @@
 </template>
 
 <script setup name="AuthUser">
+import {
+  SYSTEM_ROLE_ADD,
+  SYSTEM_ROLE_REMOVE
+} from '@/constants/permissions'
 import selectUser from "./selectUser"
 import {allocatedUserList, authUserCancel, authUserCancelAll} from "@/api/system/role"
 

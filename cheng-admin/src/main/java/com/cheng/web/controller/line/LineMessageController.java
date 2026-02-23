@@ -1,6 +1,7 @@
 package com.cheng.web.controller.line;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -35,7 +36,7 @@ public class LineMessageController extends BaseController {
     /**
      * 查詢推播訊息記錄列表
      */
-    @PreAuthorize("@ss.hasPermi('line:message:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Message.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(LineMessageLog lineMessageLog) {
         startPage();
@@ -46,7 +47,7 @@ public class LineMessageController extends BaseController {
     /**
      * 匯出推播訊息記錄列表
      */
-    @PreAuthorize("@ss.hasPermi('line:message:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Message.EXPORT + "')")
     @Log(title = "LINE推播訊息", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, LineMessageLog lineMessageLog) {
@@ -58,7 +59,7 @@ public class LineMessageController extends BaseController {
     /**
      * 取得推播訊息記錄詳細資訊
      */
-    @PreAuthorize("@ss.hasPermi('line:message:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Message.QUERY + "')")
     @GetMapping(value = "/{messageId}")
     public AjaxResult getInfo(@PathVariable("messageId") Long messageId) {
         return success(lineMessageService.selectLineMessageLogById(messageId));
@@ -67,7 +68,7 @@ public class LineMessageController extends BaseController {
     /**
      * 發送推播訊息（單人）
      */
-    @PreAuthorize("@ss.hasPermi('line:message:send')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Message.SEND + "')")
     @Log(title = "發送推播訊息", businessType = BusinessType.INSERT)
     @PostMapping("/push")
     public AjaxResult push(@Validated @RequestBody PushMessageDTO pushMessageDTO) {
@@ -83,7 +84,7 @@ public class LineMessageController extends BaseController {
     /**
      * 發送推播訊息（多人）
      */
-    @PreAuthorize("@ss.hasPermi('line:message:send')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Message.SEND + "')")
     @Log(title = "發送多人推播訊息", businessType = BusinessType.INSERT)
     @PostMapping("/multicast")
     public AjaxResult multicast(@Validated @RequestBody MulticastMessageDTO multicastMessageDTO) {
@@ -99,7 +100,7 @@ public class LineMessageController extends BaseController {
     /**
      * 發送廣播訊息
      */
-    @PreAuthorize("@ss.hasPermi('line:message:send')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Message.SEND + "')")
     @Log(title = "發送廣播訊息", businessType = BusinessType.INSERT)
     @PostMapping("/broadcast")
     public AjaxResult broadcast(@Validated @RequestBody BroadcastMessageDTO broadcastMessageDTO) {
@@ -116,7 +117,7 @@ public class LineMessageController extends BaseController {
      * 發送 Flex Message（彈性訊息）
      * 支援單人、多人、廣播
      */
-    @PreAuthorize("@ss.hasPermi('line:message:send')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Message.SEND + "')")
     @Log(title = "發送Flex Message", businessType = BusinessType.INSERT)
     @PostMapping("/flex")
     public AjaxResult sendFlexMessage(@Validated @RequestBody FlexMessageDTO flexMessageDTO) {
@@ -132,7 +133,7 @@ public class LineMessageController extends BaseController {
     /**
      * 刪除推播訊息記錄
      */
-    @PreAuthorize("@ss.hasPermi('line:message:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Message.REMOVE + "')")
     @Log(title = "LINE推播訊息", businessType = BusinessType.DELETE)
     @DeleteMapping("/{messageIds}")
     public AjaxResult remove(@PathVariable Long[] messageIds) {

@@ -69,7 +69,7 @@
               plain
               icon="Plus"
               @click="handleAdd"
-              v-hasPermi="['inventory:management:add']"
+              v-hasPermi="[INVENTORY_MANAGEMENT_ADD]"
             >新增物品
             </el-button>
           </el-col>
@@ -80,7 +80,7 @@
               icon="Delete"
               :disabled="multiple"
               @click="handleDelete"
-              v-hasPermi="['inventory:management:remove']"
+              v-hasPermi="[INVENTORY_MANAGEMENT_REMOVE]"
             >刪除
             </el-button>
           </el-col>
@@ -90,7 +90,7 @@
               plain
               icon="Download"
               @click="handleExport"
-              v-hasPermi="['inventory:management:export']"
+              v-hasPermi="[INVENTORY_MANAGEMENT_EXPORT]"
             >匯出
             </el-button>
           </el-col>
@@ -100,7 +100,7 @@
               plain
               icon="Upload"
               @click="handleImport"
-              v-hasPermi="['inventory:management:import']"
+              v-hasPermi="[INVENTORY_MANAGEMENT_IMPORT]"
             >匯入
             </el-button>
           </el-col>
@@ -125,7 +125,8 @@
               />
             </el-tooltip>
           </el-col>
-          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns" pageKey="inventory_management"></right-toolbar>
+          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns" pageKey="inventory_management"
+            :canCustomize="tableConfigPerms.canCustomize" :canManageTemplate="tableConfigPerms.canManageTemplate"></right-toolbar>
         </el-row>
 
         <!-- 資料表格 -->
@@ -268,23 +269,23 @@
                            min-width="180" fixed="right">
             <template #default="scope">
               <el-button link type="primary" icon="View" @click="handleView(scope.row)"
-                         v-hasPermi="['inventory:management:query']">詳情
+                         v-hasPermi="[INVENTORY_MANAGEMENT_QUERY]">詳情
               </el-button>
               <el-button link type="primary" icon="Top" @click="handleStockIn(scope.row)"
-                         v-hasPermi="['inventory:management:stockIn']">入庫
+                         v-hasPermi="[INVENTORY_MANAGEMENT_STOCK_IN]">入庫
               </el-button>
               <el-button link type="primary" icon="Bottom" @click="handleStockOut(scope.row)"
-                         v-hasPermi="['inventory:management:stockOut']">出庫
+                         v-hasPermi="[INVENTORY_MANAGEMENT_STOCK_OUT]">出庫
               </el-button>
               <el-button link type="warning" icon="Calendar" @click="handleReserve(scope.row)"
-                         v-hasPermi="['inventory:management:reserve']"
+                         v-hasPermi="[INVENTORY_MANAGEMENT_RESERVE]"
                          :disabled="scope.row.availableQty <= 0">預約
               </el-button>
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-                         v-hasPermi="['inventory:management:edit']">修改
+                         v-hasPermi="[INVENTORY_MANAGEMENT_EDIT]">修改
               </el-button>
               <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
-                         v-hasPermi="['inventory:management:remove']">刪除
+                         v-hasPermi="[INVENTORY_MANAGEMENT_REMOVE]">刪除
               </el-button>
             </template>
           </el-table-column>
@@ -358,7 +359,7 @@
               <span>{{ detailData.barcode }}</span>
               <el-button
                 v-if="detailData.barcode && isValidIsbn(detailData.barcode)"
-                v-hasPermi="['inventory:management:refreshIsbn']"
+                v-hasPermi="[INVENTORY_MANAGEMENT_REFRESH_ISBN]"
                 type="primary"
                 icon="Refresh"
                 @click="handleRefreshIsbn"
@@ -761,6 +762,20 @@
 
 <script>
 import {
+  INVENTORY_MANAGEMENT_ADD,
+  INVENTORY_MANAGEMENT_EDIT,
+  INVENTORY_MANAGEMENT_EXPORT,
+  INVENTORY_MANAGEMENT_IMPORT,
+  INVENTORY_MANAGEMENT_QUERY,
+  INVENTORY_MANAGEMENT_REFRESH_ISBN,
+  INVENTORY_MANAGEMENT_REMOVE,
+  INVENTORY_MANAGEMENT_RESERVE,
+  INVENTORY_MANAGEMENT_STOCK_IN,
+  INVENTORY_MANAGEMENT_STOCK_OUT,
+  SYSTEM_TABLE_CONFIG_CUSTOMIZE,
+  SYSTEM_TABLE_CONFIG_TEMPLATE
+} from '@/constants/permissions'
+import {
   listManagement,
   getManagement,
   delManagement,
@@ -785,8 +800,12 @@ import ProgressDialog from '@/components/ProgressDialog'
 import {getImageUrl} from '@/utils/image'
 import CategoryManagement from './components/CategoryManagement'
 import useUserStore from '@/store/modules/user'
+import auth from '@/plugins/auth'
 
 export default {
+  setup() {
+    return { INVENTORY_MANAGEMENT_ADD, INVENTORY_MANAGEMENT_EDIT, INVENTORY_MANAGEMENT_EXPORT, INVENTORY_MANAGEMENT_IMPORT, INVENTORY_MANAGEMENT_QUERY, INVENTORY_MANAGEMENT_REFRESH_ISBN, INVENTORY_MANAGEMENT_REMOVE, INVENTORY_MANAGEMENT_RESERVE, INVENTORY_MANAGEMENT_STOCK_IN, INVENTORY_MANAGEMENT_STOCK_OUT }
+  },
   name: "InvManagement",
   components: {
     ImageUpload,
@@ -795,6 +814,11 @@ export default {
   },
   data() {
     return {
+      // 表格欄位配置權限
+      tableConfigPerms: {
+        canCustomize: false,
+        canManageTemplate: false
+      },
       // 當前頁籤
       activeTab: 'items',
       // 遮罩層
@@ -979,6 +1003,11 @@ export default {
     }
   },
   async created() {
+    // 檢查表格欄位配置權限
+    this.tableConfigPerms = {
+      canCustomize: auth.hasPermi(SYSTEM_TABLE_CONFIG_CUSTOMIZE),
+      canManageTemplate: auth.hasPermi(SYSTEM_TABLE_CONFIG_TEMPLATE)
+    };
     // 檢查路由，如果是從分類管理選單進來，自動切換到分類管理頁籤
     if (this.$route.path === '/inventory/category') {
       this.activeTab = 'categories';
@@ -1004,6 +1033,8 @@ export default {
     loadTagOptions() {
       getInventoryTagOptions('1').then(response => {
         this.tagOptions = response.data || []
+      }).catch(() => {
+        this.tagOptions = []
       })
     },
     /** 載入表格欄位配置 */
@@ -1480,6 +1511,9 @@ export default {
       listCategory({status: '0'}).then(response => {
         this.categoryList = response.rows || [];
         this.categoryOptions = response.rows || [];
+      }).catch(() => {
+        this.categoryList = [];
+        this.categoryOptions = [];
       });
     },
     /** 匯入操作 */

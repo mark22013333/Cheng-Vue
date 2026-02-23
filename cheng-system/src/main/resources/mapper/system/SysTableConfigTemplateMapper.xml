@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.system.mapper.SysTableConfigTemplateMapper">
+
+    <resultMap type="SysTableConfigTemplate" id="SysTableConfigTemplateResult">
+        <result property="templateId"   column="template_id"   />
+        <result property="pageKey"      column="page_key"      />
+        <result property="columnConfig" column="column_config"  />
+        <result property="createBy"     column="create_by"     />
+        <result property="createTime"   column="create_time"   />
+        <result property="updateBy"     column="update_by"     />
+        <result property="updateTime"   column="update_time"   />
+        <result property="remark"       column="remark"        />
+    </resultMap>
+
+    <select id="selectByPageKey" resultMap="SysTableConfigTemplateResult">
+        select template_id, page_key, column_config, create_by, create_time, update_by, update_time, remark
+        from sys_table_config_template
+        where page_key = #{pageKey}
+    </select>
+
+    <insert id="insertOrUpdate" parameterType="SysTableConfigTemplate">
+        insert into sys_table_config_template (page_key, column_config, create_by, create_time)
+        values (#{pageKey}, #{columnConfig}, #{createBy}, now())
+        on duplicate key update
+            column_config = #{columnConfig},
+            update_by = #{updateBy},
+            update_time = now()
+    </insert>
+
+</mapper>
