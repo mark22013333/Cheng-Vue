@@ -83,7 +83,7 @@
                icon="Delete"
                :disabled="multiple"
                @click="handleDelete"
-               v-hasPermi="['monitor:operlog:remove']"
+               v-hasPermi="[MONITOR_OPERLOG_REMOVE]"
             >刪除</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -92,7 +92,7 @@
                plain
                icon="Delete"
                @click="handleClean"
-               v-hasPermi="['monitor:operlog:remove']"
+               v-hasPermi="[MONITOR_OPERLOG_REMOVE]"
             >清空</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -101,7 +101,7 @@
                plain
                icon="Download"
                @click="handleExport"
-               v-hasPermi="['monitor:operlog:export']"
+               v-hasPermi="[MONITOR_OPERLOG_EXPORT]"
             >匯出</el-button>
          </el-col>
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -135,7 +135,7 @@
          </el-table-column>
          <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width" fixed="right">
             <template #default="scope">
-               <el-button link type="primary" icon="View" @click="handleView(scope.row, scope.index)" v-hasPermi="['monitor:operlog:query']">詳細</el-button>
+               <el-button link type="primary" icon="View" @click="handleView(scope.row, scope.index)" v-hasPermi="[MONITOR_OPERLOG_QUERY]">詳細</el-button>
             </template>
          </el-table-column>
       </el-table>
@@ -198,6 +198,11 @@
 </template>
 
 <script setup name="Operlog">
+import {
+  MONITOR_OPERLOG_EXPORT,
+  MONITOR_OPERLOG_QUERY,
+  MONITOR_OPERLOG_REMOVE
+} from '@/constants/permissions'
 import { list, delOperlog, cleanOperlog } from "@/api/monitor/operlog"
 
 const { proxy } = getCurrentInstance()

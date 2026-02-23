@@ -26,12 +26,12 @@
     <!-- 操作按鈕 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['shop:banner:add']">
+        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="[SHOP_BANNER_ADD]">
           新增
         </el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['shop:banner:remove']">
+        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="[SHOP_BANNER_REMOVE]">
           刪除
         </el-button>
       </el-col>
@@ -78,17 +78,17 @@
             active-value="ENABLED"
             inactive-value="DISABLED"
             @change="handleStatusChange(scope.row)"
-            v-hasPermi="['shop:banner:edit']"
+            v-hasPermi="[SHOP_BANNER_EDIT]"
           />
         </template>
       </el-table-column>
       <el-table-column prop="createTime" label="建立時間" width="180" align="center" />
       <el-table-column label="操作" width="150" align="center" fixed="right">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['shop:banner:edit']">
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="[SHOP_BANNER_EDIT]">
             編輯
           </el-button>
-          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['shop:banner:remove']">
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[SHOP_BANNER_REMOVE]">
             刪除
           </el-button>
         </template>
@@ -161,6 +161,11 @@
 </template>
 
 <script setup name="ShopBanner">
+import {
+  SHOP_BANNER_ADD,
+  SHOP_BANNER_EDIT,
+  SHOP_BANNER_REMOVE
+} from '@/constants/permissions'
 import { ref, reactive, onMounted, getCurrentInstance } from 'vue'
 import { listBanner, getBanner, addBanner, updateBanner, delBanner } from '@/api/shop/banner'
 import ProductPickerDialog from '@/components/ProductPickerDialog/index.vue'

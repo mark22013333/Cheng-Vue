@@ -1,6 +1,7 @@
 package com.cheng.web.controller.system;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.domain.entity.SysDictType;
@@ -27,7 +28,7 @@ public class SysDictTypeController extends BaseController {
     @Autowired
     private ISysDictTypeService dictTypeService;
 
-    @PreAuthorize("@ss.hasPermi('system:dict:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysDictType dictType) {
         startPage();
@@ -36,7 +37,7 @@ public class SysDictTypeController extends BaseController {
     }
 
     @Log(title = "字典類型", businessType = BusinessType.EXPORT)
-    @PreAuthorize("@ss.hasPermi('system:dict:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.EXPORT + "')")
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysDictType dictType) {
         List<SysDictType> list = dictTypeService.selectDictTypeList(dictType);
@@ -47,7 +48,7 @@ public class SysDictTypeController extends BaseController {
     /**
      * 查詢字典類型詳細
      */
-    @PreAuthorize("@ss.hasPermi('system:dict:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.QUERY + "')")
     @GetMapping(value = "/{dictId}")
     public AjaxResult getInfo(@PathVariable Long dictId) {
         return success(dictTypeService.selectDictTypeById(dictId));
@@ -56,7 +57,7 @@ public class SysDictTypeController extends BaseController {
     /**
      * 新增字典類型
      */
-    @PreAuthorize("@ss.hasPermi('system:dict:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.ADD + "')")
     @Log(title = "字典類型", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody SysDictType dict) {
@@ -70,7 +71,7 @@ public class SysDictTypeController extends BaseController {
     /**
      * 修改字典類型
      */
-    @PreAuthorize("@ss.hasPermi('system:dict:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.EDIT + "')")
     @Log(title = "字典類型", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysDictType dict) {
@@ -84,7 +85,7 @@ public class SysDictTypeController extends BaseController {
     /**
      * 刪除字典類型
      */
-    @PreAuthorize("@ss.hasPermi('system:dict:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.REMOVE + "')")
     @Log(title = "字典類型", businessType = BusinessType.DELETE)
     @DeleteMapping("/{dictIds}")
     public AjaxResult remove(@PathVariable Long[] dictIds) {
@@ -95,7 +96,7 @@ public class SysDictTypeController extends BaseController {
     /**
      * 重新整理字典暫存
      */
-    @PreAuthorize("@ss.hasPermi('system:dict:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.REMOVE + "')")
     @Log(title = "字典類型", businessType = BusinessType.CLEAN)
     @DeleteMapping("/refreshCache")
     public AjaxResult refreshCache() {

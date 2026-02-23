@@ -45,7 +45,7 @@
       </el-form>
       <template #footer>
         <el-button @click="testDialogVisible = false">取消</el-button>
-        <el-button v-hasPermi="['line:template:send']" type="primary" :loading="testSending" :disabled="!testLineUserId" @click="sendTestMessage">
+        <el-button v-hasPermi="[LINE_TEMPLATE_SEND]" type="primary" :loading="testSending" :disabled="!testLineUserId" @click="sendTestMessage">
           發送測試
         </el-button>
       </template>
@@ -799,6 +799,9 @@
 </template>
 
 <script setup>
+import {
+  LINE_TEMPLATE_SEND
+} from '@/constants/permissions'
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, ChatLineSquare, Picture, VideoCamera, Headset, Location, PriceTag, Grid, Document, ArrowDown, Upload, WarningFilled, Star, Close, Rank, Postcard, FolderAdd } from '@element-plus/icons-vue'

@@ -8,7 +8,7 @@
           plain
           icon="Plus"
           @click="handleAdd"
-          v-hasPermi="['inventory:category:add']"
+          v-hasPermi="[INVENTORY_CATEGORY_ADD]"
         >新增分類
         </el-button>
       </el-col>
@@ -19,7 +19,7 @@
           icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['inventory:category:remove']"
+          v-hasPermi="[INVENTORY_CATEGORY_REMOVE]"
         >刪除
         </el-button>
       </el-col>
@@ -29,7 +29,7 @@
           plain
           icon="Download"
           @click="handleExport"
-          v-hasPermi="['inventory:category:export']"
+          v-hasPermi="[INVENTORY_CATEGORY_EXPORT]"
         >匯出Excel
         </el-button>
       </el-col>
@@ -75,8 +75,8 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width operation-column" width="180" fixed="right">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['inventory:category:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['inventory:category:remove']">刪除</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="[INVENTORY_CATEGORY_EDIT]">修改</el-button>
+          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[INVENTORY_CATEGORY_REMOVE]">刪除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -131,6 +131,12 @@
 </template>
 
 <script>
+import {
+  INVENTORY_CATEGORY_ADD,
+  INVENTORY_CATEGORY_EDIT,
+  INVENTORY_CATEGORY_EXPORT,
+  INVENTORY_CATEGORY_REMOVE
+} from '@/constants/permissions'
 import { getCurrentInstance } from 'vue'
 import {listCategory, getCategory, delCategory, addCategory, updateCategory} from "@/api/inventory/category"
 import {download} from '@/utils/request'
@@ -144,6 +150,7 @@ export default {
     const { sys_normal_disable } = proxy.useDict('sys_normal_disable')
     
     return {
+      INVENTORY_CATEGORY_ADD, INVENTORY_CATEGORY_EDIT, INVENTORY_CATEGORY_EXPORT, INVENTORY_CATEGORY_REMOVE,
       sys_normal_disable
     }
   },
@@ -208,6 +215,10 @@ export default {
         this.currentDefaultCategory = this.categoryList.find(cat =>
           cat.remark && cat.remark.includes('預設分類')
         );
+        this.loading = false;
+      }).catch(() => {
+        this.categoryList = [];
+        this.total = 0;
         this.loading = false;
       });
     },

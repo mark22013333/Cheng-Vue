@@ -48,7 +48,7 @@
          </el-table-column>
          <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width" fixed="right">
             <template #default="scope">
-               <el-button link type="primary" icon="Delete" @click="handleForceLogout(scope.row)" v-hasPermi="['monitor:online:forceLogout']">強制登出</el-button>
+               <el-button link type="primary" icon="Delete" @click="handleForceLogout(scope.row)" v-hasPermi="[MONITOR_ONLINE_FORCE_LOGOUT]">強制登出</el-button>
             </template>
          </el-table-column>
       </el-table>
@@ -58,6 +58,9 @@
 </template>
 
 <script setup name="Online">
+import {
+  MONITOR_ONLINE_FORCE_LOGOUT
+} from '@/constants/permissions'
 import { forceLogout, list as initData } from "@/api/monitor/online"
 
 const { proxy } = getCurrentInstance()

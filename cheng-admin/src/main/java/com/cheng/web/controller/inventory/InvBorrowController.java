@@ -18,6 +18,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import com.cheng.common.constant.PermConstants;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -47,17 +48,17 @@ public class InvBorrowController extends BaseController {
      * 查詢借出記錄列表
      * 如果沒有 inventory:borrow:all 權限，只能查看自己的借出記錄
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(InvBorrow invBorrow) {
         Long currentUserId = getUserId();
         boolean isAdmin = getLoginUser().getUser().isAdmin();
-        boolean hasAllPermission = isAdmin || getLoginUser().getPermissions().contains("inventory:borrow:all");
+        boolean hasAllPermission = isAdmin || getLoginUser().getPermissions().contains(PermConstants.Inventory.Borrow.ALL);
         
         log.info("=== 借出記錄查詢權限檢查 ===");
         log.info("當前使用者ID: {}", currentUserId);
         log.info("是否管理員: {}", isAdmin);
-        log.info("是否有 inventory:borrow:all 權限: {}", getLoginUser().getPermissions().contains("inventory:borrow:all"));
+        log.info("是否有 inventory:borrow:all 權限: {}", getLoginUser().getPermissions().contains(PermConstants.Inventory.Borrow.ALL));
         log.info("hasAllPermission: {}", hasAllPermission);
         log.info("查詢參數 - borrowerId (before): {}", invBorrow.getBorrowerId());
         
@@ -88,12 +89,12 @@ public class InvBorrowController extends BaseController {
      * 查詢逾期借出記錄列表
      * 如果沒有 inventory:borrow:all 權限，只能查看自己的逾期記錄
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.LIST + "')")
     @GetMapping("/overdue")
     public TableDataInfo overdueList() {
         // 檢查是否有查看所有記錄的權限
         boolean hasAllPermission = getLoginUser().getUser().isAdmin() || 
-                                    getLoginUser().getPermissions().contains("inventory:borrow:all");
+                                    getLoginUser().getPermissions().contains(PermConstants.Inventory.Borrow.ALL);
         
         // 沒有權限時，只能查看自己的逾期記錄
         Long borrowerId = hasAllPermission ? null : getUserId();
@@ -106,7 +107,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 查詢我的借出記錄
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.LIST + "')")
     @GetMapping("/my")
     public TableDataInfo myBorrowList() {
         startPage();
@@ -117,7 +118,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 匯出借出記錄列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.EXPORT + "')")
     @Log(title = "借出記錄", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, InvBorrow invBorrow) {
@@ -130,13 +131,13 @@ public class InvBorrowController extends BaseController {
      * 取得借出統計資料
      * 支援根據搜尋條件過濾統計結果
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.LIST + "')")
     @GetMapping("/stats")
     public AjaxResult getBorrowStats(InvBorrow searchParams) {
         try {
             Long currentUserId = getUserId();
             boolean isAdmin = getLoginUser().getUser().isAdmin();
-            boolean hasAllPermission = isAdmin || getLoginUser().getPermissions().contains("inventory:borrow:all");
+            boolean hasAllPermission = isAdmin || getLoginUser().getPermissions().contains(PermConstants.Inventory.Borrow.ALL);
             
             log.info("=== 借出統計查詢權限檢查 ===");
             log.info("當前使用者ID: {}", currentUserId);
@@ -207,7 +208,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 取得借出記錄詳細訊息
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.QUERY + "')")
     @GetMapping(value = "/{borrowId}")
     public AjaxResult getInfo(@PathVariable("borrowId") Long borrowId) {
         return success(invBorrowService.selectInvBorrowByBorrowId(borrowId));
@@ -216,7 +217,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 根據借出單號取得借出記錄
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.QUERY + "')")
     @GetMapping(value = "/no/{borrowNo}")
     public AjaxResult getInfoByNo(@PathVariable("borrowNo") String borrowNo) {
         InvBorrow borrow = invBorrowService.selectInvBorrowByBorrowNo(borrowNo);
@@ -230,7 +231,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 新增借出申請（提交待審核）
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.ADD + "')")
     @Log(title = "借出申請", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody InvBorrow invBorrow) {
@@ -268,7 +269,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 借出物品
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:borrow')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.BORROW + "')")
     @Log(title = "借出物品", businessType = BusinessType.INSERT)
     @PostMapping("/borrowItem")
     public AjaxResult borrowItem(@Validated @RequestBody InvBorrow invBorrow) {
@@ -298,7 +299,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 歸還物品
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:return')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.RETURN + "')")
     @Log(title = "歸還物品", businessType = BusinessType.UPDATE)
     @PostMapping("/returnItem")
     public AjaxResult returnItem(@RequestBody ReturnRequest request) {
@@ -327,7 +328,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 遺失物品
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:return')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.RETURN + "')")
     @Log(title = "遺失物品", businessType = BusinessType.UPDATE)
     @PostMapping("/lostItem")
     public AjaxResult lostItem(@RequestBody ReturnRequest request) {
@@ -358,7 +359,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 審核借出申請
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:approve')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.APPROVE + "')")
     @Log(title = "審核借出申請", businessType = BusinessType.UPDATE)
     @PostMapping("/approve")
     public AjaxResult approve(@RequestBody ApproveRequest request) {
@@ -390,7 +391,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 修改借出記錄
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.EDIT + "')")
     @Log(title = "借出記錄", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody InvBorrow invBorrow) {
@@ -405,7 +406,7 @@ public class InvBorrowController extends BaseController {
      * 刪除借出記錄
      * 刪除未歸還的記錄時會自動恢復庫存
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.REMOVE + "')")
     @Log(title = "借出記錄", businessType = BusinessType.DELETE)
     @DeleteMapping("/{borrowIds}")
     public AjaxResult remove(@PathVariable Long[] borrowIds) {
@@ -419,7 +420,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 檢查物品是否可借出
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.QUERY + "')")
     @GetMapping("/checkAvailable/{itemId}/{quantity}")
     public AjaxResult checkAvailable(@PathVariable Long itemId, @PathVariable Integer quantity) {
         boolean available = invBorrowService.checkItemAvailable(itemId, quantity);
@@ -429,7 +430,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 產生借出單號
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.ADD + "')")
     @GetMapping("/generateNo")
     public AjaxResult generateBorrowNo() {
         String borrowNo = invBorrowService.generateBorrowNo();
@@ -439,7 +440,7 @@ public class InvBorrowController extends BaseController {
     /**
      * 查詢借出記錄的歸還記錄
      */
-    @PreAuthorize("@ss.hasPermi('inventory:borrow:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Borrow.QUERY + "')")
     @GetMapping("/returnRecords/{borrowId}")
     public AjaxResult getReturnRecords(@PathVariable Long borrowId) {
         try {

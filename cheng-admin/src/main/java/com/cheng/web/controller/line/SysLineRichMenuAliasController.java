@@ -1,6 +1,7 @@
 package com.cheng.web.controller.line;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -30,7 +31,7 @@ public class SysLineRichMenuAliasController extends BaseController {
     /**
      * 查詢 Rich Menu Alias 列表
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenuAlias:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenuAlias.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysLineRichMenuAlias richMenuAlias) {
         startPage();
@@ -41,7 +42,7 @@ public class SysLineRichMenuAliasController extends BaseController {
     /**
      * 根據 Rich Menu ID 查詢所有 Alias
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenuAlias:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenuAlias.LIST + "')")
     @GetMapping("/listByRichMenuId/{richMenuId}")
     public AjaxResult listByRichMenuId(@PathVariable Long richMenuId) {
         List<SysLineRichMenuAlias> list = richMenuAliasService.selectRichMenuAliasByRichMenuId(richMenuId);
@@ -51,7 +52,7 @@ public class SysLineRichMenuAliasController extends BaseController {
     /**
      * 匯出 Rich Menu Alias 列表
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenuAlias:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenuAlias.EXPORT + "')")
     @Log(title = "Rich Menu Alias", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysLineRichMenuAlias richMenuAlias) {
@@ -63,7 +64,7 @@ public class SysLineRichMenuAliasController extends BaseController {
     /**
      * 取得 Rich Menu Alias 詳細資訊
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenuAlias:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenuAlias.QUERY + "')")
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id) {
         return success(richMenuAliasService.selectRichMenuAliasById(id));
@@ -72,7 +73,7 @@ public class SysLineRichMenuAliasController extends BaseController {
     /**
      * 根據 Alias ID 取得詳細資訊
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenuAlias:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenuAlias.QUERY + "')")
     @GetMapping(value = "/byAliasId/{aliasId}")
     public AjaxResult getInfoByAliasId(@PathVariable("aliasId") String aliasId) {
         return success(richMenuAliasService.selectRichMenuAliasByAliasId(aliasId));
@@ -81,7 +82,7 @@ public class SysLineRichMenuAliasController extends BaseController {
     /**
      * 新增 Rich Menu Alias
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenuAlias:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenuAlias.ADD + "')")
     @Log(title = "Rich Menu Alias", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody SysLineRichMenuAlias richMenuAlias) {
@@ -91,7 +92,7 @@ public class SysLineRichMenuAliasController extends BaseController {
     /**
      * 修改 Rich Menu Alias
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenuAlias:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenuAlias.EDIT + "')")
     @Log(title = "Rich Menu Alias", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody SysLineRichMenuAlias richMenuAlias) {
@@ -101,7 +102,7 @@ public class SysLineRichMenuAliasController extends BaseController {
     /**
      * 刪除 Rich Menu Alias
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenuAlias:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenuAlias.REMOVE + "')")
     @Log(title = "Rich Menu Alias", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids) {
@@ -119,7 +120,7 @@ public class SysLineRichMenuAliasController extends BaseController {
     /**
      * 從 LINE 平台同步 Alias 列表
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenuAlias:sync')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenuAlias.SYNC + "')")
     @Log(title = "Rich Menu Alias", businessType = BusinessType.OTHER)
     @PostMapping("/sync")
     public AjaxResult sync() {
@@ -131,7 +132,7 @@ public class SysLineRichMenuAliasController extends BaseController {
      * 檢查別名使用情況
      * 返回使用該別名的選單列表
      */
-    @PreAuthorize("@ss.hasPermi('line:richMenuAlias:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.RichMenuAlias.QUERY + "')")
     @GetMapping("/checkUsage/{aliasId}")
     public AjaxResult checkUsage(@PathVariable String aliasId) {
         return success(richMenuAliasService.checkAliasUsage(aliasId));

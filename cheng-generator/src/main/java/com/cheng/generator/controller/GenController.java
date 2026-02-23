@@ -5,6 +5,7 @@ import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlCreateTableStatement;
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -47,7 +48,7 @@ public class GenController extends BaseController {
     /**
      * 查詢程式碼產生列表
      */
-    @PreAuthorize("@ss.hasPermi('tool:gen:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tool.Gen.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo genList(GenTable genTable) {
         startPage();
@@ -58,7 +59,7 @@ public class GenController extends BaseController {
     /**
      * 取得程式碼產生訊息
      */
-    @PreAuthorize("@ss.hasPermi('tool:gen:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tool.Gen.QUERY + "')")
     @GetMapping(value = "/{tableId}")
     public AjaxResult getInfo(@PathVariable Long tableId) {
         GenTable table = genTableService.selectGenTableById(tableId);
@@ -74,7 +75,7 @@ public class GenController extends BaseController {
     /**
      * 查詢資料庫列表
      */
-    @PreAuthorize("@ss.hasPermi('tool:gen:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tool.Gen.LIST + "')")
     @GetMapping("/db/list")
     public TableDataInfo dataList(GenTable genTable) {
         startPage();
@@ -85,7 +86,7 @@ public class GenController extends BaseController {
     /**
      * 查詢數據表欄位列表
      */
-    @PreAuthorize("@ss.hasPermi('tool:gen:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tool.Gen.LIST + "')")
     @GetMapping(value = "/column/{tableId}")
     public TableDataInfo columnList(Long tableId) {
         TableDataInfo dataInfo = new TableDataInfo();
@@ -98,7 +99,7 @@ public class GenController extends BaseController {
     /**
      * 匯入表結構（儲存）
      */
-    @PreAuthorize("@ss.hasPermi('tool:gen:import')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tool.Gen.IMPORT + "')")
     @Log(title = "程式碼產生", businessType = BusinessType.IMPORT)
     @PostMapping("/importTable")
     public AjaxResult importTableSave(String tables) {
@@ -141,7 +142,7 @@ public class GenController extends BaseController {
     /**
      * 修改儲存程式碼產生業務
      */
-    @PreAuthorize("@ss.hasPermi('tool:gen:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tool.Gen.EDIT + "')")
     @Log(title = "程式碼產生", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult editSave(@Validated @RequestBody GenTable genTable) {
@@ -153,7 +154,7 @@ public class GenController extends BaseController {
     /**
      * 刪除程式碼產生
      */
-    @PreAuthorize("@ss.hasPermi('tool:gen:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tool.Gen.REMOVE + "')")
     @Log(title = "程式碼產生", businessType = BusinessType.DELETE)
     @DeleteMapping("/{tableIds}")
     public AjaxResult remove(@PathVariable Long[] tableIds) {
@@ -164,7 +165,7 @@ public class GenController extends BaseController {
     /**
      * 預覽程式碼
      */
-    @PreAuthorize("@ss.hasPermi('tool:gen:preview')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tool.Gen.PREVIEW + "')")
     @GetMapping("/preview/{tableId}")
     public AjaxResult preview(@PathVariable("tableId") Long tableId) throws IOException {
         Map<String, String> dataMap = genTableService.previewCode(tableId);
@@ -174,7 +175,7 @@ public class GenController extends BaseController {
     /**
      * 產生程式碼（下載方式）
      */
-    @PreAuthorize("@ss.hasPermi('tool:gen:code')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tool.Gen.CODE + "')")
     @Log(title = "程式碼產生", businessType = BusinessType.GENCODE)
     @GetMapping("/download/{tableName}")
     public void download(HttpServletResponse response, @PathVariable("tableName") String tableName) throws IOException {
@@ -185,7 +186,7 @@ public class GenController extends BaseController {
     /**
      * 產生程式碼（自定義路徑）
      */
-    @PreAuthorize("@ss.hasPermi('tool:gen:code')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tool.Gen.CODE + "')")
     @Log(title = "程式碼產生", businessType = BusinessType.GENCODE)
     @GetMapping("/genCode/{tableName}")
     public AjaxResult genCode(@PathVariable("tableName") String tableName) {
@@ -199,7 +200,7 @@ public class GenController extends BaseController {
     /**
      * 同步資料庫
      */
-    @PreAuthorize("@ss.hasPermi('tool:gen:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tool.Gen.EDIT + "')")
     @Log(title = "程式碼產生", businessType = BusinessType.UPDATE)
     @GetMapping("/synchDb/{tableName}")
     public AjaxResult synchDb(@PathVariable("tableName") String tableName) {
@@ -210,7 +211,7 @@ public class GenController extends BaseController {
     /**
      * 批次產生程式碼
      */
-    @PreAuthorize("@ss.hasPermi('tool:gen:code')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tool.Gen.CODE + "')")
     @Log(title = "程式碼產生", businessType = BusinessType.GENCODE)
     @GetMapping("/batchGenCode")
     public void batchGenCode(HttpServletResponse response, String tables) throws IOException {

@@ -4,6 +4,7 @@ import com.cheng.common.annotation.Log;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.shop.domain.ShopPageBlock;
 import com.cheng.shop.service.IShopPageBlockService;
@@ -29,7 +30,7 @@ public class ShopPageBlockController extends BaseController {
     /**
      * 查詢區塊列表
      */
-    @PreAuthorize("@ss.hasPermi('shop:block:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Block.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(ShopPageBlock block) {
         startPage();
@@ -40,7 +41,7 @@ public class ShopPageBlockController extends BaseController {
     /**
      * 查詢區塊詳細
      */
-    @PreAuthorize("@ss.hasPermi('shop:block:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Block.QUERY + "')")
     @GetMapping("/{blockId}")
     public AjaxResult getInfo(@PathVariable Long blockId) {
         return success(blockService.selectBlockById(blockId));
@@ -49,7 +50,7 @@ public class ShopPageBlockController extends BaseController {
     /**
      * 根據頁面和區塊識別查詢
      */
-    @PreAuthorize("@ss.hasPermi('shop:block:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Block.QUERY + "')")
     @GetMapping("/key/{pageKey}/{blockKey}")
     public AjaxResult getByKey(@PathVariable String pageKey, @PathVariable String blockKey) {
         return success(blockService.selectBlockByPageAndKey(pageKey, blockKey));
@@ -58,7 +59,7 @@ public class ShopPageBlockController extends BaseController {
     /**
      * 新增區塊
      */
-    @PreAuthorize("@ss.hasPermi('shop:block:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Block.ADD + "')")
     @Log(title = "區塊管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody ShopPageBlock block) {
@@ -71,7 +72,7 @@ public class ShopPageBlockController extends BaseController {
     /**
      * 修改區塊
      */
-    @PreAuthorize("@ss.hasPermi('shop:block:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Block.EDIT + "')")
     @Log(title = "區塊管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody ShopPageBlock block) {
@@ -84,7 +85,7 @@ public class ShopPageBlockController extends BaseController {
     /**
      * 刪除區塊
      */
-    @PreAuthorize("@ss.hasPermi('shop:block:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Block.REMOVE + "')")
     @Log(title = "區塊管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{blockId}")
     public AjaxResult remove(@PathVariable Long blockId) {

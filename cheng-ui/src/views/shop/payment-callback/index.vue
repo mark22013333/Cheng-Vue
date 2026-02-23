@@ -85,7 +85,7 @@
       <el-table-column prop="createTime" label="回調時間" min-width="160" align="center" />
       <el-table-column label="操作" min-width="120" align="center" fixed="right">
         <template #default="scope">
-          <el-button link type="primary" icon="View" @click="handleView(scope.row)" v-hasPermi="['shop:payment:callback:query']">
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)" v-hasPermi="[SHOP_PAYMENT_CALLBACK_QUERY]">
             查看
           </el-button>
         </template>
@@ -123,6 +123,9 @@
 </template>
 
 <script setup name="ShopPaymentCallbackLog">
+import {
+  SHOP_PAYMENT_CALLBACK_QUERY
+} from '@/constants/permissions'
 import { ref, reactive, onMounted } from 'vue'
 import { listPaymentCallbackLog } from '@/api/shop/paymentCallback'
 

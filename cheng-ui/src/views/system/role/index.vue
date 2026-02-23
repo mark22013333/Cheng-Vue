@@ -56,7 +56,7 @@
                plain
                icon="Plus"
                @click="handleAdd"
-               v-hasPermi="['system:role:add']"
+               v-hasPermi="[SYSTEM_ROLE_ADD]"
             >新增</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -66,7 +66,7 @@
                icon="Edit"
                :disabled="single"
                @click="handleUpdate"
-               v-hasPermi="['system:role:edit']"
+               v-hasPermi="[SYSTEM_ROLE_EDIT]"
             >修改</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -76,7 +76,7 @@
                icon="Delete"
                :disabled="multiple"
                @click="handleDelete"
-               v-hasPermi="['system:role:remove']"
+               v-hasPermi="[SYSTEM_ROLE_REMOVE]"
             >刪除</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -85,7 +85,7 @@
                plain
                icon="Download"
                @click="handleExport"
-               v-hasPermi="['system:role:export']"
+               v-hasPermi="[SYSTEM_ROLE_EXPORT]"
             >匯出</el-button>
          </el-col>
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -116,16 +116,16 @@
          <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width" fixed="right">
             <template #default="scope">
               <el-tooltip content="修改" placement="top" v-if="scope.row.roleId !== 1">
-                <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:role:edit']"></el-button>
+                <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="[SYSTEM_ROLE_EDIT]"></el-button>
               </el-tooltip>
               <el-tooltip content="刪除" placement="top" v-if="scope.row.roleId !== 1">
-                <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:role:remove']"></el-button>
+                <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[SYSTEM_ROLE_REMOVE]"></el-button>
               </el-tooltip>
               <el-tooltip content="資料權限" placement="top" v-if="scope.row.roleId !== 1">
-                <el-button link type="primary" icon="CircleCheck" @click="handleDataScope(scope.row)" v-hasPermi="['system:role:edit']"></el-button>
+                <el-button link type="primary" icon="CircleCheck" @click="handleDataScope(scope.row)" v-hasPermi="[SYSTEM_ROLE_EDIT]"></el-button>
               </el-tooltip>
               <el-tooltip content="分配使用者" placement="top" v-if="scope.row.roleId !== 1">
-                <el-button link type="primary" icon="User" @click="handleAuthUser(scope.row)" v-hasPermi="['system:role:edit']"></el-button>
+                <el-button link type="primary" icon="User" @click="handleAuthUser(scope.row)" v-hasPermi="[SYSTEM_ROLE_EDIT]"></el-button>
               </el-tooltip>
             </template>
          </el-table-column>
@@ -242,6 +242,12 @@
 </template>
 
 <script setup name="Role">
+import {
+  SYSTEM_ROLE_ADD,
+  SYSTEM_ROLE_EDIT,
+  SYSTEM_ROLE_EXPORT,
+  SYSTEM_ROLE_REMOVE
+} from '@/constants/permissions'
 import { addRole, changeRoleStatus, dataScope, delRole, getRole, listRole, updateRole, deptTreeSelect } from "@/api/system/role"
 import { roleMenuTreeselect, treeselect as menuTreeselect } from "@/api/system/menu"
 

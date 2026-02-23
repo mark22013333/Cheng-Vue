@@ -41,7 +41,7 @@
     <!-- 操作按鈕 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['shop:block:add']">
+        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="[SHOP_BLOCK_ADD]">
           新增
         </el-button>
       </el-col>
@@ -70,17 +70,17 @@
             active-value="ENABLED"
             inactive-value="DISABLED"
             @change="handleStatusChange(scope.row)"
-            v-hasPermi="['shop:block:edit']"
+            v-hasPermi="[SHOP_BLOCK_EDIT]"
           />
         </template>
       </el-table-column>
       <el-table-column prop="updateTime" label="更新時間" width="180" align="center" />
       <el-table-column label="操作" width="150" align="center" fixed="right">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['shop:block:edit']">
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="[SHOP_BLOCK_EDIT]">
             編輯
           </el-button>
-          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['shop:block:remove']">
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[SHOP_BLOCK_REMOVE]">
             刪除
           </el-button>
         </template>
@@ -200,6 +200,11 @@
 </template>
 
 <script setup name="ShopBlock">
+import {
+  SHOP_BLOCK_ADD,
+  SHOP_BLOCK_EDIT,
+  SHOP_BLOCK_REMOVE
+} from '@/constants/permissions'
 import { ref, reactive, onMounted } from 'vue'
 import { listBlock, getBlock, addBlock, updateBlock, delBlock } from '@/api/shop/block'
 

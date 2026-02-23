@@ -32,11 +32,11 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="Plus" @click="handleAdd"
-                   v-hasPermi="['tag:group:inventory:add']">新增</el-button>
+                   v-hasPermi="[TAG_GROUP_INVENTORY_ADD]">新增</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
-                   v-hasPermi="['tag:group:inventory:remove']">刪除</el-button>
+                   v-hasPermi="[TAG_GROUP_INVENTORY_REMOVE]">刪除</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
     </el-row>
@@ -74,13 +74,13 @@
       <el-table-column label="操作" width="250" align="center" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" icon="View" @click="handlePreview(row)"
-                     v-hasPermi="['tag:group:inventory:query']">預覽</el-button>
+                     v-hasPermi="[TAG_GROUP_INVENTORY_QUERY]">預覽</el-button>
           <el-button link type="success" icon="Refresh" @click="handleCalc(row)"
-                     v-hasPermi="['tag:group:inventory:calc']">運算</el-button>
+                     v-hasPermi="[TAG_GROUP_INVENTORY_CALC]">運算</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(row)"
-                     v-hasPermi="['tag:group:inventory:edit']">修改</el-button>
+                     v-hasPermi="[TAG_GROUP_INVENTORY_EDIT]">修改</el-button>
           <el-button link type="danger" icon="Delete" @click="handleDelete(row)"
-                     v-hasPermi="['tag:group:inventory:remove']">刪除</el-button>
+                     v-hasPermi="[TAG_GROUP_INVENTORY_REMOVE]">刪除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -182,6 +182,13 @@
 </template>
 
 <script setup>
+import {
+  TAG_GROUP_INVENTORY_ADD,
+  TAG_GROUP_INVENTORY_CALC,
+  TAG_GROUP_INVENTORY_EDIT,
+  TAG_GROUP_INVENTORY_QUERY,
+  TAG_GROUP_INVENTORY_REMOVE
+} from '@/constants/permissions'
 defineOptions({ name: 'InvTagGroup' })
 
 import { ref, reactive, onMounted, getCurrentInstance } from 'vue'

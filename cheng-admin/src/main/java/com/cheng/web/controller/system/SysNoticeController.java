@@ -2,6 +2,7 @@ package com.cheng.web.controller.system;
 
 import com.cheng.common.annotation.Anonymous;
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -30,7 +31,7 @@ public class SysNoticeController extends BaseController {
     /**
      * 取得通知公告列表
      */
-    @PreAuthorize("@ss.hasPermi('system:notice:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Notice.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysNotice notice) {
         startPage();
@@ -41,7 +42,7 @@ public class SysNoticeController extends BaseController {
     /**
      * 根據通知公告編號取得詳細訊息
      */
-    @PreAuthorize("@ss.hasPermi('system:notice:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Notice.QUERY + "')")
     @GetMapping(value = "/{noticeId}")
     public AjaxResult getInfo(@PathVariable Long noticeId) {
         return success(noticeService.selectNoticeById(noticeId));
@@ -50,7 +51,7 @@ public class SysNoticeController extends BaseController {
     /**
      * 新增通知公告
      */
-    @PreAuthorize("@ss.hasPermi('system:notice:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Notice.ADD + "')")
     @Log(title = "通知公告", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody SysNotice notice) {
@@ -61,7 +62,7 @@ public class SysNoticeController extends BaseController {
     /**
      * 修改通知公告
      */
-    @PreAuthorize("@ss.hasPermi('system:notice:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Notice.EDIT + "')")
     @Log(title = "通知公告", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysNotice notice) {
@@ -72,7 +73,7 @@ public class SysNoticeController extends BaseController {
     /**
      * 刪除通知公告
      */
-    @PreAuthorize("@ss.hasPermi('system:notice:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Notice.REMOVE + "')")
     @Log(title = "通知公告", businessType = BusinessType.DELETE)
     @DeleteMapping("/{noticeIds}")
     public AjaxResult remove(@PathVariable Long[] noticeIds) {

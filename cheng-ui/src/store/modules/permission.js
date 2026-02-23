@@ -2,6 +2,15 @@ import { defineStore } from 'pinia'
 import auth from '@/plugins/auth'
 import router from '@/router'
 import { getRouters } from '@/api/menu'
+import {
+  MONITOR_JOB_LIST,
+  SHOP_PRODUCT_ADD,
+  SHOP_PRODUCT_EDIT,
+  SYSTEM_DICT_LIST,
+  SYSTEM_ROLE_EDIT,
+  SYSTEM_USER_EDIT,
+  TOOL_GEN_EDIT
+} from '@/constants/permissions'
 
 // 匹配views裡面所有的.vue文件
 const modules = import.meta.glob('./../../views/**/*.vue')
@@ -36,7 +45,7 @@ const adminDynamicRoutes = [
     path: '/cadm/system/user-auth',
     component: layoutModules.Layout,
     hidden: true,
-    permissions: ['system:user:edit'],
+    permissions: [SYSTEM_USER_EDIT],
     children: [
       {
         path: 'role/:userId(\\d+)',
@@ -50,7 +59,7 @@ const adminDynamicRoutes = [
     path: '/cadm/system/role-auth',
     component: layoutModules.Layout,
     hidden: true,
-    permissions: ['system:role:edit'],
+    permissions: [SYSTEM_ROLE_EDIT],
     children: [
       {
         path: 'user/:roleId(\\d+)',
@@ -64,7 +73,7 @@ const adminDynamicRoutes = [
     path: '/cadm/system/dict-data',
     component: layoutModules.Layout,
     hidden: true,
-    permissions: ['system:dict:list'],
+    permissions: [SYSTEM_DICT_LIST],
     children: [
       {
         path: 'index/:dictId(\\d+)',
@@ -78,7 +87,7 @@ const adminDynamicRoutes = [
     path: '/cadm/monitor/job-log',
     component: layoutModules.Layout,
     hidden: true,
-    permissions: ['monitor:job:list'],
+    permissions: [MONITOR_JOB_LIST],
     children: [
       {
         path: 'index/:jobId(\\d+)',
@@ -92,7 +101,7 @@ const adminDynamicRoutes = [
     path: '/cadm/tool/gen-edit',
     component: layoutModules.Layout,
     hidden: true,
-    permissions: ['tool:gen:edit'],
+    permissions: [TOOL_GEN_EDIT],
     children: [
       {
         path: 'index/:tableId(\\d+)',
@@ -106,7 +115,7 @@ const adminDynamicRoutes = [
     path: '/cadm/shop/product-edit',
     component: layoutModules.Layout,
     hidden: true,
-    permissions: ['shop:product:add', 'shop:product:edit'],
+    permissions: [SHOP_PRODUCT_ADD, SHOP_PRODUCT_EDIT],
     children: [
       {
         path: 'index/:productId?',

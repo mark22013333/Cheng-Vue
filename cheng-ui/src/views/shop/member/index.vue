@@ -43,17 +43,17 @@
     <!-- 操作按鈕 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['shop:member:add']">
+        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="[SHOP_MEMBER_ADD]">
           新增
         </el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['shop:member:remove']">
+        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="[SHOP_MEMBER_REMOVE]">
           刪除
         </el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['shop:member:export']">
+        <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="[SHOP_MEMBER_EXPORT]">
           匯出
         </el-button>
       </el-col>
@@ -86,20 +86,20 @@
             active-value="ACTIVE"
             inactive-value="DISABLED"
             @change="handleStatusChange(scope.row)"
-            v-hasPermi="['shop:member:edit']"
+            v-hasPermi="[SHOP_MEMBER_EDIT]"
           />
         </template>
       </el-table-column>
       <el-table-column prop="createTime" label="註冊時間" width="180" align="center" />
       <el-table-column label="操作" width="200" align="center" fixed="right">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['shop:member:edit']">
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="[SHOP_MEMBER_EDIT]">
             編輯
           </el-button>
-          <el-button link type="warning" icon="Coin" @click="handlePoints(scope.row)" v-hasPermi="['shop:member:edit']">
+          <el-button link type="warning" icon="Coin" @click="handlePoints(scope.row)" v-hasPermi="[SHOP_MEMBER_EDIT]">
             積分
           </el-button>
-          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['shop:member:remove']">
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[SHOP_MEMBER_REMOVE]">
             刪除
           </el-button>
         </template>
@@ -203,6 +203,12 @@
 </template>
 
 <script setup name="ShopMember">
+import {
+  SHOP_MEMBER_ADD,
+  SHOP_MEMBER_EDIT,
+  SHOP_MEMBER_EXPORT,
+  SHOP_MEMBER_REMOVE
+} from '@/constants/permissions'
 import { ref, reactive, onMounted } from 'vue'
 import { listMember, getMember, addMember, updateMember, delMember, updateMemberStatus, adjustPoints } from '@/api/shop/member'
 

@@ -4,6 +4,7 @@ import com.cheng.common.annotation.Log;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.shop.domain.ShopMember;
 import com.cheng.shop.service.IShopMemberService;
@@ -29,7 +30,7 @@ public class ShopMemberController extends BaseController {
     /**
      * 查詢會員列表
      */
-    @PreAuthorize("@ss.hasPermi('shop:member:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Member.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(ShopMember member) {
         startPage();
@@ -40,7 +41,7 @@ public class ShopMemberController extends BaseController {
     /**
      * 查詢會員詳情
      */
-    @PreAuthorize("@ss.hasPermi('shop:member:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Member.QUERY + "')")
     @GetMapping("/{memberId}")
     public AjaxResult getInfo(@PathVariable Long memberId) {
         return success(memberService.selectMemberById(memberId));
@@ -49,7 +50,7 @@ public class ShopMemberController extends BaseController {
     /**
      * 新增會員
      */
-    @PreAuthorize("@ss.hasPermi('shop:member:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Member.ADD + "')")
     @Log(title = "會員管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody ShopMember member) {
@@ -68,7 +69,7 @@ public class ShopMemberController extends BaseController {
     /**
      * 修改會員
      */
-    @PreAuthorize("@ss.hasPermi('shop:member:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Member.EDIT + "')")
     @Log(title = "會員管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody ShopMember member) {
@@ -87,7 +88,7 @@ public class ShopMemberController extends BaseController {
     /**
      * 刪除會員
      */
-    @PreAuthorize("@ss.hasPermi('shop:member:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Member.REMOVE + "')")
     @Log(title = "會員管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{memberId}")
     public AjaxResult remove(@PathVariable Long memberId) {
@@ -103,7 +104,7 @@ public class ShopMemberController extends BaseController {
     /**
      * 更新會員狀態
      */
-    @PreAuthorize("@ss.hasPermi('shop:member:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Member.EDIT + "')")
     @Log(title = "會員管理", businessType = BusinessType.UPDATE)
     @PutMapping("/status")
     public AjaxResult updateStatus(@RequestBody ShopMember member) {
@@ -120,7 +121,7 @@ public class ShopMemberController extends BaseController {
     /**
      * 調整會員積分
      */
-    @PreAuthorize("@ss.hasPermi('shop:member:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Member.EDIT + "')")
     @Log(title = "會員管理", businessType = BusinessType.UPDATE)
     @PutMapping("/points")
     public AjaxResult adjustPoints(@RequestBody ShopMember member) {

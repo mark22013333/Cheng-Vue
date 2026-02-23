@@ -51,7 +51,7 @@
           icon="el-icon-plus"
           size="small"
           @click="handleAdd"
-          v-hasPermi="['inventory:item:add']"
+          v-hasPermi="[INVENTORY_ITEM_ADD]"
         >新增</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -62,7 +62,7 @@
           size="small"
           :disabled="single"
           @click="handleUpdate"
-          v-hasPermi="['inventory:item:edit']"
+          v-hasPermi="[INVENTORY_ITEM_EDIT]"
         >修改</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -73,7 +73,7 @@
           size="small"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['inventory:item:remove']"
+          v-hasPermi="[INVENTORY_ITEM_REMOVE]"
         >刪除</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -83,7 +83,7 @@
           icon="el-icon-download"
           size="small"
           @click="handleExport"
-          v-hasPermi="['inventory:item:export']"
+          v-hasPermi="[INVENTORY_ITEM_EXPORT]"
         >匯出</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -93,7 +93,7 @@
           icon="el-icon-upload2"
           size="small"
           @click="handleImport"
-          v-hasPermi="['inventory:item:import']"
+          v-hasPermi="[INVENTORY_ITEM_IMPORT]"
         >匯入</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -103,7 +103,7 @@
           icon="el-icon-camera"
           size="small"
           @click="handleScan"
-          v-hasPermi="['inventory:item:scan']"
+          v-hasPermi="[INVENTORY_ITEM_SCAN]"
         >掃描</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -139,14 +139,14 @@
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
-            v-hasPermi="['inventory:item:edit']"
+            v-hasPermi="[INVENTORY_ITEM_EDIT]"
           >修改</el-button>
           <el-button
             size="small"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['inventory:item:remove']"
+            v-hasPermi="[INVENTORY_ITEM_REMOVE]"
           >刪除</el-button>
           <el-button
             size="small"
@@ -315,6 +315,14 @@
 </template>
 
 <script>
+import {
+  INVENTORY_ITEM_ADD,
+  INVENTORY_ITEM_EDIT,
+  INVENTORY_ITEM_EXPORT,
+  INVENTORY_ITEM_IMPORT,
+  INVENTORY_ITEM_REMOVE,
+  INVENTORY_ITEM_SCAN
+} from '@/constants/permissions'
 import { getCurrentInstance } from 'vue'
 import { listItem, getItem, delItem, addItem, updateItem } from "@/api/inventory/item";
 import { getToken } from "@/utils/auth";
@@ -328,6 +336,7 @@ export default {
     const { sys_normal_disable } = proxy.useDict('sys_normal_disable')
     
     return {
+      INVENTORY_ITEM_ADD, INVENTORY_ITEM_EDIT, INVENTORY_ITEM_EXPORT, INVENTORY_ITEM_IMPORT, INVENTORY_ITEM_REMOVE, INVENTORY_ITEM_SCAN,
       sys_normal_disable
     }
   },

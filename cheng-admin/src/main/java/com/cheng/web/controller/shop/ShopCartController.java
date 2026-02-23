@@ -4,6 +4,7 @@ import com.cheng.common.annotation.Log;
 import com.cheng.common.annotation.PublicApi;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.SecurityUtils;
 import com.cheng.shop.domain.ShopCart;
@@ -35,7 +36,7 @@ public class ShopCartController extends BaseController {
     /**
      * 取得購物車內容
      */
-    @PreAuthorize("@ss.hasPermi('shop:cart:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Cart.QUERY + "')")
     @GetMapping
     public AjaxResult getCart() {
         Long memberId = SecurityUtils.getUserId();
@@ -72,7 +73,7 @@ public class ShopCartController extends BaseController {
     /**
      * 取得購物車商品數量
      */
-    @PreAuthorize("@ss.hasPermi('shop:cart:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Cart.QUERY + "')")
     @GetMapping("/count")
     public AjaxResult getCartCount() {
         Long memberId = SecurityUtils.getUserId();
@@ -83,7 +84,7 @@ public class ShopCartController extends BaseController {
     /**
      * 加入購物車
      */
-    @PreAuthorize("@ss.hasPermi('shop:cart:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Cart.ADD + "')")
     @Log(title = "購物車", businessType = BusinessType.INSERT)
     @PostMapping("/add")
     public AjaxResult addToCart(@Valid @RequestBody AddCartRequest request) {
@@ -95,7 +96,7 @@ public class ShopCartController extends BaseController {
     /**
      * 更新購物車數量
      */
-    @PreAuthorize("@ss.hasPermi('shop:cart:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Cart.EDIT + "')")
     @Log(title = "購物車", businessType = BusinessType.UPDATE)
     @PutMapping("/update")
     public AjaxResult updateQuantity(@Valid @RequestBody UpdateCartRequest request) {
@@ -106,7 +107,7 @@ public class ShopCartController extends BaseController {
     /**
      * 更新選中狀態
      */
-    @PreAuthorize("@ss.hasPermi('shop:cart:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Cart.EDIT + "')")
     @PutMapping("/select/{cartId}")
     public AjaxResult updateSelected(@PathVariable Long cartId, @RequestParam boolean selected) {
         int result = cartService.updateCartSelected(cartId, selected);
@@ -116,7 +117,7 @@ public class ShopCartController extends BaseController {
     /**
      * 全選/取消全選
      */
-    @PreAuthorize("@ss.hasPermi('shop:cart:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Cart.EDIT + "')")
     @PutMapping("/selectAll")
     public AjaxResult selectAll(@RequestParam boolean selected) {
         Long memberId = SecurityUtils.getUserId();
@@ -127,7 +128,7 @@ public class ShopCartController extends BaseController {
     /**
      * 移除購物車項目
      */
-    @PreAuthorize("@ss.hasPermi('shop:cart:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Cart.REMOVE + "')")
     @Log(title = "購物車", businessType = BusinessType.DELETE)
     @DeleteMapping("/remove/{cartId}")
     public AjaxResult removeItem(@PathVariable Long cartId) {
@@ -138,7 +139,7 @@ public class ShopCartController extends BaseController {
     /**
      * 批量刪除購物車項目
      */
-    @PreAuthorize("@ss.hasPermi('shop:cart:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Cart.REMOVE + "')")
     @Log(title = "購物車", businessType = BusinessType.DELETE)
     @DeleteMapping("/remove")
     public AjaxResult removeItems(@RequestBody Long[] cartIds) {
@@ -149,7 +150,7 @@ public class ShopCartController extends BaseController {
     /**
      * 清空購物車
      */
-    @PreAuthorize("@ss.hasPermi('shop:cart:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Cart.REMOVE + "')")
     @Log(title = "購物車", businessType = BusinessType.DELETE)
     @DeleteMapping("/clear")
     public AjaxResult clearCart() {
@@ -161,7 +162,7 @@ public class ShopCartController extends BaseController {
     /**
      * 刪除已選中項目
      */
-    @PreAuthorize("@ss.hasPermi('shop:cart:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Cart.REMOVE + "')")
     @Log(title = "購物車", businessType = BusinessType.DELETE)
     @DeleteMapping("/removeSelected")
     public AjaxResult removeSelected() {
@@ -173,7 +174,7 @@ public class ShopCartController extends BaseController {
     /**
      * 取得已選中的購物車項目（結帳用）
      */
-    @PreAuthorize("@ss.hasPermi('shop:cart:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Cart.QUERY + "')")
     @GetMapping("/selected")
     public AjaxResult getSelectedItems() {
         Long memberId = SecurityUtils.getUserId();

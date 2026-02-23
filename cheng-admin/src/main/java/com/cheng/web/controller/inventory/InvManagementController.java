@@ -38,6 +38,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import com.cheng.common.constant.PermConstants;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 
@@ -65,7 +66,7 @@ public class InvManagementController extends BaseController {
     /**
      * 查詢物品與庫存整合列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(InvItemWithStockDTO dto) {
         startPage();
@@ -89,7 +90,7 @@ public class InvManagementController extends BaseController {
     /**
      * 查詢低庫存物品列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.LIST + "')")
     @GetMapping("/lowStock")
     public TableDataInfo lowStockList() {
         startPage();
@@ -107,7 +108,7 @@ public class InvManagementController extends BaseController {
     /**
      * 取得物品與庫存詳細資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.QUERY + "')")
     @GetMapping(value = "/{itemId}")
     public AjaxResult getInfo(@PathVariable("itemId") Long itemId) {
         InvItemWithStockDTO dto = invItemMapper.selectItemWithStockByItemId(itemId);
@@ -122,7 +123,7 @@ public class InvManagementController extends BaseController {
     /**
      * 匯出物品與庫存列表（簡單版，僅 Excel）
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.EXPORT + "')")
     @Log(title = "物品與庫存管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, InvItemWithStockDTO dto) {
@@ -142,7 +143,7 @@ public class InvManagementController extends BaseController {
      * 建立完整匯出任務（Excel + 圖片）
      * 返回 taskId 供前端訂閱 SSE 進度
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.EXPORT + "')")
     @Log(title = "物品與庫存管理（完整匯出）", businessType = BusinessType.EXPORT)
     @PostMapping("/exportWithImages")
     public AjaxResult exportWithImages(InvItemWithStockDTO dto) {
@@ -186,7 +187,7 @@ public class InvManagementController extends BaseController {
     /**
      * 下載匯出結果
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.EXPORT + "')")
     @GetMapping("/export/download/{taskId}")
     public void downloadExportResult(@PathVariable String taskId, HttpServletResponse response) {
         try {
@@ -199,7 +200,7 @@ public class InvManagementController extends BaseController {
     /**
      * 匯入物品資料（支援 Excel 或 ZIP 檔案）
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:import')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.IMPORT + "')")
     @Log(title = "物品資訊", businessType = BusinessType.IMPORT)
     @PostMapping("/importData")
     public AjaxResult importData(MultipartFile file, Boolean updateSupport, Long defaultCategoryId, String defaultUnit) throws Exception {
@@ -237,7 +238,7 @@ public class InvManagementController extends BaseController {
     /**
      * 新增物品資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.ADD + "')")
     @Log(title = "物品資訊", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody InvItem invItem) {
@@ -253,7 +254,7 @@ public class InvManagementController extends BaseController {
     /**
      * 修改物品資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.EDIT + "')")
     @Log(title = "物品資訊", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody InvItem invItem) {
@@ -275,7 +276,7 @@ public class InvManagementController extends BaseController {
     /**
      * 刪除物品資訊（級聯刪除相關表）
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.REMOVE + "')")
     @Log(title = "物品資訊", businessType = BusinessType.DELETE)
     @DeleteMapping("/{itemIds}")
     public AjaxResult remove(@PathVariable Long[] itemIds) {
@@ -311,7 +312,7 @@ public class InvManagementController extends BaseController {
     /**
      * 入庫操作
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:stockIn')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.STOCK_IN + "')")
     @Log(title = "入庫", businessType = BusinessType.UPDATE)
     @PostMapping("/stockIn")
     public AjaxResult stockIn(@RequestBody StockOperationRequest request) {
@@ -328,7 +329,7 @@ public class InvManagementController extends BaseController {
      * 手機端快速入庫（掃碼後使用）
      * 權限要求：只需掃描權限即可
      */
-    @PreAuthorize("@ss.hasPermi('inventory:scan:use')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Scan.USE + "')")
     @Log(title = "手機端快速入庫", businessType = BusinessType.UPDATE)
     @PostMapping("/quickStockIn")
     public AjaxResult quickStockIn(@RequestBody StockOperationRequest request) {
@@ -344,7 +345,7 @@ public class InvManagementController extends BaseController {
     /**
      * 出庫操作
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:stockOut')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.STOCK_OUT + "')")
     @Log(title = "出庫", businessType = BusinessType.UPDATE)
     @PostMapping("/stockOut")
     public AjaxResult stockOut(@RequestBody StockOperationRequest request) {
@@ -360,7 +361,7 @@ public class InvManagementController extends BaseController {
     /**
      * 盤點操作
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:stockCheck')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.STOCK_CHECK + "')")
     @Log(title = "盤點", businessType = BusinessType.UPDATE)
     @PostMapping("/stockCheck")
     public AjaxResult stockCheck(@RequestBody StockCheckRequest request) {
@@ -376,7 +377,7 @@ public class InvManagementController extends BaseController {
     /**
      * 預約物品
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:reserve')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.RESERVE + "')")
     @Log(title = "物品預約", businessType = BusinessType.INSERT)
     @PostMapping("/reserve")
     public AjaxResult reserveItem(@Validated @RequestBody com.cheng.system.domain.vo.ReserveRequest request) {
@@ -439,7 +440,7 @@ public class InvManagementController extends BaseController {
      * 建立匯入任務（支援SSE進度顯示）
      * 使用 SseManager 統一管理 SSE 連線
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:import')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.IMPORT + "')")
     @PostMapping("/importData/create")
     public AjaxResult createImportTask(@RequestParam("file") MultipartFile file,
                                        @RequestParam(value = "updateSupport", defaultValue = "false") Boolean updateSupport,

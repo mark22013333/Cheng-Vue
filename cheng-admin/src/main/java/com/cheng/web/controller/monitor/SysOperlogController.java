@@ -1,6 +1,7 @@
 package com.cheng.web.controller.monitor;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -26,7 +27,7 @@ public class SysOperlogController extends BaseController {
     @Autowired
     private ISysOperLogService operLogService;
 
-    @PreAuthorize("@ss.hasPermi('monitor:operlog:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Operlog.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysOperLog operLog) {
         startPage();
@@ -35,7 +36,7 @@ public class SysOperlogController extends BaseController {
     }
 
     @Log(title = "操作日誌", businessType = BusinessType.EXPORT)
-    @PreAuthorize("@ss.hasPermi('monitor:operlog:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Operlog.EXPORT + "')")
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysOperLog operLog) {
         List<SysOperLog> list = operLogService.selectOperLogList(operLog);
@@ -44,14 +45,14 @@ public class SysOperlogController extends BaseController {
     }
 
     @Log(title = "操作日誌", businessType = BusinessType.DELETE)
-    @PreAuthorize("@ss.hasPermi('monitor:operlog:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Operlog.REMOVE + "')")
     @DeleteMapping("/{operIds}")
     public AjaxResult remove(@PathVariable Long[] operIds) {
         return toAjax(operLogService.deleteOperLogByIds(operIds));
     }
 
     @Log(title = "操作日誌", businessType = BusinessType.CLEAN)
-    @PreAuthorize("@ss.hasPermi('monitor:operlog:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Operlog.REMOVE + "')")
     @DeleteMapping("/clean")
     public AjaxResult clean() {
         operLogService.cleanOperLog();

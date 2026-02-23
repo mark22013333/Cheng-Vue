@@ -1,6 +1,7 @@
 package com.cheng.web.controller.system;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.domain.entity.SysDept;
@@ -49,7 +50,7 @@ public class SysUserController extends BaseController {
     /**
      * 取得使用者列表
      */
-    @PreAuthorize("@ss.hasPermi('system:user:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.User.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysUser user) {
         startPage();
@@ -58,7 +59,7 @@ public class SysUserController extends BaseController {
     }
 
     @Log(title = "使用者管理", businessType = BusinessType.EXPORT)
-    @PreAuthorize("@ss.hasPermi('system:user:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.User.EXPORT + "')")
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysUser user) {
         List<SysUser> list = userService.selectUserList(user);
@@ -67,7 +68,7 @@ public class SysUserController extends BaseController {
     }
 
     @Log(title = "使用者管理", businessType = BusinessType.IMPORT)
-    @PreAuthorize("@ss.hasPermi('system:user:import')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.User.IMPORT + "')")
     @PostMapping("/importData")
     public AjaxResult importData(MultipartFile file, boolean updateSupport) throws Exception {
         ExcelUtil<SysUser> util = new ExcelUtil<SysUser>(SysUser.class);
@@ -86,7 +87,7 @@ public class SysUserController extends BaseController {
     /**
      * 根據使用者編號取得詳細訊息
      */
-    @PreAuthorize("@ss.hasPermi('system:user:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.User.QUERY + "')")
     @GetMapping(value = {"/", "/{userId}"})
     public AjaxResult getInfo(@PathVariable(value = "userId", required = false) Long userId) {
         AjaxResult ajax = AjaxResult.success();
@@ -106,7 +107,7 @@ public class SysUserController extends BaseController {
     /**
      * 新增使用者
      */
-    @PreAuthorize("@ss.hasPermi('system:user:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.User.ADD + "')")
     @Log(title = "使用者管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody SysUser user) {
@@ -127,7 +128,7 @@ public class SysUserController extends BaseController {
     /**
      * 修改使用者
      */
-    @PreAuthorize("@ss.hasPermi('system:user:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.User.EDIT + "')")
     @Log(title = "使用者管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysUser user) {
@@ -149,7 +150,7 @@ public class SysUserController extends BaseController {
     /**
      * 刪除使用者
      */
-    @PreAuthorize("@ss.hasPermi('system:user:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.User.REMOVE + "')")
     @Log(title = "使用者管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{userIds}")
     public AjaxResult remove(@PathVariable Long[] userIds) {
@@ -162,7 +163,7 @@ public class SysUserController extends BaseController {
     /**
      * 重置密碼
      */
-    @PreAuthorize("@ss.hasPermi('system:user:resetPwd')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.User.RESET_PWD + "')")
     @Log(title = "使用者管理", businessType = BusinessType.UPDATE)
     @PutMapping("/resetPwd")
     public AjaxResult resetPwd(@RequestBody SysUser user) {
@@ -176,7 +177,7 @@ public class SysUserController extends BaseController {
     /**
      * 狀態修改
      */
-    @PreAuthorize("@ss.hasPermi('system:user:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.User.EDIT + "')")
     @Log(title = "使用者管理", businessType = BusinessType.UPDATE)
     @PutMapping("/changeStatus")
     public AjaxResult changeStatus(@RequestBody SysUser user) {
@@ -189,7 +190,7 @@ public class SysUserController extends BaseController {
     /**
      * 根據使用者編號取得授權角色
      */
-    @PreAuthorize("@ss.hasPermi('system:user:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.User.QUERY + "')")
     @GetMapping("/authRole/{userId}")
     public AjaxResult authRole(@PathVariable("userId") Long userId) {
         AjaxResult ajax = AjaxResult.success();
@@ -203,7 +204,7 @@ public class SysUserController extends BaseController {
     /**
      * 使用者授權角色
      */
-    @PreAuthorize("@ss.hasPermi('system:user:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.User.EDIT + "')")
     @Log(title = "使用者管理", businessType = BusinessType.GRANT)
     @PutMapping("/authRole")
     public AjaxResult insertAuthRole(Long userId, Long[] roleIds) {
@@ -216,7 +217,7 @@ public class SysUserController extends BaseController {
     /**
      * 取得部門樹列表
      */
-    @PreAuthorize("@ss.hasPermi('system:user:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.User.LIST + "')")
     @GetMapping("/deptTree")
     public AjaxResult deptTree(SysDept dept) {
         return success(deptService.selectDeptTreeList(dept));

@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import com.cheng.common.constant.PermConstants;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -78,7 +79,7 @@ public class InvScanController extends BaseController {
      * 3. 透過 BookItemService 儲存到資料庫
      * 4. 回傳書籍物品資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:scan:use')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Scan.USE + "')")
     @Log(title = "ISBN掃描", businessType = BusinessType.INSERT)
     @PostMapping("/isbn")
     public AjaxResult scanIsbn(@RequestBody @Validated IsbnScanRequest request) {
@@ -187,7 +188,7 @@ public class InvScanController extends BaseController {
      * 重新抓取 ISBN 資料並更新現有物品資訊（建立任務並回傳 taskId）
      * 支援並行抓取多本書籍
      */
-    @PreAuthorize("@ss.hasPermi('inventory:management:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.EDIT + "')")
     @Log(title = "建立重新抓取ISBN任務", businessType = BusinessType.UPDATE)
     @PostMapping("/refreshIsbn/create")
     public AjaxResult createRefreshTask(@RequestBody @Validated RefreshIsbnRequest request) {
@@ -405,7 +406,7 @@ public class InvScanController extends BaseController {
      * @deprecated 建議使用 SSE 版本 (createRefreshTask + subscribeRefreshTask)
      */
     @Deprecated
-    @PreAuthorize("@ss.hasPermi('inventory:management:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.EDIT + "')")
     @Log(title = "重新抓取ISBN資料", businessType = BusinessType.UPDATE)
     @PostMapping("/refreshIsbn")
     public AjaxResult refreshIsbn(@RequestBody @Validated RefreshIsbnRequest request) {

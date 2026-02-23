@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.http.HttpHeaders;
+import com.cheng.common.constant.PermConstants;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +47,7 @@ public class InvItemController extends BaseController {
     /**
      * 查詢物品資訊列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:item:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Item.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(InvItem invItem) {
         startPage();
@@ -57,7 +58,7 @@ public class InvItemController extends BaseController {
     /**
      * 查詢物品列表（含庫存數量，供商城使用）
      */
-    @PreAuthorize("@ss.hasPermi('inventory:item:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Item.LIST + "')")
     @GetMapping("/listWithStock")
     public TableDataInfo listWithStock(InvItemWithStockDTO query) {
         startPage();
@@ -74,7 +75,7 @@ public class InvItemController extends BaseController {
     /**
      * 查詢低庫存物品列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:item:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Item.LIST + "')")
     @GetMapping("/lowStock")
     public TableDataInfo lowStockList() {
         startPage();
@@ -85,7 +86,7 @@ public class InvItemController extends BaseController {
     /**
      * 匯出物品資訊列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:item:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Item.EXPORT + "')")
     @Log(title = "物品資訊", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, InvItem invItem) {
@@ -97,7 +98,7 @@ public class InvItemController extends BaseController {
     /**
      * 取得物品資訊詳細訊息
      */
-    @PreAuthorize("@ss.hasPermi('inventory:item:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Item.QUERY + "')")
     @GetMapping(value = "/{itemId}")
     public AjaxResult getInfo(@PathVariable("itemId") Long itemId) {
         return success(invItemService.selectInvItemByItemId(itemId));
@@ -106,7 +107,7 @@ public class InvItemController extends BaseController {
     /**
      * 根據物品編碼取得物品資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:item:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Item.QUERY + "')")
     @GetMapping(value = "/code/{itemCode}")
     public AjaxResult getInfoByCode(@PathVariable("itemCode") String itemCode) {
         InvItem item = invItemService.selectInvItemByItemCode(itemCode);
@@ -121,7 +122,7 @@ public class InvItemController extends BaseController {
      * 掃描條碼或QR碼取得物品資訊（包含庫存信息）
      * 權限：需要掃描功能權限（手機端使用）
      */
-    @PreAuthorize("@ss.hasPermi('inventory:scan:use')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Scan.USE + "')")
     @PostMapping("/scan")
     public AjaxResult scanItem(@RequestBody ScanRequest scanRequest) {
         String scanCode = scanRequest.getScanCode();
@@ -191,7 +192,7 @@ public class InvItemController extends BaseController {
     /**
      * 新增物品資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:item:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Item.ADD + "')")
     @Log(title = "物品資訊", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody InvItem invItem) {
@@ -207,7 +208,7 @@ public class InvItemController extends BaseController {
     /**
      * 修改物品資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:item:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Item.EDIT + "')")
     @Log(title = "物品資訊", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody InvItem invItem) {
@@ -223,7 +224,7 @@ public class InvItemController extends BaseController {
     /**
      * 刪除物品資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:item:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Item.REMOVE + "')")
     @Log(title = "物品資訊", businessType = BusinessType.DELETE)
     @DeleteMapping("/{itemIds}")
     public AjaxResult remove(@PathVariable Long[] itemIds) {
@@ -233,7 +234,7 @@ public class InvItemController extends BaseController {
     /**
      * 匯入物品資料
      */
-    @PreAuthorize("@ss.hasPermi('inventory:item:import')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Item.IMPORT + "')")
     @Log(title = "物品資訊", businessType = BusinessType.IMPORT)
     @PostMapping("/importData")
     public AjaxResult importData(MultipartFile file, boolean updateSupport) throws Exception {

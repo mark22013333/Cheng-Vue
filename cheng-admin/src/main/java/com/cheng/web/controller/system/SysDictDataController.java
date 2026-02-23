@@ -1,6 +1,7 @@
 package com.cheng.web.controller.system;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.domain.entity.SysDictData;
@@ -33,7 +34,7 @@ public class SysDictDataController extends BaseController {
     @Autowired
     private ISysDictTypeService dictTypeService;
 
-    @PreAuthorize("@ss.hasPermi('system:dict:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysDictData dictData) {
         startPage();
@@ -42,7 +43,7 @@ public class SysDictDataController extends BaseController {
     }
 
     @Log(title = "字典數據", businessType = BusinessType.EXPORT)
-    @PreAuthorize("@ss.hasPermi('system:dict:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.EXPORT + "')")
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysDictData dictData) {
         List<SysDictData> list = dictDataService.selectDictDataList(dictData);
@@ -53,7 +54,7 @@ public class SysDictDataController extends BaseController {
     /**
      * 查詢字典數據詳細
      */
-    @PreAuthorize("@ss.hasPermi('system:dict:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.QUERY + "')")
     @GetMapping(value = "/{dictCode}")
     public AjaxResult getInfo(@PathVariable Long dictCode) {
         return success(dictDataService.selectDictDataById(dictCode));
@@ -74,7 +75,7 @@ public class SysDictDataController extends BaseController {
     /**
      * 新增字典類型
      */
-    @PreAuthorize("@ss.hasPermi('system:dict:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.ADD + "')")
     @Log(title = "字典數據", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody SysDictData dict) {
@@ -85,7 +86,7 @@ public class SysDictDataController extends BaseController {
     /**
      * 修改儲存字典類型
      */
-    @PreAuthorize("@ss.hasPermi('system:dict:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.EDIT + "')")
     @Log(title = "字典數據", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysDictData dict) {
@@ -96,7 +97,7 @@ public class SysDictDataController extends BaseController {
     /**
      * 刪除字典類型
      */
-    @PreAuthorize("@ss.hasPermi('system:dict:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Dict.REMOVE + "')")
     @Log(title = "字典類型", businessType = BusinessType.DELETE)
     @DeleteMapping("/{dictCodes}")
     public AjaxResult remove(@PathVariable Long[] dictCodes) {

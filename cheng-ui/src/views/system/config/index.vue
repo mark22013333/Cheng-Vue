@@ -52,7 +52,7 @@
                plain
                icon="Plus"
                @click="handleAdd"
-               v-hasPermi="['system:config:add']"
+               v-hasPermi="[SYSTEM_CONFIG_ADD]"
             >新增</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -62,7 +62,7 @@
                icon="Edit"
                :disabled="single"
                @click="handleUpdate"
-               v-hasPermi="['system:config:edit']"
+               v-hasPermi="[SYSTEM_CONFIG_EDIT]"
             >修改</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -72,7 +72,7 @@
                icon="Delete"
                :disabled="multiple"
                @click="handleDelete"
-               v-hasPermi="['system:config:remove']"
+               v-hasPermi="[SYSTEM_CONFIG_REMOVE]"
             >刪除</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -81,7 +81,7 @@
                plain
                icon="Download"
                @click="handleExport"
-               v-hasPermi="['system:config:export']"
+               v-hasPermi="[SYSTEM_CONFIG_EXPORT]"
             >匯出</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -90,7 +90,7 @@
                plain
                icon="Refresh"
                @click="handleRefreshCache"
-               v-hasPermi="['system:config:remove']"
+               v-hasPermi="[SYSTEM_CONFIG_REMOVE]"
             >重新整理暫存</el-button>
          </el-col>
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -115,8 +115,8 @@
          </el-table-column>
          <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width" fixed="right">
             <template #default="scope">
-               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:config:edit']" >修改</el-button>
-               <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:config:remove']">刪除</el-button>
+               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="[SYSTEM_CONFIG_EDIT]" >修改</el-button>
+               <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[SYSTEM_CONFIG_REMOVE]">刪除</el-button>
             </template>
          </el-table-column>
       </el-table>
@@ -165,6 +165,12 @@
 </template>
 
 <script setup name="Config">
+import {
+  SYSTEM_CONFIG_ADD,
+  SYSTEM_CONFIG_EDIT,
+  SYSTEM_CONFIG_EXPORT,
+  SYSTEM_CONFIG_REMOVE
+} from '@/constants/permissions'
 import { listConfig, getConfig, delConfig, addConfig, updateConfig, refreshCache } from "@/api/system/config"
 
 const { proxy } = getCurrentInstance()

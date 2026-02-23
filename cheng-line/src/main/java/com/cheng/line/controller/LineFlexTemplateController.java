@@ -1,6 +1,7 @@
 package com.cheng.line.controller;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -31,7 +32,7 @@ public class LineFlexTemplateController extends BaseController {
     /**
      * 查詢 Flex 範本列表
      */
-    @PreAuthorize("@ss.hasPermi('line:template:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(LineFlexTemplate template) {
         startPage();
@@ -42,7 +43,7 @@ public class LineFlexTemplateController extends BaseController {
     /**
      * 查詢當前使用者可用的 Flex 範本（用於下拉選單）
      */
-    @PreAuthorize("@ss.hasPermi('line:template:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.LIST + "')")
     @GetMapping("/available")
     public AjaxResult getAvailableTemplates() {
         List<LineFlexTemplate> list = lineFlexTemplateService.selectAvailableFlexTemplates();
@@ -52,7 +53,7 @@ public class LineFlexTemplateController extends BaseController {
     /**
      * 取得 Flex 範本詳情
      */
-    @PreAuthorize("@ss.hasPermi('line:template:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.QUERY + "')")
     @GetMapping("/{flexTemplateId}")
     public AjaxResult getInfo(@PathVariable Long flexTemplateId) {
         return success(lineFlexTemplateService.selectLineFlexTemplateById(flexTemplateId));
@@ -61,7 +62,7 @@ public class LineFlexTemplateController extends BaseController {
     /**
      * 新增 Flex 範本
      */
-    @PreAuthorize("@ss.hasPermi('line:template:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.ADD + "')")
     @Log(title = "Flex範本管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody LineFlexTemplate template) {
@@ -78,7 +79,7 @@ public class LineFlexTemplateController extends BaseController {
     /**
      * 修改 Flex 範本
      */
-    @PreAuthorize("@ss.hasPermi('line:template:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.EDIT + "')")
     @Log(title = "Flex範本管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody LineFlexTemplate template) {
@@ -88,7 +89,7 @@ public class LineFlexTemplateController extends BaseController {
     /**
      * 刪除 Flex 範本
      */
-    @PreAuthorize("@ss.hasPermi('line:template:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Template.REMOVE + "')")
     @Log(title = "Flex範本管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{flexTemplateIds}")
     public AjaxResult remove(@PathVariable Long[] flexTemplateIds) {

@@ -4,6 +4,7 @@ import com.cheng.common.annotation.Log;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.SecurityUtils;
 import com.cheng.shop.domain.ShopGift;
@@ -30,7 +31,7 @@ public class ShopGiftController extends BaseController {
     /**
      * 查詢禮物列表
      */
-    @PreAuthorize("@ss.hasPermi('shop:gift:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Gift.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(ShopGift gift) {
         startPage();
@@ -41,7 +42,7 @@ public class ShopGiftController extends BaseController {
     /**
      * 查詢禮物詳情
      */
-    @PreAuthorize("@ss.hasPermi('shop:gift:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Gift.QUERY + "')")
     @GetMapping("/{giftId}")
     public AjaxResult getInfo(@PathVariable Long giftId) {
         return success(giftService.selectGiftById(giftId));
@@ -50,7 +51,7 @@ public class ShopGiftController extends BaseController {
     /**
      * 新增禮物
      */
-    @PreAuthorize("@ss.hasPermi('shop:gift:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Gift.ADD + "')")
     @Log(title = "禮物管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody ShopGift gift) {
@@ -61,7 +62,7 @@ public class ShopGiftController extends BaseController {
     /**
      * 修改禮物
      */
-    @PreAuthorize("@ss.hasPermi('shop:gift:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Gift.EDIT + "')")
     @Log(title = "禮物管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody ShopGift gift) {
@@ -72,7 +73,7 @@ public class ShopGiftController extends BaseController {
     /**
      * 刪除禮物
      */
-    @PreAuthorize("@ss.hasPermi('shop:gift:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Gift.REMOVE + "')")
     @Log(title = "禮物管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{giftIds}")
     public AjaxResult remove(@PathVariable Long[] giftIds) {

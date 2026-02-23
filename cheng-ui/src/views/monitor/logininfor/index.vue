@@ -59,7 +59,7 @@
                icon="Delete"
                :disabled="multiple"
                @click="handleDelete"
-               v-hasPermi="['monitor:logininfor:remove']"
+               v-hasPermi="[MONITOR_LOGININFOR_REMOVE]"
             >刪除</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -68,7 +68,7 @@
                plain
                icon="Delete"
                @click="handleClean"
-               v-hasPermi="['monitor:logininfor:remove']"
+               v-hasPermi="[MONITOR_LOGININFOR_REMOVE]"
             >清空</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -78,7 +78,7 @@
                icon="Unlock"
                :disabled="single"
                @click="handleUnlock"
-               v-hasPermi="['monitor:logininfor:unlock']"
+               v-hasPermi="[MONITOR_LOGININFOR_UNLOCK]"
             >解鎖</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -87,7 +87,7 @@
                plain
                icon="Download"
                @click="handleExport"
-               v-hasPermi="['monitor:logininfor:export']"
+               v-hasPermi="[MONITOR_LOGININFOR_EXPORT]"
             >匯出</el-button>
          </el-col>
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -125,6 +125,11 @@
 </template>
 
 <script setup name="Logininfor">
+import {
+  MONITOR_LOGININFOR_EXPORT,
+  MONITOR_LOGININFOR_REMOVE,
+  MONITOR_LOGININFOR_UNLOCK
+} from '@/constants/permissions'
 import { list, delLogininfor, cleanLogininfor, unlockLogininfor } from "@/api/monitor/logininfor"
 
 const { proxy } = getCurrentInstance()

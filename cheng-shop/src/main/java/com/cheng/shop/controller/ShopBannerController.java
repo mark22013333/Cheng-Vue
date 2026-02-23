@@ -4,6 +4,7 @@ import com.cheng.common.annotation.Log;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.SecurityUtils;
 import com.cheng.shop.domain.ShopBanner;
@@ -30,7 +31,7 @@ public class ShopBannerController extends BaseController {
     /**
      * 查詢輪播列表
      */
-    @PreAuthorize("@ss.hasPermi('shop:banner:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Banner.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(ShopBanner banner) {
         startPage();
@@ -41,7 +42,7 @@ public class ShopBannerController extends BaseController {
     /**
      * 查詢輪播詳情
      */
-    @PreAuthorize("@ss.hasPermi('shop:banner:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Banner.QUERY + "')")
     @GetMapping("/{bannerId}")
     public AjaxResult getInfo(@PathVariable Long bannerId) {
         return success(bannerService.selectBannerById(bannerId));
@@ -50,7 +51,7 @@ public class ShopBannerController extends BaseController {
     /**
      * 新增輪播
      */
-    @PreAuthorize("@ss.hasPermi('shop:banner:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Banner.ADD + "')")
     @Log(title = "輪播管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody ShopBanner banner) {
@@ -64,7 +65,7 @@ public class ShopBannerController extends BaseController {
     /**
      * 修改輪播
      */
-    @PreAuthorize("@ss.hasPermi('shop:banner:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Banner.EDIT + "')")
     @Log(title = "輪播管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody ShopBanner banner) {
@@ -78,7 +79,7 @@ public class ShopBannerController extends BaseController {
     /**
      * 刪除輪播
      */
-    @PreAuthorize("@ss.hasPermi('shop:banner:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Banner.REMOVE + "')")
     @Log(title = "輪播管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{bannerIds}")
     public AjaxResult remove(@PathVariable Long[] bannerIds) {

@@ -1,6 +1,7 @@
 package com.cheng.web.controller.tag;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -37,7 +38,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 查詢庫存標籤列表
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysTag sysTag) {
         startPage();
@@ -50,7 +51,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 查詢庫存標籤下拉選項（不分頁）
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.QUERY + "')")
     @GetMapping("/options")
     public AjaxResult options(@RequestParam(required = false) Integer status) {
         List<SysTag> list = sysTagService.selectInventoryTagList(status);
@@ -60,7 +61,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 取得標籤詳情
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.QUERY + "')")
     @GetMapping("/{tagId}")
     public AjaxResult getInfo(@PathVariable Long tagId) {
         return success(sysTagService.selectSysTagByTagId(tagId));
@@ -69,7 +70,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 新增庫存標籤
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.ADD + "')")
     @Log(title = "庫存標籤", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody SysTag sysTag) {
@@ -92,7 +93,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 修改庫存標籤
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.EDIT + "')")
     @Log(title = "庫存標籤", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysTag sysTag) {
@@ -112,7 +113,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 刪除庫存標籤
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.REMOVE + "')")
     @Log(title = "庫存標籤", businessType = BusinessType.DELETE)
     @DeleteMapping("/{tagIds}")
     public AjaxResult remove(@PathVariable Long[] tagIds) {
@@ -143,7 +144,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 查詢物品標籤關聯列表
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:bindItem')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.BIND_ITEM + "')")
     @GetMapping("/relation/list")
     public TableDataInfo relationList(InvItemTagRelation relation) {
         startPage();
@@ -154,7 +155,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 查詢指定物品的標籤
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:bindQuery')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.BIND_QUERY + "')")
     @GetMapping("/relation/item/{itemId}")
     public AjaxResult getItemTags(@PathVariable Long itemId) {
         List<InvItemTagRelation> list = invItemTagRelationService.selectByItemId(itemId);
@@ -164,7 +165,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 查詢指定標籤的物品
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:bindQuery')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.BIND_QUERY + "')")
     @GetMapping("/relation/tag/{tagId}")
     public AjaxResult getTagItems(@PathVariable Long tagId) {
         List<InvItemTagRelation> list = invItemTagRelationService.selectByTagId(tagId);
@@ -174,7 +175,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 為物品貼標（單一物品，單一標籤）
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:batchBind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.BATCH_BIND + "')")
     @Log(title = "庫存物品貼標", businessType = BusinessType.INSERT)
     @PostMapping("/relation/bind")
     public AjaxResult bindTag(@RequestBody BindTagRequest request) {
@@ -193,7 +194,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 批次為物品貼標
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:batchBind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.BATCH_BIND + "')")
     @Log(title = "庫存批次貼標", businessType = BusinessType.INSERT)
     @PostMapping("/relation/batchBind")
     public AjaxResult batchBindTag(@RequestBody BatchBindTagRequest request) {
@@ -213,7 +214,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 移除物品標籤
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:unbind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.UNBIND + "')")
     @Log(title = "庫存移除標籤", businessType = BusinessType.DELETE)
     @DeleteMapping("/relation/unbind")
     public AjaxResult unbindTag(@RequestBody BindTagRequest request) {
@@ -231,7 +232,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 批次刪除關聯
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:unbind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.UNBIND + "')")
     @Log(title = "庫存批次移除標籤", businessType = BusinessType.DELETE)
     @DeleteMapping("/relation/{ids}")
     public AjaxResult removeRelations(@PathVariable Long[] ids) {
@@ -241,7 +242,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 批次貼標（含驗證和額外標籤支援）
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:batchBind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.BATCH_BIND + "')")
     @Log(title = "庫存批次貼標（驗證）", businessType = BusinessType.INSERT)
     @PostMapping("/relation/batchBindWithValidation")
     public AjaxResult batchBindWithValidation(@RequestBody BatchBindWithValidationRequest request) {
@@ -256,7 +257,7 @@ public class InventoryTagController extends BaseController {
     /**
      * 更新物品標籤（支援多標籤，可選擇替換現有標籤）
      */
-    @PreAuthorize("@ss.hasPermi('tag:inventory:batchBind')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Tag.Inventory.BATCH_BIND + "')")
     @Log(title = "庫存更新物品標籤", businessType = BusinessType.UPDATE)
     @PostMapping("/relation/updateTags")
     public AjaxResult updateItemTags(@RequestBody UpdateTagsRequest request) {

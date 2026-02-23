@@ -4,6 +4,7 @@ import com.cheng.common.annotation.Log;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.common.utils.SecurityUtils;
 import com.cheng.shop.domain.ShopOrder;
@@ -29,7 +30,7 @@ public class ShopOrderController extends BaseController {
     /**
      * 查詢訂單列表
      */
-    @PreAuthorize("@ss.hasPermi('shop:order:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Order.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(ShopOrder order) {
         startPage();
@@ -40,7 +41,7 @@ public class ShopOrderController extends BaseController {
     /**
      * 查詢訂單詳情
      */
-    @PreAuthorize("@ss.hasPermi('shop:order:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Order.QUERY + "')")
     @GetMapping("/{orderId}")
     public AjaxResult getInfo(@PathVariable Long orderId) {
         return success(orderService.selectOrderById(orderId));
@@ -49,7 +50,7 @@ public class ShopOrderController extends BaseController {
     /**
      * 根據訂單編號查詢
      */
-    @PreAuthorize("@ss.hasPermi('shop:order:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Order.QUERY + "')")
     @GetMapping("/no/{orderNo}")
     public AjaxResult getByOrderNo(@PathVariable String orderNo) {
         return success(orderService.selectOrderByOrderNo(orderNo));
@@ -58,7 +59,7 @@ public class ShopOrderController extends BaseController {
     /**
      * 出貨
      */
-    @PreAuthorize("@ss.hasPermi('shop:order:ship')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Order.SHIP + "')")
     @Log(title = "訂單管理", businessType = BusinessType.UPDATE)
     @PutMapping("/ship")
     public AjaxResult ship(@RequestBody ShopOrder order) {
@@ -76,7 +77,7 @@ public class ShopOrderController extends BaseController {
     /**
      * 取消訂單
      */
-    @PreAuthorize("@ss.hasPermi('shop:order:cancel')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Order.CANCEL + "')")
     @Log(title = "訂單管理", businessType = BusinessType.UPDATE)
     @PutMapping("/cancel")
     public AjaxResult cancel(@RequestBody ShopOrder order) {
@@ -94,7 +95,7 @@ public class ShopOrderController extends BaseController {
     /**
      * 確認收貨
      */
-    @PreAuthorize("@ss.hasPermi('shop:order:deliver')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Order.DELIVER + "')")
     @Log(title = "訂單管理", businessType = BusinessType.UPDATE)
     @PutMapping("/deliver/{orderId}")
     public AjaxResult deliver(@PathVariable Long orderId) {
@@ -111,7 +112,7 @@ public class ShopOrderController extends BaseController {
     /**
      * 完成訂單
      */
-    @PreAuthorize("@ss.hasPermi('shop:order:complete')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Order.COMPLETE + "')")
     @Log(title = "訂單管理", businessType = BusinessType.UPDATE)
     @PutMapping("/complete/{orderId}")
     public AjaxResult complete(@PathVariable Long orderId) {
@@ -128,7 +129,7 @@ public class ShopOrderController extends BaseController {
     /**
      * 更新訂單備註
      */
-    @PreAuthorize("@ss.hasPermi('shop:order:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Order.EDIT + "')")
     @Log(title = "訂單管理", businessType = BusinessType.UPDATE)
     @PutMapping("/remark")
     public AjaxResult updateRemark(@RequestBody ShopOrder order) {
@@ -139,7 +140,7 @@ public class ShopOrderController extends BaseController {
     /**
      * 手動更新付款狀態
      */
-    @PreAuthorize("@ss.hasPermi('shop:order:updatePayStatus')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Order.UPDATE_PAY_STATUS + "')")
     @Log(title = "訂單管理", businessType = BusinessType.UPDATE)
     @PutMapping("/{orderId}/payStatus")
     public AjaxResult updatePayStatus(@PathVariable Long orderId, @RequestParam String payStatus) {
@@ -157,7 +158,7 @@ public class ShopOrderController extends BaseController {
     /**
      * 手動更新物流狀態
      */
-    @PreAuthorize("@ss.hasPermi('shop:order:updateShipStatus')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Order.UPDATE_SHIP_STATUS + "')")
     @Log(title = "訂單管理", businessType = BusinessType.UPDATE)
     @PutMapping("/{orderId}/shipStatus")
     public AjaxResult updateShipStatus(@PathVariable Long orderId, @RequestParam String shipStatus) {
@@ -177,7 +178,7 @@ public class ShopOrderController extends BaseController {
      * <p>
      * 用於超商取貨訂單物流單號產生失敗時，手動觸發重新建立。
      */
-    @PreAuthorize("@ss.hasPermi('shop:order:ship')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Order.SHIP + "')")
     @Log(title = "訂單管理", businessType = BusinessType.UPDATE)
     @PostMapping("/{orderId}/recreate-logistics")
     public AjaxResult recreateLogistics(@PathVariable Long orderId) {

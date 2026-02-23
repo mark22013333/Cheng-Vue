@@ -20,12 +20,13 @@ import java.util.Set;
 public class CaptchaNoCacheFilter implements Filter {
     private static final Set<String> CAPTCHA_PATHS = Set.of("/captchaImage", "/cadm/captchaImage");
 
+    /**
+     * Disables browser caching for captcha image requests
+     */
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-        if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
-            HttpServletRequest httpRequest = (HttpServletRequest) request;
-            HttpServletResponse httpResponse = (HttpServletResponse) response;
+        if (request instanceof HttpServletRequest httpRequest && response instanceof HttpServletResponse httpResponse) {
             if (PathUtils.isPathInWhitelist(httpRequest, CAPTCHA_PATHS)) {
                 httpResponse.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
                 httpResponse.setHeader("Pragma", "no-cache");

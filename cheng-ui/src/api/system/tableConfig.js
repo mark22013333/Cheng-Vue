@@ -28,3 +28,32 @@ export function saveTableConfig(pageKey, columnConfig) {
     }
   })
 }
+
+/**
+ * 取得全域模版配置
+ * @param {string} pageKey 頁面標識
+ * @returns {Promise}
+ */
+export function getTemplateConfig(pageKey) {
+  return request({
+    url: `/system/tableConfig/template/${pageKey}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 儲存全域模版配置
+ * @param {string} pageKey 頁面標識
+ * @param {object} columnConfig 欄位配置物件
+ * @returns {Promise}
+ */
+export function saveTemplateConfig(pageKey, columnConfig) {
+  return request({
+    url: '/system/tableConfig/template',
+    method: 'post',
+    data: {
+      pageKey: pageKey,
+      columnConfig: JSON.stringify(columnConfig)
+    }
+  })
+}

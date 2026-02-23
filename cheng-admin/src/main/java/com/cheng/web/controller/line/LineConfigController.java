@@ -1,6 +1,7 @@
 package com.cheng.web.controller.line;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -36,7 +37,7 @@ public class LineConfigController extends BaseController {
     /**
      * 查詢 LINE 頻道設定列表
      */
-    @PreAuthorize("@ss.hasPermi('line:config:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(LineConfig lineConfig) {
         startPage();
@@ -47,7 +48,7 @@ public class LineConfigController extends BaseController {
     /**
      * 匯出 LINE 頻道設定列表
      */
-    @PreAuthorize("@ss.hasPermi('line:config:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.EXPORT + "')")
     @Log(title = "LINE頻道設定", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, LineConfig lineConfig) {
@@ -59,7 +60,7 @@ public class LineConfigController extends BaseController {
     /**
      * 取得 LINE 頻道設定詳細資訊
      */
-    @PreAuthorize("@ss.hasPermi('line:config:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.QUERY + "')")
     @GetMapping(value = "/{configId}")
     public AjaxResult getInfo(@PathVariable("configId") Integer configId) {
         return success(lineConfigService.selectLineConfigById(configId));
@@ -68,7 +69,7 @@ public class LineConfigController extends BaseController {
     /**
      * 取得預設頻道設定
      */
-    @PreAuthorize("@ss.hasPermi('line:config:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.QUERY + "')")
     @GetMapping("/default")
     public AjaxResult getDefaultConfig() {
         return success(lineConfigService.selectDefaultLineConfig());
@@ -77,7 +78,7 @@ public class LineConfigController extends BaseController {
     /**
      * 新增 LINE 頻道設定
      */
-    @PreAuthorize("@ss.hasPermi('line:config:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.ADD + "')")
     @Log(title = "LINE頻道設定", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody LineConfig lineConfig) {
@@ -88,7 +89,7 @@ public class LineConfigController extends BaseController {
     /**
      * 修改 LINE 頻道設定
      */
-    @PreAuthorize("@ss.hasPermi('line:config:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.EDIT + "')")
     @Log(title = "LINE頻道設定", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody LineConfig lineConfig) {
@@ -108,7 +109,7 @@ public class LineConfigController extends BaseController {
     /**
      * 刪除 LINE 頻道設定
      */
-    @PreAuthorize("@ss.hasPermi('line:config:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.REMOVE + "')")
     @Log(title = "LINE頻道設定", businessType = BusinessType.DELETE)
     @DeleteMapping("/{configIds}")
     public AjaxResult remove(@PathVariable Integer[] configIds) {
@@ -118,7 +119,7 @@ public class LineConfigController extends BaseController {
     /**
      * 測試 LINE 頻道連線
      */
-    @PreAuthorize("@ss.hasPermi('line:config:test')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.TEST + "')")
     @Log(title = "LINE連線測試", businessType = BusinessType.OTHER)
     @PostMapping("/testConnection/{configId}")
     public AjaxResult testConnection(@PathVariable Integer configId) {
@@ -134,7 +135,7 @@ public class LineConfigController extends BaseController {
     /**
      * 測試 Webhook 端點
      */
-    @PreAuthorize("@ss.hasPermi('line:config:test')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.TEST + "')")
     @Log(title = "Webhook測試", businessType = BusinessType.OTHER)
     @PostMapping("/testWebhook")
     public AjaxResult testWebhook(@Validated @RequestBody WebhookTestDTO webhookTestDTO) {
@@ -167,7 +168,7 @@ public class LineConfigController extends BaseController {
     /**
      * 更新 Webhook URL
      */
-    @PreAuthorize("@ss.hasPermi('line:config:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.EDIT + "')")
     @Log(title = "更新Webhook URL", businessType = BusinessType.UPDATE)
     @PutMapping("/webhook/{configId}")
     public AjaxResult updateWebhookUrl(@PathVariable Integer configId, @RequestParam String webhookUrl) {
@@ -177,7 +178,7 @@ public class LineConfigController extends BaseController {
     /**
      * 設定為預設頻道
      */
-    @PreAuthorize("@ss.hasPermi('line:config:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.EDIT + "')")
     @Log(title = "設定預設頻道", businessType = BusinessType.UPDATE)
     @PutMapping("/setDefault/{configId}")
     public AjaxResult setAsDefault(@PathVariable Integer configId) {
@@ -187,7 +188,7 @@ public class LineConfigController extends BaseController {
     /**
      * 取得所有啟用的頻道設定
      */
-    @PreAuthorize("@ss.hasPermi('line:config:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.QUERY + "')")
     @GetMapping("/enabled")
     public AjaxResult getEnabledList() {
         List<LineConfig> list = lineConfigService.selectEnabledLineConfigs();
@@ -197,7 +198,7 @@ public class LineConfigController extends BaseController {
     /**
      * 檢查指定類型的頻道是否已存在
      */
-    @PreAuthorize("@ss.hasPermi('line:config:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.QUERY + "')")
     @GetMapping("/checkChannelType/{channelType}")
     public AjaxResult checkChannelType(@PathVariable String channelType) {
         LineConfig existingConfig = lineConfigService.selectLineConfigByType(channelType);
@@ -214,7 +215,7 @@ public class LineConfigController extends BaseController {
      * @param configId 頻道設定ID
      * @return 結果
      */
-    @PreAuthorize("@ss.hasPermi('line:config:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.EDIT + "')")
     @Log(title = "設定LINE Webhook", businessType = BusinessType.UPDATE)
     @PostMapping("/setLineWebhook/{configId}")
     public AjaxResult setLineWebhook(@PathVariable Integer configId) {
@@ -235,7 +236,7 @@ public class LineConfigController extends BaseController {
      * @param params 包含 webhookUrl, channelAccessToken, configId
      * @return 結果
      */
-    @PreAuthorize("@ss.hasPermi('line:config:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Config.EDIT + "')")
     @Log(title = "設定LINE Webhook(表單值)", businessType = BusinessType.UPDATE)
     @PostMapping("/setLineWebhookWithParams")
     public AjaxResult setLineWebhookWithParams(@RequestBody Map<String, Object> params) {

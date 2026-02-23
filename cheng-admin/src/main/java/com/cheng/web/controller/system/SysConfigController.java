@@ -1,6 +1,7 @@
 package com.cheng.web.controller.system;
 
 import com.cheng.common.annotation.Log;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.core.page.TableDataInfo;
@@ -30,7 +31,7 @@ public class SysConfigController extends BaseController {
     /**
      * 取得參數設定列表
      */
-    @PreAuthorize("@ss.hasPermi('system:config:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Config.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(SysConfig config) {
         startPage();
@@ -39,7 +40,7 @@ public class SysConfigController extends BaseController {
     }
 
     @Log(title = "參數管理", businessType = BusinessType.EXPORT)
-    @PreAuthorize("@ss.hasPermi('system:config:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Config.EXPORT + "')")
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysConfig config) {
         List<SysConfig> list = configService.selectConfigList(config);
@@ -50,7 +51,7 @@ public class SysConfigController extends BaseController {
     /**
      * 根據參數編號取得詳細訊息
      */
-    @PreAuthorize("@ss.hasPermi('system:config:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Config.QUERY + "')")
     @GetMapping(value = "/{configId}")
     public AjaxResult getInfo(@PathVariable Long configId) {
         return success(configService.selectConfigById(configId));
@@ -67,7 +68,7 @@ public class SysConfigController extends BaseController {
     /**
      * 新增參數設定
      */
-    @PreAuthorize("@ss.hasPermi('system:config:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Config.ADD + "')")
     @Log(title = "參數管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody SysConfig config) {
@@ -81,7 +82,7 @@ public class SysConfigController extends BaseController {
     /**
      * 修改參數設定
      */
-    @PreAuthorize("@ss.hasPermi('system:config:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Config.EDIT + "')")
     @Log(title = "參數管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysConfig config) {
@@ -95,7 +96,7 @@ public class SysConfigController extends BaseController {
     /**
      * 刪除參數設定
      */
-    @PreAuthorize("@ss.hasPermi('system:config:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Config.REMOVE + "')")
     @Log(title = "參數管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{configIds}")
     public AjaxResult remove(@PathVariable Long[] configIds) {
@@ -106,7 +107,7 @@ public class SysConfigController extends BaseController {
     /**
      * 重新整理參數暫存
      */
-    @PreAuthorize("@ss.hasPermi('system:config:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.System.Config.REMOVE + "')")
     @Log(title = "參數管理", businessType = BusinessType.CLEAN)
     @DeleteMapping("/refreshCache")
     public AjaxResult refreshCache() {

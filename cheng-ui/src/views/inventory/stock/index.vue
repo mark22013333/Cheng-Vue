@@ -48,7 +48,7 @@
           icon="el-icon-plus"
           size="small"
           @click="handleStockIn"
-          v-hasPermi="['inventory:stock:add']"
+          v-hasPermi="[INVENTORY_STOCK_ADD]"
         >入庫</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -59,7 +59,7 @@
           size="small"
           :disabled="single"
           @click="handleStockOut"
-          v-hasPermi="['inventory:stock:edit']"
+          v-hasPermi="[INVENTORY_STOCK_EDIT]"
         >出庫</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -69,7 +69,7 @@
           icon="el-icon-download"
           size="small"
           @click="handleExport"
-          v-hasPermi="['inventory:stock:export']"
+          v-hasPermi="[INVENTORY_STOCK_EXPORT]"
         >匯出</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -79,7 +79,7 @@
           icon="el-icon-view"
           size="small"
           @click="handleStockCheck"
-          v-hasPermi="['inventory:stock:check']"
+          v-hasPermi="[INVENTORY_STOCK_CHECK]"
         >盤點</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -168,14 +168,14 @@
             type="text"
             icon="el-icon-plus"
             @click="handleStockInItem(scope.row)"
-            v-hasPermi="['inventory:stock:add']"
+            v-hasPermi="[INVENTORY_STOCK_ADD]"
           >入庫</el-button>
           <el-button
             size="small"
             type="text"
             icon="el-icon-minus"
             @click="handleStockOutItem(scope.row)"
-            v-hasPermi="['inventory:stock:edit']"
+            v-hasPermi="[INVENTORY_STOCK_EDIT]"
           >出庫</el-button>
           <el-button
             size="small"
@@ -278,10 +278,19 @@
 </template>
 
 <script>
+import {
+  INVENTORY_STOCK_ADD,
+  INVENTORY_STOCK_CHECK,
+  INVENTORY_STOCK_EDIT,
+  INVENTORY_STOCK_EXPORT
+} from '@/constants/permissions'
 import { listStock, getStock, stockIn, stockOut, stockCheck, exportStock, getStockStats } from "@/api/inventory/stock";
 import { listCategory } from "@/api/inventory/category";
 
 export default {
+  setup() {
+    return { INVENTORY_STOCK_ADD, INVENTORY_STOCK_CHECK, INVENTORY_STOCK_EDIT, INVENTORY_STOCK_EXPORT }
+  },
   name: "Stock",
   data() {
     return {
@@ -359,18 +368,26 @@ export default {
         this.stockList = response.rows;
         this.total = response.total;
         this.loading = false;
+      }).catch(() => {
+        this.stockList = [];
+        this.total = 0;
+        this.loading = false;
       });
     },
     /** 查詢分類列表 */
     getCategoryList() {
       listCategory().then(response => {
         this.categoryOptions = response.data;
+      }).catch(() => {
+        this.categoryOptions = [];
       });
     },
     /** 取得庫存統計 */
     getStockStatistics() {
       getStockStats().then(response => {
         this.stockStats = response.data;
+      }).catch(() => {
+        this.stockStats = {};
       });
     },
     /** 取消按鈕 */

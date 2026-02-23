@@ -17,7 +17,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="借用人" prop="borrowerName" v-hasPermi="['inventory:borrow:all']">
+      <el-form-item label="借用人" prop="borrowerName" v-hasPermi="[INVENTORY_BORROW_ALL]">
         <el-input
           v-model="queryParams.borrowerName"
           placeholder="請輸入借用人"
@@ -70,7 +70,7 @@
           plain
           icon="Plus"
           @click="handleAdd"
-          v-hasPermi="['inventory:borrow:add']"
+          v-hasPermi="[INVENTORY_BORROW_ADD]"
         >新增借出
         </el-button>
       </el-col>
@@ -81,11 +81,12 @@
           plain
           icon="Download"
           @click="handleExport"
-          v-hasPermi="['inventory:borrow:export']"
+          v-hasPermi="[INVENTORY_BORROW_EXPORT]"
         >匯出
         </el-button>
       </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns" pageKey="inventory_borrow"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns" pageKey="inventory_borrow"
+        :canCustomize="tableConfigPerms.canCustomize" :canManageTemplate="tableConfigPerms.canManageTemplate"></right-toolbar>
     </el-row>
 
     <!-- 借出統計卡片 -->
@@ -180,7 +181,7 @@
             icon="Edit"
             @click="handleUpdate(scope.row)"
             v-if="scope.row.status === '0' && scope.row.reserveStatus !== 1"
-            v-hasPermi="['inventory:borrow:edit']"
+            v-hasPermi="[INVENTORY_BORROW_EDIT]"
           >修改
           </el-button>
           <!-- 只有待審核狀態顯示審核按鈕 -->
@@ -190,7 +191,7 @@
             icon="Check"
             @click="handleApprove(scope.row)"
             v-if="scope.row.status === '0'"
-            v-hasPermi="['inventory:borrow:approve']"
+            v-hasPermi="[INVENTORY_BORROW_APPROVE]"
           >審核
           </el-button>
           <!-- 已借出、部分歸還、逾期狀態可以歸還（只有借出人本人或管理員）-->
@@ -200,7 +201,7 @@
             icon="RefreshLeft"
             @click="handleReturn(scope.row)"
             v-if="(scope.row.status === '1' || scope.row.status === '4' || scope.row.status === '5') && canReturn(scope.row)"
-            v-hasPermi="['inventory:borrow:return']"
+            v-hasPermi="[INVENTORY_BORROW_RETURN]"
           >歸還
           </el-button>
           <!-- 已歸還或部分歸還狀態顯示查看歸還記錄按鈕 -->
@@ -210,7 +211,7 @@
             icon="Document"
             @click="handleViewReturnRecords(scope.row)"
             v-if="scope.row.status === '3' || scope.row.status === '4'"
-            v-hasPermi="['inventory:borrow:query']"
+            v-hasPermi="[INVENTORY_BORROW_QUERY]"
           >歸還記錄
           </el-button>
           <!-- 審核拒絕狀態顯示查看拒絕原因按鈕 -->
@@ -220,7 +221,7 @@
             icon="Warning"
             @click="handleViewRejectReason(scope.row)"
             v-if="scope.row.status === '2' && scope.row.approveRemark"
-            v-hasPermi="['inventory:borrow:query']"
+            v-hasPermi="[INVENTORY_BORROW_QUERY]"
           >拒絕原因
           </el-button>
           <!-- 移除刪除按鈕，借出記錄應完整保留 -->
@@ -400,6 +401,17 @@
 
 <script>
 import {
+  INVENTORY_BORROW_ADD,
+  INVENTORY_BORROW_ALL,
+  INVENTORY_BORROW_APPROVE,
+  INVENTORY_BORROW_EDIT,
+  INVENTORY_BORROW_EXPORT,
+  INVENTORY_BORROW_QUERY,
+  INVENTORY_BORROW_RETURN,
+  SYSTEM_TABLE_CONFIG_CUSTOMIZE,
+  SYSTEM_TABLE_CONFIG_TEMPLATE
+} from '@/constants/permissions'
+import {
   listBorrow,
   getBorrow,
   delBorrow,
@@ -415,11 +427,20 @@ import {listManagement} from "@/api/inventory/management";
 import {getTableConfig, saveTableConfig} from "@/api/system/tableConfig";
 import { mapState } from 'pinia';
 import useUserStore from '@/store/modules/user';
+import auth from '@/plugins/auth';
 
 export default {
+  setup() {
+    return { INVENTORY_BORROW_ADD, INVENTORY_BORROW_ALL, INVENTORY_BORROW_APPROVE, INVENTORY_BORROW_EDIT, INVENTORY_BORROW_EXPORT, INVENTORY_BORROW_QUERY, INVENTORY_BORROW_RETURN }
+  },
   name: "Borrow",
   data() {
     return {
+      // 表格欄位配置權限
+      tableConfigPerms: {
+        canCustomize: false,
+        canManageTemplate: false
+      },
       // 遮罩層
       loading: true,
       // 選中陣列
@@ -542,6 +563,10 @@ export default {
     }
   },
   async created() {
+    this.tableConfigPerms = {
+      canCustomize: auth.hasPermi(SYSTEM_TABLE_CONFIG_CUSTOMIZE),
+      canManageTemplate: auth.hasPermi(SYSTEM_TABLE_CONFIG_TEMPLATE)
+    };
     await this.loadTableConfig();
     this.getList();
     this.getItemList();
@@ -614,6 +639,10 @@ export default {
         this.borrowList = response.rows;
         this.total = response.total;
         this.loading = false;
+      }).catch(() => {
+        this.borrowList = [];
+        this.total = 0;
+        this.loading = false;
       });
     },
     /** 查詢物品列表 */
@@ -660,6 +689,8 @@ export default {
       };
       getBorrowStats(statsQuery).then(response => {
         this.borrowStats = response.data;
+      }).catch(() => {
+        this.borrowStats = { pending: 0, borrowed: 0, returned: 0, overdue: 0 };
       });
     },
     /** 取消按鈕 */

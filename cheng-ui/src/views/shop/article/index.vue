@@ -26,12 +26,12 @@
     <!-- 操作按鈕 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['shop:article:add']">
+        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="[SHOP_ARTICLE_ADD]">
           新增
         </el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['shop:article:remove']">
+        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="[SHOP_ARTICLE_REMOVE]">
           刪除
         </el-button>
       </el-col>
@@ -72,10 +72,10 @@
       <el-table-column prop="createTime" label="建立時間" width="180" align="center" />
       <el-table-column label="操作" width="150" align="center" fixed="right">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['shop:article:edit']">
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="[SHOP_ARTICLE_EDIT]">
             編輯
           </el-button>
-          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['shop:article:remove']">
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[SHOP_ARTICLE_REMOVE]">
             刪除
           </el-button>
         </template>
@@ -140,6 +140,11 @@
 </template>
 
 <script setup name="ShopArticle">
+import {
+  SHOP_ARTICLE_ADD,
+  SHOP_ARTICLE_EDIT,
+  SHOP_ARTICLE_REMOVE
+} from '@/constants/permissions'
 import { ref, reactive, onMounted, getCurrentInstance } from 'vue'
 import { listArticle, getArticle, addArticle, updateArticle, delArticle } from '@/api/shop/article'
 import ProductPickerDialog from '@/components/ProductPickerDialog/index.vue'

@@ -38,7 +38,7 @@
           plain
           icon="Plus"
           @click="handleAdd"
-          v-hasPermi="['tag:line:add']"
+          v-hasPermi="[TAG_LINE_ADD]"
         >新增</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -48,7 +48,7 @@
           icon="Edit"
           :disabled="single"
           @click="handleUpdate"
-          v-hasPermi="['tag:line:edit']"
+          v-hasPermi="[TAG_LINE_EDIT]"
         >修改</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -58,7 +58,7 @@
           icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['tag:line:remove']"
+          v-hasPermi="[TAG_LINE_REMOVE]"
         >刪除</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
@@ -99,8 +99,8 @@
       <el-table-column label="建立時間" align="center" prop="createTime" width="160" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="180">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['tag:line:edit']">修改</el-button>
-          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['tag:line:remove']">刪除</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="[TAG_LINE_EDIT]">修改</el-button>
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="[TAG_LINE_REMOVE]">刪除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -146,6 +146,11 @@
 </template>
 
 <script setup name="LineTagList">
+import {
+  TAG_LINE_ADD,
+  TAG_LINE_EDIT,
+  TAG_LINE_REMOVE
+} from '@/constants/permissions'
 import { ref, reactive, onMounted, getCurrentInstance } from 'vue'
 import { listLineTags, getLineTag, addLineTag, updateLineTag, delLineTag } from '@/api/tag/line'
 

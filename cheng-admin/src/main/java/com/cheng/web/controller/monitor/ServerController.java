@@ -1,5 +1,6 @@
 package com.cheng.web.controller.monitor;
 
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.framework.web.domain.Server;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/monitor/server")
 public class ServerController {
-    @PreAuthorize("@ss.hasPermi('monitor:server:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Server.LIST + "')")
     @GetMapping()
     public AjaxResult getInfo() throws Exception {
         Server server = new Server();

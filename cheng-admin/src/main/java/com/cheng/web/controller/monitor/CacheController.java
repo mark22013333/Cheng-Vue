@@ -1,6 +1,7 @@
 package com.cheng.web.controller.monitor;
 
 import com.cheng.common.constant.CacheConstants;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.utils.StringUtils;
 import com.cheng.system.domain.SysCache;
@@ -37,7 +38,7 @@ public class CacheController {
     }
 
     @SuppressWarnings("deprecation")
-    @PreAuthorize("@ss.hasPermi('monitor:cache:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Cache.LIST + "')")
     @GetMapping()
     public AjaxResult getInfo() throws Exception {
         Properties info = (Properties) redisTemplate.execute((RedisCallback<Object>) DefaultedRedisConnection::info);
@@ -60,20 +61,20 @@ public class CacheController {
         return AjaxResult.success(result);
     }
 
-    @PreAuthorize("@ss.hasPermi('monitor:cache:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Cache.LIST + "')")
     @GetMapping("/getNames")
     public AjaxResult cache() {
         return AjaxResult.success(CACHES);
     }
 
-    @PreAuthorize("@ss.hasPermi('monitor:cache:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Cache.LIST + "')")
     @GetMapping("/getKeys/{cacheName}")
     public AjaxResult getCacheKeys(@PathVariable String cacheName) {
         Set<String> cacheKeys = redisTemplate.keys(cacheName + "*");
         return AjaxResult.success(new TreeSet<>(cacheKeys));
     }
 
-    @PreAuthorize("@ss.hasPermi('monitor:cache:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Cache.LIST + "')")
     @GetMapping("/getValue/{cacheName}/{cacheKey}")
     public AjaxResult getCacheValue(@PathVariable String cacheName, @PathVariable String cacheKey) {
         String cacheValue = redisTemplate.opsForValue().get(cacheKey);
@@ -81,7 +82,7 @@ public class CacheController {
         return AjaxResult.success(sysCache);
     }
 
-    @PreAuthorize("@ss.hasPermi('monitor:cache:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Cache.LIST + "')")
     @DeleteMapping("/clearCacheName/{cacheName}")
     public AjaxResult clearCacheName(@PathVariable String cacheName) {
         Collection<String> cacheKeys = redisTemplate.keys(cacheName + "*");
@@ -89,14 +90,14 @@ public class CacheController {
         return AjaxResult.success();
     }
 
-    @PreAuthorize("@ss.hasPermi('monitor:cache:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Cache.LIST + "')")
     @DeleteMapping("/clearCacheKey/{cacheKey}")
     public AjaxResult clearCacheKey(@PathVariable String cacheKey) {
         redisTemplate.delete(cacheKey);
         return AjaxResult.success();
     }
 
-    @PreAuthorize("@ss.hasPermi('monitor:cache:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Monitor.Cache.LIST + "')")
     @DeleteMapping("/clearCacheAll")
     public AjaxResult clearCacheAll() {
         Collection<String> cacheKeys = redisTemplate.keys("*");

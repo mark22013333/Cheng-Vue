@@ -201,6 +201,7 @@
 import request from "@/utils/request"
 import {versionLogs, getLatestVersion} from "@/data/changelog"
 import {checkPermi} from "@/utils/permission"
+import { MONITOR_ONLINE_LIST, SYSTEM_USER_LIST } from '@/constants/permissions'
 
 export default {
   name: "Index",
@@ -242,8 +243,8 @@ export default {
     // 產生統計卡片資料結構，方便 v-for
     statCards() {
       // 使用 checkPermi 函數檢查權限（支援萬用字元權限）
-      const hasOnlinePermission = checkPermi(['monitor:online:list'])
-      const hasUserPermission = checkPermi(['system:user:list'])
+      const hasOnlinePermission = checkPermi([MONITOR_ONLINE_LIST])
+      const hasUserPermission = checkPermi([SYSTEM_USER_LIST])
 
       return [
         {label: "版本迭代", value: this.totalVersions, icon: "el-icon-data-line", colorClass: "primary"},
@@ -276,7 +277,7 @@ export default {
     },
     getOnlineUsers() {
       // 有權限才呼叫 API，避免不必要的請求
-      if (checkPermi(['monitor:online:list'])) {
+      if (checkPermi([MONITOR_ONLINE_LIST])) {
         request({
           url: "/monitor/online/list",
           method: "get"
@@ -289,7 +290,7 @@ export default {
     },
     getTotalUsers() {
       // 有權限才呼叫 API，避免不必要的請求
-      if (checkPermi(['system:user:list'])) {
+      if (checkPermi([SYSTEM_USER_LIST])) {
         request({
           url: "/system/user/list",
           method: "get",

@@ -1,8 +1,11 @@
 package com.cheng.system.service.impl;
 
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.utils.DateUtils;
 import com.cheng.common.utils.SecurityUtils;
+import com.cheng.system.domain.SysTableConfigTemplate;
 import com.cheng.system.domain.SysUserTableConfig;
+import com.cheng.system.mapper.SysTableConfigTemplateMapper;
 import com.cheng.system.mapper.SysUserTableConfigMapper;
 import com.cheng.system.service.ISysUserTableConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,9 @@ import org.springframework.stereotype.Service;
 public class SysUserTableConfigServiceImpl implements ISysUserTableConfigService {
     @Autowired
     private SysUserTableConfigMapper sysUserTableConfigMapper;
+
+    @Autowired
+    private SysTableConfigTemplateMapper sysTableConfigTemplateMapper;
 
     /**
      * 查詢使用者表格欄位配置
@@ -109,5 +115,44 @@ public class SysUserTableConfigServiceImpl implements ISysUserTableConfigService
     @Override
     public int deleteSysUserTableConfigByConfigId(Long configId) {
         return sysUserTableConfigMapper.deleteSysUserTableConfigByConfigId(configId);
+    }
+
+    /**
+     * 智慧取得有效配置：
+     * 1. 有 customize 權限 → 讀個人配置 → fallback 模版
+     * 2. 無 customize 權限 → 直接讀模版
+     * 3. 都沒有 → 返回 null（前端使用 defaultColumns）
+     */
+    @Override
+    public String getEffectiveConfig(String pageKey) {
+        boolean hasCustomize = SecurityUtils.hasPermi(PermConstants.System.TableConfig.CUSTOMIZE);
+
+        if (hasCustomize) {
+            String userConfig = getColumnConfig(pageKey);
+            if (userConfig != null) {
+                return userConfig;
+            }
+        }
+
+        return getTemplateConfig(pageKey);
+    }
+
+    @Override
+    public String getTemplateConfig(String pageKey) {
+        SysTableConfigTemplate template = sysTableConfigTemplateMapper.selectByPageKey(pageKey);
+        return template != null ? template.getColumnConfig() : null;
+    }
+
+    @Override
+    public int saveTemplateConfig(String pageKey, String columnConfig) {
+        String username = SecurityUtils.getUsername();
+
+        SysTableConfigTemplate template = new SysTableConfigTemplate();
+        template.setPageKey(pageKey);
+        template.setColumnConfig(columnConfig);
+        template.setCreateBy(username);
+        template.setUpdateBy(username);
+
+        return sysTableConfigTemplateMapper.insertOrUpdate(template);
     }
 }

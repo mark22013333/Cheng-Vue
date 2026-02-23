@@ -9,6 +9,7 @@ import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.system.domain.InvBookInfo;
 import com.cheng.system.service.IInvBookInfoService;
 import lombok.RequiredArgsConstructor;
+import com.cheng.common.constant.PermConstants;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,7 +32,7 @@ public class InvBookInfoController extends BaseController {
     /**
      * 查詢書籍資訊列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:bookInfo:list')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.BookInfo.LIST + "')")
     @GetMapping("/list")
     public TableDataInfo list(InvBookInfo invBookInfo) {
         startPage();
@@ -42,7 +43,7 @@ public class InvBookInfoController extends BaseController {
     /**
      * 匯出書籍資訊列表
      */
-    @PreAuthorize("@ss.hasPermi('inventory:bookInfo:export')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.BookInfo.EXPORT + "')")
     @Log(title = "書籍資訊", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, InvBookInfo invBookInfo) {
@@ -54,7 +55,7 @@ public class InvBookInfoController extends BaseController {
     /**
      * 取得書籍資訊詳細資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:bookInfo:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.BookInfo.QUERY + "')")
     @GetMapping(value = "/{bookInfoId}")
     public AjaxResult getInfo(@PathVariable("bookInfoId") Long bookInfoId) {
         return success(invBookInfoService.selectInvBookInfoByBookInfoId(bookInfoId));
@@ -63,7 +64,7 @@ public class InvBookInfoController extends BaseController {
     /**
      * 根據 ISBN 查詢書籍資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:bookInfo:query')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.BookInfo.QUERY + "')")
     @GetMapping(value = "/isbn/{isbn}")
     public AjaxResult getInfoByIsbn(@PathVariable("isbn") String isbn) {
         return success(invBookInfoService.selectInvBookInfoByIsbn(isbn));
@@ -72,7 +73,7 @@ public class InvBookInfoController extends BaseController {
     /**
      * 新增書籍資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:bookInfo:add')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.BookInfo.ADD + "')")
     @Log(title = "書籍資訊", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody InvBookInfo invBookInfo) {
@@ -82,7 +83,7 @@ public class InvBookInfoController extends BaseController {
     /**
      * 修改書籍資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:bookInfo:edit')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.BookInfo.EDIT + "')")
     @Log(title = "書籍資訊", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody InvBookInfo invBookInfo) {
@@ -92,7 +93,7 @@ public class InvBookInfoController extends BaseController {
     /**
      * 刪除書籍資訊
      */
-    @PreAuthorize("@ss.hasPermi('inventory:bookInfo:remove')")
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.BookInfo.REMOVE + "')")
     @Log(title = "書籍資訊", businessType = BusinessType.DELETE)
     @DeleteMapping("/{bookInfoIds}")
     public AjaxResult remove(@PathVariable Long[] bookInfoIds) {
