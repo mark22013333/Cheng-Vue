@@ -52,7 +52,7 @@
             </div>
           </el-scrollbar>
           <div class="panel-footer">
-            <router-link to="/system/notice" class="view-all-link">
+            <router-link to="/cadm/system/notice" class="view-all-link">
               查看全部公告
             </router-link>
           </div>
