@@ -27,13 +27,10 @@ const useMemberStore = defineStore('member', {
         })
       })
     },
-    // 會員註冊
+    // 會員註冊（註冊後需 Email 驗證，不設定 token）
     register(registerBody) {
       return new Promise((resolve, reject) => {
         memberRegister(registerBody).then(res => {
-          setMemberToken(res.token)
-          this.token = res.token
-          this.setMember(res.member)
           resolve(res)
         }).catch(error => {
           reject(error)

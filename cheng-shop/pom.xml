@@ -65,6 +65,12 @@
             <artifactId>lombok</artifactId>
         </dependency>
 
+        <!-- Spring Boot Starter Mail（忘記密碼驗證碼發送） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>

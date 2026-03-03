@@ -6,7 +6,7 @@
       :sub-title="subTitle"
     >
       <template #extra>
-        <el-button type="primary" @click="$router.push(`/member/order/${orderNo}`)">
+        <el-button type="primary" @click="goToOrderDetail">
           查看訂單
         </el-button>
         <el-button @click="$router.push('/products')">繼續購物</el-button>
@@ -21,8 +21,9 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { createEcpayPayment } from '@/api/shop/payment'
+import { getMemberToken } from '@/utils/memberAuth'
 
 const route = useRoute()
 const router = useRouter()
@@ -39,7 +40,35 @@ const subTitle = computed(() => {
   return `訂單編號：${orderNo}，付款未完成，請重新嘗試`
 })
 
+/**
+ * 檢查會員 Token 是否存在，若不存在則引導登入
+ * @returns {boolean} Token 是否有效
+ */
+function ensureAuthenticated() {
+  if (getMemberToken()) {
+    return true
+  }
+  ElMessageBox.confirm(
+    '登入已過期，需要重新登入後才能繼續操作。',
+    '請重新登入',
+    { confirmButtonText: '前往登入', cancelButtonText: '取消', type: 'warning' }
+  ).then(() => {
+    // 帶 redirect 回當前頁面，登入後可直接返回
+    const currentPath = route.fullPath
+    router.push(`/login?redirect=${encodeURIComponent(currentPath)}`)
+  }).catch(() => {})
+  return false
+}
+
+/** 查看訂單詳情（需要登入） */
+function goToOrderDetail() {
+  if (!ensureAuthenticated()) return
+  router.push(`/member/order/${orderNo}`)
+}
+
+/** 重新付款（需要登入） */
 async function retryPayment() {
+  if (!ensureAuthenticated()) return
   try {
     const res = await createEcpayPayment(orderNo)
     if (res.code === 200 && res.data?.formHtml) {

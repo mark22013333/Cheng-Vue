@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.shop.mapper.ShopEmailVerificationMapper">
+
+    <resultMap type="com.cheng.shop.domain.ShopEmailVerification" id="ShopEmailVerificationResult">
+        <id     property="id"          column="id"/>
+        <result property="selector"    column="selector"/>
+        <result property="hashedToken" column="hashed_token"/>
+        <result property="email"       column="email"/>
+        <result property="memberId"    column="member_id"/>
+        <result property="expiresAt"   column="expires_at"/>
+        <result property="used"        column="used"/>
+        <result property="ipAddress"   column="ip_address"/>
+        <result property="userAgent"   column="user_agent"/>
+        <result property="createdAt"   column="created_at"/>
+        <result property="usedAt"      column="used_at"/>
+    </resultMap>
+
+    <select id="selectBySelector" parameterType="String" resultMap="ShopEmailVerificationResult">
+        select id, selector, hashed_token, email, member_id, expires_at,
+               used, ip_address, user_agent, created_at, used_at
+        from shop_email_verification
+        where selector = #{selector}
+    </select>
+
+    <insert id="insert" parameterType="com.cheng.shop.domain.ShopEmailVerification" useGeneratedKeys="true" keyProperty="id">
+        insert into shop_email_verification (selector, hashed_token, email, member_id, expires_at,
+                                             used, ip_address, user_agent, created_at)
+        values (#{selector}, #{hashedToken}, #{email}, #{memberId}, #{expiresAt},
+                #{used}, #{ipAddress}, #{userAgent}, #{createdAt})
+    </insert>
+
+    <update id="markAsUsed">
+        update shop_email_verification
+        set used = 1, used_at = #{usedAt}
+        where id = #{id}
+    </update>
+
+    <update id="invalidateByMemberId" parameterType="Long">
+        update shop_email_verification
+        set used = 1, used_at = now()
+        where member_id = #{memberId} and used = 0
+    </update>
+
+    <update id="invalidateByEmail" parameterType="String">
+        update shop_email_verification
+        set used = 1, used_at = now()
+        where email = #{email} and used = 0
+    </update>
+
+    <delete id="deleteExpired">
+        delete from shop_email_verification
+        where expires_at &lt; now()
+    </delete>
+
+</mapper>

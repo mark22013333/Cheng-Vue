@@ -9,7 +9,9 @@
         <result property="avatar"       column="avatar"/>
         <result property="mobile"       column="mobile"/>
         <result property="email"        column="email"/>
+        <result property="emailVerified" column="email_verified"/>
         <result property="password"     column="password"/>
+        <result property="passwordChangedAt" column="password_changed_at"/>
         <result property="gender"       column="gender"/>
         <result property="birthday"     column="birthday"/>
         <result property="points"       column="points"/>
@@ -22,8 +24,8 @@
     </resultMap>
 
     <sql id="selectMemberVo">
-        select member_id, member_no, nickname, avatar, mobile, email, password, gender, birthday,
-               points, level, status, last_login_time, last_login_ip, create_time, update_time
+        select member_id, member_no, nickname, avatar, mobile, email, email_verified, password, password_changed_at,
+               gender, birthday, points, level, status, last_login_time, last_login_ip, create_time, update_time
         from shop_member
     </sql>
 
@@ -72,6 +74,7 @@
             <if test="memberNo != null and memberNo != ''">member_no,</if>
             <if test="mobile != null">mobile,</if>
             <if test="email != null">email,</if>
+            <if test="emailVerified != null">email_verified,</if>
             <if test="password != null and password != ''">password,</if>
             <if test="gender != null">gender,</if>
             <if test="birthday != null">birthday,</if>
@@ -86,6 +89,7 @@
             <if test="memberNo != null and memberNo != ''">#{memberNo},</if>
             <if test="mobile != null">#{mobile},</if>
             <if test="email != null">#{email},</if>
+            <if test="emailVerified != null">#{emailVerified},</if>
             <if test="password != null and password != ''">#{password},</if>
             <if test="gender != null">#{gender},</if>
             <if test="birthday != null">#{birthday},</if>
@@ -103,7 +107,9 @@
             <if test="avatar != null">avatar = #{avatar},</if>
             <if test="mobile != null">mobile = #{mobile},</if>
             <if test="email != null">email = #{email},</if>
+            <if test="emailVerified != null">email_verified = #{emailVerified},</if>
             <if test="password != null and password != ''">password = #{password},</if>
+            <if test="passwordChangedAt != null">password_changed_at = #{passwordChangedAt},</if>
             <if test="gender != null">gender = #{gender},</if>
             <if test="birthday != null">birthday = #{birthday},</if>
             <if test="points != null">points = #{points},</if>

@@ -1,254 +1,234 @@
 <template>
   <div class="register-page">
-    <div class="motion-background" :style="motionBackgroundStyle" aria-hidden="true"></div>
-    <div class="gradient-orb orb-one" aria-hidden="true"></div>
-    <div class="gradient-orb orb-two" aria-hidden="true"></div>
-    <div class="gradient-orb orb-three" aria-hidden="true"></div>
-
     <div class="register-shell">
-      <aside class="hero-panel">
-        <div class="hero-content">
-          <div class="hero-logo">
-            <img src="@/assets/logo/logo.png" alt="CoolApps" />
-          </div>
-          <p class="hero-kicker">COOLAPPS MEMBERSHIP</p>
-          <h1 class="hero-title">加入藍海會員，打開更聰明的購物旅程</h1>
-          <p class="hero-desc">
-            註冊後即可享有會員專屬折扣、快速結帳、訂單進度通知與收藏同步，打造更流暢的電商體驗。
-          </p>
-
-          <div class="hero-grid">
-            <article class="hero-card">
-              <el-icon><Discount /></el-icon>
-              <div>
-                <h3>首購折扣</h3>
-                <p>新會員首筆訂單立即享優惠。</p>
-              </div>
-            </article>
-            <article class="hero-card">
-              <el-icon><Present /></el-icon>
-              <div>
-                <h3>會員活動</h3>
-                <p>節慶限定活動與回饋不漏接。</p>
-              </div>
-            </article>
-            <article class="hero-card">
-              <el-icon><Star /></el-icon>
-              <div>
-                <h3>收藏同步</h3>
-                <p>喜愛商品與訂單狀態集中管理。</p>
-              </div>
-            </article>
-          </div>
-
-          <div class="promo-chip">
-            <span>NEW MEMBER DEAL</span>
-            <strong>首購享 NT$120 折抵</strong>
-          </div>
-        </div>
-      </aside>
-
       <section class="form-panel">
         <div class="form-surface">
-          <header class="form-header">
-            <span class="form-badge">免費註冊</span>
-            <h2>建立你的會員帳號</h2>
-            <p>完成註冊後，立即啟用專屬購物禮遇。</p>
-          </header>
 
-          <div class="signup-steps">
-            <span class="step active">1. 聯絡方式</span>
-            <span class="step active">2. 密碼設定</span>
-            <span class="step">3. 完成</span>
-          </div>
+          <!-- 步驟一：註冊表單 -->
+          <template v-if="currentStep === 1">
+            <header class="form-header">
+              <span class="form-badge">建立帳號</span>
+              <h2>加入 CoolApps</h2>
+              <p>填寫以下資料完成註冊，我們將發送驗證信至您的信箱。</p>
+            </header>
 
-          <div class="contact-switch" role="tablist" aria-label="註冊方式">
-            <button
-              type="button"
-              class="switch-btn"
-              :class="{ active: contactType === 'email' }"
-              :aria-pressed="contactType === 'email'"
-              @click="switchContactType('email')"
+            <el-form
+              ref="registerFormRef"
+              :model="registerForm"
+              :rules="registerRules"
+              class="register-form"
+              label-position="top"
             >
-              <span class="switch-main">
-                <el-icon><Message /></el-icon>
-                Email 註冊
-              </span>
-              <small>適合接收帳務通知</small>
-            </button>
-            <button
-              type="button"
-              class="switch-btn"
-              :class="{ active: contactType === 'mobile' }"
-              :aria-pressed="contactType === 'mobile'"
-              @click="switchContactType('mobile')"
-            >
-              <span class="switch-main">
-                <el-icon><Iphone /></el-icon>
-                手機註冊
-              </span>
-              <small>適合快速登入驗證</small>
-            </button>
-          </div>
-
-          <el-form
-            ref="registerFormRef"
-            :model="registerForm"
-            :rules="registerRules"
-            class="register-form"
-            label-position="top"
-          >
-            <el-form-item label="會員暱稱" prop="nickname">
-              <el-input
-                v-model="registerForm.nickname"
-                size="large"
-                placeholder="請輸入暱稱"
-                :prefix-icon="User"
-                maxlength="20"
-                autocomplete="nickname"
-              />
-            </el-form-item>
-
-            <el-form-item v-if="contactType === 'email'" label="Email（必填）" prop="email">
-              <el-input
-                v-model="registerForm.email"
-                size="large"
-                placeholder="name@example.com"
-                :prefix-icon="Message"
-                autocomplete="email"
-                inputmode="email"
-              />
-            </el-form-item>
-
-            <el-form-item v-else label="手機號碼（必填）" prop="mobile">
-              <el-input
-                v-model="registerForm.mobile"
-                size="large"
-                placeholder="請輸入 8-15 碼手機號碼"
-                :prefix-icon="Iphone"
-                autocomplete="tel"
-                inputmode="tel"
-              />
-            </el-form-item>
-
-            <el-form-item v-if="contactType === 'email'" label="手機號碼（選填）" prop="mobile">
-              <el-input
-                v-model="registerForm.mobile"
-                size="large"
-                placeholder="可填寫手機接收物流通知"
-                :prefix-icon="Iphone"
-                autocomplete="tel"
-                inputmode="tel"
-              />
-            </el-form-item>
-
-            <el-form-item v-else label="Email（選填）" prop="email">
-              <el-input
-                v-model="registerForm.email"
-                size="large"
-                placeholder="可填寫 Email 接收促銷通知"
-                :prefix-icon="Message"
-                autocomplete="email"
-                inputmode="email"
-              />
-            </el-form-item>
-
-            <el-form-item label="密碼" prop="password">
-              <el-input
-                v-model="registerForm.password"
-                size="large"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="請輸入 6-20 字元密碼"
-                :prefix-icon="Lock"
-                autocomplete="new-password"
-              >
-                <template #suffix>
-                  <el-icon class="password-toggle" @click="showPassword = !showPassword">
-                    <View v-if="showPassword" />
-                    <Hide v-else />
-                  </el-icon>
-                </template>
-              </el-input>
-              <p class="field-hint">建議使用英數混合，提高帳號安全性。</p>
-            </el-form-item>
-
-            <el-form-item label="確認密碼" prop="confirmPassword">
-              <el-input
-                v-model="registerForm.confirmPassword"
-                size="large"
-                :type="showConfirmPassword ? 'text' : 'password'"
-                placeholder="請再次輸入密碼"
-                :prefix-icon="Lock"
-                autocomplete="new-password"
-                @keyup.enter="handleRegister"
-              >
-                <template #suffix>
-                  <el-icon class="password-toggle" @click="showConfirmPassword = !showConfirmPassword">
-                    <View v-if="showConfirmPassword" />
-                    <Hide v-else />
-                  </el-icon>
-                </template>
-              </el-input>
-            </el-form-item>
-
-            <el-form-item v-if="captchaEnabled" label="驗證碼" prop="code">
-              <div class="captcha-row">
+              <el-form-item label="會員暱稱" prop="nickname" required>
                 <el-input
-                  v-model="registerForm.code"
+                  v-model="registerForm.nickname"
                   size="large"
-                  placeholder="請輸入驗證碼"
-                  :prefix-icon="Key"
-                  autocomplete="one-time-code"
-                  @keyup.enter="handleRegister"
+                  placeholder="請輸入暱稱"
+                  :prefix-icon="User"
+                  maxlength="20"
+                  autocomplete="nickname"
                 />
-                <button type="button" class="captcha-btn" @click="getCode">
-                  <img :src="codeUrl" alt="驗證碼" />
-                  <span class="captcha-mask">
-                    <el-icon><Refresh /></el-icon>
-                    <em>更新</em>
-                  </span>
-                </button>
+              </el-form-item>
+
+              <el-form-item label="電子信箱" prop="email" required>
+                <el-input
+                  v-model="registerForm.email"
+                  size="large"
+                  placeholder="name@example.com"
+                  :prefix-icon="Message"
+                  autocomplete="email"
+                  inputmode="email"
+                />
+                <p class="field-hint">用於登入及接收訂單通知，請確保信箱可正常收信。</p>
+              </el-form-item>
+
+              <el-form-item label="密碼" prop="password" required>
+                <el-input
+                  v-model="registerForm.password"
+                  size="large"
+                  :type="showPassword ? 'text' : 'password'"
+                  placeholder="請輸入 12-50 字元密碼"
+                  :prefix-icon="Lock"
+                  autocomplete="new-password"
+                  @input="checkPasswordStrength"
+                >
+                  <template #suffix>
+                    <el-icon class="password-toggle" @click="showPassword = !showPassword">
+                      <View v-if="showPassword" />
+                      <Hide v-else />
+                    </el-icon>
+                  </template>
+                </el-input>
+              </el-form-item>
+
+              <!-- 密碼強度指示器 -->
+              <div v-if="registerForm.password" class="strength-bar">
+                <div class="strength-track">
+                  <div
+                    v-for="i in 4"
+                    :key="i"
+                    class="strength-segment"
+                    :class="{ active: i <= strengthLevel }"
+                    :style="{ background: i <= strengthLevel ? strengthColor : '' }"
+                  />
+                </div>
+                <span v-if="strengthLevel > 0" class="strength-label" :style="{ color: strengthColor }">
+                  {{ strengthText }}
+                </span>
               </div>
-            </el-form-item>
+              <p v-else class="field-hint" style="margin-top: -6px;">建議使用大小寫英文、數字與特殊符號混合。</p>
 
-            <el-form-item prop="agreement">
-              <el-checkbox v-model="registerForm.agreement" class="agreement">
-                我已閱讀並同意
-                <router-link class="inline-link" to="/terms" target="_blank" rel="noopener noreferrer">
-                  服務條款
+              <el-form-item label="確認密碼" prop="confirmPassword" required>
+                <el-input
+                  v-model="registerForm.confirmPassword"
+                  size="large"
+                  :type="showConfirmPassword ? 'text' : 'password'"
+                  placeholder="請再次輸入密碼"
+                  :prefix-icon="Lock"
+                  autocomplete="new-password"
+                  @keyup.enter="handleRegister"
+                >
+                  <template #suffix>
+                    <el-icon class="password-toggle" @click="showConfirmPassword = !showConfirmPassword">
+                      <View v-if="showConfirmPassword" />
+                      <Hide v-else />
+                    </el-icon>
+                  </template>
+                </el-input>
+              </el-form-item>
+
+              <el-form-item v-if="captchaEnabled" label="驗證碼" prop="code" required>
+                <div class="captcha-row">
+                  <el-input
+                    v-model="registerForm.code"
+                    size="large"
+                    placeholder="請輸入驗證碼"
+                    :prefix-icon="Key"
+                    autocomplete="one-time-code"
+                    @keyup.enter="handleRegister"
+                  />
+                  <button type="button" class="captcha-btn" @click="getCode">
+                    <img :src="codeUrl" alt="驗證碼" />
+                    <span class="captcha-mask">
+                      <el-icon><Refresh /></el-icon>
+                      <em>更新</em>
+                    </span>
+                  </button>
+                </div>
+              </el-form-item>
+
+              <el-form-item prop="agreement">
+                <el-checkbox v-model="registerForm.agreement" class="agreement">
+                  我已閱讀並同意
+                  <a class="inline-link" href="javascript:;" @click.stop="openPolicy('terms')">服務條款</a>
+                  與
+                  <a class="inline-link" href="javascript:;" @click.stop="openPolicy('privacy')">隱私政策</a>
+                </el-checkbox>
+              </el-form-item>
+
+              <el-button
+                type="primary"
+                size="large"
+                class="submit-btn"
+                :loading="loading"
+                @click="handleRegister"
+              >
+                {{ loading ? '註冊中...' : '註冊並發送驗證信' }}
+              </el-button>
+
+              <p class="form-footer">
+                已經有帳號？
+                <router-link :to="{ path: '/login', query: { redirect: redirect } }">
+                  立即登入
                 </router-link>
-                與
-                <router-link class="inline-link" to="/privacy" target="_blank" rel="noopener noreferrer">
-                  隱私政策
-                </router-link>
-              </el-checkbox>
-            </el-form-item>
+              </p>
+            </el-form>
+          </template>
 
-            <el-button
-              type="primary"
-              size="large"
-              class="submit-btn"
-              :loading="loading"
-              @click="handleRegister"
-            >
-              {{ loading ? '註冊中...' : '立即註冊並開始購物' }}
-            </el-button>
+          <!-- 步驟二：驗證信已發送 -->
+          <template v-if="currentStep === 2">
+            <div class="success-panel">
+              <div class="success-icon">
+                <el-icon :size="56" color="#4A6B7C"><Message /></el-icon>
+              </div>
+              <h2>驗證信已發送</h2>
+              <p>我們已寄送驗證連結至</p>
+              <p><strong>{{ maskedEmail }}</strong></p>
+              <p class="hint-text">
+                請至信箱點擊驗證連結以完成註冊。<br />
+                沒收到信？請檢查垃圾郵件資料夾，或稍後重試。
+              </p>
+              <el-button
+                type="primary"
+                size="large"
+                class="submit-btn"
+                @click="goToLogin"
+              >
+                前往登入頁面
+              </el-button>
+            </div>
+          </template>
 
-            <p class="form-footer">
-              已經有帳號？
-              <router-link :to="{ path: '/login', query: { redirect: redirect } }">
-                立即登入
-              </router-link>
-            </p>
-          </el-form>
+          <!-- 步驟指示器 -->
+          <div v-if="currentStep === 1" class="step-indicator">
+            <div
+              v-for="step in 2"
+              :key="step"
+              class="step-dot"
+              :class="{ active: step === currentStep, done: step < currentStep }"
+            />
+          </div>
         </div>
       </section>
     </div>
+
+    <el-dialog
+      v-model="policyVisible"
+      :title="policyType === 'terms' ? '服務條款' : '隱私政策'"
+      width="600px"
+      top="8vh"
+      class="policy-dialog"
+      destroy-on-close
+    >
+      <div class="policy-content">
+        <template v-if="policyType === 'terms'">
+          <h3>CoolApps 服務條款</h3>
+          <p>歡迎使用 CoolApps 電商平台。使用本服務前，請仔細閱讀以下條款。</p>
+          <h4>一、服務範圍</h4>
+          <p>CoolApps 提供線上商品瀏覽、購買、訂單管理等電子商務服務。我們保留隨時修改或中止服務的權利。</p>
+          <h4>二、帳號管理</h4>
+          <p>您有責任妥善保管帳號及密碼，因帳號或密碼外洩所產生的一切損失由用戶自行承擔。</p>
+          <h4>三、購物與付款</h4>
+          <p>商品價格以下單時頁面顯示為準。付款成功後，系統將寄送訂單確認通知。如有退換貨需求，請參閱退換貨政策。</p>
+          <h4>四、智慧財產權</h4>
+          <p>本平台所有內容（包括但不限於文字、圖片、商標）均受智慧財產權法律保護，未經授權不得使用。</p>
+          <h4>五、免責聲明</h4>
+          <p>本平台對因不可抗力、系統維護或第三方服務中斷導致的損失不承擔責任。</p>
+        </template>
+        <template v-else>
+          <h3>CoolApps 隱私政策</h3>
+          <p>我們重視您的隱私權，本政策說明我們如何蒐集、使用及保護您的個人資料。</p>
+          <h4>一、資料蒐集</h4>
+          <p>我們蒐集的資料包括：姓名、Email、收件地址及購物紀錄等，用於提供服務與改善體驗。</p>
+          <h4>二、資料使用</h4>
+          <p>您的資料僅用於訂單處理、客戶服務、行銷通知（經同意後）及平台改善分析。</p>
+          <h4>三、資料保護</h4>
+          <p>我們採用業界標準的加密技術與安全措施保護您的個人資料，防止未經授權的存取。</p>
+          <h4>四、Cookie 使用</h4>
+          <p>本平台使用 Cookie 記錄您的偏好設定與登入狀態，以提供更好的瀏覽體驗。</p>
+          <h4>五、您的權利</h4>
+          <p>您可以隨時要求查閱、更正或刪除您的個人資料，請透過客服聯繫我們。</p>
+        </template>
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="policyVisible = false">我知道了</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -258,21 +238,13 @@ import {
   Hide,
   Key,
   Refresh,
-  Message,
-  Iphone,
-  Discount,
-  Present,
-  Star
+  Message
 } from '@element-plus/icons-vue'
 import { getCodeImg } from '@/api/login'
-import useMemberStore from '@/store/modules/member'
-import { useCartStore } from '@/store/modules/cart'
-import loginBackground from '@/assets/images/login-background.jpg'
+import { memberRegister } from '@/api/shop/auth'
 
 const router = useRouter()
 const route = useRoute()
-const memberStore = useMemberStore()
-const cartStore = useCartStore()
 
 const registerFormRef = ref(null)
 const loading = ref(false)
@@ -280,16 +252,24 @@ const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const captchaEnabled = ref(true)
 const codeUrl = ref('')
-const contactType = ref('email')
+const currentStep = ref(1)
+const policyVisible = ref(false)
+const policyType = ref('terms')
+
+// 密碼強度
+const strengthLevel = ref(0)
+const strengthText = ref('')
+const strengthColor = ref('')
+
+function openPolicy(type) {
+  policyType.value = type
+  policyVisible.value = true
+}
 
 const redirect = computed(() => route.query.redirect || '/')
-const motionBackgroundStyle = computed(() => ({
-  backgroundImage: `linear-gradient(160deg, rgba(6, 48, 104, 0.86), rgba(18, 97, 183, 0.7)), url(${loginBackground})`
-}))
 
 const registerForm = ref({
   nickname: '',
-  mobile: '',
   email: '',
   password: '',
   confirmPassword: '',
@@ -298,40 +278,56 @@ const registerForm = ref({
   agreement: false
 })
 
-function switchContactType(type) {
-  if (contactType.value === type) return
-  contactType.value = type
-  nextTick(() => {
-    registerFormRef.value?.clearValidate(['mobile', 'email'])
-  })
-}
+// 遮蔽 Email 顯示
+const maskedEmail = computed(() => {
+  const email = registerForm.value.email
+  if (!email) return ''
+  const [local, domain] = email.split('@')
+  if (!domain) return email
+  if (local.length <= 2) return email
+  return local[0] + '***' + local[local.length - 1] + '@' + domain
+})
 
-const validateMobile = (rule, value, callback) => {
-  const mobile = (registerForm.value.mobile || '').trim()
-  if (!mobile) {
-    if (contactType.value === 'mobile') {
-      callback(new Error('請輸入手機號碼'))
-      return
-    }
-    callback()
+// ===== 密碼強度檢測 =====
+function checkPasswordStrength() {
+  const pwd = registerForm.value.password
+  if (!pwd) {
+    strengthLevel.value = 0
+    strengthText.value = ''
+    strengthColor.value = ''
     return
   }
-  const mobileOk = /^[0-9]{8,15}$/.test(mobile)
-  if (!mobileOk) {
-    callback(new Error('請輸入正確的手機號碼'))
-    return
+
+  let score = 0
+  if (pwd.length >= 12) score++
+  if (pwd.length >= 16) score++
+  if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score++
+  if (/\d/.test(pwd)) score++
+  if (/[^a-zA-Z0-9]/.test(pwd)) score++
+
+  if (score <= 1) {
+    strengthLevel.value = 1
+    strengthText.value = '弱'
+    strengthColor.value = '#E53E3E'
+  } else if (score <= 2) {
+    strengthLevel.value = 2
+    strengthText.value = '普通'
+    strengthColor.value = '#DD6B20'
+  } else if (score <= 3) {
+    strengthLevel.value = 3
+    strengthText.value = '中等'
+    strengthColor.value = '#D69E2E'
+  } else {
+    strengthLevel.value = 4
+    strengthText.value = '強'
+    strengthColor.value = '#38A169'
   }
-  callback()
 }
 
 const validateEmail = (rule, value, callback) => {
-  const email = (registerForm.value.email || '').trim()
+  const email = (value || '').trim()
   if (!email) {
-    if (contactType.value === 'email') {
-      callback(new Error('請輸入 Email'))
-      return
-    }
-    callback()
+    callback(new Error('請輸入 Email'))
     return
   }
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -343,8 +339,8 @@ const validateEmail = (rule, value, callback) => {
 }
 
 const validatePassword = (rule, value, callback) => {
-  if (value.length < 6 || value.length > 20) {
-    callback(new Error('密碼長度需在 6-20 字元之間'))
+  if (!value || value.length < 12 || value.length > 50) {
+    callback(new Error('密碼長度需在 12-50 字元之間'))
   } else {
     callback()
   }
@@ -371,10 +367,8 @@ const registerRules = {
     { required: true, trigger: 'blur', message: '請輸入暱稱' },
     { min: 2, max: 20, trigger: 'blur', message: '暱稱長度需在 2-20 字元之間' }
   ],
-  mobile: [
-    { validator: validateMobile, trigger: 'blur' }
-  ],
   email: [
+    { required: true, trigger: 'blur', message: '請輸入 Email' },
     { validator: validateEmail, trigger: 'blur' }
   ],
   password: [
@@ -413,23 +407,16 @@ async function handleRegister() {
   try {
     await registerFormRef.value.validate()
 
-    await memberStore.register({
+    await memberRegister({
       nickname: registerForm.value.nickname.trim(),
-      mobile: (registerForm.value.mobile || '').trim(),
-      email: (registerForm.value.email || '').trim(),
+      email: registerForm.value.email.trim().toLowerCase(),
       password: registerForm.value.password,
       code: registerForm.value.code,
       uuid: registerForm.value.uuid
     })
 
-    try {
-      await cartStore.mergeGuestCartOnLogin()
-    } catch (e) {
-      console.error('合併購物車失敗', e)
-    }
-
-    ElMessage.success('註冊成功')
-    await router.push(redirect.value)
+    ElMessage.success('註冊成功，驗證信已發送至您的信箱')
+    currentStep.value = 2
   } catch (error) {
     if (captchaEnabled.value) {
       getCode()
@@ -437,6 +424,10 @@ async function handleRegister() {
   } finally {
     loading.value = false
   }
+}
+
+function goToLogin() {
+  router.push({ path: '/login', query: { redirect: redirect.value } })
 }
 
 onMounted(() => {
@@ -448,244 +439,31 @@ onMounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&display=swap');
 
 .register-page {
-  --rg-ink: #eaf4ff;
-  --rg-primary: #3f93ff;
-  --rg-secondary: #255fc3;
-  --rg-accent: #79d0ff;
-  --rg-panel: rgba(8, 23, 56, 0.72);
-  --rg-form-bg: rgba(255, 255, 255, 0.95);
-  --rg-line: #d6e6ff;
-  min-height: 100vh;
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(145deg, #041a45, #0a2d69 40%, #0f3f87);
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 40px 24px;
   font-family: 'Noto Sans TC', sans-serif;
 }
 
-.motion-background {
-  position: absolute;
-  inset: auto -10% -18% -10%;
-  height: 70%;
-  background-size: cover;
-  background-position: center;
-  filter: saturate(1.15) brightness(0.9);
-  transform-origin: center;
-  animation: bgDrift 18s ease-in-out infinite alternate;
-  opacity: 0.52;
-}
-
-.motion-background::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(0deg, rgba(3, 10, 25, 0.72), rgba(3, 10, 25, 0));
-}
-
-.gradient-orb {
-  position: absolute;
-  border-radius: 999px;
-  pointer-events: none;
-  filter: blur(2px);
-}
-
-.orb-one {
-  width: 360px;
-  height: 360px;
-  top: -120px;
-  right: 12%;
-  background: radial-gradient(circle, rgba(121, 208, 255, 0.8), rgba(121, 208, 255, 0));
-  animation: orbFloat 9s ease-in-out infinite;
-}
-
-.orb-two {
-  width: 420px;
-  height: 420px;
-  left: -150px;
-  top: 28%;
-  background: radial-gradient(circle, rgba(79, 145, 255, 0.65), rgba(79, 145, 255, 0));
-  animation: orbFloat 10s ease-in-out infinite 1.3s;
-}
-
-.orb-three {
-  width: 320px;
-  height: 320px;
-  right: -80px;
-  bottom: 6%;
-  background: radial-gradient(circle, rgba(49, 102, 221, 0.72), rgba(49, 102, 221, 0));
-  animation: orbFloat 11s ease-in-out infinite 2.2s;
-}
-
 .register-shell {
-  width: min(1220px, 100%);
-  min-height: 760px;
-  display: grid;
-  grid-template-columns: 52% 48%;
-  border-radius: 32px;
-  overflow: hidden;
-  position: relative;
-  z-index: 2;
-  border: 1px solid rgba(166, 213, 255, 0.34);
-  box-shadow: 0 28px 56px rgba(2, 8, 24, 0.48);
-  backdrop-filter: blur(3px);
-}
-
-.hero-panel {
-  padding: 56px 48px;
-  background:
-    linear-gradient(152deg, rgba(8, 34, 85, 0.88), rgba(12, 72, 149, 0.74)),
-    radial-gradient(circle at 15% 12%, rgba(121, 208, 255, 0.2), transparent 45%);
-  position: relative;
-}
-
-.hero-panel::after {
-  content: '';
-  position: absolute;
-  inset: 20px;
-  border-radius: 24px;
-  border: 1px solid rgba(201, 228, 255, 0.22);
-  pointer-events: none;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 1;
-  color: var(--rg-ink);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.hero-logo {
-  width: 94px;
-  height: 94px;
-  border-radius: 24px;
-  background: rgba(241, 248, 255, 0.96);
-  box-shadow: 0 14px 26px rgba(3, 15, 43, 0.36);
-  padding: 12px;
-}
-
-.hero-logo img {
   width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.hero-kicker {
-  margin: 24px 0 10px;
-  font-size: 12px;
-  letter-spacing: 0.2em;
-  font-weight: 700;
-  color: rgba(225, 242, 255, 0.86);
-}
-
-.hero-title {
-  margin: 0;
-  font-size: 40px;
-  line-height: 1.2;
-  font-family: 'Noto Serif TC', serif;
-  text-wrap: pretty;
-}
-
-.hero-desc {
-  margin: 18px 0 24px;
-  color: rgba(227, 243, 255, 0.84);
-  line-height: 1.8;
-  font-size: 15px;
-}
-
-.hero-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.hero-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(219, 239, 255, 0.22);
-  backdrop-filter: blur(5px);
-}
-
-.hero-card .el-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(121, 208, 255, 0.22);
-  color: #e8f5ff;
-  flex-shrink: 0;
-}
-
-.hero-card h3 {
-  margin: 0 0 3px;
-  font-size: 14px;
-  color: #eef7ff;
-}
-
-.hero-card p {
-  margin: 0;
-  font-size: 12px;
-  color: rgba(225, 242, 255, 0.78);
-  line-height: 1.6;
-}
-
-.promo-chip {
-  margin-top: auto;
-  border-radius: 16px;
-  padding: 16px;
-  background: linear-gradient(130deg, rgba(121, 208, 255, 0.24), rgba(63, 147, 255, 0.36));
-  border: 1px solid rgba(203, 233, 255, 0.36);
-  box-shadow: 0 14px 26px rgba(6, 24, 64, 0.24);
-}
-
-.promo-chip span {
-  display: inline-flex;
-  align-items: center;
-  height: 24px;
-  border-radius: 999px;
-  padding: 0 10px;
-  background: rgba(7, 36, 87, 0.42);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: #d8eeff;
-}
-
-.promo-chip strong {
-  display: block;
-  margin-top: 8px;
-  font-size: 26px;
-  font-family: 'Lexend', sans-serif;
+  max-width: 520px;
 }
 
 .form-panel {
-  padding: 44px 34px;
-  background: linear-gradient(180deg, rgba(238, 246, 255, 0.9), rgba(232, 243, 255, 0.96));
-  display: flex;
-  align-items: center;
+  padding: 40px 36px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid var(--mall-border-color, #E8E4DF);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
 }
 
 .form-surface {
   width: 100%;
-  max-width: 510px;
-  margin: 0 auto;
-  border-radius: 24px;
-  padding: 28px 28px 24px;
-  background: var(--rg-form-bg);
-  border: 1px solid rgba(185, 214, 246, 0.76);
-  box-shadow: 0 18px 32px rgba(23, 58, 108, 0.16);
 }
 
 .form-header {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 .form-badge {
@@ -694,9 +472,9 @@ onMounted(() => {
   height: 28px;
   border-radius: 999px;
   padding: 0 12px;
-  background: rgba(63, 147, 255, 0.16);
-  border: 1px solid rgba(63, 147, 255, 0.32);
-  color: #1f5bbf;
+  background: rgba(74, 107, 124, 0.12);
+  border: 1px solid rgba(74, 107, 124, 0.25);
+  color: #4A6B7C;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -704,91 +482,17 @@ onMounted(() => {
 
 .form-header h2 {
   margin: 12px 0 8px;
-  font-size: 32px;
+  font-size: 28px;
   font-family: 'Noto Serif TC', serif;
-  color: #11294e;
-  line-height: 1.14;
+  color: #3D2B1F;
+  line-height: 1.2;
 }
 
 .form-header p {
   margin: 0;
-  color: #4b6592;
+  color: #7A6B5D;
   font-size: 14px;
-}
-
-.signup-steps {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-
-.step {
-  display: inline-flex;
-  align-items: center;
-  height: 26px;
-  border-radius: 999px;
-  border: 1px solid #cfe2fb;
-  color: #6a7c9e;
-  padding: 0 10px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.step.active {
-  color: #1f5bbf;
-  border-color: rgba(63, 147, 255, 0.42);
-  background: rgba(111, 181, 255, 0.18);
-}
-
-.contact-switch {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 18px;
-}
-
-.switch-btn {
-  border: 1px solid #d4e6ff;
-  border-radius: 14px;
-  padding: 10px 12px;
-  min-height: 64px;
-  background: #f8fbff;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  cursor: pointer;
-  transition: all 0.22s ease;
-}
-
-.switch-main {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #365483;
-}
-
-.switch-btn small {
-  color: #7288aa;
-  font-size: 11px;
-}
-
-.switch-btn:hover {
-  transform: translateY(-1px);
-  border-color: #8bc2ff;
-  box-shadow: 0 10px 16px rgba(41, 93, 171, 0.12);
-}
-
-.switch-btn.active {
-  background: linear-gradient(130deg, rgba(121, 208, 255, 0.22), rgba(63, 147, 255, 0.16));
-  border-color: rgba(63, 147, 255, 0.44);
-}
-
-.switch-btn.active .switch-main {
-  color: #1f5bbf;
+  line-height: 1.6;
 }
 
 .register-form :deep(.el-form-item) {
@@ -796,40 +500,74 @@ onMounted(() => {
 }
 
 .register-form :deep(.el-form-item__label) {
-  color: #2b4c7e;
+  color: #5a4a3e;
   font-weight: 700;
   font-size: 13px;
   line-height: 1.4;
   margin-bottom: 8px;
 }
 
+.register-form :deep(.el-form-item.is-required:not(.is-no-asterisk) > .el-form-item__label-wrap > .el-form-item__label::before),
+.register-form :deep(.el-form-item.is-required:not(.is-no-asterisk) > .el-form-item__label::before) {
+  color: #E53E3E;
+}
+
 .register-form :deep(.el-input__wrapper) {
   min-height: 48px;
   border-radius: 12px;
-  box-shadow: 0 0 0 1px #d7e7fb inset;
+  box-shadow: 0 0 0 1px #E0D5C8 inset;
 }
 
 .register-form :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #9dc9ff inset;
+  box-shadow: 0 0 0 1px #C4A882 inset;
 }
 
 .register-form :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 2px rgba(63, 147, 255, 0.4) inset;
+  box-shadow: 0 0 0 2px rgba(74, 107, 124, 0.4) inset;
 }
 
 .password-toggle {
   cursor: pointer;
-  color: #83a3cd;
+  color: #b0a090;
 }
 
 .password-toggle:hover {
-  color: #2c68c7;
+  color: #4A6B7C;
 }
 
 .field-hint {
   margin: 8px 0 0;
   font-size: 12px;
-  color: #6782ab;
+  color: #9a8b7d;
+}
+
+/* 密碼強度指示器 */
+.strength-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -4px 0 12px;
+}
+
+.strength-track {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.strength-segment {
+  height: 4px;
+  flex: 1;
+  border-radius: 2px;
+  background: #E0D5C8;
+  transition: background 0.3s ease;
+}
+
+.strength-label {
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 32px;
+  text-align: right;
 }
 
 .captcha-row {
@@ -839,7 +577,7 @@ onMounted(() => {
 }
 
 .captcha-btn {
-  border: 1px solid #d6e7fc;
+  border: 1px solid #E0D5C8;
   border-radius: 12px;
   overflow: hidden;
   padding: 0;
@@ -863,8 +601,8 @@ onMounted(() => {
   gap: 6px;
   opacity: 0;
   transition: opacity 0.2s ease;
-  background: rgba(14, 40, 87, 0.45);
-  color: #e9f6ff;
+  background: rgba(60, 35, 20, 0.45);
+  color: #fff5eb;
   font-size: 12px;
 }
 
@@ -877,12 +615,12 @@ onMounted(() => {
 }
 
 .agreement :deep(.el-checkbox__label) {
-  color: #4f6c95;
+  color: #7a6b5d;
   line-height: 1.7;
 }
 
 .inline-link {
-  color: #2165ce;
+  color: #4A6B7C;
   text-decoration: none;
   font-weight: 700;
 }
@@ -897,8 +635,8 @@ onMounted(() => {
   margin-top: 4px;
   border-radius: 14px;
   border: none;
-  background: linear-gradient(125deg, #1b63ca, #47a6ff);
-  box-shadow: 0 14px 22px rgba(24, 87, 176, 0.24);
+  background: linear-gradient(125deg, #4A6B7C, #5A8A9A);
+  box-shadow: 0 14px 22px rgba(74, 107, 124, 0.24);
   font-size: 16px;
   font-weight: 700;
   position: relative;
@@ -923,23 +661,23 @@ onMounted(() => {
 
 .submit-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 16px 26px rgba(24, 87, 176, 0.3);
+  box-shadow: 0 16px 26px rgba(74, 107, 124, 0.3);
 }
 
 .submit-btn:focus-visible {
-  outline: 2px solid rgba(65, 157, 255, 0.62);
+  outline: 2px solid rgba(74, 107, 124, 0.5);
   outline-offset: 2px;
 }
 
 .form-footer {
   margin: 18px 0 0;
   text-align: center;
-  color: #5d759d;
+  color: #7a6b5d;
   font-size: 14px;
 }
 
 .form-footer a {
-  color: #2165ce;
+  color: #4A6B7C;
   text-decoration: none;
   font-weight: 700;
 }
@@ -948,107 +686,91 @@ onMounted(() => {
   text-decoration: underline;
 }
 
-@keyframes bgDrift {
-  0% {
-    transform: scale(1.05) translateY(0);
-    background-position: center 52%;
-  }
-  50% {
-    transform: scale(1.09) translateY(-6px);
-    background-position: center 46%;
-  }
-  100% {
-    transform: scale(1.05) translateY(0);
-    background-position: center 56%;
-  }
+/* 步驟指示器 */
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
 }
 
-@keyframes orbFloat {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(0, -14px, 0);
-  }
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #E0D5C8;
+  transition: all 0.3s ease;
 }
 
-@media (max-width: 1280px) {
+.step-dot.active {
+  width: 24px;
+  border-radius: 4px;
+  background: #4A6B7C;
+}
+
+.step-dot.done {
+  background: #A5C4B8;
+}
+
+/* 成功畫面 */
+.success-panel {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.success-icon {
+  margin-bottom: 20px;
+}
+
+.success-panel h2 {
+  margin: 0 0 12px;
+  font-size: 26px;
+  font-family: 'Noto Serif TC', serif;
+  color: #3D2B1F;
+}
+
+.success-panel p {
+  margin: 0 0 4px;
+  color: #7A6B5D;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.success-panel strong {
+  color: #4A6B7C;
+  font-weight: 700;
+}
+
+.hint-text {
+  color: #9A8B7D !important;
+  font-size: 13px !important;
+  margin-top: 12px !important;
+  margin-bottom: 24px !important;
+}
+
+@media (max-width: 768px) {
   .register-page {
-    padding: 18px;
-  }
-
-  .register-shell {
-    grid-template-columns: 50% 50%;
-  }
-
-  .hero-panel {
-    padding: 46px 36px;
-  }
-
-  .hero-title {
-    font-size: 34px;
-  }
-}
-
-@media (max-width: 980px) {
-  .register-shell {
-    grid-template-columns: 1fr;
-    min-height: auto;
-    border-radius: 22px;
-  }
-
-  .hero-panel {
-    padding: 28px 22px;
-  }
-
-  .hero-panel::after {
-    inset: 12px;
-  }
-
-  .hero-title {
-    font-size: 26px;
-  }
-
-  .promo-chip {
-    margin-top: 18px;
+    padding: 16px 12px;
   }
 
   .form-panel {
-    padding: 22px 14px 24px;
+    padding: 28px 20px;
+    border-radius: 16px;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .register-page {
-    padding: 10px;
+    padding: 8px;
   }
 
-  .hero-logo {
-    width: 74px;
-    height: 74px;
-    border-radius: 16px;
-  }
-
-  .hero-grid {
-    gap: 10px;
-  }
-
-  .hero-card {
-    padding: 12px;
-  }
-
-  .form-surface {
-    border-radius: 16px;
+  .form-panel {
     padding: 20px 14px;
+    border-radius: 14px;
   }
 
   .form-header h2 {
-    font-size: 26px;
-  }
-
-  .contact-switch {
-    grid-template-columns: 1fr;
+    font-size: 22px;
   }
 
   .captcha-row {
@@ -1058,5 +780,29 @@ onMounted(() => {
   .captcha-btn {
     min-height: 48px;
   }
+}
+
+.policy-content {
+  max-height: 60vh;
+  overflow-y: auto;
+  line-height: 1.8;
+  color: #5A4A3C;
+  font-size: 14px;
+}
+
+.policy-content h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  color: #3D2B1F;
+}
+
+.policy-content h4 {
+  margin: 16px 0 6px;
+  font-size: 15px;
+  color: #4A6B7C;
+}
+
+.policy-content p {
+  margin: 0 0 8px;
 }
 </style>

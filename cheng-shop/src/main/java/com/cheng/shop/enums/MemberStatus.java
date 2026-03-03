@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum MemberStatus implements CodedEnum<String> {
 
+    PENDING_VERIFY("PENDING_VERIFY", "待驗證"),
     ACTIVE("ACTIVE", "正常"),
     DISABLED("DISABLED", "停用"),
     FROZEN("FROZEN", "凍結");
@@ -36,10 +37,18 @@ public enum MemberStatus implements CodedEnum<String> {
     }
 
     /**
+     * 是否為待驗證狀態
+     */
+    public boolean isPendingVerify() {
+        return this == PENDING_VERIFY;
+    }
+
+    /**
      * 取得狀態對應的顏色
      */
     public String getColor() {
         return switch (this) {
+            case PENDING_VERIFY -> "#E6A23C";
             case ACTIVE -> "#67C23A";
             case DISABLED -> "#909399";
             case FROZEN -> "#F56C6C";

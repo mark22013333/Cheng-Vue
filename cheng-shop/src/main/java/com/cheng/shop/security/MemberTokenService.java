@@ -50,6 +50,10 @@ public class MemberTokenService {
 
     /**
      * 取得登入會員資訊
+     * <p>
+     * 包含密碼變更後的 JWT 強制失效檢查：
+     * 若 Redis 中存在 {@code member_pwd_changed:{memberId}} 且時間戳晚於 token 建立時間，
+     * 表示密碼已變更，此 token 應被視為無效。
      */
     public ShopMemberLoginUser getLoginUser(HttpServletRequest request) {
         String token = getToken(request);
@@ -58,12 +62,39 @@ public class MemberTokenService {
                 Claims claims = parseToken(token);
                 String uuid = (String) claims.get(Constants.LOGIN_USER_KEY);
                 String userKey = getTokenKey(uuid);
-                return redisCache.getCacheObject(userKey);
+                ShopMemberLoginUser loginUser = redisCache.getCacheObject(userKey);
+
+                // 密碼變更後的 JWT 強制失效檢查
+                if (loginUser != null && isTokenInvalidatedByPasswordChange(loginUser, userKey)) {
+                    return null;
+                }
+
+                return loginUser;
             } catch (Exception e) {
                 log.error("取得會員資訊異常'{}'", e.getMessage());
             }
         }
         return null;
+    }
+
+    /**
+     * 檢查 token 是否因密碼變更而失效
+     * <p>
+     * 比對 loginTime 與 Redis 中的密碼變更時間戳
+     */
+    private boolean isTokenInvalidatedByPasswordChange(ShopMemberLoginUser loginUser, String userKey) {
+        if (loginUser.getMemberId() == null) {
+            return false;
+        }
+        Long pwdChangedTime = redisCache.getCacheObject(
+                CacheConstants.MEMBER_PWD_CHANGED_KEY + loginUser.getMemberId());
+        if (pwdChangedTime != null && loginUser.getLoginTime() < pwdChangedTime) {
+            log.info("會員 {} 的 token 因密碼變更而失效（loginTime={}, pwdChanged={}）",
+                    loginUser.getMemberId(), loginUser.getLoginTime(), pwdChangedTime);
+            redisCache.deleteObject(userKey);
+            return true;
+        }
+        return false;
     }
 
     /**

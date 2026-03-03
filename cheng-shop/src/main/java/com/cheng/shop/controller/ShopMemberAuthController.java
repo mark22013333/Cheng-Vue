@@ -2,6 +2,8 @@ package com.cheng.shop.controller;
 
 import com.cheng.common.annotation.Anonymous;
 import com.cheng.common.annotation.PublicApi;
+import com.cheng.common.annotation.RateLimiter;
+import com.cheng.common.enums.LimitType;
 import com.cheng.common.constant.CacheConstants;
 import com.cheng.common.constant.Constants;
 import com.cheng.common.core.controller.BaseController;
@@ -17,15 +19,29 @@ import com.cheng.shop.domain.ShopMember;
 import com.cheng.shop.enums.MemberStatus;
 import com.cheng.shop.security.MemberTokenService;
 import com.cheng.shop.security.ShopMemberLoginUser;
+import com.cheng.shop.config.ShopConfigKey;
+import com.cheng.shop.config.ShopConfigService;
 import com.cheng.shop.service.IShopMemberService;
+import com.cheng.shop.service.ShopEmailVerificationService;
+import com.cheng.shop.service.ShopPasswordResetService;
 import com.cheng.shop.utils.ShopMemberSecurityUtils;
 import com.cheng.system.service.ISysConfigService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static com.cheng.common.utils.ServletUtils.getRequest;
@@ -35,6 +51,7 @@ import static com.cheng.common.utils.ServletUtils.getRequest;
  *
  * @author cheng
  */
+@Slf4j
 @Anonymous
 @PublicApi
 @RestController
@@ -46,24 +63,38 @@ public class ShopMemberAuthController extends BaseController {
     private final MemberTokenService memberTokenService;
     private final RedisCache redisCache;
     private final ISysConfigService configService;
+    private final ShopPasswordResetService passwordResetService;
+    private final ShopEmailVerificationService emailVerificationService;
+    private final ShopConfigService shopConfigService;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @PostMapping("/login")
     public AjaxResult login(@Valid @RequestBody MemberLoginBody body) {
-        validateCaptcha(body.getAccount(), body.getCode(), body.getUuid());
-
         ShopMember member = findMemberByAccount(body.getAccount());
         if (member == null) {
             throw new ServiceException("帳號或密碼錯誤");
         }
-        MemberStatus status = member.getStatusEnum();
-        if (status == null || !status.canLogin()) {
-            throw new ServiceException("此帳號已停用或凍結");
-        }
+
+        // 密碼驗證
         if (StringUtils.isEmpty(member.getPassword())
                 || !SecurityUtils.matchesPassword(body.getPassword(), member.getPassword())) {
             throw new ServiceException("帳號或密碼錯誤");
+        }
+
+        // Email 驗證檢查
+        if (!Boolean.TRUE.equals(member.getEmailVerified())) {
+            AjaxResult result = AjaxResult.error("您的 Email 尚未驗證，請先至信箱點擊驗證連結");
+            result.put("needVerify", true);
+            result.put("email", member.getEmail());
+            return result;
+        }
+
+        // 狀態檢查
+        MemberStatus status = member.getStatusEnum();
+        if (status == null || !status.canLogin()) {
+            throw new ServiceException("此帳號已停用或凍結");
         }
 
         memberService.updateLoginInfo(member.getMemberId(), IpUtils.getIpAddr());
@@ -80,24 +111,18 @@ public class ShopMemberAuthController extends BaseController {
     public AjaxResult register(@Valid @RequestBody MemberRegisterBody body) {
         validateCaptcha(body.getNickname(), body.getCode(), body.getUuid());
 
-        if (StringUtils.isEmpty(body.getMobile()) && StringUtils.isEmpty(body.getEmail())) {
-            throw new ServiceException("手機或 Email 必須擇一填寫");
-        }
-        if (StringUtils.isNotEmpty(body.getEmail()) && !isEmail(body.getEmail())) {
+        String email = body.getEmail().trim().toLowerCase();
+        if (!isEmail(email)) {
             throw new ServiceException("Email 格式不正確");
         }
 
         ShopMember member = new ShopMember();
         member.setNickname(body.getNickname());
-        member.setMobile(StringUtils.isEmpty(body.getMobile()) ? null : body.getMobile());
-        member.setEmail(StringUtils.isEmpty(body.getEmail()) ? null : body.getEmail());
+        member.setEmail(email);
         member.setPassword(body.getPassword());
 
-        if (StringUtils.isNotEmpty(member.getMobile()) && !memberService.checkMobileUnique(member)) {
-            throw new ServiceException("手機號碼已存在");
-        }
-        if (StringUtils.isNotEmpty(member.getEmail()) && !memberService.checkEmailUnique(member)) {
-            throw new ServiceException("Email 已存在");
+        if (!memberService.checkEmailUnique(member)) {
+            throw new ServiceException("此 Email 已被註冊");
         }
 
         int result = memberService.registerMember(member);
@@ -105,13 +130,12 @@ public class ShopMemberAuthController extends BaseController {
             throw new ServiceException("註冊失敗，請稍後再試");
         }
 
-        ShopMemberLoginUser loginUser = new ShopMemberLoginUser(member);
-        String token = memberTokenService.createToken(loginUser);
+        // 寄送 Email 驗證信（不發 JWT，需驗證後才能登入）
+        String ipAddress = IpUtils.getIpAddr();
+        String userAgent = getRequest().getHeader("User-Agent");
+        emailVerificationService.requestEmailVerification(email, member.getMemberId(), ipAddress, userAgent);
 
-        AjaxResult ajax = AjaxResult.success();
-        ajax.put(Constants.TOKEN, token);
-        ajax.put("member", member);
-        return ajax;
+        return AjaxResult.success("註冊成功，驗證信已發送至您的信箱");
     }
 
     @PostMapping("/logout")
@@ -201,6 +225,29 @@ public class ShopMemberAuthController extends BaseController {
         return EMAIL_PATTERN.matcher(account).matches();
     }
 
+    /**
+     * 模擬處理延遲，防止時間側信道攻擊。
+     * email 不存在時呼叫，使回應時間與存在時接近。
+     */
+    private void simulateProcessingDelay() {
+        try {
+            Thread.sleep(150 + SECURE_RANDOM.nextInt(200));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * 累加每日發送次數，TTL 設定到當天 23:59:59
+     */
+    private void incrementDailyCount(String dailyKey, Integer currentCount) {
+        int newCount = (currentCount == null ? 0 : currentCount) + 1;
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime endOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+        long ttl = Math.max(Duration.between(now, endOfDay).getSeconds(), 1);
+        redisCache.setCacheObject(dailyKey, newCount, (int) ttl, TimeUnit.SECONDS);
+    }
+
     private void validateCaptcha(String username, String code, String uuid) {
         if (!configService.selectCaptchaEnabled()) {
             return;
@@ -219,6 +266,227 @@ public class ShopMemberAuthController extends BaseController {
         }
     }
 
+    // ========== Email 驗證 ==========
+
+    /**
+     * 驗證 Email（使用者點擊驗證連結後到達）
+     */
+    @GetMapping("/verify-email")
+    public AjaxResult verifyEmail(
+            @RequestParam String selector,
+            @RequestParam String token) {
+        ShopEmailVerificationService.VerifyResult result =
+                emailVerificationService.verifyEmail(selector, token);
+
+        AjaxResult ajax = AjaxResult.success("Email 驗證成功");
+        ajax.put(Constants.TOKEN, result.token());
+        ajax.put("member", result.member());
+        return ajax;
+    }
+
+    /**
+     * 重寄 Email 驗證信
+     */
+    @PostMapping("/resend-verification")
+    @RateLimiter(time = 3600, count = 10, limitType = LimitType.IP)
+    public AjaxResult resendVerification(@Valid @RequestBody ResendVerificationBody body) {
+        // 圖形驗證碼校驗
+        validateCaptcha("resend-verification", body.getCode(), body.getUuid());
+
+        String email = body.getEmail().trim().toLowerCase();
+        if (!isEmail(email)) {
+            throw new ServiceException("Email 格式不正確");
+        }
+
+        // 頻率限制
+        checkEmailVerifyRateLimit(email);
+
+        // 統一回應訊息（防止帳號列舉攻擊）
+        String safeMsg = "若此信箱已註冊且尚未驗證，驗證信將寄至您的信箱";
+
+        // 查詢會員
+        ShopMember member = memberService.selectMemberByEmail(email);
+        if (member == null) {
+            simulateProcessingDelay();
+            return AjaxResult.success(safeMsg);
+        }
+
+        // 已驗證的不需重寄
+        if (Boolean.TRUE.equals(member.getEmailVerified())) {
+            simulateProcessingDelay();
+            return AjaxResult.success(safeMsg);
+        }
+
+        String ipAddress = IpUtils.getIpAddr();
+        String userAgent = getRequest().getHeader("User-Agent");
+        emailVerificationService.requestEmailVerification(email, member.getMemberId(), ipAddress, userAgent);
+
+        return AjaxResult.success(safeMsg);
+    }
+
+    /**
+     * Email 驗證頻率限制檢查
+     */
+    private void checkEmailVerifyRateLimit(String email) {
+        // 同一 email 60 秒內不可重複發送
+        String limitKey = CacheConstants.EMAIL_VERIFY_LIMIT_KEY + email;
+        if (redisCache.getCacheObject(limitKey) != null) {
+            throw new ServiceException("驗證信已發送，請稍後再試");
+        }
+
+        // 每小時限制
+        String hourlyKey = CacheConstants.EMAIL_VERIFY_HOURLY_KEY + email;
+        Integer hourlyCount = redisCache.getCacheObject(hourlyKey);
+        int maxHourly = shopConfigService.getInt(ShopConfigKey.EMAIL_VERIFY_EMAIL_HOURLY_LIMIT);
+        if (hourlyCount != null && hourlyCount >= maxHourly) {
+            throw new ServiceException("發送次數過多，請稍後再試");
+        }
+
+        // 每日限制
+        String dailyKey = CacheConstants.EMAIL_VERIFY_DAILY_KEY + email;
+        Integer dailyCount = redisCache.getCacheObject(dailyKey);
+        int maxDaily = shopConfigService.getInt(ShopConfigKey.EMAIL_VERIFY_EMAIL_DAILY_LIMIT);
+        if (dailyCount != null && dailyCount >= maxDaily) {
+            throw new ServiceException("今日發送次數已達上限，請明天再試");
+        }
+
+        // 設定 60 秒頻率限制
+        redisCache.setCacheObject(limitKey, "1", 60, TimeUnit.SECONDS);
+
+        // 累加每小時計數
+        int newHourly = (hourlyCount == null ? 0 : hourlyCount) + 1;
+        redisCache.setCacheObject(hourlyKey, newHourly, 1, TimeUnit.HOURS);
+
+        // 累加每日計數
+        incrementDailyCount(dailyKey, dailyCount);
+    }
+
+    // ========== 忘記密碼（重設連結方式） ==========
+
+    /**
+     * 步驟一：發送密碼重設連結
+     */
+    @PostMapping("/forgot-password")
+    @RateLimiter(time = 3600, count = 10, limitType = LimitType.IP)
+    public AjaxResult forgotPassword(@Valid @RequestBody ForgotPasswordBody body) {
+        // 圖形驗證碼校驗
+        validateCaptcha("forgot-password", body.getCode(), body.getUuid());
+
+        String email = body.getEmail().trim().toLowerCase();
+        if (!isEmail(email)) {
+            throw new ServiceException("Email 格式不正確");
+        }
+
+        // Email 頻率限制
+        checkEmailRateLimit(email);
+
+        // 統一回應訊息（防止帳號列舉攻擊）
+        String safeMsg = "若此信箱已註冊，重設連結將寄至您的信箱";
+
+        // 委託 service 處理（內部處理 email 不存在的情況）
+        String ipAddress = IpUtils.getIpAddr();
+        String userAgent = getRequest().getHeader("User-Agent");
+        passwordResetService.requestPasswordReset(email, ipAddress, userAgent);
+
+        return AjaxResult.success(safeMsg);
+    }
+
+    /**
+     * 驗證重設連結有效性（前端開啟重設密碼頁面時呼叫）
+     *
+     * @deprecated 改用 POST /shop/auth/validate-reset-token，將於後續版本移除
+     */
+    @Deprecated(since = "2026-03")
+    @GetMapping("/validate-reset-token")
+    public AjaxResult validateResetToken(
+            @RequestParam String selector,
+            @RequestParam String token) {
+        boolean valid = passwordResetService.validateResetToken(selector, token);
+        if (!valid) {
+            return AjaxResult.error("重設連結無效或已過期");
+        }
+        return AjaxResult.success("連結有效");
+    }
+
+    /**
+     * 驗證重設連結有效性（POST body 版本）
+     */
+    @PostMapping("/validate-reset-token")
+    public AjaxResult validateResetTokenPost(@Valid @RequestBody ValidateResetTokenBody body) {
+        boolean valid = passwordResetService.validateResetToken(body.getSelector(), body.getToken());
+        if (!valid) {
+            return AjaxResult.error("重設連結無效或已過期");
+        }
+        return AjaxResult.success("連結有效");
+    }
+
+    /**
+     * 密碼重設政策（前端顯示用）
+     */
+    @GetMapping("/password-reset-policy")
+    public AjaxResult getPasswordResetPolicy() {
+        Map<String, Object> data = new HashMap<>(4);
+        data.put("expireMinutes", passwordResetService.getTokenExpireMinutes());
+        data.put("minPasswordLength", passwordResetService.getMinPasswordLength());
+        data.put("resendCooldownSeconds", passwordResetService.getResendCooldownSeconds());
+        return AjaxResult.success(data);
+    }
+
+    /**
+     * 步驟二：重設密碼
+     */
+    @PostMapping("/reset-password")
+    public AjaxResult resetPassword(@Valid @RequestBody ResetPasswordBody body) {
+        String ipAddress = IpUtils.getIpAddr();
+        String userAgent = getRequest().getHeader("User-Agent");
+
+        passwordResetService.resetPassword(
+                body.getSelector(), body.getToken(),
+                body.getNewPassword(), ipAddress, userAgent
+        );
+
+        return AjaxResult.success("密碼重設成功");
+    }
+
+    /**
+     * Email 頻率限制檢查（每小時 + 每日）
+     */
+    private void checkEmailRateLimit(String email) {
+        int resendCooldownSeconds = passwordResetService.getResendCooldownSeconds();
+
+        // 同一 email 冷卻期間內不可重複發送
+        String limitKey = CacheConstants.PWD_RESET_LIMIT_KEY + email;
+        if (redisCache.getCacheObject(limitKey) != null) {
+            throw new ServiceException("重設連結已發送，請稍後再試");
+        }
+
+        // 每小時限制
+        String hourlyKey = CacheConstants.PWD_RESET_HOURLY_KEY + email;
+        Integer hourlyCount = redisCache.getCacheObject(hourlyKey);
+        int maxHourly = shopConfigService.getInt(ShopConfigKey.PWD_RESET_EMAIL_HOURLY_LIMIT);
+        if (hourlyCount != null && hourlyCount >= maxHourly) {
+            throw new ServiceException("發送次數過多，請稍後再試");
+        }
+
+        // 每日限制
+        String dailyKey = CacheConstants.PWD_RESET_DAILY_KEY + email;
+        Integer dailyCount = redisCache.getCacheObject(dailyKey);
+        int maxDaily = shopConfigService.getInt(ShopConfigKey.PWD_RESET_EMAIL_DAILY_LIMIT);
+        if (dailyCount != null && dailyCount >= maxDaily) {
+            throw new ServiceException("今日發送次數已達上限，請明天再試");
+        }
+
+        // 設定重發冷卻秒數
+        redisCache.setCacheObject(limitKey, "1", resendCooldownSeconds, TimeUnit.SECONDS);
+
+        // 累加每小時計數
+        int newHourly = (hourlyCount == null ? 0 : hourlyCount) + 1;
+        redisCache.setCacheObject(hourlyKey, newHourly, 1, TimeUnit.HOURS);
+
+        // 累加每日計數
+        incrementDailyCount(dailyKey, dailyCount);
+    }
+
     @Data
     public static class MemberLoginBody {
         @NotBlank(message = "請輸入帳號")
@@ -233,11 +501,22 @@ public class ShopMemberAuthController extends BaseController {
     public static class MemberRegisterBody {
         @NotBlank(message = "請輸入暱稱")
         private String nickname;
-        private String mobile;
+        @NotBlank(message = "請輸入 Email")
         private String email;
         @NotBlank(message = "請輸入密碼")
+        @Size(min = 12, max = 50, message = "密碼長度須為 12-50 字元")
         private String password;
         private String code;
+        private String uuid;
+    }
+
+    @Data
+    public static class ResendVerificationBody {
+        @NotBlank(message = "請輸入 Email")
+        private String email;
+        /** 圖形驗證碼 */
+        private String code;
+        /** 圖形驗證碼 uuid */
         private String uuid;
     }
 
@@ -254,5 +533,34 @@ public class ShopMemberAuthController extends BaseController {
     public static class AvatarBody {
         @NotBlank(message = "請選擇頭像")
         private String avatar;
+    }
+
+    @Data
+    public static class ForgotPasswordBody {
+        @NotBlank(message = "請輸入 Email")
+        private String email;
+        /** 圖形驗證碼 */
+        private String code;
+        /** 圖形驗證碼 uuid */
+        private String uuid;
+    }
+
+    @Data
+    public static class ResetPasswordBody {
+        @NotBlank(message = "Selector 不可為空")
+        private String selector;
+        @NotBlank(message = "Token 不可為空")
+        private String token;
+        @NotBlank(message = "請輸入新密碼")
+        @Size(max = 50, message = "密碼長度不可超過 50 字元")
+        private String newPassword;
+    }
+
+    @Data
+    public static class ValidateResetTokenBody {
+        @NotBlank(message = "Selector 不可為空")
+        private String selector;
+        @NotBlank(message = "Token 不可為空")
+        private String token;
     }
 }

@@ -346,6 +346,36 @@ public class ShopConfigService {
         return getBigDecimal(ShopConfigKey.SHIPPING_ISLAND_FEE);
     }
 
+    // ==================== 郵件相關便捷方法 ====================
+
+    /**
+     * 取得 SMTP 主機
+     */
+    public String getMailHost() {
+        return getString(ShopConfigKey.MAIL_HOST);
+    }
+
+    /**
+     * 取得 SMTP 埠號
+     */
+    public int getMailPort() {
+        return getInt(ShopConfigKey.MAIL_PORT);
+    }
+
+    /**
+     * 取得寄件人帳號
+     */
+    public String getMailUsername() {
+        return getString(ShopConfigKey.MAIL_USERNAME);
+    }
+
+    /**
+     * 取得寄件人密碼
+     */
+    public String getMailPassword() {
+        return getString(ShopConfigKey.MAIL_PASSWORD);
+    }
+
     // ==================== 折扣相關便捷方法 ====================
 
     /**

@@ -57,7 +57,10 @@ public class ShopMemberServiceImpl implements IShopMemberService {
             member.setMemberNo(IdUtils.generateCode("M"));
         }
         if (member.getStatus() == null) {
-            member.setStatus(MemberStatus.ACTIVE.getCode());
+            member.setStatus(MemberStatus.PENDING_VERIFY.getCode());
+        }
+        if (member.getEmailVerified() == null) {
+            member.setEmailVerified(false);
         }
         if (member.getPoints() == null) {
             member.setPoints(0);
@@ -67,7 +70,7 @@ public class ShopMemberServiceImpl implements IShopMemberService {
         }
 
         member.setCreateTime(DateUtils.getNowDate());
-        log.info("新會員註冊，手機: {}", member.getMobile());
+        log.info("新會員註冊，Email: {}", member.getEmail());
         return memberMapper.insertMember(member);
     }
 

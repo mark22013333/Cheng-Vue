@@ -23,7 +23,7 @@
         {{ product.discountLabel }}
       </div>
       <div class="product-meta">
-        <span class="sales">銷量 {{ product.salesCount || 0 }}</span>
+        <span class="sales">已售 {{ product.salesCount || 0 }}</span>
       </div>
     </div>
   </div>
@@ -54,12 +54,13 @@ function getImageUrl(url) {
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .product-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   border-color: transparent;
 }
 
@@ -67,44 +68,48 @@ function getImageUrl(url) {
   position: relative;
   aspect-ratio: 1;
   overflow: hidden;
+  background: #f8f6f3;
 }
 
 .product-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.5s ease;
 }
 
 .product-card:hover .product-image img {
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
 
 .product-tags {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 10px;
+  left: 10px;
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
 .tag {
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 4px;
-  font-size: 12px;
-  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .tag.hot {
-  background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+  background: rgba(165, 99, 92, 0.9);
+  color: white;
 }
 
 .tag.new {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: rgba(74, 107, 124, 0.9);
+  color: white;
 }
 
 .product-info {
-  padding: 14px;
+  padding: 16px;
 }
 
 .product-title {
@@ -115,12 +120,13 @@ function getImageUrl(url) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.4;
 }
 
 .product-subtitle {
   font-size: 12px;
-  color: #909399;
-  margin: 0 0 8px 0;
+  color: var(--mall-text-muted, #909399);
+  margin: 0 0 10px 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -130,13 +136,13 @@ function getImageUrl(url) {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .current-price {
   font-size: 18px;
   font-weight: 700;
-  color: var(--mall-accent, #f56c6c);
+  color: var(--mall-accent, #A5635C);
 }
 
 .original-price {
@@ -148,11 +154,11 @@ function getImageUrl(url) {
 .discount-label {
   display: inline-block;
   padding: 2px 8px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   font-size: 11px;
-  color: #f56c6c;
-  background: #fef0f0;
-  border: 1px solid #fde2e2;
+  color: var(--mall-accent, #A5635C);
+  background: rgba(165, 99, 92, 0.08);
+  border: 1px solid rgba(165, 99, 92, 0.15);
   border-radius: 4px;
 }
 
@@ -160,6 +166,6 @@ function getImageUrl(url) {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #909399;
+  color: var(--mall-text-muted, #909399);
 }
 </style>
