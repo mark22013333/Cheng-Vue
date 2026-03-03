@@ -23,19 +23,19 @@ spring:
           max-active: 8
           # 連線池最大阻塞等待時間（使用負值表示沒有限制）
           max-wait: -1ms
-  # 郵件設定（忘記密碼驗證碼發送）
-  # 未配置時自動降級為 log 輸出驗證碼（開發模式）
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME:dadaamber777@gmail.com}
-    password: ${MAIL_PASSWORD:wuzwqhmrdiawudex}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+  # 郵件設定已移至管理後台（系統管理 > 參數設定 > shop.mail.*）
+  # 如需 YML 備援，可取消下方註解：
+  # mail:
+  #   host: smtp.gmail.com
+  #   port: 587
+  #   username: ${MAIL_USERNAME:}
+  #   password: ${MAIL_PASSWORD:}
+  #   properties:
+  #     mail:
+  #       smtp:
+  #         auth: true
+  #         starttls:
+  #           enable: true
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driverClassName: com.mysql.cj.jdbc.Driver

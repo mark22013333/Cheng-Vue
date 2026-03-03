@@ -21,8 +21,8 @@ import java.util.Properties;
  * <p>
  * 郵件設定來源優先順序：
  * <ol>
- *   <li>application.yml（spring.mail.*）</li>
- *   <li>資料庫 sys_config（shop.mail.*）</li>
+ *   <li>資料庫 sys_config（shop.mail.*）— 可在管理後台即時修改</li>
+ *   <li>application.yml（spring.mail.*）— 備援</li>
  *   <li>開發模式 — 僅以 log 輸出</li>
  * </ol>
  *
@@ -231,20 +231,13 @@ public class ShopMailService {
     /**
      * 依優先順序解析可用的 MailSender
      * <ol>
-     *   <li>YML 設定（Spring 自動配置的 JavaMailSender）</li>
-     *   <li>DB sys_config 設定（動態建立 JavaMailSenderImpl）</li>
+     *   <li>DB sys_config 設定（動態建立 JavaMailSenderImpl）— 可在管理後台即時修改</li>
+     *   <li>YML 設定（Spring 自動配置的 JavaMailSender）— 備援</li>
      *   <li>都沒有 → 返回 null（開發模式）</li>
      * </ol>
      */
     private MailSenderHolder resolveMailSender() {
-        // 1. YML 優先
-        if (mailSender != null && StringUtils.isNotEmpty(ymlFromEmail)) {
-            return new MailSenderHolder(mailSender, ymlFromEmail, "YML");
-        }
-        log.debug("YML 郵件來源不可用 — mailSender={}, ymlFromEmail='{}'",
-                mailSender != null ? "存在" : "null", ymlFromEmail);
-
-        // 2. 從 DB 取得
+        // 1. DB 優先（管理後台可即時修改）
         String dbHost = shopConfigService.getString(ShopConfigKey.MAIL_HOST);
         String dbUsername = shopConfigService.getString(ShopConfigKey.MAIL_USERNAME);
         String dbPassword = shopConfigService.getString(ShopConfigKey.MAIL_PASSWORD);
@@ -264,6 +257,13 @@ public class ShopMailService {
             return new MailSenderHolder(dbSender, dbUsername, "DB");
         }
         log.debug("DB 郵件來源不可用 — host='{}', username='{}'", dbHost, dbUsername);
+
+        // 2. YML 備援
+        if (mailSender != null && StringUtils.isNotEmpty(ymlFromEmail)) {
+            return new MailSenderHolder(mailSender, ymlFromEmail, "YML");
+        }
+        log.debug("YML 郵件來源不可用 — mailSender={}, ymlFromEmail='{}'",
+                mailSender != null ? "存在" : "null", ymlFromEmail);
 
         // 3. 都沒有 → 開發模式
         return null;
