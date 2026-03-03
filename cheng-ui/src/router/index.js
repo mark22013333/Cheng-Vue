@@ -178,18 +178,6 @@ export const adminDynamicRoutes = [
 // ============================================================================
 export const shopRoutes = [
   {
-    path: '/login',
-    component: () => import('@/views/shop-front/auth/login.vue'),
-    hidden: true,
-    meta: { title: '會員登入' }
-  },
-  {
-    path: '/register',
-    component: () => import('@/views/shop-front/auth/register.vue'),
-    hidden: true,
-    meta: { title: '會員註冊' }
-  },
-  {
     path: '/401',
     component: () => import('@/views/error/401'),
     hidden: true
@@ -203,6 +191,41 @@ export const shopRoutes = [
         component: () => import('@/views/shop-front/home/index.vue'),
         name: 'ShopHome',
         meta: { title: '商城首頁' }
+      },
+      {
+        path: 'login',
+        component: () => import('@/views/shop-front/auth/login.vue'),
+        hidden: true,
+        name: 'ShopLogin',
+        meta: { title: '會員登入' }
+      },
+      {
+        path: 'register',
+        component: () => import('@/views/shop-front/auth/register.vue'),
+        hidden: true,
+        name: 'ShopRegister',
+        meta: { title: '會員註冊' }
+      },
+      {
+        path: 'forgot-password',
+        component: () => import('@/views/shop-front/auth/forgot-password.vue'),
+        hidden: true,
+        name: 'ShopForgotPassword',
+        meta: { title: '忘記密碼' }
+      },
+      {
+        path: 'reset-password',
+        component: () => import('@/views/shop-front/auth/reset-password.vue'),
+        hidden: true,
+        name: 'ShopResetPassword',
+        meta: { title: '重設密碼' }
+      },
+      {
+        path: 'verify-email',
+        component: () => import('@/views/shop-front/auth/verify-email.vue'),
+        hidden: true,
+        name: 'ShopVerifyEmail',
+        meta: { title: 'Email 驗證' }
       },
       {
         path: 'products',

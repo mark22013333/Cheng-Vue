@@ -1,53 +1,6 @@
 <template>
   <div class="login-page">
-    <div class="motion-background" :style="motionBackgroundStyle" aria-hidden="true"></div>
-    <div class="gradient-orb orb-one" aria-hidden="true"></div>
-    <div class="gradient-orb orb-two" aria-hidden="true"></div>
-    <div class="gradient-orb orb-three" aria-hidden="true"></div>
-
     <div class="login-shell">
-      <aside class="hero-panel">
-        <div class="hero-content">
-          <div class="hero-logo">
-            <img src="@/assets/logo/logo.png" alt="CoolApps" />
-          </div>
-          <p class="hero-kicker">WELCOME BACK</p>
-          <h1 class="hero-title">登入會員，快速完成你的下單旅程</h1>
-          <p class="hero-desc">
-            立即登入以查看購物車、訂單進度與會員優惠，享受更順暢、更安全的購物體驗。
-          </p>
-
-          <div class="hero-grid">
-            <article class="hero-card">
-              <el-icon><ShoppingCart /></el-icon>
-              <div>
-                <h3>快速購物流程</h3>
-                <p>登入後可保留購物車內容與收件資訊。</p>
-              </div>
-            </article>
-            <article class="hero-card">
-              <el-icon><Van /></el-icon>
-              <div>
-                <h3>即時訂單追蹤</h3>
-                <p>配送狀態與付款結果即時同步。</p>
-              </div>
-            </article>
-            <article class="hero-card">
-              <el-icon><Service /></el-icon>
-              <div>
-                <h3>專屬客服協助</h3>
-                <p>登入會員後可快速取得售後支援。</p>
-              </div>
-            </article>
-          </div>
-
-          <div class="promo-chip">
-            <span>MEMBER EXCLUSIVE</span>
-            <strong>本週會員限定免運活動</strong>
-          </div>
-        </div>
-      </aside>
-
       <section class="form-panel">
         <div class="form-surface">
           <header class="form-header">
@@ -86,29 +39,9 @@
               </el-input>
             </el-form-item>
 
-            <el-form-item v-if="captchaEnabled" label="驗證碼" prop="code">
-              <div class="captcha-row">
-                <el-input
-                  v-model="loginForm.code"
-                  size="large"
-                  placeholder="請輸入驗證碼"
-                  :prefix-icon="Key"
-                  autocomplete="one-time-code"
-                  @keyup.enter="handleLogin"
-                />
-                <button type="button" class="captcha-btn" @click="getCode">
-                  <img :src="codeUrl" alt="驗證碼" />
-                  <span class="captcha-mask">
-                    <el-icon><Refresh /></el-icon>
-                    <em>更新</em>
-                  </span>
-                </button>
-              </div>
-            </el-form-item>
-
             <div class="form-options">
               <el-checkbox v-model="loginForm.rememberMe">記住我</el-checkbox>
-              <a href="javascript:;" class="forgot-link">忘記密碼？</a>
+              <router-link to="/forgot-password" class="forgot-link">忘記密碼？</router-link>
             </div>
 
             <el-button
@@ -130,13 +63,9 @@
 
             <p class="policy-note">
               登入即表示同意
-              <router-link class="inline-link" to="/terms" target="_blank" rel="noopener noreferrer">
-                服務條款
-              </router-link>
+              <a class="inline-link" href="javascript:;" @click="openPolicy('terms')">服務條款</a>
               與
-              <router-link class="inline-link" to="/privacy" target="_blank" rel="noopener noreferrer">
-                隱私政策
-              </router-link>
+              <a class="inline-link" href="javascript:;" @click="openPolicy('privacy')">隱私政策</a>
             </p>
 
             <div class="divider">
@@ -155,6 +84,49 @@
         </div>
       </section>
     </div>
+
+    <el-dialog
+      v-model="policyVisible"
+      :title="policyType === 'terms' ? '服務條款' : '隱私政策'"
+      width="600px"
+      top="8vh"
+      class="policy-dialog"
+      destroy-on-close
+    >
+      <div class="policy-content">
+        <template v-if="policyType === 'terms'">
+          <h3>CoolApps 服務條款</h3>
+          <p>歡迎使用 CoolApps 電商平台。使用本服務前，請仔細閱讀以下條款。</p>
+          <h4>一、服務範圍</h4>
+          <p>CoolApps 提供線上商品瀏覽、購買、訂單管理等電子商務服務。我們保留隨時修改或中止服務的權利。</p>
+          <h4>二、帳號管理</h4>
+          <p>您有責任妥善保管帳號及密碼，因帳號或密碼外洩所產生的一切損失由用戶自行承擔。</p>
+          <h4>三、購物與付款</h4>
+          <p>商品價格以下單時頁面顯示為準。付款成功後，系統將寄送訂單確認通知。如有退換貨需求，請參閱退換貨政策。</p>
+          <h4>四、智慧財產權</h4>
+          <p>本平台所有內容（包括但不限於文字、圖片、商標）均受智慧財產權法律保護，未經授權不得使用。</p>
+          <h4>五、免責聲明</h4>
+          <p>本平台對因不可抗力、系統維護或第三方服務中斷導致的損失不承擔責任。</p>
+        </template>
+        <template v-else>
+          <h3>CoolApps 隱私政策</h3>
+          <p>我們重視您的隱私權，本政策說明我們如何蒐集、使用及保護您的個人資料。</p>
+          <h4>一、資料蒐集</h4>
+          <p>我們蒐集的資料包括：姓名、Email、手機號碼、收件地址及購物紀錄等，用於提供服務與改善體驗。</p>
+          <h4>二、資料使用</h4>
+          <p>您的資料僅用於訂單處理、客戶服務、行銷通知（經同意後）及平台改善分析。</p>
+          <h4>三、資料保護</h4>
+          <p>我們採用業界標準的加密技術與安全措施保護您的個人資料，防止未經授權的存取。</p>
+          <h4>四、Cookie 使用</h4>
+          <p>本平台使用 Cookie 記錄您的偏好設定與登入狀態，以提供更好的瀏覽體驗。</p>
+          <h4>五、您的權利</h4>
+          <p>您可以隨時要求查閱、更正或刪除您的個人資料，請透過客服聯繫我們。</p>
+        </template>
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="policyVisible = false">我知道了</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -166,19 +138,12 @@ import {
   User,
   Lock,
   View,
-  Hide,
-  Key,
-  Refresh,
-  ShoppingCart,
-  Van,
-  Service
+  Hide
 } from '@element-plus/icons-vue'
-import { getCodeImg } from '@/api/login'
 import { encrypt, decrypt } from '@/utils/jsencrypt'
 import Cookies from 'js-cookie'
 import useMemberStore from '@/store/modules/member'
 import { useCartStore } from '@/store/modules/cart'
-import loginBackground from '@/assets/images/login-background.jpg'
 
 const router = useRouter()
 const route = useRoute()
@@ -188,20 +153,20 @@ const cartStore = useCartStore()
 const loginFormRef = ref(null)
 const loading = ref(false)
 const showPassword = ref(false)
-const captchaEnabled = ref(true)
-const codeUrl = ref('')
+const policyVisible = ref(false)
+const policyType = ref('terms')
+
+function openPolicy(type) {
+  policyType.value = type
+  policyVisible.value = true
+}
 
 const redirect = computed(() => route.query.redirect || '/')
-const motionBackgroundStyle = computed(() => ({
-  backgroundImage: `linear-gradient(160deg, rgba(7, 42, 104, 0.84), rgba(22, 108, 205, 0.66)), url(${loginBackground})`
-}))
 
 const loginForm = ref({
   username: '',
   password: '',
-  rememberMe: false,
-  code: '',
-  uuid: ''
+  rememberMe: false
 })
 
 const loginRules = {
@@ -210,23 +175,7 @@ const loginRules = {
   ],
   password: [
     { required: true, trigger: 'blur', message: '請輸入密碼' }
-  ],
-  code: [
-    { required: true, trigger: 'change', message: '請輸入驗證碼' }
   ]
-}
-
-async function getCode() {
-  try {
-    const res = await getCodeImg()
-    captchaEnabled.value = res.captchaEnabled !== false
-    if (captchaEnabled.value) {
-      codeUrl.value = 'data:image/gif;base64,' + res.img
-      loginForm.value.uuid = res.uuid
-    }
-  } catch (error) {
-    console.error('獲取驗證碼失敗', error)
-  }
 }
 
 function getCookie() {
@@ -236,9 +185,7 @@ function getCookie() {
   loginForm.value = {
     username: username || '',
     password: password ? decrypt(password) : '',
-    rememberMe: rememberMe === 'true',
-    code: '',
-    uuid: ''
+    rememberMe: rememberMe === 'true'
   }
 }
 
@@ -261,9 +208,7 @@ async function handleLogin() {
 
     await memberStore.login({
       account: loginForm.value.username,
-      password: loginForm.value.password,
-      code: loginForm.value.code,
-      uuid: loginForm.value.uuid
+      password: loginForm.value.password
     })
 
     try {
@@ -275,9 +220,7 @@ async function handleLogin() {
     ElMessage.success('登入成功')
     await router.push(redirect.value)
   } catch (error) {
-    if (captchaEnabled.value) {
-      getCode()
-    }
+    // 登入失敗，不需額外處理
   } finally {
     loading.value = false
   }
@@ -288,7 +231,6 @@ function handleLineLogin() {
 }
 
 onMounted(() => {
-  getCode()
   getCookie()
 })
 </script>
@@ -297,230 +239,27 @@ onMounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&display=swap');
 
 .login-page {
-  min-height: 100vh;
-  position: relative;
-  overflow: hidden;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 24px;
-  background: linear-gradient(145deg, #041a45, #0a2d69 40%, #0f3f87);
+  padding: 40px 24px;
   font-family: 'Noto Sans TC', sans-serif;
 }
 
-.motion-background {
-  position: absolute;
-  inset: auto -10% -18% -10%;
-  height: 70%;
-  background-size: cover;
-  background-position: center;
-  filter: saturate(1.15) brightness(0.92);
-  transform-origin: center;
-  animation: bgDrift 18s ease-in-out infinite alternate;
-  opacity: 0.48;
-}
-
-.motion-background::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(0deg, rgba(3, 10, 25, 0.72), rgba(3, 10, 25, 0));
-}
-
-.gradient-orb {
-  position: absolute;
-  border-radius: 999px;
-  pointer-events: none;
-}
-
-.orb-one {
-  width: 360px;
-  height: 360px;
-  top: -120px;
-  right: 12%;
-  background: radial-gradient(circle, rgba(121, 208, 255, 0.82), rgba(121, 208, 255, 0));
-  animation: orbFloat 9s ease-in-out infinite;
-}
-
-.orb-two {
-  width: 420px;
-  height: 420px;
-  left: -150px;
-  top: 28%;
-  background: radial-gradient(circle, rgba(79, 145, 255, 0.64), rgba(79, 145, 255, 0));
-  animation: orbFloat 10s ease-in-out infinite 1.3s;
-}
-
-.orb-three {
-  width: 320px;
-  height: 320px;
-  right: -80px;
-  bottom: 6%;
-  background: radial-gradient(circle, rgba(49, 102, 221, 0.72), rgba(49, 102, 221, 0));
-  animation: orbFloat 11s ease-in-out infinite 2.2s;
-}
-
 .login-shell {
-  width: min(1220px, 100%);
-  min-height: 750px;
-  display: grid;
-  grid-template-columns: 52% 48%;
-  border-radius: 32px;
-  overflow: hidden;
-  position: relative;
-  z-index: 2;
-  border: 1px solid rgba(166, 213, 255, 0.34);
-  box-shadow: 0 28px 56px rgba(2, 8, 24, 0.48);
-}
-
-.hero-panel {
-  padding: 56px 48px;
-  background:
-    linear-gradient(152deg, rgba(8, 34, 85, 0.88), rgba(12, 72, 149, 0.74)),
-    radial-gradient(circle at 15% 12%, rgba(121, 208, 255, 0.2), transparent 45%);
-  position: relative;
-}
-
-.hero-panel::after {
-  content: '';
-  position: absolute;
-  inset: 20px;
-  border-radius: 24px;
-  border: 1px solid rgba(201, 228, 255, 0.22);
-  pointer-events: none;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 1;
-  color: #eaf4ff;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.hero-logo {
-  width: 94px;
-  height: 94px;
-  border-radius: 24px;
-  background: rgba(241, 248, 255, 0.96);
-  box-shadow: 0 14px 26px rgba(3, 15, 43, 0.36);
-  padding: 12px;
-}
-
-.hero-logo img {
   width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.hero-kicker {
-  margin: 24px 0 10px;
-  font-size: 12px;
-  letter-spacing: 0.2em;
-  font-weight: 700;
-  color: rgba(225, 242, 255, 0.86);
-}
-
-.hero-title {
-  margin: 0;
-  font-size: 40px;
-  line-height: 1.2;
-  font-family: 'Noto Serif TC', serif;
-}
-
-.hero-desc {
-  margin: 18px 0 24px;
-  color: rgba(227, 243, 255, 0.84);
-  line-height: 1.8;
-  font-size: 15px;
-}
-
-.hero-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.hero-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(219, 239, 255, 0.22);
-  backdrop-filter: blur(5px);
-}
-
-.hero-card .el-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(121, 208, 255, 0.22);
-  color: #e8f5ff;
-  flex-shrink: 0;
-}
-
-.hero-card h3 {
-  margin: 0 0 3px;
-  font-size: 14px;
-  color: #eef7ff;
-}
-
-.hero-card p {
-  margin: 0;
-  font-size: 12px;
-  color: rgba(225, 242, 255, 0.78);
-  line-height: 1.6;
-}
-
-.promo-chip {
-  margin-top: auto;
-  border-radius: 16px;
-  padding: 16px;
-  background: linear-gradient(130deg, rgba(121, 208, 255, 0.24), rgba(63, 147, 255, 0.36));
-  border: 1px solid rgba(203, 233, 255, 0.36);
-  box-shadow: 0 14px 26px rgba(6, 24, 64, 0.24);
-}
-
-.promo-chip span {
-  display: inline-flex;
-  align-items: center;
-  height: 24px;
-  border-radius: 999px;
-  padding: 0 10px;
-  background: rgba(7, 36, 87, 0.42);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: #d8eeff;
-}
-
-.promo-chip strong {
-  display: block;
-  margin-top: 8px;
-  font-size: 26px;
-  font-family: 'Lexend', sans-serif;
+  max-width: 480px;
 }
 
 .form-panel {
-  padding: 44px 34px;
-  background: linear-gradient(180deg, rgba(238, 246, 255, 0.9), rgba(232, 243, 255, 0.96));
-  display: flex;
-  align-items: center;
+  padding: 40px 36px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid var(--mall-border-color, #E8E4DF);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
 }
 
 .form-surface {
   width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
-  border-radius: 24px;
-  padding: 28px 28px 24px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(185, 214, 246, 0.76);
-  box-shadow: 0 18px 32px rgba(23, 58, 108, 0.16);
 }
 
 .form-header {
@@ -533,9 +272,9 @@ onMounted(() => {
   height: 28px;
   border-radius: 999px;
   padding: 0 12px;
-  background: rgba(63, 147, 255, 0.16);
-  border: 1px solid rgba(63, 147, 255, 0.32);
-  color: #1f5bbf;
+  background: rgba(165, 99, 92, 0.12);
+  border: 1px solid rgba(165, 99, 92, 0.25);
+  color: #8B4A42;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -545,13 +284,13 @@ onMounted(() => {
   margin: 12px 0 8px;
   font-size: 32px;
   font-family: 'Noto Serif TC', serif;
-  color: #11294e;
+  color: #3D2B1F;
   line-height: 1.14;
 }
 
 .form-header p {
   margin: 0;
-  color: #4b6592;
+  color: #7A6B5D;
   font-size: 14px;
 }
 
@@ -560,7 +299,7 @@ onMounted(() => {
 }
 
 .login-form :deep(.el-form-item__label) {
-  color: #2b4c7e;
+  color: #5A4A3C;
   font-weight: 700;
   font-size: 13px;
   line-height: 1.4;
@@ -570,68 +309,24 @@ onMounted(() => {
 .login-form :deep(.el-input__wrapper) {
   min-height: 48px;
   border-radius: 12px;
-  box-shadow: 0 0 0 1px #d7e7fb inset;
+  box-shadow: 0 0 0 1px #E0D5C8 inset;
 }
 
 .login-form :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #9dc9ff inset;
+  box-shadow: 0 0 0 1px #C4A98A inset;
 }
 
 .login-form :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 2px rgba(63, 147, 255, 0.4) inset;
+  box-shadow: 0 0 0 2px rgba(74, 107, 124, 0.35) inset;
 }
 
 .password-toggle {
   cursor: pointer;
-  color: #83a3cd;
+  color: #A89585;
 }
 
 .password-toggle:hover {
-  color: #2c68c7;
-}
-
-.captcha-row {
-  display: grid;
-  grid-template-columns: 1fr 130px;
-  gap: 10px;
-}
-
-.captcha-btn {
-  border: 1px solid #d6e7fc;
-  border-radius: 12px;
-  overflow: hidden;
-  padding: 0;
-  position: relative;
-  cursor: pointer;
-  background: #fff;
-}
-
-.captcha-btn img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.captcha-mask {
-  position: absolute;
-  inset: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  background: rgba(14, 40, 87, 0.45);
-  color: #e9f6ff;
-  font-size: 12px;
-}
-
-.captcha-mask em {
-  font-style: normal;
-}
-
-.captcha-btn:hover .captcha-mask {
-  opacity: 1;
+  color: #4A6B7C;
 }
 
 .form-options {
@@ -642,11 +337,11 @@ onMounted(() => {
 }
 
 .form-options :deep(.el-checkbox__label) {
-  color: #4f6c95;
+  color: #7A6B5D;
 }
 
 .forgot-link {
-  color: #2165ce;
+  color: #4A6B7C;
   font-weight: 600;
   text-decoration: none;
 }
@@ -660,8 +355,8 @@ onMounted(() => {
   min-height: 50px;
   border-radius: 14px;
   border: none;
-  background: linear-gradient(125deg, #1b63ca, #47a6ff);
-  box-shadow: 0 14px 22px rgba(24, 87, 176, 0.24);
+  background: linear-gradient(125deg, #4A6B7C, #5A8A9A);
+  box-shadow: 0 14px 22px rgba(74, 107, 124, 0.2);
   font-size: 16px;
   font-weight: 700;
   position: relative;
@@ -686,23 +381,23 @@ onMounted(() => {
 
 .submit-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 16px 26px rgba(24, 87, 176, 0.3);
+  box-shadow: 0 16px 26px rgba(74, 107, 124, 0.28);
 }
 
 .submit-btn:focus-visible {
-  outline: 2px solid rgba(65, 157, 255, 0.62);
+  outline: 2px solid rgba(74, 107, 124, 0.5);
   outline-offset: 2px;
 }
 
 .form-footer {
   margin-top: 16px;
   text-align: center;
-  color: #5d759d;
+  color: #7A6B5D;
   font-size: 14px;
 }
 
 .form-footer a {
-  color: #2165ce;
+  color: #4A6B7C;
   text-decoration: none;
   font-weight: 700;
   margin-left: 4px;
@@ -715,12 +410,12 @@ onMounted(() => {
 .policy-note {
   margin: 12px 0 0;
   text-align: center;
-  color: #6b81a4;
+  color: #9A8B7D;
   font-size: 12px;
 }
 
 .inline-link {
-  color: #2165ce;
+  color: #4A6B7C;
   text-decoration: none;
   font-weight: 700;
   margin: 0 2px;
@@ -734,7 +429,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   margin: 22px 0 14px;
-  color: #86a2ca;
+  color: #A89585;
   font-size: 12px;
 }
 
@@ -743,7 +438,7 @@ onMounted(() => {
   content: '';
   flex: 1;
   height: 1px;
-  background: #d7e7fc;
+  background: #E0D5C8;
 }
 
 .divider span {
@@ -777,111 +472,53 @@ onMounted(() => {
   transform: translateY(-1px);
 }
 
-@keyframes bgDrift {
-  0% {
-    transform: scale(1.05) translateY(0);
-    background-position: center 52%;
-  }
-  50% {
-    transform: scale(1.09) translateY(-6px);
-    background-position: center 46%;
-  }
-  100% {
-    transform: scale(1.05) translateY(0);
-    background-position: center 56%;
-  }
-}
-
-@keyframes orbFloat {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(0, -14px, 0);
-  }
-}
-
-@media (max-width: 1280px) {
+@media (max-width: 768px) {
   .login-page {
-    padding: 18px;
-  }
-
-  .login-shell {
-    grid-template-columns: 50% 50%;
-  }
-
-  .hero-panel {
-    padding: 46px 36px;
-  }
-
-  .hero-title {
-    font-size: 34px;
-  }
-}
-
-@media (max-width: 980px) {
-  .login-shell {
-    grid-template-columns: 1fr;
-    min-height: auto;
-    border-radius: 22px;
-  }
-
-  .hero-panel {
-    padding: 28px 22px;
-  }
-
-  .hero-panel::after {
-    inset: 12px;
-  }
-
-  .hero-title {
-    font-size: 26px;
-  }
-
-  .promo-chip {
-    margin-top: 18px;
+    padding: 16px 12px;
   }
 
   .form-panel {
-    padding: 22px 14px 24px;
+    padding: 28px 20px;
+    border-radius: 16px;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .login-page {
-    padding: 10px;
+    padding: 8px;
   }
 
-  .hero-logo {
-    width: 74px;
-    height: 74px;
-    border-radius: 16px;
-  }
-
-  .hero-grid {
-    gap: 10px;
-  }
-
-  .hero-card {
-    padding: 12px;
-  }
-
-  .form-surface {
-    border-radius: 16px;
+  .form-panel {
     padding: 20px 14px;
+    border-radius: 14px;
   }
 
   .form-header h2 {
-    font-size: 26px;
+    font-size: 24px;
   }
+}
 
-  .captcha-row {
-    grid-template-columns: 1fr;
-  }
+.policy-content {
+  max-height: 60vh;
+  overflow-y: auto;
+  line-height: 1.8;
+  color: #5A4A3C;
+  font-size: 14px;
+}
 
-  .captcha-btn {
-    min-height: 48px;
-  }
+.policy-content h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  color: #3D2B1F;
+}
+
+.policy-content h4 {
+  margin: 16px 0 6px;
+  font-size: 15px;
+  color: #4A6B7C;
+}
+
+.policy-content p {
+  margin: 0 0 8px;
 }
 </style>

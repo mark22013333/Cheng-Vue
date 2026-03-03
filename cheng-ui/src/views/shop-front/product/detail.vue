@@ -45,87 +45,116 @@
       <div class="product-info">
         <h1 class="product-title">{{ product.title }}</h1>
         <p class="product-subtitle" v-if="product.subTitle">{{ product.subTitle }}</p>
-        
+
         <div class="price-section">
-          <span class="current-price">NT$ {{ currentPrice }}</span>
-          <span
-            v-if="selectedSku?.originalPrice && Number(selectedSku.originalPrice) > Number(currentPrice)"
-            class="original-price"
-          >
-            NT$ {{ selectedSku.originalPrice }}
-          </span>
-          <span
-            v-else-if="product.originalDisplayPrice && Number(product.originalDisplayPrice) > Number(currentPrice)"
-            class="original-price"
-          >
-            NT$ {{ product.originalDisplayPrice }}
-          </span>
-          <span
-            v-else-if="product.originalPrice && Number(product.originalPrice) > Number(currentPrice)"
-            class="original-price"
-          >
-            NT$ {{ product.originalPrice }}
-          </span>
+          <div class="price-row">
+            <span class="current-price">NT$ {{ currentPrice }}</span>
+            <span
+              v-if="selectedSku?.originalPrice && Number(selectedSku.originalPrice) > Number(currentPrice)"
+              class="original-price"
+            >
+              NT$ {{ selectedSku.originalPrice }}
+            </span>
+            <span
+              v-else-if="product.originalDisplayPrice && Number(product.originalDisplayPrice) > Number(currentPrice)"
+              class="original-price"
+            >
+              NT$ {{ product.originalDisplayPrice }}
+            </span>
+            <span
+              v-else-if="product.originalPrice && Number(product.originalPrice) > Number(currentPrice)"
+              class="original-price"
+            >
+              NT$ {{ product.originalPrice }}
+            </span>
+          </div>
           <span v-if="showDiscountTag" class="discount-tag">{{ product.discountLabel }}</span>
         </div>
 
-        <div v-if="showSaleCountdown" class="sale-countdown">特惠價倒數：{{ saleCountdownText }}</div>
+        <div v-if="showSaleCountdown" class="sale-countdown">
+          <el-icon><Timer /></el-icon>
+          <span>特惠倒數：{{ saleCountdownText }}</span>
+        </div>
 
         <div class="meta-section">
-          <span>銷量：{{ product.salesCount || 0 }}</span>
-          <span>瀏覽：{{ product.viewCount || 0 }}</span>
+          <span>銷量 {{ product.salesCount || 0 }}</span>
+          <span class="meta-divider"></span>
+          <span>瀏覽 {{ product.viewCount || 0 }}</span>
         </div>
 
         <!-- SKU 選擇 -->
         <div class="sku-section" v-if="skuList.length > 0">
           <div class="section-label">規格選擇</div>
-          <el-radio-group v-model="selectedSkuId" class="sku-list">
-            <el-radio-button 
-              v-for="sku in skuList" 
-              :key="sku.skuId" 
-              :value="sku.skuId"
+          <div class="sku-grid">
+            <button
+              v-for="sku in skuList"
+              :key="sku.skuId"
+              class="sku-btn"
+              :class="{
+                active: selectedSkuId === sku.skuId,
+                disabled: sku.stockQuantity <= 0
+              }"
               :disabled="sku.stockQuantity <= 0"
+              @click="selectedSkuId = sku.skuId"
             >
               {{ sku.skuName }}
-              <span v-if="sku.stockQuantity <= 0" class="out-of-stock">（缺貨）</span>
-            </el-radio-button>
-          </el-radio-group>
+              <span v-if="sku.stockQuantity <= 0" class="out-of-stock">缺貨</span>
+            </button>
+          </div>
         </div>
 
         <!-- 數量選擇 -->
         <div class="quantity-section">
           <div class="section-label">購買數量</div>
-          <el-input-number 
-            v-model="quantity" 
-            :min="1" 
-            :max="selectedSku?.stockQuantity || 99"
-            size="large"
-          />
-          <span class="stock-info" v-if="selectedSku">
-            庫存 {{ selectedSku.stockQuantity }} 件
-          </span>
+          <div class="quantity-row">
+            <el-input-number
+              v-model="quantity"
+              :min="1"
+              :max="selectedSku?.stockQuantity || 99"
+              size="large"
+            />
+            <span class="stock-info" v-if="selectedSku">
+              庫存 {{ selectedSku.stockQuantity }} 件
+            </span>
+          </div>
         </div>
 
         <!-- 操作按鈕 -->
         <div class="action-buttons">
-          <el-button type="warning" size="large" icon="ShoppingCart" @click="handleAddToCart">
+          <button class="btn-cart" @click="handleAddToCart">
+            <el-icon><ShoppingCart /></el-icon>
             加入購物車
-          </el-button>
-          <el-button type="primary" size="large" @click="handleBuyNow">
+          </button>
+          <button class="btn-buy" @click="handleBuyNow">
             立即購買
-          </el-button>
+          </button>
         </div>
       </div>
     </div>
 
     <!-- 商品詳情 -->
     <div class="product-description" v-if="product">
-      <el-tabs v-model="activeTab">
+      <el-tabs v-model="activeTab" class="detail-tabs">
         <el-tab-pane label="商品詳情" name="detail">
           <div class="description-content" v-html="product.description"></div>
           <el-empty v-if="!product.description" description="暫無商品詳情" />
         </el-tab-pane>
       </el-tabs>
+    </div>
+
+    <!-- 推薦商品 -->
+    <div class="recommend-section" v-if="recommendProducts.length > 0">
+      <div class="recommend-header">
+        <h2 class="recommend-title">你可能也喜歡</h2>
+      </div>
+      <div class="recommend-grid">
+        <ProductCard
+          v-for="item in recommendProducts"
+          :key="item.productId"
+          :product="item"
+          @click="goProductDetail(item.productId)"
+        />
+      </div>
     </div>
 
     <el-empty v-if="!loading && !product" description="商品不存在或已下架" />
@@ -136,9 +165,11 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getProduct, getProductSkus, listCategories } from '@/api/shop/front'
+import { ShoppingCart, Timer } from '@element-plus/icons-vue'
+import { getProduct, getProductSkus, listCategories, listProducts } from '@/api/shop/front'
 import { useCartStore } from '@/store/modules/cart'
 import { getMemberToken } from '@/utils/memberAuth'
+import ProductCard from '@/views/shop-front/components/ProductCard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -152,8 +183,9 @@ const selectedSkuId = ref(null)
 const quantity = ref(1)
 const currentImage = ref('')
 const activeTab = ref('detail')
+const recommendProducts = ref([])
 
-// 計算分類路徑（從根到當前分類）
+// 計算分類路徑
 const categoryPath = computed(() => {
   if (!product.value?.categoryId || categories.value.length === 0) {
     return []
@@ -162,7 +194,6 @@ const categoryPath = computed(() => {
   const path = []
   let currentCatId = product.value.categoryId
 
-  // 從當前分類向上追溯到根分類
   while (currentCatId) {
     const category = categories.value.find(c => c.categoryId === currentCatId)
     if (category) {
@@ -218,28 +249,23 @@ const hasActiveSalePrice = computed(() => {
 const currentPrice = computed(() => {
   if (!product.value) return 0
 
-  // 若商品特惠價已過期，但後端回傳的 finalPrice 仍可能是舊資料，先強制回到商品價格
   if (saleEndTs.value && saleRemainingMs.value <= 0) {
     return Number(selectedSku.value?.price || product.value.price || 0)
   }
 
-  // 優先顯示特惠價（有效期間內）
   if (hasActiveSalePrice.value) {
     return Number(effectiveSalePrice.value || 0)
   }
 
-  // 有選擇 SKU 時，價格以 SKU 為準
   if (selectedSku.value?.price != null) {
     return Number(selectedSku.value.price || 0)
   }
 
-  // 其次使用後端計算後的最終售價（例如全站折扣）
   const finalPrice = product.value.finalPrice
   if (finalPrice != null) {
     return Number(finalPrice || 0)
   }
 
-  // 最後才退回商品價格
   return Number(product.value.price || 0)
 })
 
@@ -311,12 +337,10 @@ const allImages = computed(() => {
   return images
 })
 
-// 預覽用的圖片列表（經過 URL 處理）
 const previewImages = computed(() => {
   return allImages.value.map(img => getImageUrl(img))
 })
 
-// 當前圖片在列表中的索引
 const currentImageIndex = computed(() => {
   const index = allImages.value.indexOf(currentImage.value)
   return index >= 0 ? index : 0
@@ -329,20 +353,22 @@ function getImageUrl(url) {
   return '/profile' + (url.startsWith('/') ? url : '/' + url)
 }
 
+function goProductDetail(productId) {
+  router.push(`/product/${productId}`)
+}
+
 async function handleAddToCart() {
   if (!selectedSkuId.value && skuList.value.length > 0) {
     ElMessage.warning('請選擇商品規格')
     return
   }
 
-  // 如果沒有 SKU 但商品存在，使用第一個 SKU 或拒絕
   const sku = selectedSku.value || skuList.value[0]
   if (!sku) {
     ElMessage.warning('此商品暫無可購買規格')
     return
   }
 
-  // 組裝 skuInfo（用於訪客購物車）
   const skuInfo = {
     skuId: sku.skuId,
     productId: product.value.productId,
@@ -372,7 +398,6 @@ async function handleBuyNow() {
     return
   }
 
-  // 組裝 skuInfo（用於訪客購物車）
   const skuInfo = {
     skuId: sku.skuId,
     productId: product.value.productId,
@@ -388,21 +413,33 @@ async function handleBuyNow() {
       router.push('/login?redirect=/checkout')
       return
     }
-    // 先加入購物車並選中
     await cartStore.addToCart(sku.skuId, quantity.value, skuInfo)
-    // 跳轉到結帳頁面
     router.push('/checkout')
   } catch (error) {
     ElMessage.error(error.message || '操作失敗')
   }
 }
 
-async function loadCategories() {
+async function loadCategoriesData() {
   try {
     const res = await listCategories()
     categories.value = res.data || []
   } catch (error) {
     console.error('載入分類失敗', error)
+  }
+}
+
+async function loadRecommendProducts() {
+  if (!product.value?.categoryId) return
+  try {
+    const res = await listProducts({
+      categoryIds: String(product.value.categoryId),
+      pageNum: 1,
+      pageSize: 4
+    })
+    recommendProducts.value = (res.rows || []).filter(p => p.productId !== product.value.productId).slice(0, 4)
+  } catch (e) {
+    recommendProducts.value = []
   }
 }
 
@@ -417,7 +454,6 @@ async function loadProduct() {
     currentImage.value = res.data?.mainImage || ''
     saleExpiredReloaded = false
 
-    // 載入 SKU
     const skuRes = await getProductSkus(productId)
     skuList.value = skuRes.data || []
     if (skuList.value.length > 0) {
@@ -426,6 +462,8 @@ async function loadProduct() {
         selectedSkuId.value = availableSku.skuId
       }
     }
+
+    loadRecommendProducts()
   } catch (error) {
     console.error('載入商品失敗', error)
   } finally {
@@ -446,7 +484,7 @@ watch(selectedSkuId, () => {
 })
 
 onMounted(() => {
-  loadCategories()
+  loadCategoriesData()
   loadProduct()
 })
 
@@ -462,36 +500,37 @@ onUnmounted(() => {
   gap: 24px;
 }
 
+/* === 麵包屑 === */
 .breadcrumb-section {
-  background: var(--mall-card-bg, white);
-  border-radius: 8px;
-  padding: 16px 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  padding: 12px 0;
 }
 
 .breadcrumb-section :deep(.el-breadcrumb__item) {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .breadcrumb-section :deep(.el-breadcrumb__inner.is-link) {
-  color: #606266;
+  color: var(--mall-text-muted, #909399);
   font-weight: normal;
 }
 
 .breadcrumb-section :deep(.el-breadcrumb__inner.is-link:hover) {
-  color: var(--mall-primary, #409eff);
+  color: var(--mall-primary, #4A6B7C);
 }
 
+/* === 商品主區域 === */
 .product-main {
   background: var(--mall-card-bg, white);
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 32px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 48px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
+/* === 圖片區 === */
 .product-gallery {
   display: flex;
   flex-direction: column;
@@ -502,7 +541,7 @@ onUnmounted(() => {
   aspect-ratio: 1;
   border-radius: 8px;
   overflow: hidden;
-  background: #f5f5f5;
+  background: #f8f6f3;
 }
 
 .main-image :deep(.el-image) {
@@ -517,17 +556,22 @@ onUnmounted(() => {
 }
 
 .thumbnail {
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   border-radius: 6px;
   overflow: hidden;
   cursor: pointer;
   border: 2px solid transparent;
   flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+
+.thumbnail:hover {
+  border-color: var(--mall-border-color, #E8E4DF);
 }
 
 .thumbnail.active {
-  border-color: var(--mall-primary, #667eea);
+  border-color: var(--mall-primary, #4A6B7C);
 }
 
 .thumbnail img {
@@ -536,6 +580,7 @@ onUnmounted(() => {
   object-fit: cover;
 }
 
+/* === 商品資訊 === */
 .product-info {
   display: flex;
   flex-direction: column;
@@ -543,22 +588,33 @@ onUnmounted(() => {
 }
 
 .product-title {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--mall-text-primary, #303133);
   margin: 0;
+  line-height: 1.4;
+  letter-spacing: 0.5px;
 }
 
 .product-subtitle {
   font-size: 14px;
-  color: #909399;
+  color: var(--mall-text-muted, #909399);
   margin: 0;
+  line-height: 1.6;
 }
 
+/* === 價格 === */
 .price-section {
-  background: #fff7e6;
-  padding: 16px;
+  background: var(--mall-body-bg, #FAF8F5);
+  padding: 18px 20px;
   border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.price-row {
   display: flex;
   align-items: baseline;
   gap: 12px;
@@ -567,103 +623,259 @@ onUnmounted(() => {
 .current-price {
   font-size: 28px;
   font-weight: 700;
-  color: var(--mall-accent, #f56c6c);
+  color: var(--mall-accent, #A5635C);
 }
 
 .original-price {
-  font-size: 16px;
+  font-size: 15px;
   color: #c0c4cc;
   text-decoration: line-through;
 }
 
 .discount-tag {
   display: inline-block;
-  padding: 4px 10px;
+  padding: 3px 10px;
   font-size: 12px;
-  color: white;
-  background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+  color: var(--mall-accent, #A5635C);
+  background: rgba(165, 99, 92, 0.1);
+  border: 1px solid rgba(165, 99, 92, 0.2);
   border-radius: 4px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .sale-countdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
-  color: #e6a23c;
-  margin-top: 8px;
+  color: var(--mall-accent, #A5635C);
+  padding: 8px 12px;
+  background: rgba(165, 99, 92, 0.06);
+  border-radius: 6px;
 }
 
+/* === 統計 === */
 .meta-section {
   display: flex;
-  gap: 20px;
-  font-size: 14px;
-  color: #909399;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--mall-text-muted, #909399);
 }
 
+.meta-divider {
+  width: 1px;
+  height: 12px;
+  background: var(--mall-border-color, #E8E4DF);
+}
+
+/* === SKU === */
 .section-label {
   font-size: 14px;
-  color: #606266;
-  margin-bottom: 8px;
+  color: var(--mall-text-secondary, #606266);
+  margin-bottom: 10px;
+  font-weight: 500;
 }
 
 .sku-section {
-  padding-top: 8px;
+  padding-top: 4px;
 }
 
-.sku-list {
+.sku-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.out-of-stock {
-  color: #c0c4cc;
-  font-size: 12px;
+.sku-btn {
+  padding: 8px 20px;
+  border: 1px solid var(--mall-border-color, #E8E4DF);
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--mall-text-primary, #303133);
+  transition: all 0.2s;
 }
 
-.quantity-section {
+.sku-btn:hover:not(.disabled) {
+  border-color: var(--mall-primary, #4A6B7C);
+  color: var(--mall-primary, #4A6B7C);
+}
+
+.sku-btn.active {
+  border-color: var(--mall-primary, #4A6B7C);
+  background: var(--mall-primary, #4A6B7C);
+  color: white;
+}
+
+.sku-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f5f5;
+}
+
+.out-of-stock {
+  font-size: 11px;
+  color: #c0c4cc;
+  margin-left: 4px;
+}
+
+/* === 數量 === */
+.quantity-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
 .stock-info {
-  font-size: 14px;
-  color: #909399;
+  font-size: 13px;
+  color: var(--mall-text-muted, #909399);
 }
 
+/* === 操作按鈕 === */
 .action-buttons {
   display: flex;
-  gap: 16px;
-  margin-top: 16px;
+  gap: 12px;
+  margin-top: 12px;
 }
 
-.action-buttons .el-button {
+.btn-cart,
+.btn-buy {
   flex: 1;
   height: 48px;
-  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s;
+  letter-spacing: 1px;
 }
 
+.btn-cart {
+  background: var(--mall-primary, #4A6B7C);
+  color: white;
+}
+
+.btn-cart:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-buy {
+  background: var(--mall-accent, #A5635C);
+  color: white;
+}
+
+.btn-buy:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* === 商品詳情 Tab === */
 .product-description {
   background: var(--mall-card-bg, white);
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 28px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.detail-tabs :deep(.el-tabs__header) {
+  margin-bottom: 24px;
+}
+
+.detail-tabs :deep(.el-tabs__item) {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--mall-text-secondary, #606266);
+}
+
+.detail-tabs :deep(.el-tabs__item.is-active) {
+  color: var(--mall-primary, #4A6B7C);
+}
+
+.detail-tabs :deep(.el-tabs__active-bar) {
+  background-color: var(--mall-primary, #4A6B7C);
 }
 
 .description-content {
   line-height: 1.8;
-  color: #606266;
+  color: var(--mall-text-secondary, #606266);
+  font-size: 14px;
 }
 
 .description-content :deep(img) {
   max-width: 100%;
   height: auto;
+  border-radius: 4px;
 }
 
+/* === 推薦商品 === */
+.recommend-section {
+  margin-top: 8px;
+}
+
+.recommend-header {
+  margin-bottom: 20px;
+}
+
+.recommend-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--mall-text-primary, #303133);
+  margin: 0;
+  position: relative;
+  padding-left: 16px;
+}
+
+.recommend-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+  background: var(--mall-accent, #A5635C);
+  border-radius: 2px;
+}
+
+.recommend-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+/* === RWD === */
 @media (max-width: 900px) {
   .product-main {
     grid-template-columns: 1fr;
+    padding: 20px;
+    gap: 24px;
+  }
+
+  .recommend-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 500px) {
+  .product-title {
+    font-size: 20px;
+  }
+
+  .current-price {
+    font-size: 24px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
   }
 }
 </style>

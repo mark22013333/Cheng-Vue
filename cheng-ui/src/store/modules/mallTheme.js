@@ -4,6 +4,16 @@ import { defineStore } from 'pinia'
  * 預設主題配色
  */
 export const PRESET_THEMES = {
+  natural: {
+    name: '自然質感',
+    primary: '#4A6B7C',
+    primaryEnd: '#5A8A9A',
+    accent: '#A5635C',
+    headerBg: '#FFFFFF',
+    footerBg: '#3D3D3D',
+    cardBg: '#FFFFFF',
+    bodyBg: '#FAF8F5'
+  },
   purple: {
     name: '典雅紫',
     primary: '#667eea',
@@ -68,9 +78,22 @@ export const PRESET_THEMES = {
 
 const STORAGE_KEY = 'mall_theme'
 
+/**
+ * 判斷 headerBg 是否為白色系（非漸層且為淺色）
+ */
+function isLightBg(bg) {
+  if (!bg || bg.includes('gradient')) return false
+  const hex = bg.replace('#', '')
+  if (hex.length !== 6) return false
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
+  return (r * 299 + g * 587 + b * 114) / 1000 > 186
+}
+
 export const useMallThemeStore = defineStore('mallTheme', {
   state: () => ({
-    currentTheme: 'purple',
+    currentTheme: 'natural',
     customTheme: null
   }),
 
@@ -79,13 +102,16 @@ export const useMallThemeStore = defineStore('mallTheme', {
       if (state.customTheme) {
         return state.customTheme
       }
-      return PRESET_THEMES[state.currentTheme] || PRESET_THEMES.purple
+      return PRESET_THEMES[state.currentTheme] || PRESET_THEMES.natural
     },
     themeList: () => {
       return Object.entries(PRESET_THEMES).map(([key, value]) => ({
         key,
         ...value
       }))
+    },
+    isLightHeader() {
+      return isLightBg(this.theme.headerBg)
     }
   },
 
@@ -117,8 +143,16 @@ export const useMallThemeStore = defineStore('mallTheme', {
       root.style.setProperty('--mall-card-bg', theme.cardBg)
       root.style.setProperty('--mall-body-bg', theme.bodyBg)
 
-      // 設定文字顏色
+      // Header 文字顏色
+      const lightHeader = isLightBg(theme.headerBg)
+      root.style.setProperty('--mall-header-text', lightHeader ? '#303133' : '#ffffff')
+      root.style.setProperty('--mall-header-text-secondary', lightHeader ? '#606266' : 'rgba(255, 255, 255, 0.9)')
+
+      // 邊框顏色
       const isDark = theme.bodyBg === '#121212'
+      root.style.setProperty('--mall-border-color', isDark ? '#333333' : '#E8E4DF')
+
+      // 設定文字顏色
       root.style.setProperty('--mall-text-primary', isDark ? '#ffffff' : '#303133')
       root.style.setProperty('--mall-text-secondary', isDark ? '#a0a0a0' : '#606266')
       root.style.setProperty('--mall-text-muted', isDark ? '#666666' : '#909399')
@@ -137,7 +171,7 @@ export const useMallThemeStore = defineStore('mallTheme', {
         const saved = localStorage.getItem(STORAGE_KEY)
         if (saved) {
           const data = JSON.parse(saved)
-          this.currentTheme = data.currentTheme || 'purple'
+          this.currentTheme = data.currentTheme || 'natural'
           this.customTheme = data.customTheme || null
         }
       } catch (e) {

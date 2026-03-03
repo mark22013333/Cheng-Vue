@@ -195,7 +195,7 @@
     <section class="section article-section" v-if="latestArticles.length > 0">
       <div class="section-header">
         <div class="section-title-group">
-          <span class="section-tag" style="background: linear-gradient(135deg, #38b2ac 0%, #4299e1 100%);">BLOG</span>
+          <span class="section-tag" style="background: var(--mall-primary, #4A6B7C);">BLOG</span>
           <h2 class="section-title">文章精選</h2>
         </div>
         <p class="section-desc">探索最新的商品資訊與生活提案</p>
@@ -417,13 +417,13 @@ onMounted(() => {
 <style scoped>
 /* ===== Base & Variables ===== */
 .shop-home {
-  --home-accent: var(--mall-primary, #5a67d8);
-  --home-accent-light: var(--mall-primary-light, #ebf4ff);
-  --home-text: var(--mall-text-primary, #1a202c);
-  --home-text-secondary: #718096;
+  --home-accent: var(--mall-primary, #4A6B7C);
+  --home-accent-light: var(--mall-primary-light, #f0ebe5);
+  --home-text: var(--mall-text-primary, #303133);
+  --home-text-secondary: var(--mall-text-secondary, #606266);
   --home-card-bg: var(--mall-card-bg, #ffffff);
-  --home-border: #e2e8f0;
-  --home-price: #c53030;
+  --home-border: var(--mall-border-color, #E8E4DF);
+  --home-price: var(--mall-accent, #A5635C);
   --home-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --home-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --home-radius: 16px;
@@ -582,7 +582,7 @@ onMounted(() => {
 
 .hero-placeholder {
   height: 400px;
-  background: var(--mall-header-bg, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+  background: linear-gradient(135deg, var(--mall-primary, #4A6B7C) 0%, var(--mall-primary-end, #5A8A9A) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -702,7 +702,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 4px 12px;
-  background: linear-gradient(135deg, #f56565 0%, #ed8936 100%);
+  background: var(--mall-accent, #A5635C);
   color: white;
   font-size: 11px;
   font-weight: 700;
@@ -838,7 +838,7 @@ onMounted(() => {
   top: 12px;
   left: 12px;
   padding: 4px 12px;
-  background: linear-gradient(135deg, #f56565 0%, #ed8936 100%);
+  background: var(--mall-accent, #A5635C);
   color: white;
   font-size: 11px;
   font-weight: 600;
@@ -1006,7 +1006,7 @@ onMounted(() => {
   top: 12px;
   left: 12px;
   padding: 4px 10px;
-  background: linear-gradient(135deg, #4299e1 0%, #667eea 100%);
+  background: var(--mall-primary, #4A6B7C);
   color: white;
   font-size: 11px;
   font-weight: 700;
@@ -1187,7 +1187,7 @@ onMounted(() => {
   top: 10px;
   right: 10px;
   padding: 4px 10px;
-  background: linear-gradient(135deg, #9f7aea 0%, #667eea 100%);
+  background: var(--mall-accent, #A5635C);
   color: white;
   font-size: 11px;
   font-weight: 600;
@@ -1305,7 +1305,7 @@ onMounted(() => {
 .article-cover-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #38b2ac, #4299e1);
+  background: linear-gradient(135deg, var(--mall-primary, #4A6B7C), var(--mall-primary-end, #5A8A9A));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1345,14 +1345,14 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #a0aec0;
+  color: var(--mall-text-muted, #909399);
 }
 
 /* ===== CTA Section ===== */
 .cta-section {
   position: relative;
   padding: 60px 40px;
-  background: linear-gradient(135deg, var(--home-accent) 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--mall-primary, #4A6B7C) 0%, var(--mall-accent, #A5635C) 100%);
   border-radius: var(--home-radius);
   overflow: hidden;
   text-align: center;

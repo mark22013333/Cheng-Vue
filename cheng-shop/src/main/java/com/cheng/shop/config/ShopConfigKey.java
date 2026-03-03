@@ -182,7 +182,60 @@ public enum ShopConfigKey implements CodedEnum<String> {
     /**
      * 全站折扣比例（百分比，如 85 表示 85 折）
      */
-    DISCOUNT_RATE("shop.discount.rate", "全站折扣比例", "100");
+    DISCOUNT_RATE("shop.discount.rate", "全站折扣比例", "100"),
+
+    // ==================== 郵件設定 ====================
+
+    /**
+     * SMTP 主機
+     */
+    MAIL_HOST("shop.mail.host", "SMTP 主機", ""),
+
+    /**
+     * SMTP 埠號
+     */
+    MAIL_PORT("shop.mail.port", "SMTP 埠號", "587"),
+
+    /**
+     * 寄件人帳號（Email）
+     */
+    MAIL_USERNAME("shop.mail.username", "寄件人帳號", ""),
+
+    /**
+     * 寄件人密碼（應用程式密碼）
+     */
+    MAIL_PASSWORD("shop.mail.password", "寄件人密碼", ""),
+
+    // ==================== 密碼重設設定 ====================
+
+    /** 密碼重設 Token 有效期（分鐘） */
+    PWD_RESET_TOKEN_EXPIRE("shop.pwd_reset.token_expire_minutes", "密碼重設連結有效分鐘數", "30"),
+
+    /** 同一 Email 每小時最多請求次數 */
+    PWD_RESET_EMAIL_HOURLY_LIMIT("shop.pwd_reset.email_hourly_limit", "密碼重設 Email 每小時上限", "3"),
+
+    /** 同一 Email 每天最多請求次數 */
+    PWD_RESET_EMAIL_DAILY_LIMIT("shop.pwd_reset.email_daily_limit", "密碼重設 Email 每日上限", "5"),
+
+    /** 同一 Email 重發冷卻秒數 */
+    PWD_RESET_RESEND_COOLDOWN_SECONDS("shop.pwd_reset.resend_cooldown_seconds", "密碼重設重發冷卻秒數", "60"),
+
+    /** 密碼最小長度 */
+    PWD_RESET_MIN_LENGTH("shop.pwd_reset.min_password_length", "密碼最小長度", "12"),
+
+    /** 敏感操作保護時數 */
+    PWD_RESET_SENSITIVE_LOCK_HOURS("shop.pwd_reset.sensitive_lock_hours", "敏感操作保護時數", "24"),
+
+    // ==================== Email 驗證設定 ====================
+
+    /** Email 驗證 Token 有效期（分鐘），預設 24 小時 */
+    EMAIL_VERIFY_TOKEN_EXPIRE("shop.email_verify.token_expire_minutes", "Email 驗證連結有效分鐘數", "1440"),
+
+    /** 同一 Email 每小時最多發送驗證信次數 */
+    EMAIL_VERIFY_EMAIL_HOURLY_LIMIT("shop.email_verify.email_hourly_limit", "Email 驗證每小時上限", "3"),
+
+    /** 同一 Email 每天最多發送驗證信次數 */
+    EMAIL_VERIFY_EMAIL_DAILY_LIMIT("shop.email_verify.email_daily_limit", "Email 驗證每日上限", "5");
 
     /**
      * 設定鍵（對應 sys_config.config_key）
@@ -274,5 +327,12 @@ public enum ShopConfigKey implements CodedEnum<String> {
      */
     public boolean isFeatureConfig() {
         return code.startsWith("shop.gift.") || code.startsWith("shop.discount.");
+    }
+
+    /**
+     * 是否為郵件相關設定
+     */
+    public boolean isMailConfig() {
+        return code.startsWith("shop.mail.");
     }
 }

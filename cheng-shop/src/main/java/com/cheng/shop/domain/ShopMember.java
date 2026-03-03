@@ -50,10 +50,21 @@ public class ShopMember implements Serializable {
     private String email;
 
     /**
+     * Email 是否已驗證
+     */
+    private Boolean emailVerified;
+
+    /**
      * 密碼（加密）
      */
     @JsonIgnore
     private String password;
+
+    /**
+     * 最近密碼變更時間（用於 JWT 強制失效判斷）
+     */
+    @JsonIgnore
+    private Date passwordChangedAt;
 
     /**
      * 性別

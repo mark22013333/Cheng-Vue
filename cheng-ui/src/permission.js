@@ -35,7 +35,9 @@ const shopWhiteList = [
 ]
 
 // 商城需要登入的路徑
-const shopProtectedPaths = ['/checkout', '/member', '/order-success', '/payment-result']
+// 注意：/payment-result 不在此列表中，因為從 ECPay 回來時 token 可能已過期，
+// 用戶應能看到付款結果，「重新付款」按鈕會在點擊時檢查登入狀態
+const shopProtectedPaths = ['/checkout', '/member', '/order-success']
 
 // ============================================================================
 // 輔助函數

@@ -9,6 +9,7 @@ import com.cheng.common.utils.SecurityUtils;
 import com.cheng.common.utils.JacksonUtil;
 import com.cheng.shop.domain.ShopOrder;
 import com.cheng.shop.domain.ShopPaymentCallbackLog;
+import com.cheng.shop.enums.PayStatus;
 import com.cheng.shop.enums.PaymentMethod;
 import com.cheng.shop.payment.CallbackResult;
 import com.cheng.shop.payment.PaymentGateway;
@@ -148,11 +149,16 @@ public class ShopPaymentController extends BaseController {
     }
 
     /**
-     * ECPay 用戶返回（Fallback）
+     * ECPay 用戶返回（Browser Callback）
      * <p>
-     * 正常流程下 OrderResultURL 直接指向前端，不經過此端點。
-     * 此端點作為 fallback：當 shop.payment.frontend_url 未設定時，
-     * OrderResultURL 會指向此處，再用 JS 跳轉至前端。
+     * 付款完成後，ECPay 以瀏覽器 form POST 回傳參數到此端點，
+     * 再以 JS 跳轉至前端付款結果頁面。
+     * <p>
+     * 跳轉策略：
+     * <ul>
+     *   <li>有 orderNo → /payment-result/{orderNo}?status=success|failure</li>
+     *   <li>無 orderNo → /member/orders（最終 fallback）</li>
+     * </ul>
      * <p>
      * 支援 GET and POST，因為 ECPay 使用 POST，但瀏覽器直接訪問是 GET。
      */
@@ -161,9 +167,12 @@ public class ShopPaymentController extends BaseController {
     public void ecpayReturn(@RequestParam(required = false) String orderNo,
                             HttpServletRequest request,
                             HttpServletResponse response) throws IOException {
-        // 付款完成後，ECPay 會以瀏覽器 POST 回傳完整參數
-        // 若伺服器回調（ReturnURL）失敗，這裡作為補救更新訂單狀態
+
         Map<String, String> params = extractParams(request);
+        Boolean paymentSuccess = null;
+        String resolvedOrderNo = orderNo;
+
+        // ========== 第一步：解析 ECPay 回傳參數 ==========
         if (!params.isEmpty()) {
             log.info("ECPay 前端回傳參數：{}", params);
             try {
@@ -183,6 +192,9 @@ public class ShopPaymentController extends BaseController {
 
                 if (verifyOk) {
                     CallbackResult result = gateway.parseCallback(params);
+                    paymentSuccess = result.isPaymentSuccess();
+
+                    // 補上 orderNo
                     if ((result.getOrderNo() == null || result.getOrderNo().isBlank())
                             && orderNo != null && !orderNo.isBlank()) {
                         result = CallbackResult.builder()
@@ -193,37 +205,97 @@ public class ShopPaymentController extends BaseController {
                                 .rawInfo(result.getRawInfo())
                                 .build();
                     }
+                    if (result.getOrderNo() != null && !result.getOrderNo().isBlank()) {
+                        resolvedOrderNo = result.getOrderNo();
+                    }
+
+                    // 補救：嘗試更新訂單狀態
                     orderService.handlePaymentCallback(result);
                 } else {
-                    log.warn("ECPay 前端回傳驗證失敗，orderNo={}", orderNo);
+                    // 驗簽失敗，嘗試從參數取 orderNo
+                    String paramOrderNo = params.get("CustomField2");
+                    if (paramOrderNo != null && !paramOrderNo.isBlank()) {
+                        resolvedOrderNo = paramOrderNo;
+                    }
+                    log.warn("ECPay 前端回傳驗證失敗，orderNo={}", resolvedOrderNo);
                 }
             } catch (Exception e) {
                 log.error("ECPay 前端回傳處理異常", e);
             }
         }
 
-        String targetUrl = getFrontendUrl() + "/member/orders";
+        // ========== 第二步：Fallback — 查 DB 確認付款狀態 ==========
+        if (paymentSuccess == null && resolvedOrderNo != null && !resolvedOrderNo.isBlank()) {
+            paymentSuccess = checkOrderPaidFromDb(resolvedOrderNo);
+        }
 
-        log.info("ECPay 用戶返回（fallback），orderNo={}，重導向至：{}", orderNo, targetUrl);
+        // ========== 第三步：決定跳轉目標 ==========
+        String frontendUrl = getFrontendUrl();
+        String targetUrl;
+        String pageTitle;
+        String pageMessage;
+
+        if (resolvedOrderNo != null && !resolvedOrderNo.isBlank()
+                && resolvedOrderNo.matches("[A-Za-z0-9_-]+")) {
+            String status = Boolean.TRUE.equals(paymentSuccess) ? "success" : "failure";
+            targetUrl = frontendUrl + "/payment-result/" + resolvedOrderNo + "?status=" + status;
+            pageTitle = Boolean.TRUE.equals(paymentSuccess) ? "付款成功" : "付款處理中";
+            pageMessage = "正在跳轉至付款結果頁面...";
+        } else {
+            targetUrl = frontendUrl + "/member/orders";
+            pageTitle = "付款處理中";
+            pageMessage = "正在跳轉至訂單頁面...";
+        }
+
+        log.info("ECPay 用戶返回，orderNo={}，paymentSuccess={}，重導向至：{}",
+                resolvedOrderNo, paymentSuccess, targetUrl);
 
         response.setContentType("text/html;charset=UTF-8");
-        response.getWriter().write(
-                "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
-                + "<title>付款完成</title>"
+        response.getWriter().write(buildRedirectHtml(targetUrl, pageTitle, pageMessage));
+    }
+
+    /**
+     * 查詢 DB 確認訂單是否已付款
+     *
+     * @param orderNo 訂單編號
+     * @return true=已付款，false=未付款，null=查詢失敗
+     */
+    private Boolean checkOrderPaidFromDb(String orderNo) {
+        try {
+            ShopOrder order = orderService.selectOrderByOrderNo(orderNo);
+            if (order != null) {
+                return PayStatus.PAID.getCode().equals(order.getPayStatus());
+            }
+        } catch (Exception e) {
+            log.error("查詢訂單狀態異常，orderNo={}", orderNo, e);
+        }
+        return null;
+    }
+
+    /**
+     * 建構中間跳轉 HTML 頁面
+     */
+    private String buildRedirectHtml(String targetUrl, String title, String message) {
+        String icon = title.contains("成功") ? "&#10004;" : "&#8987;";
+        String iconColor = title.contains("成功") ? "#67C23A" : "#E6A23C";
+
+        return "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
+                + "<title>" + title + "</title>"
                 + "<style>body{display:flex;justify-content:center;align-items:center;min-height:100vh;"
                 + "font-family:-apple-system,sans-serif;background:#f5efe6;margin:0;}"
                 + ".card{text-align:center;padding:40px;background:#fffaf2;border-radius:16px;"
                 + "box-shadow:0 10px 24px rgba(44,29,21,.15);}"
+                + ".icon{font-size:48px;color:" + iconColor + ";margin-bottom:12px;}"
                 + "h2{color:#8b5e3c;margin:0 0 12px;}p{color:#6b5a50;margin:0 0 20px;}"
                 + "a{color:#8b5e3c;text-decoration:none;font-weight:600;}</style>"
                 + "</head><body><div class='card'>"
-                + "<h2>付款完成</h2>"
-                + "<p>正在跳轉至訂單頁面...</p>"
+                + "<div class='icon'>" + icon + "</div>"
+                + "<h2>" + title + "</h2>"
+                + "<p>" + message + "</p>"
                 + "<a href='" + targetUrl + "'>若未自動跳轉，請點此前往</a>"
                 + "</div>"
                 + "<script>window.location.replace('" + targetUrl + "');</script>"
-                + "</body></html>"
-        );
+                + "</body></html>";
     }
 
     /**
