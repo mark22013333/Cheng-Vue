@@ -130,4 +130,22 @@ public class ShopPriceService {
         // 否則使用全站折扣
         return calculatePrice(sku.getPrice(), null, null);
     }
+
+    /**
+     * 批量填充 SKU 列表的最終售價和折扣標籤
+     *
+     * @param skus    SKU 列表
+     * @param product 所屬商品（用於取得 saleEndDate）
+     */
+    public void enrichSkuPrices(List<ShopProductSku> skus, ShopProduct product) {
+        if (skus == null || skus.isEmpty()) {
+            return;
+        }
+        for (ShopProductSku sku : skus) {
+            PriceResult result = calculateSkuPrice(sku, product);
+            sku.setFinalPrice(result.getFinalPrice());
+            sku.setDiscountLabel(result.getDiscountLabel());
+            sku.setOriginalDisplayPrice(result.getOriginalDisplayPrice());
+        }
+    }
 }

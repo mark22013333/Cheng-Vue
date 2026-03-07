@@ -48,27 +48,15 @@
 
         <div class="price-section">
           <div class="price-row">
-            <span class="current-price">NT$ {{ currentPrice }}</span>
+            <span class="current-price">{{ fmtCurrency(currentPrice) }}</span>
             <span
-              v-if="selectedSku?.originalPrice && Number(selectedSku.originalPrice) > Number(currentPrice)"
+              v-if="currentOriginalPrice && Number(currentOriginalPrice) > Number(currentPrice)"
               class="original-price"
             >
-              NT$ {{ selectedSku.originalPrice }}
-            </span>
-            <span
-              v-else-if="product.originalDisplayPrice && Number(product.originalDisplayPrice) > Number(currentPrice)"
-              class="original-price"
-            >
-              NT$ {{ product.originalDisplayPrice }}
-            </span>
-            <span
-              v-else-if="product.originalPrice && Number(product.originalPrice) > Number(currentPrice)"
-              class="original-price"
-            >
-              NT$ {{ product.originalPrice }}
+              {{ fmtCurrency(currentOriginalPrice) }}
             </span>
           </div>
-          <span v-if="showDiscountTag" class="discount-tag">{{ product.discountLabel }}</span>
+          <span v-if="currentDiscountLabel" class="discount-tag">{{ currentDiscountLabel }}</span>
         </div>
 
         <div v-if="showSaleCountdown" class="sale-countdown">
@@ -169,6 +157,7 @@ import { ShoppingCart, Timer } from '@element-plus/icons-vue'
 import { getProduct, getProductSkus, listCategories, listProducts } from '@/api/shop/front'
 import { useCartStore } from '@/store/modules/cart'
 import { getMemberToken } from '@/utils/memberAuth'
+import { formatCurrency } from '@/utils/cheng'
 import ProductCard from '@/views/shop-front/components/ProductCard.vue'
 
 const route = useRoute()
@@ -246,21 +235,29 @@ const hasActiveSalePrice = computed(() => {
   return saleRemainingMs.value > 0
 })
 
+function fmtCurrency(value) {
+  return formatCurrency(value)
+}
+
 const currentPrice = computed(() => {
   if (!product.value) return 0
 
+  // 特惠到期：回歸基礎價格
   if (saleEndTs.value && saleRemainingMs.value <= 0) {
     return Number(selectedSku.value?.price || product.value.price || 0)
   }
 
+  // 有效特惠價優先
   if (hasActiveSalePrice.value) {
     return Number(effectiveSalePrice.value || 0)
   }
 
-  if (selectedSku.value?.price != null) {
-    return Number(selectedSku.value.price || 0)
+  // 選中 SKU 時，優先使用後端計算的 finalPrice（含全站折扣）
+  if (selectedSku.value) {
+    return Number(selectedSku.value.finalPrice || selectedSku.value.price || 0)
   }
 
+  // 無 SKU 時，使用商品層級的 finalPrice
   const finalPrice = product.value.finalPrice
   if (finalPrice != null) {
     return Number(finalPrice || 0)
@@ -269,13 +266,33 @@ const currentPrice = computed(() => {
   return Number(product.value.price || 0)
 })
 
-const showDiscountTag = computed(() => {
-  if (!product.value?.discountLabel) return false
+/**
+ * 目前的劃線原價
+ */
+const currentOriginalPrice = computed(() => {
+  if (selectedSku.value?.originalDisplayPrice) {
+    return Number(selectedSku.value.originalDisplayPrice)
+  }
+  if (selectedSku.value?.originalPrice) {
+    return Number(selectedSku.value.originalPrice)
+  }
+  if (product.value?.originalDisplayPrice) {
+    return Number(product.value.originalDisplayPrice)
+  }
+  if (product.value?.originalPrice) {
+    return Number(product.value.originalPrice)
+  }
+  return 0
+})
 
-  const original = Number(
-    selectedSku.value?.originalPrice ?? product.value.originalDisplayPrice ?? product.value.originalPrice ?? 0
-  )
-  return original > Number(currentPrice.value)
+/**
+ * 目前的折扣標籤
+ */
+const currentDiscountLabel = computed(() => {
+  if (selectedSku.value?.discountLabel) {
+    return selectedSku.value.discountLabel
+  }
+  return product.value?.discountLabel || null
 })
 
 const showSaleCountdown = computed(() => {

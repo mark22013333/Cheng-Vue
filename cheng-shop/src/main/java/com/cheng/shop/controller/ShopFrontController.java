@@ -141,6 +141,12 @@ public class ShopFrontController extends BaseController {
         List<ShopProductSku> list = skuService.selectSkuListByProductId(productId);
         // 只返回啟用的 SKU（支援 'ENABLED' 和 '1' 兩種格式）
         list = list.stream().filter(sku -> "ENABLED".equals(sku.getStatus()) || "1".equals(sku.getStatus())).toList();
+
+        // 計算 SKU 最終售價（套用全站折扣等）
+        ShopProduct product = productService.selectProductById(productId);
+        if (product != null) {
+            priceService.enrichSkuPrices(list, product);
+        }
         return success(list);
     }
 

@@ -44,6 +44,7 @@ public class ShopPasswordResetService {
     private final IShopMemberService memberService;
     private final ShopMailService mailService;
     private final ShopConfigService configService;
+    private final ShopPasswordPolicyService passwordPolicyService;
     private final RedisCache redisCache;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -56,9 +57,6 @@ public class ShopPasswordResetService {
 
     /** 會員密碼變更 Redis key TTL（天），等同 JWT 最長壽命 */
     private static final int PWD_CHANGED_TTL_DAYS = 7;
-
-    /** 密碼最大長度（字元） */
-    private static final int MAX_PASSWORD_LENGTH = 50;
 
     // ==================== 公開方法 ====================
 
@@ -161,11 +159,7 @@ public class ShopPasswordResetService {
     @Transactional(rollbackFor = Exception.class)
     public void resetPassword(String selector, String validator, String newPassword,
                               String ipAddress, String userAgent) {
-        int minPasswordLength = getMinPasswordLength();
-        if (StringUtils.isEmpty(newPassword) || newPassword.length() < minPasswordLength
-                || newPassword.length() > MAX_PASSWORD_LENGTH) {
-            throw new ServiceException("密碼長度須為 " + minPasswordLength + "-" + MAX_PASSWORD_LENGTH + " 字元");
-        }
+        passwordPolicyService.validate(newPassword);
 
         // 1. 透過 selector 查詢 DB
         ShopPasswordReset resetRecord = passwordResetMapper.selectBySelector(selector);
@@ -228,10 +222,10 @@ public class ShopPasswordResetService {
     }
 
     /**
-     * 重設密碼最小長度
+     * 密碼最小長度（delegate 至 passwordPolicyService）
      */
     public int getMinPasswordLength() {
-        return Math.max(configService.getInt(ShopConfigKey.PWD_RESET_MIN_LENGTH), 8);
+        return passwordPolicyService.getMinLength();
     }
 
     // ==================== 私有方法 ====================

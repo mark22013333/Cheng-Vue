@@ -207,12 +207,20 @@ function goCart() {
   router.push('/cart')
 }
 
+/** 排除認證頁面作為 redirect 目標，避免 redirect 參數不斷累積 */
+const AUTH_PATHS = ['/login', '/register', '/forgot-password', '/reset-password']
+
+function getRedirectTarget() {
+  const current = route.path
+  return AUTH_PATHS.some(p => current.startsWith(p)) ? '/' : route.fullPath
+}
+
 function goLogin() {
-  router.push(`/login?redirect=${route.fullPath}`)
+  router.push({ path: '/login', query: { redirect: getRedirectTarget() } })
 }
 
 function goRegister() {
-  router.push(`/register?redirect=${route.fullPath}`)
+  router.push({ path: '/register', query: { redirect: getRedirectTarget() } })
 }
 
 function goMember() {

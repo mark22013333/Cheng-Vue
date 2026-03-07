@@ -11,12 +11,12 @@
       <h3 class="product-title">{{ product.title }}</h3>
       <p class="product-subtitle" v-if="product.subTitle">{{ product.subTitle }}</p>
       <div class="product-price">
-        <span class="current-price">NT$ {{ product.finalPrice || product.price || 0 }}</span>
+        <span class="current-price">{{ fmtCurrency(product.finalPrice || product.price || 0) }}</span>
         <span v-if="product.originalDisplayPrice && product.originalDisplayPrice > (product.finalPrice || product.price)" class="original-price">
-          NT$ {{ product.originalDisplayPrice }}
+          {{ fmtCurrency(product.originalDisplayPrice) }}
         </span>
         <span v-else-if="product.originalPrice && product.originalPrice > (product.finalPrice || product.price)" class="original-price">
-          NT$ {{ product.originalPrice }}
+          {{ fmtCurrency(product.originalPrice) }}
         </span>
       </div>
       <div v-if="product.discountLabel" class="discount-label">
@@ -38,6 +38,12 @@ defineProps({
 })
 
 defineEmits(['click'])
+
+import { formatCurrency } from '@/utils/cheng'
+
+function fmtCurrency(value) {
+  return formatCurrency(value)
+}
 
 function getImageUrl(url) {
   if (!url) return 'https://via.placeholder.com/300x300?text=No+Image'

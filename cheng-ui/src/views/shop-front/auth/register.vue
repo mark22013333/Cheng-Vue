@@ -19,17 +19,6 @@
               class="register-form"
               label-position="top"
             >
-              <el-form-item label="會員暱稱" prop="nickname" required>
-                <el-input
-                  v-model="registerForm.nickname"
-                  size="large"
-                  placeholder="請輸入暱稱"
-                  :prefix-icon="User"
-                  maxlength="20"
-                  autocomplete="nickname"
-                />
-              </el-form-item>
-
               <el-form-item label="電子信箱" prop="email" required>
                 <el-input
                   v-model="registerForm.email"
@@ -47,7 +36,7 @@
                   v-model="registerForm.password"
                   size="large"
                   :type="showPassword ? 'text' : 'password'"
-                  placeholder="請輸入 12-50 字元密碼"
+                  :placeholder="`請輸入 ${passwordPolicy.minLength}-${passwordPolicy.maxLength} 字元密碼`"
                   :prefix-icon="Lock"
                   autocomplete="new-password"
                   @input="checkPasswordStrength"
@@ -76,7 +65,22 @@
                   {{ strengthText }}
                 </span>
               </div>
-              <p v-else class="field-hint" style="margin-top: -6px;">建議使用大小寫英文、數字與特殊符號混合。</p>
+              <!-- 複雜度需求清單 -->
+              <ul v-if="registerForm.password && hasComplexityRules" class="complexity-list">
+                <li v-if="passwordPolicy.requireUppercase" :class="{ met: /[A-Z]/.test(registerForm.password) }">
+                  {{ /[A-Z]/.test(registerForm.password) ? '✓' : '✗' }} 包含大寫英文字母
+                </li>
+                <li v-if="passwordPolicy.requireLowercase" :class="{ met: /[a-z]/.test(registerForm.password) }">
+                  {{ /[a-z]/.test(registerForm.password) ? '✓' : '✗' }} 包含小寫英文字母
+                </li>
+                <li v-if="passwordPolicy.requireDigit" :class="{ met: /\d/.test(registerForm.password) }">
+                  {{ /\d/.test(registerForm.password) ? '✓' : '✗' }} 包含數字
+                </li>
+                <li v-if="passwordPolicy.requireSpecial" :class="{ met: /[^a-zA-Z0-9]/.test(registerForm.password) }">
+                  {{ /[^a-zA-Z0-9]/.test(registerForm.password) ? '✓' : '✗' }} 包含特殊符號
+                </li>
+              </ul>
+              <p v-else-if="!registerForm.password" class="field-hint" style="margin-top: -6px;">建議使用大小寫英文、數字與特殊符號混合。</p>
 
               <el-form-item label="確認密碼" prop="confirmPassword" required>
                 <el-input
@@ -228,11 +232,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
-  User,
   Lock,
   View,
   Hide,
@@ -241,7 +244,7 @@ import {
   Message
 } from '@element-plus/icons-vue'
 import { getCodeImg } from '@/api/login'
-import { memberRegister } from '@/api/shop/auth'
+import { memberRegister, getPasswordPolicy } from '@/api/shop/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -256,20 +259,63 @@ const currentStep = ref(1)
 const policyVisible = ref(false)
 const policyType = ref('terms')
 
+// 密碼政策
+const passwordPolicy = ref({
+  minLength: 8,
+  maxLength: 50,
+  requireUppercase: false,
+  requireLowercase: false,
+  requireDigit: false,
+  requireSpecial: false
+})
+
 // 密碼強度
 const strengthLevel = ref(0)
 const strengthText = ref('')
 const strengthColor = ref('')
+
+// 是否有複雜度規則啟用
+const hasComplexityRules = computed(() => {
+  const p = passwordPolicy.value
+  return p.requireUppercase || p.requireLowercase || p.requireDigit || p.requireSpecial
+})
 
 function openPolicy(type) {
   policyType.value = type
   policyVisible.value = true
 }
 
-const redirect = computed(() => route.query.redirect || '/')
+const AUTH_PATHS = ['/register', '/login', '/forgot-password', '/reset-password']
+
+const redirect = computed(() => {
+  const r = route.query.redirect
+  // 避免重導回認證頁面造成 redirect 累積
+  if (r && AUTH_PATHS.some(p => r.startsWith(p))) {
+    return '/'
+  }
+  return r || '/'
+})
+
+// 同一元件路由變化時（如 navbar 點擊「註冊」），重置為步驟一
+watch(() => route.fullPath, () => {
+  if (currentStep.value !== 1) {
+    currentStep.value = 1
+    registerForm.value = {
+      email: '',
+      password: '',
+      confirmPassword: '',
+      code: '',
+      uuid: '',
+      agreement: false
+    }
+    strengthLevel.value = 0
+    strengthText.value = ''
+    strengthColor.value = ''
+    getCode()
+  }
+})
 
 const registerForm = ref({
-  nickname: '',
   email: '',
   password: '',
   confirmPassword: '',
@@ -298,9 +344,10 @@ function checkPasswordStrength() {
     return
   }
 
+  const minLen = passwordPolicy.value.minLength
   let score = 0
-  if (pwd.length >= 12) score++
-  if (pwd.length >= 16) score++
+  if (pwd.length >= minLen) score++
+  if (pwd.length >= minLen + 4) score++
   if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score++
   if (/\d/.test(pwd)) score++
   if (/[^a-zA-Z0-9]/.test(pwd)) score++
@@ -339,11 +386,28 @@ const validateEmail = (rule, value, callback) => {
 }
 
 const validatePassword = (rule, value, callback) => {
-  if (!value || value.length < 12 || value.length > 50) {
-    callback(new Error('密碼長度需在 12-50 字元之間'))
-  } else {
-    callback()
+  const p = passwordPolicy.value
+  if (!value || value.length < p.minLength || value.length > p.maxLength) {
+    callback(new Error(`密碼長度需在 ${p.minLength}-${p.maxLength} 字元之間`))
+    return
   }
+  if (p.requireUppercase && !/[A-Z]/.test(value)) {
+    callback(new Error('密碼需包含至少一個大寫英文字母'))
+    return
+  }
+  if (p.requireLowercase && !/[a-z]/.test(value)) {
+    callback(new Error('密碼需包含至少一個小寫英文字母'))
+    return
+  }
+  if (p.requireDigit && !/\d/.test(value)) {
+    callback(new Error('密碼需包含至少一個數字'))
+    return
+  }
+  if (p.requireSpecial && !/[^a-zA-Z0-9]/.test(value)) {
+    callback(new Error('密碼需包含至少一個特殊符號'))
+    return
+  }
+  callback()
 }
 
 const validateConfirmPassword = (rule, value, callback) => {
@@ -363,10 +427,6 @@ const validateAgreement = (rule, value, callback) => {
 }
 
 const registerRules = {
-  nickname: [
-    { required: true, trigger: 'blur', message: '請輸入暱稱' },
-    { min: 2, max: 20, trigger: 'blur', message: '暱稱長度需在 2-20 字元之間' }
-  ],
   email: [
     { required: true, trigger: 'blur', message: '請輸入 Email' },
     { validator: validateEmail, trigger: 'blur' }
@@ -408,7 +468,6 @@ async function handleRegister() {
     await registerFormRef.value.validate()
 
     await memberRegister({
-      nickname: registerForm.value.nickname.trim(),
       email: registerForm.value.email.trim().toLowerCase(),
       password: registerForm.value.password,
       code: registerForm.value.code,
@@ -430,8 +489,23 @@ function goToLogin() {
   router.push({ path: '/login', query: { redirect: redirect.value } })
 }
 
-onMounted(() => {
+onMounted(async () => {
   getCode()
+  try {
+    const { data } = await getPasswordPolicy()
+    if (data) {
+      passwordPolicy.value = {
+        minLength: data.minLength ?? 8,
+        maxLength: data.maxLength ?? 50,
+        requireUppercase: !!data.requireUppercase,
+        requireLowercase: !!data.requireLowercase,
+        requireDigit: !!data.requireDigit,
+        requireSpecial: !!data.requireSpecial
+      }
+    }
+  } catch (e) {
+    console.warn('載入密碼政策失敗，使用預設值', e)
+  }
 })
 </script>
 
@@ -568,6 +642,26 @@ onMounted(() => {
   font-weight: 700;
   min-width: 32px;
   text-align: right;
+}
+
+/* 複雜度需求清單 */
+.complexity-list {
+  list-style: none;
+  padding: 0;
+  margin: -2px 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 12px;
+  color: #b0a090;
+}
+
+.complexity-list li {
+  transition: color 0.2s ease;
+}
+
+.complexity-list li.met {
+  color: #38A169;
 }
 
 .captcha-row {

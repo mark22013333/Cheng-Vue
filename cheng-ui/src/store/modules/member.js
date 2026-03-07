@@ -11,7 +11,8 @@ const useMemberStore = defineStore('member', {
     nickname: '',
     avatar: '',
     mobile: '',
-    email: ''
+    email: '',
+    gender: ''
   }),
   actions: {
     // 會員登入
@@ -70,6 +71,10 @@ const useMemberStore = defineStore('member', {
       this.avatar = avatar
       this.mobile = member.mobile || ''
       this.email = member.email || ''
+      // 正規化 gender（相容 MALE/FEMALE/UNKNOWN 與 0/1/2）
+      const genderMap = { 'MALE': '0', 'FEMALE': '1', 'UNKNOWN': '2' }
+      const raw = (member.gender || '').toUpperCase()
+      this.gender = genderMap[raw] || member.gender || '2'
     },
     clearMember() {
       this.token = ''
@@ -78,6 +83,7 @@ const useMemberStore = defineStore('member', {
       this.avatar = ''
       this.mobile = ''
       this.email = ''
+      this.gender = ''
       removeMemberToken()
     }
   }
