@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 商品 Service 實作
@@ -61,6 +63,9 @@ public class ShopProductServiceImpl implements IShopProductService {
         // 處理 sliderImages JSON 欄位
         normalizeSliderImages(product);
 
+        // 從 SKU 同步最低價格到商品主表
+        syncPriceFromSkus(product);
+
         // 新增商品
         int rows = productMapper.insertProduct(product);
 
@@ -81,6 +86,9 @@ public class ShopProductServiceImpl implements IShopProductService {
     public int updateProduct(ShopProduct product) {
         // 處理 sliderImages JSON 欄位
         normalizeSliderImages(product);
+
+        // 從 SKU 同步最低價格到商品主表
+        syncPriceFromSkus(product);
 
         // 更新商品
         int rows = productMapper.updateProduct(product);
@@ -147,6 +155,38 @@ public class ShopProductServiceImpl implements IShopProductService {
     @Override
     public int increaseSalesCount(Long productId, int count) {
         return productMapper.increaseSalesCount(productId, count);
+    }
+
+    /**
+     * 從 SKU 列表同步最低價格到商品主表
+     * <p>
+     * 確保 product.price / originalPrice 與 SKU 價格一致，
+     * 避免列表頁和詳情頁因資料不同步而顯示不同價格。
+     */
+    private void syncPriceFromSkus(ShopProduct product) {
+        List<ShopProductSku> skuList = product.getSkuList();
+        if (skuList == null || skuList.isEmpty()) {
+            return;
+        }
+
+        BigDecimal minPrice = skuList.stream()
+                .map(ShopProductSku::getPrice)
+                .filter(Objects::nonNull)
+                .min(BigDecimal::compareTo)
+                .orElse(null);
+
+        BigDecimal minOriginalPrice = skuList.stream()
+                .map(ShopProductSku::getOriginalPrice)
+                .filter(Objects::nonNull)
+                .min(BigDecimal::compareTo)
+                .orElse(null);
+
+        if (minPrice != null) {
+            product.setPrice(minPrice);
+        }
+        if (minOriginalPrice != null) {
+            product.setOriginalPrice(minOriginalPrice);
+        }
     }
 
     /**

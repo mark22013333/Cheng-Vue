@@ -3,28 +3,31 @@
     <div class="member-container">
       <!-- 側邊欄 -->
       <aside class="member-sidebar">
-        <div class="user-info">
-          <el-avatar :size="64" :src="userAvatar" />
-          <div class="user-name">{{ userName }}</div>
+        <div class="sidebar-user">
+          <div class="sidebar-avatar-wrap">
+            <el-avatar :size="56" :src="userAvatar" class="sidebar-avatar" />
+          </div>
+          <div class="sidebar-name">{{ userName }}</div>
+          <div class="sidebar-badge">一般會員</div>
         </div>
-        <el-menu
-          :default-active="activeMenu"
-          class="member-menu"
-          @select="handleMenuSelect"
-        >
-          <el-menu-item index="orders">
-            <el-icon><Document /></el-icon>
-            <span>我的訂單</span>
-          </el-menu-item>
-          <el-menu-item index="address">
-            <el-icon><Location /></el-icon>
-            <span>收貨地址</span>
-          </el-menu-item>
-          <el-menu-item index="profile">
-            <el-icon><User /></el-icon>
-            <span>個人資料</span>
-          </el-menu-item>
-        </el-menu>
+
+        <nav class="sidebar-nav">
+          <button
+            v-for="item in menuItems"
+            :key="item.key"
+            class="nav-link"
+            :class="{ active: activeMenu === item.key }"
+            @click="handleMenuSelect(item.key)"
+          >
+            <span class="nav-link-icon">
+              <el-icon :size="18"><component :is="item.icon" /></el-icon>
+            </span>
+            <span class="nav-link-text">{{ item.label }}</span>
+            <span class="nav-link-arrow">
+              <el-icon :size="12"><ArrowRight /></el-icon>
+            </span>
+          </button>
+        </nav>
       </aside>
 
       <!-- 主內容區 -->
@@ -37,44 +40,25 @@
 
         <!-- 預設首頁內容 -->
         <div v-if="isIndexPage" class="member-dashboard">
-          <h2>會員中心</h2>
+          <div class="dash-header">
+            <h2>會員中心</h2>
+            <p>歡迎回來，{{ userName }}</p>
+          </div>
 
           <!-- 訂單統計 -->
           <div class="stats-cards">
-            <div class="stat-card" @click="goTo('orders', 'pending')">
-              <div class="stat-icon pending">
-                <el-icon><Clock /></el-icon>
+            <div
+              v-for="stat in statCards"
+              :key="stat.key"
+              class="stat-card"
+              @click="goTo('orders', stat.key)"
+            >
+              <div class="stat-icon" :class="stat.key">
+                <el-icon><component :is="stat.icon" /></el-icon>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ orderStats.pending }}</div>
-                <div class="stat-label">待付款</div>
-              </div>
-            </div>
-            <div class="stat-card" @click="goTo('orders', 'paid')">
-              <div class="stat-icon paid">
-                <el-icon><Box /></el-icon>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ orderStats.paid }}</div>
-                <div class="stat-label">待出貨</div>
-              </div>
-            </div>
-            <div class="stat-card" @click="goTo('orders', 'shipped')">
-              <div class="stat-icon shipped">
-                <el-icon><Van /></el-icon>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ orderStats.shipped }}</div>
-                <div class="stat-label">待收貨</div>
-              </div>
-            </div>
-            <div class="stat-card" @click="goTo('orders', 'completed')">
-              <div class="stat-icon completed">
-                <el-icon><CircleCheck /></el-icon>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ orderStats.completed }}</div>
-                <div class="stat-label">已完成</div>
+                <div class="stat-value">{{ orderStats[stat.key] }}</div>
+                <div class="stat-label">{{ stat.label }}</div>
               </div>
             </div>
           </div>
@@ -108,7 +92,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, markRaw } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import useMemberStore from '@/store/modules/member'
 import { getOrderStats } from '@/api/shop/order'
@@ -121,7 +105,8 @@ import {
   Van,
   CircleCheck,
   ShoppingCart,
-  Goods
+  Goods,
+  ArrowRight
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -130,6 +115,19 @@ const memberStore = useMemberStore()
 
 const userName = computed(() => memberStore.nickname || '會員')
 const userAvatar = computed(() => memberStore.avatar || '')
+
+const menuItems = [
+  { key: 'orders', label: '我的訂單', icon: markRaw(Document) },
+  { key: 'address', label: '收貨地址', icon: markRaw(Location) },
+  { key: 'profile', label: '個人資料', icon: markRaw(User) }
+]
+
+const statCards = [
+  { key: 'pending', label: '待付款', icon: markRaw(Clock) },
+  { key: 'paid', label: '待出貨', icon: markRaw(Box) },
+  { key: 'shipped', label: '待收貨', icon: markRaw(Van) },
+  { key: 'completed', label: '已完成', icon: markRaw(CircleCheck) }
+]
 
 const activeMenu = computed(() => {
   const path = route.path
@@ -143,7 +141,6 @@ const isIndexPage = computed(() => {
   return route.path === '/member' || route.path === '/member/'
 })
 
-// 訂單統計（模擬數據，之後接 API）
 const orderStats = ref({
   pending: 0,
   paid: 0,
@@ -184,183 +181,303 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&display=swap');
+
 .member-center {
   min-height: calc(100vh - 120px);
-  background: #f5f7fa;
-  padding: 24px;
+  padding: 0;
+  font-family: 'Noto Sans TC', sans-serif;
 }
 
 .member-container {
-  max-width: 1200px;
+  max-width: 1060px;
   margin: 0 auto;
   display: flex;
-  gap: 24px;
+  gap: 28px;
+  align-items: flex-start;
 }
 
-/* 側邊欄 */
+/* ====== 側邊欄 ====== */
 .member-sidebar {
-  width: 220px;
+  width: 240px;
   flex-shrink: 0;
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px 0;
-  height: fit-content;
+  background: #FDFCFA;
+  border: 1px solid #EDE8E2;
+  border-radius: 18px;
+  overflow: hidden;
+  position: sticky;
+  top: 100px;
 }
 
-.user-info {
+.sidebar-user {
   text-align: center;
-  padding: 0 24px 24px;
-  border-bottom: 1px solid #ebeef5;
-  margin-bottom: 16px;
+  padding: 28px 20px 22px;
+  background: linear-gradient(160deg, rgba(74, 107, 124, 0.06) 0%, rgba(196, 168, 130, 0.06) 100%);
+  border-bottom: 1px solid #F0EBE5;
 }
 
-.user-name {
-  margin-top: 12px;
+.sidebar-avatar-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  padding: 3px;
+  border-radius: 50%;
+  aspect-ratio: 1 / 1;
+  background: conic-gradient(from 45deg, #4A6B7C, #7BA3B5, #C4A882, #A5635C, #4A6B7C);
+}
+
+.sidebar-avatar-wrap :deep(.sidebar-avatar) {
+  width: 100% !important;
+  height: 100% !important;
+  border: 2.5px solid #FDFCFA;
+}
+
+.sidebar-name {
+  margin-top: 14px;
+  font-family: 'Noto Serif TC', serif;
   font-size: 16px;
+  font-weight: 600;
+  color: #3D2B1F;
+}
+
+.sidebar-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 12px;
+  border-radius: 99px;
+  background: rgba(74, 107, 124, 0.08);
+  border: 1px solid rgba(74, 107, 124, 0.15);
+  font-size: 11px;
+  font-weight: 600;
+  color: #4A6B7C;
+  letter-spacing: 0.5px;
+}
+
+/* 導航 */
+.sidebar-nav {
+  padding: 10px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 14px;
   font-weight: 500;
-  color: #303133;
+  color: #7A6B5D;
+  transition: all 0.25s ease;
+  text-align: left;
 }
 
-.member-menu {
-  border-right: none;
+.nav-link:hover {
+  background: rgba(74, 107, 124, 0.05);
+  color: #4A6B7C;
 }
 
-.member-menu .el-menu-item {
-  height: 50px;
-  line-height: 50px;
-  margin: 4px 12px;
-  border-radius: 8px;
+.nav-link.active {
+  background: linear-gradient(135deg, rgba(74, 107, 124, 0.10), rgba(90, 138, 154, 0.08));
+  color: #4A6B7C;
+  font-weight: 700;
 }
 
-.member-menu .el-menu-item.is-active {
-  background: var(--mall-primary-light, #ecf5ff);
-  color: var(--mall-primary, #409eff);
+.nav-link-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #F5F0EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9A8B7D;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
 }
 
-/* 主內容區 */
+.nav-link.active .nav-link-icon {
+  background: linear-gradient(135deg, #4A6B7C, #5A8A9A);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(74, 107, 124, 0.2);
+}
+
+.nav-link:hover .nav-link-icon {
+  color: #4A6B7C;
+}
+
+.nav-link-text {
+  flex: 1;
+}
+
+.nav-link-arrow {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all 0.25s ease;
+  color: #B0A090;
+}
+
+.nav-link:hover .nav-link-arrow,
+.nav-link.active .nav-link-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ====== 主內容區 ====== */
 .member-content {
   flex: 1;
+  min-width: 0;
   background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  min-height: 500px;
+  border: 1px solid #EDE8E2;
+  border-radius: 18px;
+  padding: 32px;
+  min-height: 480px;
 }
 
-.member-dashboard h2 {
-  margin: 0 0 24px;
-  font-size: 20px;
-  color: #303133;
+/* ====== Dashboard ====== */
+.dash-header {
+  margin-bottom: 28px;
+}
+
+.dash-header h2 {
+  margin: 0;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #3D2B1F;
+}
+
+.dash-header p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #A09585;
 }
 
 /* 統計卡片 */
 .stats-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 14px;
   margin-bottom: 32px;
 }
 
 .stat-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: #fafafa;
-  border-radius: 12px;
+  gap: 14px;
+  padding: 18px 16px;
+  background: #FDFCFA;
+  border: 1px solid #F0EBE5;
+  border-radius: 14px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
 }
 
 .stat-card:hover {
-  background: #f0f2f5;
+  border-color: #D8CFC5;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   transform: translateY(-2px);
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
 .stat-icon.pending {
-  background: #fef0f0;
-  color: #f56c6c;
+  background: #FEF3F0;
+  color: #D4594B;
 }
 
 .stat-icon.paid {
-  background: #fdf6ec;
-  color: #e6a23c;
+  background: #FEF6EC;
+  color: #C4882E;
 }
 
 .stat-icon.shipped {
-  background: #ecf5ff;
-  color: #409eff;
+  background: #EFF6FC;
+  color: #4A6B7C;
 }
 
 .stat-icon.completed {
-  background: #f0f9eb;
-  color: #67c23a;
-}
-
-.stat-info {
-  flex: 1;
+  background: #F0F7EB;
+  color: #5F9E3C;
 }
 
 .stat-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #303133;
+  font-size: 22px;
+  font-weight: 700;
+  color: #3D2B1F;
+  line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #909399;
-  margin-top: 4px;
+  font-size: 12.5px;
+  color: #A09585;
+  margin-top: 2px;
 }
 
 /* 快捷功能 */
 .quick-actions h3 {
-  margin: 0 0 16px;
-  font-size: 16px;
-  color: #303133;
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #3D2B1F;
 }
 
 .action-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 14px;
 }
 
 .action-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 20px;
-  background: #fafafa;
-  border-radius: 12px;
+  gap: 10px;
+  padding: 22px 14px;
+  background: #FDFCFA;
+  border: 1px solid #F0EBE5;
+  border-radius: 14px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  color: #7A6B5D;
 }
 
 .action-item:hover {
-  background: var(--mall-primary-light, #ecf5ff);
-  color: var(--mall-primary, #409eff);
+  border-color: #4A6B7C;
+  color: #4A6B7C;
+  background: rgba(74, 107, 124, 0.03);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(74, 107, 124, 0.08);
 }
 
 .action-item .el-icon {
-  font-size: 28px;
+  font-size: 26px;
 }
 
 .action-item span {
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
-/* 響應式 */
+/* ====== RWD ====== */
 @media (max-width: 768px) {
   .member-container {
     flex-direction: column;
@@ -368,6 +485,41 @@ onMounted(() => {
 
   .member-sidebar {
     width: 100%;
+    position: static;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .nav-link {
+    flex-direction: column;
+    gap: 6px;
+    min-width: fit-content;
+    padding: 10px 16px;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .nav-link-arrow {
+    display: none;
+  }
+
+  .nav-link-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .sidebar-user {
+    padding: 18px 20px 14px;
+  }
+
+  .member-content {
+    padding: 20px 16px;
+    border-radius: 16px;
   }
 
   .stats-cards,

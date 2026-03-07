@@ -23,12 +23,12 @@ import com.cheng.shop.config.ShopConfigKey;
 import com.cheng.shop.config.ShopConfigService;
 import com.cheng.shop.service.IShopMemberService;
 import com.cheng.shop.service.ShopEmailVerificationService;
+import com.cheng.shop.service.ShopPasswordPolicyService;
 import com.cheng.shop.service.ShopPasswordResetService;
 import com.cheng.shop.utils.ShopMemberSecurityUtils;
 import com.cheng.system.service.ISysConfigService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,6 +64,7 @@ public class ShopMemberAuthController extends BaseController {
     private final RedisCache redisCache;
     private final ISysConfigService configService;
     private final ShopPasswordResetService passwordResetService;
+    private final ShopPasswordPolicyService passwordPolicyService;
     private final ShopEmailVerificationService emailVerificationService;
     private final ShopConfigService shopConfigService;
 
@@ -109,15 +110,23 @@ public class ShopMemberAuthController extends BaseController {
 
     @PostMapping("/register")
     public AjaxResult register(@Valid @RequestBody MemberRegisterBody body) {
-        validateCaptcha(body.getNickname(), body.getCode(), body.getUuid());
+        validateCaptcha("register", body.getCode(), body.getUuid());
+
+        // 動態密碼政策驗證
+        passwordPolicyService.validate(body.getPassword());
 
         String email = body.getEmail().trim().toLowerCase();
         if (!isEmail(email)) {
             throw new ServiceException("Email 格式不正確");
         }
 
+        // 暱稱：優先使用前端傳入值，未提供則取 Email @ 前綴
+        String nickname = StringUtils.isNotEmpty(body.getNickname())
+                ? body.getNickname().trim()
+                : email.split("@")[0];
+
         ShopMember member = new ShopMember();
-        member.setNickname(body.getNickname());
+        member.setNickname(nickname);
         member.setEmail(email);
         member.setPassword(body.getPassword());
 
@@ -177,12 +186,12 @@ public class ShopMemberAuthController extends BaseController {
         ShopMemberLoginUser loginUser = ShopMemberSecurityUtils.getLoginUser();
         ShopMember member = loginUser.getMember();
 
-        // 更新會員資料
+        // 更新會員資料（空字串轉 null，避免唯一鍵衝突）
         ShopMember updateMember = new ShopMember();
         updateMember.setMemberId(member.getMemberId());
         updateMember.setNickname(body.getNickname());
-        updateMember.setMobile(body.getMobile());
-        updateMember.setEmail(body.getEmail());
+        updateMember.setMobile(StringUtils.isEmpty(body.getMobile()) ? null : body.getMobile());
+        updateMember.setEmail(StringUtils.isEmpty(body.getEmail()) ? null : body.getEmail());
         updateMember.setGender(body.getGender());
 
         // 檢查手機唯一性（如果有變更）
@@ -202,8 +211,12 @@ public class ShopMemberAuthController extends BaseController {
         if (result > 0) {
             // 更新 LoginUser 中的會員資訊
             member.setNickname(body.getNickname());
-            member.setMobile(body.getMobile());
-            member.setEmail(body.getEmail());
+            if (StringUtils.isNotEmpty(body.getMobile())) {
+                member.setMobile(body.getMobile());
+            }
+            if (StringUtils.isNotEmpty(body.getEmail())) {
+                member.setEmail(body.getEmail());
+            }
             member.setGender(body.getGender());
             memberTokenService.refreshToken(loginUser);
             return success(member);
@@ -421,14 +434,25 @@ public class ShopMemberAuthController extends BaseController {
     }
 
     /**
+     * 密碼政策（註冊 + 重設共用）
+     */
+    @GetMapping("/password-policy")
+    public AjaxResult getPasswordPolicy() {
+        return AjaxResult.success(passwordPolicyService.getPolicyMap());
+    }
+
+    /**
      * 密碼重設政策（前端顯示用）
      */
     @GetMapping("/password-reset-policy")
     public AjaxResult getPasswordResetPolicy() {
-        Map<String, Object> data = new HashMap<>(4);
+        Map<String, Object> data = new HashMap<>(8);
         data.put("expireMinutes", passwordResetService.getTokenExpireMinutes());
-        data.put("minPasswordLength", passwordResetService.getMinPasswordLength());
         data.put("resendCooldownSeconds", passwordResetService.getResendCooldownSeconds());
+        // 合併密碼政策（包含 minLength, maxLength, requireUppercase 等）
+        data.putAll(passwordPolicyService.getPolicyMap());
+        // 向後相容
+        data.put("minPasswordLength", passwordPolicyService.getMinLength());
         return AjaxResult.success(data);
     }
 
@@ -499,12 +523,11 @@ public class ShopMemberAuthController extends BaseController {
 
     @Data
     public static class MemberRegisterBody {
-        @NotBlank(message = "請輸入暱稱")
+        /** 暱稱（選填，未提供時以 Email 前綴作為預設值） */
         private String nickname;
         @NotBlank(message = "請輸入 Email")
         private String email;
         @NotBlank(message = "請輸入密碼")
-        @Size(min = 12, max = 50, message = "密碼長度須為 12-50 字元")
         private String password;
         private String code;
         private String uuid;
@@ -552,7 +575,6 @@ public class ShopMemberAuthController extends BaseController {
         @NotBlank(message = "Token 不可為空")
         private String token;
         @NotBlank(message = "請輸入新密碼")
-        @Size(max = 50, message = "密碼長度不可超過 50 字元")
         private String newPassword;
     }
 

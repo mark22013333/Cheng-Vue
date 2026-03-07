@@ -36,7 +36,7 @@
             <header class="form-header">
               <span class="form-badge">重設密碼</span>
               <h2>設定新密碼</h2>
-              <p>請輸入你的新密碼，密碼至少需要 <strong>{{ minPasswordLength }} 個字元</strong>。</p>
+              <p>請輸入你的新密碼，密碼需為 <strong>{{ passwordPolicy.minLength }}-{{ passwordPolicy.maxLength }} 字元</strong>。</p>
             </header>
 
             <el-form
@@ -51,7 +51,7 @@
                   v-model="passwordForm.newPassword"
                   type="password"
                   size="large"
-                  :placeholder="`請輸入新密碼（至少 ${minPasswordLength} 字元）`"
+                  :placeholder="`請輸入新密碼（${passwordPolicy.minLength}-${passwordPolicy.maxLength} 字元）`"
                   :prefix-icon="Lock"
                   show-password
                   autocomplete="new-password"
@@ -74,6 +74,22 @@
                   {{ strengthText }}
                 </span>
               </div>
+
+              <!-- 複雜度需求清單 -->
+              <ul v-if="passwordForm.newPassword && hasComplexityRules" class="complexity-list">
+                <li v-if="passwordPolicy.requireUppercase" :class="{ met: /[A-Z]/.test(passwordForm.newPassword) }">
+                  {{ /[A-Z]/.test(passwordForm.newPassword) ? '✓' : '✗' }} 包含大寫英文字母
+                </li>
+                <li v-if="passwordPolicy.requireLowercase" :class="{ met: /[a-z]/.test(passwordForm.newPassword) }">
+                  {{ /[a-z]/.test(passwordForm.newPassword) ? '✓' : '✗' }} 包含小寫英文字母
+                </li>
+                <li v-if="passwordPolicy.requireDigit" :class="{ met: /\d/.test(passwordForm.newPassword) }">
+                  {{ /\d/.test(passwordForm.newPassword) ? '✓' : '✗' }} 包含數字
+                </li>
+                <li v-if="passwordPolicy.requireSpecial" :class="{ met: /[^a-zA-Z0-9]/.test(passwordForm.newPassword) }">
+                  {{ /[^a-zA-Z0-9]/.test(passwordForm.newPassword) ? '✓' : '✗' }} 包含特殊符號
+                </li>
+              </ul>
 
               <el-form-item label="確認新密碼" prop="confirmPassword">
                 <el-input
@@ -131,7 +147,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -154,7 +170,22 @@ const errorMessage = ref('此重設連結已過期或無效，請重新申請。
 // ===== URL 參數 =====
 const selector = ref('')
 const token = ref('')
-const minPasswordLength = ref(12)
+const minPasswordLength = ref(8)
+
+// 密碼政策
+const passwordPolicy = ref({
+  minLength: 8,
+  maxLength: 50,
+  requireUppercase: false,
+  requireLowercase: false,
+  requireDigit: false,
+  requireSpecial: false
+})
+
+const hasComplexityRules = computed(() => {
+  const p = passwordPolicy.value
+  return p.requireUppercase || p.requireLowercase || p.requireDigit || p.requireSpecial
+})
 
 // ===== 密碼表單 =====
 const passwordFormRef = ref(null)
@@ -182,13 +213,29 @@ const validateConfirmPassword = (rule, value, callback) => {
 }
 
 const validatePasswordLength = (rule, value, callback) => {
-  const min = minPasswordLength.value
+  const p = passwordPolicy.value
   if (!value) {
     callback(new Error('請輸入新密碼'))
     return
   }
-  if (value.length < min || value.length > 50) {
-    callback(new Error(`密碼長度須為 ${min}-50 字元`))
+  if (value.length < p.minLength || value.length > p.maxLength) {
+    callback(new Error(`密碼長度須為 ${p.minLength}-${p.maxLength} 字元`))
+    return
+  }
+  if (p.requireUppercase && !/[A-Z]/.test(value)) {
+    callback(new Error('密碼需包含至少一個大寫英文字母'))
+    return
+  }
+  if (p.requireLowercase && !/[a-z]/.test(value)) {
+    callback(new Error('密碼需包含至少一個小寫英文字母'))
+    return
+  }
+  if (p.requireDigit && !/\d/.test(value)) {
+    callback(new Error('密碼需包含至少一個數字'))
+    return
+  }
+  if (p.requireSpecial && !/[^a-zA-Z0-9]/.test(value)) {
+    callback(new Error('密碼需包含至少一個特殊符號'))
     return
   }
   callback()
@@ -272,11 +319,11 @@ async function validateLink() {
     if (isInvalidTokenMessage(msg)) {
       errorTitle.value = '連結無效或已過期'
       errorMessage.value = '此重設連結已過期、已使用或無效，請重新申請重設連結。'
-      pageState.value = 'invalid'
     } else {
-      ElMessage.error(msg || '目前無法驗證重設連結，請稍後再試')
-      pageState.value = 'form'
+      errorTitle.value = '無法驗證連結'
+      errorMessage.value = '目前無法驗證重設連結，請稍後再試或重新申請。'
     }
+    pageState.value = 'invalid'
   }
 }
 
@@ -346,10 +393,19 @@ function isInvalidTokenMessage(message) {
 async function loadPasswordResetPolicy() {
   try {
     const res = await getPasswordResetPolicy()
-    const policy = res?.data || {}
-    const minLen = Number(policy.minPasswordLength)
+    const data = res?.data || {}
+    // 優先讀取新欄位 minLength，向後相容 minPasswordLength
+    const minLen = Number(data.minLength ?? data.minPasswordLength)
     if (Number.isFinite(minLen) && minLen > 0) {
       minPasswordLength.value = minLen
+    }
+    passwordPolicy.value = {
+      minLength: minPasswordLength.value,
+      maxLength: Number(data.maxLength) || 50,
+      requireUppercase: !!data.requireUppercase,
+      requireLowercase: !!data.requireLowercase,
+      requireDigit: !!data.requireDigit,
+      requireSpecial: !!data.requireSpecial
     }
   } catch {
     // 使用預設值
@@ -486,6 +542,26 @@ onUnmounted(() => {
   font-weight: 700;
   min-width: 32px;
   text-align: right;
+}
+
+/* 複雜度需求清單 */
+.complexity-list {
+  list-style: none;
+  padding: 0;
+  margin: -2px 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 12px;
+  color: #b0a090;
+}
+
+.complexity-list li {
+  transition: color 0.2s ease;
+}
+
+.complexity-list li.met {
+  color: #38A169;
 }
 
 .submit-btn {

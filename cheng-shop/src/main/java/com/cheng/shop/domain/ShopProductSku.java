@@ -100,6 +100,23 @@ public class ShopProductSku extends BaseEntity {
      */
     private String invItemCode;
 
+    // ============ 計算欄位（非 DB 持久化） ============
+
+    /**
+     * 最終售價（由 ShopPriceService 計算）
+     */
+    private transient BigDecimal finalPrice;
+
+    /**
+     * 折扣標籤（例如「特價」「95折」）
+     */
+    private transient String discountLabel;
+
+    /**
+     * 劃線顯示原價
+     */
+    private transient BigDecimal originalDisplayPrice;
+
     /**
      * 取得狀態列舉
      */

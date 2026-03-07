@@ -123,6 +123,17 @@ export function validateResetTokenLegacy(params) {
   })
 }
 
+// 密碼政策（註冊 + 重設共用）
+export function getPasswordPolicy() {
+  return requestShop({
+    url: '/shop/auth/password-policy',
+    method: 'get',
+    headers: {
+      isToken: false
+    }
+  })
+}
+
 // 忘記密碼 - 取得密碼重設政策
 export function getPasswordResetPolicy() {
   return requestShop({

@@ -221,10 +221,30 @@ public enum ShopConfigKey implements CodedEnum<String> {
     PWD_RESET_RESEND_COOLDOWN_SECONDS("shop.pwd_reset.resend_cooldown_seconds", "密碼重設重發冷卻秒數", "60"),
 
     /** 密碼最小長度 */
-    PWD_RESET_MIN_LENGTH("shop.pwd_reset.min_password_length", "密碼最小長度", "12"),
+    PWD_RESET_MIN_LENGTH("shop.pwd_reset.min_password_length", "密碼最小長度", "8"),
 
     /** 敏感操作保護時數 */
     PWD_RESET_SENSITIVE_LOCK_HOURS("shop.pwd_reset.sensitive_lock_hours", "敏感操作保護時數", "24"),
+
+    // ==================== 會員密碼政策 ====================
+
+    /** 商城密碼最小長度（註冊 + 重設共用） */
+    PWD_MIN_LENGTH("shop.password.min_length", "商城密碼最小長度", "8"),
+
+    /** 商城密碼最大長度 */
+    PWD_MAX_LENGTH("shop.password.max_length", "商城密碼最大長度", "50"),
+
+    /** 商城需要包含大寫字母（1=是, 0=否） */
+    PWD_REQUIRE_UPPERCASE("shop.password.require_uppercase", "商城需要大寫字母", "0"),
+
+    /** 商城需要包含小寫字母（1=是, 0=否） */
+    PWD_REQUIRE_LOWERCASE("shop.password.require_lowercase", "商城需要小寫字母", "0"),
+
+    /** 商城需要包含數字（1=是, 0=否） */
+    PWD_REQUIRE_DIGIT("shop.password.require_digit", "商城需要數字", "0"),
+
+    /** 商城需要包含特殊符號（1=是, 0=否） */
+    PWD_REQUIRE_SPECIAL("shop.password.require_special", "商城需要特殊符號", "0"),
 
     // ==================== Email 驗證設定 ====================
 

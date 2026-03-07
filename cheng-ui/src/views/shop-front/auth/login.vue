@@ -161,7 +161,15 @@ function openPolicy(type) {
   policyVisible.value = true
 }
 
-const redirect = computed(() => route.query.redirect || '/')
+const AUTH_PATHS = ['/register', '/login', '/forgot-password', '/reset-password']
+
+const redirect = computed(() => {
+  const r = route.query.redirect
+  if (r && AUTH_PATHS.some(p => r.startsWith(p))) {
+    return '/'
+  }
+  return r || '/'
+})
 
 const loginForm = ref({
   username: '',
