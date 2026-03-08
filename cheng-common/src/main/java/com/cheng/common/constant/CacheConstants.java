@@ -80,4 +80,9 @@ public class CacheConstants {
      * Email 驗證每日發送次數 redis key（TTL 到當天結束）
      */
     public static final String EMAIL_VERIFY_DAILY_KEY = "email_verify_daily:";
+
+    /**
+     * OAuth state CSRF 防護 redis key（TTL 5 分鐘）
+     */
+    public static final String OAUTH_STATE_KEY = "oauth_state:";
 }

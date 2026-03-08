@@ -108,6 +108,29 @@ public class ImageImportUtil {
     }
 
     /**
+     * 根據物品名稱在目錄中搜尋對應圖片
+     * 嘗試匹配 name.jpg, name.png, name.jpeg 等常見圖片格式
+     *
+     * @param imagesDir 圖片目錄
+     * @param itemName  物品名稱
+     * @return 找到的圖片檔案，未找到則返回 null
+     */
+    public static File findImageByItemName(File imagesDir, String itemName) {
+        if (imagesDir == null || !imagesDir.exists() || itemName == null || itemName.trim().isEmpty()) {
+            return null;
+        }
+
+        String[] extensions = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"};
+        for (String ext : extensions) {
+            File found = findImageFile(imagesDir, itemName.trim() + ext);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    /**
      * 複製圖片到上傳路徑，並備份已存在的檔案
      *
      * @param sourceImage  來源圖片

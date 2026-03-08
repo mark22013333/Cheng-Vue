@@ -255,7 +255,27 @@ public enum ShopConfigKey implements CodedEnum<String> {
     EMAIL_VERIFY_EMAIL_HOURLY_LIMIT("shop.email_verify.email_hourly_limit", "Email 驗證每小時上限", "3"),
 
     /** 同一 Email 每天最多發送驗證信次數 */
-    EMAIL_VERIFY_EMAIL_DAILY_LIMIT("shop.email_verify.email_daily_limit", "Email 驗證每日上限", "5");
+    EMAIL_VERIFY_EMAIL_DAILY_LIMIT("shop.email_verify.email_daily_limit", "Email 驗證每日上限", "5"),
+
+    // ==================== 商城第三方登入 (OAuth) ====================
+
+    /** 商城 LINE 登入啟用（1=啟用, 0=停用） */
+    OAUTH_LINE_ENABLED("shop.oauth.line.enabled", "商城 LINE 登入啟用", "0"),
+
+    /** 商城 LINE Channel ID */
+    OAUTH_LINE_CHANNEL_ID("shop.oauth.line.channel_id", "商城 LINE Channel ID", ""),
+
+    /** 商城 LINE Channel Secret */
+    OAUTH_LINE_CHANNEL_SECRET("shop.oauth.line.channel_secret", "商城 LINE Channel Secret", ""),
+
+    /** 商城 Google 登入啟用（1=啟用, 0=停用） */
+    OAUTH_GOOGLE_ENABLED("shop.oauth.google.enabled", "商城 Google 登入啟用", "0"),
+
+    /** 商城 Google Client ID */
+    OAUTH_GOOGLE_CLIENT_ID("shop.oauth.google.client_id", "商城 Google Client ID", ""),
+
+    /** 商城 Google Client Secret */
+    OAUTH_GOOGLE_CLIENT_SECRET("shop.oauth.google.client_secret", "商城 Google Client Secret", "");
 
     /**
      * 設定鍵（對應 sys_config.config_key）
