@@ -157,3 +157,57 @@ export function resetPassword(data) {
     data
   })
 }
+
+// ==================== OAuth 第三方登入 ====================
+
+// 取得第三方登入授權 URL
+export function getOAuthAuthorizeUrl(provider, redirectUri) {
+  return requestShop({
+    url: '/shop/auth/oauth/authorize-url',
+    method: 'get',
+    headers: {
+      isToken: false
+    },
+    params: { provider, redirectUri }
+  })
+}
+
+// 處理 OAuth 回調（換取 JWT）
+export function handleOAuthCallback(data, redirectUri) {
+  return requestShop({
+    url: '/shop/auth/oauth/callback',
+    method: 'post',
+    headers: {
+      isToken: false,
+      repeatSubmit: false,
+      'X-OAuth-Redirect-Uri': redirectUri
+    },
+    data
+  })
+}
+
+// 綁定社交帳號（已登入）
+export function linkOAuthAccount(data) {
+  return requestShop({
+    url: '/shop/auth/oauth/link',
+    method: 'post',
+    data
+  })
+}
+
+// 解除社交帳號綁定（已登入）
+export function unlinkOAuthAccount(provider) {
+  return requestShop({
+    url: '/shop/auth/oauth/unlink',
+    method: 'post',
+    data: { provider }
+  })
+}
+
+// 查詢綁定狀態（已登入）
+export function getOAuthBindings() {
+  return requestShop({
+    url: '/shop/auth/oauth/bindings',
+    method: 'get'
+  })
+}

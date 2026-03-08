@@ -144,6 +144,7 @@ import { encrypt, decrypt } from '@/utils/jsencrypt'
 import Cookies from 'js-cookie'
 import useMemberStore from '@/store/modules/member'
 import { useCartStore } from '@/store/modules/cart'
+import { getOAuthAuthorizeUrl } from '@/api/shop/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -234,8 +235,30 @@ async function handleLogin() {
   }
 }
 
-function handleLineLogin() {
-  ElMessage.info('LINE 登入功能開發中')
+async function handleLineLogin() {
+  try {
+    // 組裝 OAuth 回調 URI（前端 /oauth/callback 頁面）
+    const redirectUri = `${window.location.origin}/oauth/callback`
+
+    // 暫存必要資訊到 sessionStorage（供 oauth-callback.vue 使用）
+    sessionStorage.setItem('oauth_provider', 'LINE')
+    sessionStorage.setItem('oauth_redirect', redirect.value)
+    sessionStorage.setItem('oauth_redirect_uri', redirectUri)
+
+    // 呼叫後端取得 LINE 授權 URL
+    const res = await getOAuthAuthorizeUrl('LINE', redirectUri)
+    const authorizeUrl = res.data || res.authorizeUrl || res
+
+    if (!authorizeUrl) {
+      ElMessage.error('無法取得授權連結，請稍後再試')
+      return
+    }
+
+    // 跳轉到 LINE 授權頁面
+    window.location.href = authorizeUrl
+  } catch (error) {
+    ElMessage.error(error?.msg || '取得 LINE 登入連結失敗')
+  }
 }
 
 onMounted(() => {

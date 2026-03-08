@@ -224,7 +224,7 @@ import { listConfig, getConfig, delConfig, addConfig, updateConfig, refreshCache
 import {
   Search, Plus, Download, Refresh, Edit, Delete, Close,
   Monitor, Lock, Discount, Van, CreditCard, Box,
-  Wallet, Location, Key, Message, More, Top, Bottom
+  Wallet, Location, Key, Message, Connection, More, Top, Bottom
 } from '@element-plus/icons-vue'
 
 const { proxy } = getCurrentInstance()
@@ -286,6 +286,11 @@ const CATEGORIES = [
     key: 'shop-mail', label: '郵件服務', icon: markRaw(Message),
     desc: 'SMTP 郵件伺服器與 Email 驗證相關設定',
     match: (k) => k.startsWith('shop.mail.') || k.startsWith('shop.email_verify.')
+  },
+  {
+    key: 'shop-oauth', label: '第三方登入', icon: markRaw(Connection),
+    desc: '第三方登入 OAuth 設定（LINE、Google 等）',
+    match: (k) => k.startsWith('shop.oauth.')
   },
   {
     key: 'other', label: '其他', icon: markRaw(More),

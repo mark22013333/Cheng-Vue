@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.shop.mapper.ShopMemberSocialMapper">
+
+    <resultMap id="ShopMemberSocialResult" type="com.cheng.shop.domain.ShopMemberSocial">
+        <id     property="id"           column="id"/>
+        <result property="memberId"     column="member_id"/>
+        <result property="provider"     column="provider"/>
+        <result property="providerId"   column="provider_id"/>
+        <result property="unionId"      column="union_id"/>
+        <result property="accessToken"  column="access_token"/>
+        <result property="refreshToken" column="refresh_token"/>
+        <result property="tokenExpire"  column="token_expire"/>
+        <result property="nickname"     column="nickname"/>
+        <result property="avatar"       column="avatar"/>
+        <result property="extraData"    column="extra_data"/>
+        <result property="createTime"   column="create_time"/>
+        <result property="updateTime"   column="update_time"/>
+    </resultMap>
+
+    <sql id="selectColumns">
+        id, member_id, provider, provider_id, union_id,
+        access_token, refresh_token, token_expire,
+        nickname, avatar, extra_data, create_time, update_time
+    </sql>
+
+    <select id="selectByProviderAndProviderId" resultMap="ShopMemberSocialResult">
+        SELECT <include refid="selectColumns"/>
+        FROM shop_member_social
+        WHERE provider = #{provider} AND provider_id = #{providerId}
+    </select>
+
+    <select id="selectByMemberId" resultMap="ShopMemberSocialResult">
+        SELECT <include refid="selectColumns"/>
+        FROM shop_member_social
+        WHERE member_id = #{memberId}
+    </select>
+
+    <insert id="insertSocial" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO shop_member_social (
+            member_id, provider, provider_id, union_id,
+            access_token, refresh_token, token_expire,
+            nickname, avatar, extra_data, create_time
+        ) VALUES (
+            #{memberId}, #{provider}, #{providerId}, #{unionId},
+            #{accessToken}, #{refreshToken}, #{tokenExpire},
+            #{nickname}, #{avatar}, #{extraData}, NOW()
+        )
+    </insert>
+
+    <delete id="deleteSocial">
+        DELETE FROM shop_member_social
+        WHERE member_id = #{memberId} AND provider = #{provider}
+    </delete>
+
+    <update id="updateTokens">
+        UPDATE shop_member_social
+        SET access_token  = #{accessToken},
+            refresh_token = #{refreshToken},
+            token_expire  = #{tokenExpire},
+            nickname      = #{nickname},
+            avatar        = #{avatar},
+            update_time   = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>

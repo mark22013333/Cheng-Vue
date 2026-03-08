@@ -228,6 +228,13 @@ export const shopRoutes = [
         meta: { title: 'Email 驗證' }
       },
       {
+        path: 'oauth/callback',
+        component: () => import('@/views/shop-front/auth/oauth-callback.vue'),
+        hidden: true,
+        name: 'ShopOAuthCallback',
+        meta: { title: 'OAuth 登入' }
+      },
+      {
         path: 'products',
         component: () => import('@/views/shop-front/product/list.vue'),
         name: 'ShopProducts',

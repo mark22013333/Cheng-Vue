@@ -2004,18 +2004,24 @@ public class InvItemServiceImpl implements IInvItemService {
                 File extractDir = new File(tempDir, "extract");
                 ImageImportUtil.unzip(zipFile, extractDir);
 
-                // 尋找 Excel 檔案
+                // 遞迴尋找 Excel 檔案（支援巢狀目錄結構）
                 excelFile = findExcelFile(extractDir);
                 if (excelFile == null) {
                     throw new ServiceException("ZIP 檔案中未找到 Excel 檔案");
                 }
 
-                // 尋找 images.zip
-                File imagesZip = new File(extractDir, "images.zip");
-                if (imagesZip.exists()) {
+                // 尋找圖片來源：優先 images.zip，其次 images 資料夾
+                File imagesZip = findFileRecursive(extractDir, "images.zip");
+                if (imagesZip != null) {
                     imagesDir = new File(tempDir, "images");
                     ImageImportUtil.unzip(imagesZip, imagesDir);
                     log.info("解壓縮圖片: {} 張", countFiles(imagesDir));
+                } else {
+                    // 遞迴尋找名為 images 的資料夾
+                    imagesDir = findDirectoryRecursive(extractDir, "images");
+                    if (imagesDir != null) {
+                        log.info("找到圖片資料夾: {}，共 {} 張", imagesDir.getAbsolutePath(), countFiles(imagesDir));
+                    }
                 }
             } else {
                 // Excel 檔案：直接儲存
@@ -2077,11 +2083,14 @@ public class InvItemServiceImpl implements IInvItemService {
                     existingItem = invItemMapper.selectInvItemByItemCode(dto.getItemCode());
                 }
 
+                Long savedItemId = null;
+
                 if (existingItem != null) {
                     if (updateSupport != null && updateSupport) {
                         // 更新現有資料
                         updateItemFromDTO(existingItem, dto, defaultCategoryId, defaultUnit);
                         invItemMapper.updateInvItem(existingItem);
+                        savedItemId = existingItem.getItemId();
                         result.setSuccessRows(result.getSuccessRows() + 1);
                         log.debug("更新物品: {} (編碼: {})", dto.getItemName(), dto.getItemCode());
                     } else {
@@ -2105,13 +2114,20 @@ public class InvItemServiceImpl implements IInvItemService {
                     stock.setLostQty(0);
                     invStockMapper.insertInvStock(stock);
 
+                    savedItemId = newItem.getItemId();
                     result.setSuccessRows(result.getSuccessRows() + 1);
                     log.debug("新增物品: {} (編碼: {})", dto.getItemName(), dto.getItemCode());
                 }
 
                 // 處理圖片
-                if (imagesDir != null && dto.getImageUrl() != null && !dto.getImageUrl().trim().isEmpty()) {
-                    processImage(dto.getImageUrl(), imagesDir, result);
+                if (imagesDir != null && savedItemId != null) {
+                    if (StringUtils.isNotEmpty(dto.getImageUrl())) {
+                        // Excel 有填「圖片存放位置」，使用指定路徑匹配
+                        processImage(dto.getImageUrl(), imagesDir, result);
+                    } else {
+                        // Excel 未填圖片路徑，嘗試用物品名稱匹配圖片檔案
+                        processImageByItemName(dto.getItemName(), savedItemId, imagesDir, result);
+                    }
                 }
 
             } catch (Exception e) {
@@ -2171,12 +2187,54 @@ public class InvItemServiceImpl implements IInvItemService {
     }
 
     /**
+     * 按物品名稱匹配圖片並儲存
+     * 在 imagesDir 中搜尋與物品名稱相同的圖片檔（如 物品名.jpg、物品名.png）
+     */
+    private void processImageByItemName(String itemName, Long itemId, File imagesDir, ImportResult result) {
+        try {
+            File sourceImage = ImageImportUtil.findImageByItemName(imagesDir, itemName);
+            if (sourceImage == null) {
+                return;
+            }
+
+            if (!ImageImportUtil.validateImage(sourceImage, 10 * 1024 * 1024)) {
+                log.warn("圖片驗證失敗（按名稱匹配）: {}", sourceImage.getName());
+                return;
+            }
+
+            // 建立相對路徑：inventory/items/{itemId}{extension}
+            String originalName = sourceImage.getName();
+            String extension = originalName.substring(originalName.lastIndexOf('.'));
+            String relativePath = "inventory/items/" + itemId + extension;
+            String dbPath = "/profile/" + relativePath;
+
+            // 複製圖片到上傳路徑
+            ImageImportUtil.copyImageToUploadPath(sourceImage, relativePath, uploadPath);
+
+            // 更新資料庫中的圖片路徑
+            InvItem updateItem = new InvItem();
+            updateItem.setItemId(itemId);
+            updateItem.setImageUrl(dbPath);
+            invItemMapper.updateInvItem(updateItem);
+
+            result.setCopiedImages(result.getCopiedImages() + 1);
+            log.debug("按名稱匹配圖片成功: {} -> {}", itemName, dbPath);
+        } catch (Exception e) {
+            log.error("處理圖片（按名稱匹配）失敗: {}", itemName, e);
+        }
+    }
+
+    /**
      * 從 DTO 建立 InvItem
      */
     private InvItem createItemFromDTO(InvItemWithStockDTO dto, Long defaultCategoryId, String defaultUnit) {
         InvItem item = new InvItem();
         item.setItemName(dto.getItemName());
-        item.setItemCode(dto.getItemCode());
+        if (StringUtils.isEmpty(dto.getItemCode())) {
+            item.setItemCode(IdUtils.generateItemCode());
+        } else {
+            item.setItemCode(dto.getItemCode());
+        }
         item.setBarcode(dto.getBarcode());
         item.setQrCode(dto.getQrCode());
         item.setCategoryId(dto.getCategoryId() != null ? dto.getCategoryId() : defaultCategoryId);
@@ -2235,12 +2293,82 @@ public class InvItemServiceImpl implements IInvItemService {
      * 尋找 Excel 檔案
      */
     private File findExcelFile(File dir) {
+        if (dir == null || !dir.isDirectory()) {
+            return null;
+        }
         File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
+        if (files == null) {
+            return null;
+        }
+        // 先搜尋當前層級的 Excel 檔案
+        for (File file : files) {
+            if (file.isFile()) {
                 String name = file.getName().toLowerCase();
-                if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+                if ((name.endsWith(".xlsx") || name.endsWith(".xls")) && !name.startsWith("~$") && !name.startsWith(".")) {
                     return file;
+                }
+            }
+        }
+        // 遞迴搜尋子目錄（跳過 __MACOSX 等系統目錄）
+        for (File file : files) {
+            if (file.isDirectory() && !file.getName().startsWith("__") && !file.getName().startsWith(".")) {
+                File found = findExcelFile(file);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 遞迴尋找指定檔名的檔案
+     */
+    private File findFileRecursive(File dir, String fileName) {
+        if (dir == null || !dir.isDirectory()) {
+            return null;
+        }
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return null;
+        }
+        for (File file : files) {
+            if (file.isFile() && file.getName().equalsIgnoreCase(fileName)) {
+                return file;
+            }
+        }
+        for (File file : files) {
+            if (file.isDirectory() && !file.getName().startsWith("__") && !file.getName().startsWith(".")) {
+                File found = findFileRecursive(file, fileName);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 遞迴尋找指定名稱的資料夾
+     */
+    private File findDirectoryRecursive(File dir, String dirName) {
+        if (dir == null || !dir.isDirectory()) {
+            return null;
+        }
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return null;
+        }
+        for (File file : files) {
+            if (file.isDirectory() && file.getName().equalsIgnoreCase(dirName)) {
+                return file;
+            }
+        }
+        for (File file : files) {
+            if (file.isDirectory() && !file.getName().startsWith("__") && !file.getName().startsWith(".")) {
+                File found = findDirectoryRecursive(file, dirName);
+                if (found != null) {
+                    return found;
                 }
             }
         }
