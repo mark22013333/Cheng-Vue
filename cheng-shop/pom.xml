@@ -71,6 +71,12 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
+        <!-- Cheng LINE（讀取 LINE 頻道設定供 OAuth 登入使用） -->
+        <dependency>
+            <groupId>com.cheng</groupId>
+            <artifactId>cheng-line</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>

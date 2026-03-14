@@ -3,8 +3,13 @@ package com.cheng.common.utils.file;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.security.MessageDigest;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -148,9 +153,14 @@ public class ImageImportUtil {
             throw new IOException("無法建立目錄: " + targetDir.getAbsolutePath());
         }
 
-        // 如果目標檔案已存在，先備份
+        // 如果目標檔案已存在，比較內容是否相同
         File backupFile = null;
         if (targetFile.exists()) {
+            if (isFileContentEqual(sourceImage, targetFile)) {
+                log.debug("圖片內容相同，跳過複製: {}", targetFile.getName());
+                return null;
+            }
+            // 內容不同才備份
             String backupPath = targetFile.getAbsolutePath() + ".backup." + System.currentTimeMillis();
             backupFile = new File(backupPath);
             Files.copy(targetFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -159,6 +169,10 @@ public class ImageImportUtil {
 
         // 複製圖片
         Files.copy(sourceImage.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+        // 設定檔案權限為 644（owner 讀寫，group/other 唯讀），避免 Tomcat 預設 umask 導致其他使用者無法讀取
+        setReadablePermissions(targetFile);
+
         log.debug("複製圖片: {} -> {}", sourceImage.getName(), targetFile.getAbsolutePath());
 
         return backupFile;
@@ -231,6 +245,53 @@ public class ImageImportUtil {
         }
 
         log.info("解壓縮完成: {} -> {}", zipFile.getName(), destDir.getAbsolutePath());
+    }
+
+    /**
+     * 比較兩個檔案內容是否相同（先比大小，再比 MD5）
+     */
+    private static boolean isFileContentEqual(File file1, File file2) {
+        if (file1.length() != file2.length()) {
+            return false;
+        }
+        try {
+            byte[] hash1 = computeMd5(file1);
+            byte[] hash2 = computeMd5(file2);
+            return MessageDigest.isEqual(hash1, hash2);
+        } catch (Exception e) {
+            log.warn("比較檔案內容失敗，視為不同: {} vs {}", file1.getName(), file2.getName());
+            return false;
+        }
+    }
+
+    /**
+     * 計算檔案 MD5 雜湊
+     */
+    private static byte[] computeMd5(File file) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        try (InputStream is = new BufferedInputStream(new FileInputStream(file))) {
+            byte[] buffer = new byte[8192];
+            int len;
+            while ((len = is.read(buffer)) != -1) {
+                md.update(buffer, 0, len);
+            }
+        }
+        return md.digest();
+    }
+
+    /**
+     * 設定檔案權限為 644（rw-r--r--）
+     * 僅在支援 POSIX 的檔案系統上執行（Linux/macOS），Windows 會自動跳過
+     */
+    private static void setReadablePermissions(File file) {
+        try {
+            if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+                Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-r--r--");
+                Files.setPosixFilePermissions(file.toPath(), perms);
+            }
+        } catch (IOException e) {
+            log.warn("設定檔案權限失敗: {}", file.getAbsolutePath(), e);
+        }
     }
 
     /**

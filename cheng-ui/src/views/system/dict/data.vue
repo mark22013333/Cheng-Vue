@@ -86,7 +86,7 @@
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
 
-      <el-table v-loading="loading" :data="dataList" @selection-change="handleSelectionChange">
+      <el-table v-loading="loading" :data="dataList" @selection-change="handleSelectionChange" class="custom-table">
          <el-table-column type="selection" width="55" align="center" />
          <el-table-column label="字典編碼" align="center" prop="dictCode" />
          <el-table-column label="字典標籤" align="center" prop="dictLabel">
@@ -284,7 +284,7 @@ function handleQuery() {
 
 /** 返回按鈕操作 */
 function handleClose() {
-  const obj = { path: "/system/dict" }
+  const obj = { path: "/cadm/system/dict" }
   proxy.$tab.closeOpenPage(obj)
 }
 

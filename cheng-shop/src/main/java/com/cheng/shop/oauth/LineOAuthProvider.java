@@ -3,8 +3,9 @@ package com.cheng.shop.oauth;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.cheng.common.exception.ServiceException;
-import com.cheng.shop.config.ShopConfigKey;
-import com.cheng.shop.config.ShopConfigService;
+import com.cheng.common.utils.StringUtils;
+import com.cheng.line.domain.LineConfig;
+import com.cheng.line.service.ILineConfigService;
 import com.cheng.shop.domain.dto.OAuthTokenResponse;
 import com.cheng.shop.domain.dto.OAuthUserProfile;
 import com.cheng.shop.enums.SocialProvider;
@@ -20,6 +21,10 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * LINE Login OAuth2 策略實作
+ * <p>
+ * 從 LINE 頻道設定（sys_line_config）讀取 Login Channel ID/Secret，
+ * 不再需要在系統參數（sys_config）中重複設定。
+ * </p>
  * <p>
  * LINE Login API v2.1：
  * <ul>
@@ -46,7 +51,7 @@ public class LineOAuthProvider implements OAuthProviderStrategy {
             .writeTimeout(15, TimeUnit.SECONDS)
             .build();
 
-    private final ShopConfigService configService;
+    private final ILineConfigService lineConfigService;
 
     @Override
     public SocialProvider getProvider() {
@@ -55,7 +60,7 @@ public class LineOAuthProvider implements OAuthProviderStrategy {
 
     @Override
     public String buildAuthorizeUrl(String state, String redirectUri) {
-        String channelId = configService.getRequiredString(ShopConfigKey.OAUTH_LINE_CHANNEL_ID);
+        String channelId = getLoginChannelId();
 
         return AUTHORIZE_URL
                 + "?response_type=code"
@@ -67,8 +72,8 @@ public class LineOAuthProvider implements OAuthProviderStrategy {
 
     @Override
     public OAuthTokenResponse exchangeToken(String code, String redirectUri) {
-        String channelId = configService.getRequiredString(ShopConfigKey.OAUTH_LINE_CHANNEL_ID);
-        String channelSecret = configService.getRequiredString(ShopConfigKey.OAUTH_LINE_CHANNEL_SECRET);
+        String channelId = getLoginChannelId();
+        String channelSecret = getLoginChannelSecret();
 
         RequestBody formBody = new FormBody.Builder()
                 .add("grant_type", "authorization_code")
@@ -129,6 +134,55 @@ public class LineOAuthProvider implements OAuthProviderStrategy {
             log.error("LINE Profile 取得異常", e);
             throw new ServiceException("LINE 用戶資料連線失敗");
         }
+    }
+
+    /**
+     * 檢查 LINE Login 是否已設定（預設頻道有 Login Channel ID 和 Secret）
+     *
+     * @return true=已設定可用，false=未設定
+     */
+    public boolean isLoginConfigured() {
+        LineConfig config = lineConfigService.selectDefaultLineConfig();
+        return config != null
+                && StringUtils.isNotEmpty(config.getLoginChannelId())
+                && StringUtils.isNotEmpty(config.getLoginChannelSecret());
+    }
+
+    // ==================== 私有方法 ====================
+
+    /**
+     * 從預設 LINE 頻道設定取得 Login Channel ID
+     */
+    private String getLoginChannelId() {
+        LineConfig config = getDefaultLineConfig();
+        String loginChannelId = config.getLoginChannelId();
+        if (StringUtils.isEmpty(loginChannelId)) {
+            throw new ServiceException("LINE 頻道設定中未填寫 Login Channel ID，請至「行銷管理 → LINE 設定」配置");
+        }
+        return loginChannelId;
+    }
+
+    /**
+     * 從預設 LINE 頻道設定取得 Login Channel Secret
+     */
+    private String getLoginChannelSecret() {
+        LineConfig config = getDefaultLineConfig();
+        String loginChannelSecret = config.getLoginChannelSecret();
+        if (StringUtils.isEmpty(loginChannelSecret)) {
+            throw new ServiceException("LINE 頻道設定中未填寫 Login Channel Secret，請至「行銷管理 → LINE 設定」配置");
+        }
+        return loginChannelSecret;
+    }
+
+    /**
+     * 取得預設 LINE 頻道設定，若無預設頻道則拋出異常
+     */
+    private LineConfig getDefaultLineConfig() {
+        LineConfig config = lineConfigService.selectDefaultLineConfig();
+        if (config == null) {
+            throw new ServiceException("尚未設定預設 LINE 頻道，請至「行銷管理 → LINE 設定」配置");
+        }
+        return config;
     }
 
     private static String encode(String value) {

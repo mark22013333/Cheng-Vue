@@ -26,7 +26,7 @@
          </el-form-item>
       </el-form>
       <el-row>
-         <el-table @row-click="clickRow" ref="refTable" :data="userList" @selection-change="handleSelectionChange" height="260px">
+         <el-table @row-click="clickRow" ref="refTable" :data="userList" @selection-change="handleSelectionChange" height="260px" class="custom-table">
             <el-table-column type="selection" width="55"></el-table-column>
             <el-table-column label="使用者名稱" prop="userName" :show-overflow-tooltip="true" />
             <el-table-column label="使用者暱稱" prop="nickName" :show-overflow-tooltip="true" />

@@ -14,6 +14,7 @@ import com.cheng.shop.domain.dto.OAuthUserProfile;
 import com.cheng.shop.enums.MemberStatus;
 import com.cheng.shop.enums.SocialProvider;
 import com.cheng.shop.mapper.ShopMemberSocialMapper;
+import com.cheng.shop.oauth.LineOAuthProvider;
 import com.cheng.shop.oauth.OAuthProviderFactory;
 import com.cheng.shop.oauth.OAuthProviderStrategy;
 import com.cheng.shop.security.MemberTokenService;
@@ -51,6 +52,7 @@ public class SocialLoginService {
     private final IShopMemberService memberService;
     private final MemberTokenService memberTokenService;
     private final ShopConfigService configService;
+    private final LineOAuthProvider lineOAuthProvider;
     private final RedisCache redisCache;
 
     /** OAuth state 有效期（5 分鐘） */
@@ -252,16 +254,24 @@ public class SocialLoginService {
 
     /**
      * 檢查平台是否啟用
+     * <p>
+     * LINE：檢查預設 LINE 頻道是否已設定 Login Channel ID/Secret
+     * Google：檢查 sys_config 中的啟用開關
+     * </p>
      */
     private void checkProviderEnabled(SocialProvider provider) {
-        ShopConfigKey enabledKey = switch (provider) {
-            case LINE -> ShopConfigKey.OAUTH_LINE_ENABLED;
-            case GOOGLE -> ShopConfigKey.OAUTH_GOOGLE_ENABLED;
+        switch (provider) {
+            case LINE -> {
+                if (!lineOAuthProvider.isLoginConfigured()) {
+                    throw new ServiceException("LINE 登入尚未啟用，請至「行銷管理 → LINE 設定」配置 Login Channel");
+                }
+            }
+            case GOOGLE -> {
+                if (!configService.getBoolean(ShopConfigKey.OAUTH_GOOGLE_ENABLED)) {
+                    throw new ServiceException(provider.getDescription() + " 登入尚未啟用");
+                }
+            }
             default -> throw new ServiceException("不支援的登入方式：" + provider.getDescription());
-        };
-
-        if (!configService.getBoolean(enabledKey)) {
-            throw new ServiceException(provider.getDescription() + " 登入尚未啟用");
         }
     }
 

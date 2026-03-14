@@ -77,7 +77,7 @@
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
 
-      <el-table v-loading="loading" :data="postList" @selection-change="handleSelectionChange">
+      <el-table v-loading="loading" :data="postList" @selection-change="handleSelectionChange" class="custom-table">
          <el-table-column type="selection" width="55" align="center" />
          <el-table-column label="職位編號" align="center" prop="postId" />
          <el-table-column label="職位編碼" align="center" prop="postCode" />

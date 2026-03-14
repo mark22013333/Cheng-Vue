@@ -23,3 +23,9 @@ VALUES ('商城 Google Client ID', 'shop.oauth.google.client_id', '', 'Y', 'Goog
 INSERT INTO sys_config (config_name, config_key, config_value, config_type, remark, create_by, create_time)
 VALUES ('商城 Google Client Secret', 'shop.oauth.google.client_secret', '', 'Y',
         'Google OAuth Client Secret（建議使用 ENC() 加密）', 'admin', NOW());
+
+-- LINE 登入設定統一至 LINE 頻道設定（sys_line_config.login_channel_id / login_channel_secret）
+-- 移除 sys_config 中重複的 LINE OAuth 設定
+DELETE FROM sys_config WHERE config_key = 'shop.oauth.line.enabled';
+DELETE FROM sys_config WHERE config_key = 'shop.oauth.line.channel_id';
+DELETE FROM sys_config WHERE config_key = 'shop.oauth.line.channel_secret';

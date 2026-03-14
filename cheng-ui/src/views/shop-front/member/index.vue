@@ -181,12 +181,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+Symbols+2&family=Noto+Color+Emoji&display=swap');
 
 .member-center {
   min-height: calc(100vh - 120px);
   padding: 0;
-  font-family: 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans TC', 'Noto Sans Symbols 2', system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 .member-container {
@@ -236,7 +236,7 @@ onMounted(() => {
 
 .sidebar-name {
   margin-top: 14px;
-  font-family: 'Noto Serif TC', serif;
+  font-family: 'Noto Serif TC', 'Noto Sans Symbols 2', system-ui, serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   font-size: 16px;
   font-weight: 600;
   color: #3D2B1F;
@@ -273,7 +273,7 @@ onMounted(() => {
   border-radius: 12px;
   background: transparent;
   cursor: pointer;
-  font-family: 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans TC', 'Noto Sans Symbols 2', system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   font-size: 14px;
   font-weight: 500;
   color: #7A6B5D;
@@ -350,7 +350,7 @@ onMounted(() => {
 
 .dash-header h2 {
   margin: 0;
-  font-family: 'Noto Serif TC', serif;
+  font-family: 'Noto Serif TC', 'Noto Sans Symbols 2', system-ui, serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   font-size: 22px;
   font-weight: 600;
   color: #3D2B1F;

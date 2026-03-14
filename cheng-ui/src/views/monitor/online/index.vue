@@ -27,7 +27,7 @@
       <el-table
          v-loading="loading"
          :data="onlineList.slice((pageNum - 1) * pageSize, pageNum * pageSize)"
-         style="width: 100%;"
+         class="custom-table"
       >
          <el-table-column label="序號" width="50" type="index" align="center">
             <template #default="scope">

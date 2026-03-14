@@ -14,6 +14,7 @@
       padding: 0;
     }
 
+    /* ====== 共用基底 ====== */
     #loader-wrapper {
       position: fixed;
       top: 0;
@@ -21,7 +22,6 @@
       width: 100%;
       height: 100%;
       z-index: 999999;
-      background: linear-gradient(-45deg, #1488cc, #2b32b2, #667eea, #764ba2);
       background-size: 400% 400%;
       animation: gradientBG 15s ease infinite;
       display: flex;
@@ -37,6 +37,37 @@
       100% { background-position: 0 50%; }
     }
 
+    /* ====== 後台主題 — 深邃科技紫藍 ====== */
+    #loader-wrapper.loader--admin {
+      background: linear-gradient(-45deg, #1488cc, #2b32b2, #667eea, #764ba2);
+    }
+
+    .loader--admin .dot {
+      background: #fff;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
+    }
+
+    .loader--admin .load_title {
+      color: #fff;
+      text-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ====== 商城主題 — 溫暖珊瑚琥珀 ====== */
+    #loader-wrapper.loader--shop {
+      background: linear-gradient(-45deg, #ff9a56, #ee5a24, #f0932b, #e55039);
+    }
+
+    .loader--shop .dot {
+      background: #fff;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.85);
+    }
+
+    .loader--shop .load_title {
+      color: #fff;
+      text-shadow: 0 8px 24px rgba(120, 40, 0, 0.35);
+    }
+
+    /* ====== 滑鼠光暈 ====== */
     .mouse-glow {
       position: absolute;
       width: 800px;
@@ -50,6 +81,7 @@
       transition: opacity 0.5s ease;
     }
 
+    /* ====== Loader 動畫 ====== */
     .loader-container {
       position: relative;
       z-index: 10;
@@ -66,9 +98,7 @@
       position: absolute;
       width: 16px;
       height: 16px;
-      background: #fff;
       border-radius: 50%;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
     }
 
     #loader .dot:nth-child(1) { top: 0; left: 42px; animation-delay: 0s; }
@@ -96,13 +126,12 @@
       }
     }
 
+    /* ====== 標題文字 ====== */
     .load_title {
       margin-top: 50px;
       font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      color: #FFF;
       text-align: center;
       z-index: 10;
-      text-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
       position: relative;
       transform-style: preserve-3d;
     }
@@ -123,6 +152,7 @@
       letter-spacing: 1px;
     }
 
+    /* ====== 退場動畫 ====== */
     .loaded #loader-wrapper {
       opacity: 0;
       visibility: hidden;
@@ -155,13 +185,33 @@
       </div>
     </div>
     <div class="load_title" id="parallaxText">
-      <h2>CoolApps 管理系統</h2>
-      <span>正在鋪設網路地毯，馬上就好！</span>
+      <h2 id="loaderTitle"></h2>
+      <span id="loaderSubtitle"></span>
     </div>
   </div>
 </div>
 
 <script>
+  (function () {
+    // 根據路徑判斷是後台還是商城
+    var isAdmin = window.location.pathname.indexOf('/cadm') === 0;
+    var wrapper = document.getElementById('loader-wrapper');
+    var titleEl = document.getElementById('loaderTitle');
+    var subtitleEl = document.getElementById('loaderSubtitle');
+
+    if (isAdmin) {
+      wrapper.className = 'loader--admin';
+      titleEl.textContent = 'CoolApps 管理系統';
+      subtitleEl.textContent = '正在鋪設網路地毯，馬上就好！';
+      document.title = 'CoolApps 管理系統';
+    } else {
+      wrapper.className = 'loader--shop';
+      titleEl.textContent = 'CoolApps 商城';
+      subtitleEl.textContent = '正在為您準備精選好物⋯';
+      document.title = 'CoolApps 商城';
+    }
+  })();
+
   document.addEventListener('DOMContentLoaded', function () {
     var glow = document.getElementById('mouseGlow');
     var content = document.getElementById('parallaxContent');

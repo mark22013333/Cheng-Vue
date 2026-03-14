@@ -92,7 +92,7 @@
       </el-row>
 
       <!-- 表格資料 -->
-      <el-table v-loading="loading" :data="roleList" @selection-change="handleSelectionChange">
+      <el-table v-loading="loading" :data="roleList" @selection-change="handleSelectionChange" class="custom-table">
          <el-table-column type="selection" width="55" align="center" />
          <el-table-column label="角色編號" prop="roleId" width="120" />
          <el-table-column label="角色名稱" prop="roleName" :show-overflow-tooltip="true" width="150" />

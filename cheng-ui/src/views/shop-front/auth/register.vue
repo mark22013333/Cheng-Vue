@@ -146,6 +146,19 @@
                   立即登入
                 </router-link>
               </p>
+
+              <div class="divider">
+                <span>或使用其他方式快速註冊</span>
+              </div>
+
+              <div class="social-login">
+                <el-button class="social-btn line-btn" @click="handleLineLogin">
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor" d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
+                  </svg>
+                  <span>LINE 快速註冊</span>
+                </el-button>
+              </div>
             </el-form>
           </template>
 
@@ -244,7 +257,7 @@ import {
   Message
 } from '@element-plus/icons-vue'
 import { getCodeImg } from '@/api/login'
-import { memberRegister, getPasswordPolicy } from '@/api/shop/auth'
+import { memberRegister, getPasswordPolicy, getOAuthAuthorizeUrl } from '@/api/shop/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -485,6 +498,28 @@ async function handleRegister() {
   }
 }
 
+async function handleLineLogin() {
+  try {
+    const redirectUri = `${window.location.origin}/oauth/callback`
+
+    sessionStorage.setItem('oauth_provider', 'LINE')
+    sessionStorage.setItem('oauth_redirect', redirect.value)
+    sessionStorage.setItem('oauth_redirect_uri', redirectUri)
+
+    const res = await getOAuthAuthorizeUrl('LINE', redirectUri)
+    const authorizeUrl = res.data || res.authorizeUrl || res
+
+    if (!authorizeUrl) {
+      ElMessage.error('無法取得授權連結，請稍後再試')
+      return
+    }
+
+    window.location.href = authorizeUrl
+  } catch (error) {
+    ElMessage.error(error?.msg || '取得 LINE 登入連結失敗')
+  }
+}
+
 function goToLogin() {
   router.push({ path: '/login', query: { redirect: redirect.value } })
 }
@@ -510,13 +545,13 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+Symbols+2&family=Noto+Color+Emoji&display=swap');
 
 .register-page {
   display: flex;
   justify-content: center;
   padding: 40px 24px;
-  font-family: 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans TC', 'Noto Sans Symbols 2', system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 .register-shell {
@@ -557,7 +592,7 @@ onMounted(async () => {
 .form-header h2 {
   margin: 12px 0 8px;
   font-size: 28px;
-  font-family: 'Noto Serif TC', serif;
+  font-family: 'Noto Serif TC', 'Noto Sans Symbols 2', system-ui, serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   color: #3D2B1F;
   line-height: 1.2;
 }
@@ -780,6 +815,55 @@ onMounted(async () => {
   text-decoration: underline;
 }
 
+/* 分隔線 */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0 14px;
+  color: #A89585;
+  font-size: 12px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #E0D5C8;
+}
+
+.divider span {
+  padding: 0 12px;
+}
+
+/* 社群登入 */
+.social-login {
+  display: flex;
+}
+
+.social-btn {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.line-btn {
+  background: #00c300;
+  border-color: #00c300;
+  color: #fff;
+}
+
+.line-btn:hover {
+  background: #00ae00;
+  border-color: #00ae00;
+  transform: translateY(-1px);
+}
+
 /* 步驟指示器 */
 .step-indicator {
   display: flex;
@@ -819,7 +903,7 @@ onMounted(async () => {
 .success-panel h2 {
   margin: 0 0 12px;
   font-size: 26px;
-  font-family: 'Noto Serif TC', serif;
+  font-family: 'Noto Serif TC', 'Noto Sans Symbols 2', system-ui, serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   color: #3D2B1F;
 }
 

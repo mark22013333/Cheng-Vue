@@ -59,7 +59,7 @@
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange" class="custom-table">
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="使用者名稱" prop="userName" :show-overflow-tooltip="true"/>
       <el-table-column label="使用者暱稱" prop="nickName" :show-overflow-tooltip="true"/>

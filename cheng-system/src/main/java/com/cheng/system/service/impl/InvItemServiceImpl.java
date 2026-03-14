@@ -449,8 +449,14 @@ public class InvItemServiceImpl implements IInvItemService {
 
         for (InvItem item : itemList) {
             try {
-                // 驗證是否存在這個物品
-                InvItem existItem = invItemMapper.selectInvItemByItemCode(item.getItemCode());
+                // 驗證是否存在這個物品：優先用 itemCode，若為空則用 itemName 比對
+                InvItem existItem = null;
+                if (StringUtils.isNotEmpty(item.getItemCode())) {
+                    existItem = invItemMapper.selectInvItemByItemCode(item.getItemCode());
+                }
+                if (existItem == null && StringUtils.isNotEmpty(item.getItemName())) {
+                    existItem = invItemMapper.selectInvItemByItemName(item.getItemName().trim());
+                }
                 if (StringUtils.isNull(existItem)) {
                     BeanValidators.validateWithException(validator, item);
                     item.setCreateBy(operName);
@@ -2077,10 +2083,13 @@ public class InvItemServiceImpl implements IInvItemService {
                     continue;
                 }
 
-                // 檢查物品編碼是否重複
+                // 檢查物品是否重複：優先用 itemCode，若為空則用 itemName 比對
                 InvItem existingItem = null;
                 if (dto.getItemCode() != null && !dto.getItemCode().trim().isEmpty()) {
                     existingItem = invItemMapper.selectInvItemByItemCode(dto.getItemCode());
+                }
+                if (existingItem == null) {
+                    existingItem = invItemMapper.selectInvItemByItemName(dto.getItemName().trim());
                 }
 
                 Long savedItemId = null;
@@ -2092,11 +2101,11 @@ public class InvItemServiceImpl implements IInvItemService {
                         invItemMapper.updateInvItem(existingItem);
                         savedItemId = existingItem.getItemId();
                         result.setSuccessRows(result.getSuccessRows() + 1);
-                        log.debug("更新物品: {} (編碼: {})", dto.getItemName(), dto.getItemCode());
+                        log.debug("更新物品: {} (編碼: {}, 名稱比對)", dto.getItemName(), existingItem.getItemCode());
                     } else {
                         // 跳過
                         result.setSkippedRows(result.getSkippedRows() + 1);
-                        log.debug("跳過重複物品: {} (編碼: {})", dto.getItemName(), dto.getItemCode());
+                        log.debug("跳過重複物品: {} (編碼: {}, 名稱比對)", dto.getItemName(), existingItem.getItemCode());
                     }
                 } else {
                     // 新增

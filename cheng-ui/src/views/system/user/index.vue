@@ -111,8 +111,8 @@
             </el-row>
 
             <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange"
-                      class="custom-table">
-              <el-table-column type="selection" width="50" align="center"/>
+                      class="custom-table" :scrollbar-always-on="false">
+              <el-table-column type="selection" width="50" align="center" fixed="left"/>
               <el-table-column v-if="columns.userId.visible" key="userId" align="center" label="使用者編號"
                                prop="userId"/>
               <el-table-column v-if="columns.userName.visible" key="userName" :show-overflow-tooltip="true"

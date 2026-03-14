@@ -111,7 +111,7 @@
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="jobLogList" @selection-change="handleSelectionChange" stripe>
+    <el-table v-loading="loading" :data="jobLogList" @selection-change="handleSelectionChange" class="custom-table">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column align="center" label="日誌編號" prop="jobLogId" width="80"/>
       <el-table-column :show-overflow-tooltip="true" align="center" label="任務名稱" prop="jobName"/>

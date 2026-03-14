@@ -258,15 +258,7 @@ public enum ShopConfigKey implements CodedEnum<String> {
     EMAIL_VERIFY_EMAIL_DAILY_LIMIT("shop.email_verify.email_daily_limit", "Email 驗證每日上限", "5"),
 
     // ==================== 商城第三方登入 (OAuth) ====================
-
-    /** 商城 LINE 登入啟用（1=啟用, 0=停用） */
-    OAUTH_LINE_ENABLED("shop.oauth.line.enabled", "商城 LINE 登入啟用", "0"),
-
-    /** 商城 LINE Channel ID */
-    OAUTH_LINE_CHANNEL_ID("shop.oauth.line.channel_id", "商城 LINE Channel ID", ""),
-
-    /** 商城 LINE Channel Secret */
-    OAUTH_LINE_CHANNEL_SECRET("shop.oauth.line.channel_secret", "商城 LINE Channel Secret", ""),
+    // LINE 登入設定已統一至 LINE 頻道設定（sys_line_config），不再於此處管理
 
     /** 商城 Google 登入啟用（1=啟用, 0=停用） */
     OAUTH_GOOGLE_ENABLED("shop.oauth.google.enabled", "商城 Google 登入啟用", "0"),
