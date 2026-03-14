@@ -1,128 +1,154 @@
 <template>
-  <div class="login-page" @mousemove="handleMouseMove">
-    <div class="parallax-layer layer-back" :style="layerBackStyle"></div>
-    <div class="parallax-layer layer-mid" :style="layerMidStyle"></div>
+  <div class="login-page">
 
-    <div class="mouse-glow" :style="glowStyle"></div>
+    <!-- ═══ 左側品牌面板 ═══ -->
+    <div class="brand-panel" :class="timeClass">
+      <div class="dot-grid"></div>
+      <div class="ring ring-a"></div>
+      <div class="ring ring-b"></div>
+      <div class="ring ring-c"></div>
 
-    <div class="login-container">
-      <div class="login-card">
-        <div class="card-header">
-          <div class="logo-wrapper">
-            <div class="logo-icon">
-              <el-icon>
-                <Connection/>
-              </el-icon>
-            </div>
-            <div class="logo-ring"></div>
+      <div class="brand-content">
+        <!-- Wordmark -->
+        <div class="brand-mark">
+          <div class="brand-icon">
+            <el-icon><Connection /></el-icon>
           </div>
-          <h2 class="app-title">{{ title }}</h2>
-          <p class="app-subtitle">System Access Portal</p>
+          <div class="brand-words">
+            <span class="brand-name">{{ appName }}</span>
+            <span class="brand-sub">Admin Console</span>
+          </div>
         </div>
 
-        <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
+        <div class="brand-rule"></div>
 
-          <el-form-item prop="username">
-            <div class="input-group" :class="{ 'is-focused': focusedInput === 'username' }">
-              <el-icon class="prefix-icon">
-                <User/>
-              </el-icon>
-              <el-input
-                v-model="loginForm.username"
-                placeholder="使用者帳號 / User ID"
-                @focus="focusedInput = 'username'"
-                @blur="focusedInput = ''"
-              />
-            </div>
-          </el-form-item>
+        <!-- 時間感知問候 -->
+        <div class="brand-hero">
+          <p class="hero-greeting">{{ greeting }}</p>
+          <p class="hero-date">{{ todayLabel }}</p>
+        </div>
 
-          <el-form-item prop="password">
-            <div class="input-group" :class="{ 'is-focused': focusedInput === 'password' }">
-              <el-icon class="prefix-icon">
-                <Lock/>
-              </el-icon>
-              <el-input
-                v-model="loginForm.password"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="密碼 / Password"
-                @focus="focusedInput = 'password'"
-                @blur="focusedInput = ''"
-                @keyup.enter="handleLogin"
-              />
-              <el-icon class="suffix-icon" @click="togglePassword">
-                <View v-if="showPassword"/>
-                <Hide v-else/>
-              </el-icon>
-            </div>
-          </el-form-item>
+        <!-- 底部版本 -->
+        <div class="brand-foot">v2.1.0 · CoolApps Technology</div>
+      </div>
+    </div>
 
-          <el-form-item prop="code" v-if="captchaEnabled">
-            <div class="captcha-row">
-              <div class="input-group captcha-input" :class="{ 'is-focused': focusedInput === 'code' }">
-                <el-icon class="prefix-icon">
-                  <Key/>
-                </el-icon>
+    <!-- ═══ 右側表單面板 ═══ -->
+    <div class="form-panel">
+      <div class="form-inner">
+
+        <div class="form-head">
+          <h1 class="form-title">歡迎回來</h1>
+          <p class="form-hint">請使用管理員帳號登入系統</p>
+        </div>
+
+        <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="lform">
+
+          <!-- 帳號 -->
+          <el-form-item prop="username" class="lform-item">
+            <div class="field-wrap">
+              <label class="field-label">帳號</label>
+              <div class="field-box" :class="{ focused: focusedInput === 'username' }">
+                <el-icon class="f-icon"><User /></el-icon>
                 <el-input
-                  v-model="loginForm.code"
-                  placeholder="驗證碼"
-                  inputmode="numeric"
-                  :formatter="(value) => value.replace(/\D/g, '')"
-                  :parser="(value) => value.replace(/\D/g, '')"
-                  @focus="focusedInput = 'code'"
+                  v-model="loginForm.username"
+                  placeholder="請輸入管理員帳號"
+                  @focus="focusedInput = 'username'"
+                  @blur="focusedInput = ''"
+                />
+              </div>
+            </div>
+          </el-form-item>
+
+          <!-- 密碼 -->
+          <el-form-item prop="password" class="lform-item">
+            <div class="field-wrap">
+              <label class="field-label">密碼</label>
+              <div class="field-box" :class="{ focused: focusedInput === 'password' }">
+                <el-icon class="f-icon"><Lock /></el-icon>
+                <el-input
+                  v-model="loginForm.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  placeholder="請輸入登入密碼"
+                  @focus="focusedInput = 'password'"
                   @blur="focusedInput = ''"
                   @keyup.enter="handleLogin"
                 />
+                <el-icon class="f-toggle" @click="togglePassword">
+                  <View v-if="showPassword" />
+                  <Hide v-else />
+                </el-icon>
               </div>
-              <div class="captcha-img-wrapper" @click="getCode">
-                <img :src="codeUrl" alt="captcha" class="captcha-img"/>
-                <div class="captcha-overlay">
-                  <el-icon>
-                    <Refresh/>
-                  </el-icon>
+            </div>
+          </el-form-item>
+
+          <!-- 驗證碼 -->
+          <el-form-item prop="code" v-if="captchaEnabled" class="lform-item">
+            <div class="field-wrap">
+              <label class="field-label">驗證碼</label>
+              <div class="captcha-row">
+                <div class="field-box captcha-box" :class="{ focused: focusedInput === 'code' }">
+                  <el-icon class="f-icon"><Key /></el-icon>
+                  <el-input
+                    v-model="loginForm.code"
+                    placeholder="請輸入圖形驗證碼"
+                    inputmode="numeric"
+                    :formatter="(value) => value.replace(/\D/g, '')"
+                    :parser="(value) => value.replace(/\D/g, '')"
+                    @focus="focusedInput = 'code'"
+                    @blur="focusedInput = ''"
+                    @keyup.enter="handleLogin"
+                  />
+                </div>
+                <div class="captcha-img" @click="getCode">
+                  <img :src="codeUrl" alt="驗證碼" />
+                  <div class="captcha-mask">
+                    <el-icon><Refresh /></el-icon>
+                  </div>
                 </div>
               </div>
             </div>
           </el-form-item>
 
-          <div class="form-options">
+          <!-- 記住我 -->
+          <div class="form-opts">
             <el-checkbox v-model="loginForm.rememberMe">記住我</el-checkbox>
           </div>
 
+          <!-- 登入按鈕 -->
           <el-button
             class="submit-btn"
             :loading="loading"
             @click.prevent="handleLogin"
           >
-            {{ loading ? '驗證身分中...' : '登 入 系 統' }}
-            <el-icon v-if="!loading">
-              <Right/>
-            </el-icon>
+            <span>{{ loading ? '驗證身分中...' : '登入系統' }}</span>
+            <el-icon v-if="!loading" class="btn-icon"><Right /></el-icon>
           </el-button>
 
           <div class="register-hint" v-if="register">
-            尚未擁有帳號?
-            <router-link to="/register">立即註冊</router-link>
+            尚未擁有帳號？
+            <router-link to="/register">立即申請</router-link>
           </div>
+
         </el-form>
+
+        <p class="form-copy">Copyright © 2025 Cool-Apps Technology. All Rights Reserved.</p>
       </div>
     </div>
 
-    <div class="copyright">
-      <span>Copyright © 2025 Cool-Apps Technology. All Rights Reserved.</span>
-    </div>
   </div>
 </template>
 
 <script>
-import {getCodeImg} from "@/api/login";
+import { getCodeImg } from "@/api/login";
 import Cookies from "js-cookie";
-import {decrypt, encrypt} from '@/utils/jsencrypt';
-import {Connection, User, Lock, View, Hide, Key, Refresh, Right} from '@element-plus/icons-vue'
+import { decrypt, encrypt } from '@/utils/jsencrypt';
+import { Connection, User, Lock, View, Hide, Key, Refresh, Right } from '@element-plus/icons-vue'
 import useUserStore from '@/store/modules/user'
 
 export default {
   name: "Login",
-  components: {Connection, User, Lock, View, Hide, Key, Refresh, Right},
+  components: { Connection, User, Lock, View, Hide, Key, Refresh, Right },
   data() {
     return {
       title: import.meta.env.VITE_APP_TITLE || "CoolApps Admin",
@@ -135,69 +161,56 @@ export default {
         uuid: ""
       },
       loginRules: {
-        username: [{required: true, trigger: "blur", message: "請輸入帳號"}],
-        password: [{required: true, trigger: "blur", message: "請輸入密碼"}],
-        code: [{required: true, trigger: "change", message: "請輸入驗證碼"}]
+        username: [{ required: true, trigger: "blur", message: "請輸入帳號" }],
+        password: [{ required: true, trigger: "blur", message: "請輸入密碼" }],
+        code: [{ required: true, trigger: "change", message: "請輸入驗證碼" }]
       },
       loading: false,
       showPassword: false,
       captchaEnabled: true,
       register: false,
       redirect: undefined,
-      focusedInput: '', // 用於控制輸入框樣式
-
-      // 視差效果參數
-      mouseX: 0,
-      mouseY: 0,
-      winCenterX: window.innerWidth / 2,
-      winCenterY: window.innerHeight / 2
+      focusedInput: ''
     };
   },
   computed: {
-    // 背景層移動 (較慢)
-    layerBackStyle() {
-      const x = (this.mouseX - this.winCenterX) * 0.02;
-      const y = (this.mouseY - this.winCenterY) * 0.02;
-      return {transform: `translate(${x}px, ${y}px)`};
+    appName() {
+      return (this.title || 'CoolApps')
+        .replace(/\s*[Aa]dmin.*$/, '')
+        .trim() || 'CoolApps';
     },
-    // 中景層移動 (稍快)
-    layerMidStyle() {
-      const x = (this.mouseX - this.winCenterX) * 0.05;
-      const y = (this.mouseY - this.winCenterY) * 0.05;
-      return {transform: `translate(${x}px, ${y}px)`};
+    timeContext() {
+      const h = new Date().getHours();
+      if (h >= 5 && h < 12) return 'morning';
+      if (h >= 12 && h < 18) return 'afternoon';
+      return 'evening';
     },
-    // 滑鼠光暈位置
-    glowStyle() {
-      return {
-        left: `${this.mouseX}px`,
-        top: `${this.mouseY}px`
-      };
+    timeClass() {
+      return `time-${this.timeContext}`;
+    },
+    greeting() {
+      const map = { morning: '早安，管理員', afternoon: '午安，管理員', evening: '晚安，管理員' };
+      return map[this.timeContext];
+    },
+    todayLabel() {
+      const d = new Date();
+      const days = ['日', '一', '二', '三', '四', '五', '六'];
+      return `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 星期${days[d.getDay()]}`;
     }
   },
   watch: {
     $route: {
-      handler: function (route) {
+      handler(route) {
         this.redirect = route.query && route.query.redirect;
       },
       immediate: true
     }
-  },
-  mounted() {
-    // 更新視窗中心點 (RWD)
-    window.addEventListener('resize', () => {
-      this.winCenterX = window.innerWidth / 2;
-      this.winCenterY = window.innerHeight / 2;
-    });
   },
   created() {
     this.getCode();
     this.getCookie();
   },
   methods: {
-    handleMouseMove(e) {
-      this.mouseX = e.clientX;
-      this.mouseY = e.clientY;
-    },
     togglePassword() {
       this.showPassword = !this.showPassword;
     },
@@ -225,9 +238,9 @@ export default {
         if (valid) {
           this.loading = true;
           if (this.loginForm.rememberMe) {
-            Cookies.set("username", this.loginForm.username, {expires: 30});
-            Cookies.set("password", encrypt(this.loginForm.password), {expires: 30});
-            Cookies.set('rememberMe', this.loginForm.rememberMe, {expires: 30});
+            Cookies.set("username", this.loginForm.username, { expires: 30 });
+            Cookies.set("password", encrypt(this.loginForm.password), { expires: 30 });
+            Cookies.set('rememberMe', this.loginForm.rememberMe, { expires: 30 });
           } else {
             Cookies.remove("username");
             Cookies.remove("password");
@@ -235,9 +248,7 @@ export default {
           }
           const userStore = useUserStore();
           userStore.login(this.loginForm).then(() => {
-            // 後台登入預設跳轉到後台首頁
-            this.$router.push({path: this.redirect || "/cadm/index"}).catch(() => {
-            });
+            this.$router.push({ path: this.redirect || "/cadm/index" }).catch(() => {});
           }).catch(() => {
             this.loading = false;
             if (this.captchaEnabled) {
@@ -252,407 +263,545 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@use "sass:color";
 
-// --- 變數定義 ---
-$bg-dark: #0f172a;
-$primary: #667eea;
-$accent: #764ba2;
-$glow-color: #8f94fb;
-$glass-bg: rgba(15, 23, 42, 0.6);
-$glass-border: rgba(255, 255, 255, 0.1);
-$text-light: #e2e8f0;
+// ─────────────────────────────────────────────
+// 設計變數
+// ─────────────────────────────────────────────
+$brand-bg   : #0f172a;
+$form-bg    : #f0f4f8;
+$white      : #ffffff;
+$text-1     : #111827;
+$text-2     : #6b7280;
+$text-3     : #9ca3af;
+$border     : rgba(0, 0, 0, 0.08);
+$primary    : #409EFF;
+$radius-lg  : 12px;
+$radius-md  : 10px;
+$radius-card: 20px;
 
+// ─────────────────────────────────────────────
+// 外層佈局
+// ─────────────────────────────────────────────
 .login-page {
-  position: relative;
+  display: flex;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: radial-gradient(circle at center, #2b32b2 0%, #0f172a 100%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Inter', 'Avenir', 'Helvetica Neue', Arial, sans-serif;
 }
 
-// --- 視差背景層 ---
-.parallax-layer {
-  position: absolute;
-  top: -10%;
-  left: -10%;
-  width: 120%;
-  height: 120%;
-  pointer-events: none;
-  transition: transform 0.1s linear;
-}
-
-.layer-back {
-  background-image: radial-gradient(2px 2px at 20px 30px, #fff, transparent),
-  radial-gradient(2px 2px at 40px 70px, #fff, transparent),
-  radial-gradient(2px 2px at 50px 160px, #fff, transparent),
-  radial-gradient(2px 2px at 90px 40px, #fff, transparent),
-  radial-gradient(2px 2px at 130px 80px, #fff, transparent);
-  background-size: 200px 200px;
-  opacity: 0.4;
-}
-
-.layer-mid {
-  background-image: radial-gradient(circle at 50% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
-  radial-gradient(circle at 20% 80%, rgba(118, 75, 162, 0.15) 0%, transparent 40%);
-  background-size: 100% 100%;
-}
-
-// --- 滑鼠光暈 ---
-.mouse-glow {
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 1;
-  mix-blend-mode: overlay;
-  transition: opacity 0.3s;
-}
-
-// --- 卡片容器 ---
-.login-container {
+// ─────────────────────────────────────────────
+// 左側：品牌面板
+// ─────────────────────────────────────────────
+.brand-panel {
   position: relative;
-  z-index: 10;
+  flex: 0 0 420px;
+  background: $brand-bg;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 56px 48px;
+
+  // 時間感知色調覆層（與儀表板 Hero 同語言）
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    transition: background 1s ease;
+  }
+  &.time-morning::before {
+    background: radial-gradient(ellipse at 15% 85%, rgba(251, 191, 36, 0.08) 0%, transparent 55%);
+  }
+  &.time-afternoon::before {
+    background: radial-gradient(ellipse at 15% 85%, rgba(59, 130, 246, 0.08) 0%, transparent 55%);
+  }
+  &.time-evening::before {
+    background: radial-gradient(ellipse at 15% 85%, rgba(139, 92, 246, 0.08) 0%, transparent 55%);
+  }
+}
+
+// 點格紋理
+.dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 26px 26px;
+  pointer-events: none;
+}
+
+// 同心環裝飾（右上角，CSS-only）
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.ring-a {
+  width: 480px;
+  height: 480px;
+  top: -180px;
+  right: -180px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.ring-b {
+  width: 320px;
+  height: 320px;
+  top: -100px;
+  right: -100px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+}
+.ring-c {
+  width: 180px;
+  height: 180px;
+  top: -30px;
+  right: -30px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+// 內容
+.brand-content {
+  position: relative;
+  z-index: 2;
   width: 100%;
-  max-width: 420px;
-  padding: 20px;
-  perspective: 1000px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.login-card {
-  background: $glass-bg;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid $glass-border;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 24px;
-  padding: 40px 36px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
-  0 0 0 1px rgba(255, 255, 255, 0.05);
-  transform-style: preserve-3d;
-  animation: floatCard 6s ease-in-out infinite;
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 52px;
 }
 
-@keyframes floatCard {
-  0%, 100% {
-    transform: translateY(0);
+.brand-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: $radius-lg;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  :deep(.el-icon) {
+    font-size: 22px;
+    color: rgba(255, 255, 255, 0.88);
   }
-  50% {
-    transform: translateY(-10px);
-  }
 }
 
-// --- Logo & Header ---
-.card-header {
-  text-align: center;
+.brand-words {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.brand-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.32);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+.brand-rule {
+  width: 28px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.14);
   margin-bottom: 36px;
 }
 
-.logo-wrapper {
+.brand-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-greeting {
+  font-size: 34px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 12px;
+}
+
+.hero-date {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.36);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.brand-foot {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.18);
+  letter-spacing: 0.04em;
+}
+
+// ─────────────────────────────────────────────
+// 右側：表單面板
+// ─────────────────────────────────────────────
+.form-panel {
+  flex: 1;
+  // 雙節點微型漸層：左上藍暈 + 右下紫暈，讓背景有「來自某處」的感覺
+  background:
+    radial-gradient(ellipse at 18% 20%, rgba(64, 158, 255, 0.09) 0%, transparent 52%),
+    radial-gradient(ellipse at 82% 82%, rgba(99, 102, 241, 0.07) 0%, transparent 52%),
+    $form-bg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+  overflow-y: auto;
+}
+
+.form-inner {
   position: relative;
-  width: 70px;
-  height: 70px;
-  margin: 0 auto 16px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.logo-icon {
-  font-size: 32px;
-  color: #fff;
-  z-index: 2;
-  text-shadow: 0 0 15px $primary;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  :deep(.el-icon) {
-    font-size: 32px;
-  }
-}
-
-.logo-ring {
-  position: absolute;
   width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  border-top-color: $primary;
-  border-right-color: $accent;
-  animation: spin 3s linear infinite;
-  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+  max-width: 460px;
+
+  // 白卡浮起，與左側深色面板形成清晰的「暗/亮」語言
+  background: $white;
+  border-radius: $radius-card;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow:
+    0 2px 4px   rgba(0, 0, 0, 0.03),
+    0 8px 32px  rgba(0, 0, 0, 0.07),
+    0 24px 64px rgba(0, 0, 0, 0.04);
+  padding: 48px 44px 44px;
+  overflow: hidden;
+
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  // 卡片頂部品牌漸層線 — 從品牌藍延伸到紫，呼應背景雙色暈
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: $radius-card $radius-card 0 0;
+    background: linear-gradient(90deg, #409EFF 0%, #818cf8 60%, transparent 100%);
+  }
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.form-head {
+  margin-bottom: 36px;
+
+  // 設計系統簽名：光暈膠囊出現在表單面板，與側邊欄 / 樹節點一脈相承
+  &::before {
+    content: '';
+    display: block;
+    width: 28px;
+    height: 3px;
+    border-radius: 3px;
+    background: $primary;
+    box-shadow: 0 0 10px rgba(64, 158, 255, 0.5);
+    margin-bottom: 18px;
   }
 }
 
-.app-title {
-  color: #fff;
+.form-title {
   font-size: 26px;
   font-weight: 700;
+  color: $text-1;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 8px;
+}
+
+.form-hint {
+  font-size: 14px;
+  color: $text-2;
   margin: 0;
-  letter-spacing: 1px;
-  background: linear-gradient(to right, #fff, #a5b4fc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
-.app-subtitle {
-  color: #94a3b8;
+// ─────────────────────────────────────────────
+// 表單元件
+// ─────────────────────────────────────────────
+.lform {
+  // el-form-item 間距與錯誤訊息
+  :deep(.el-form-item) {
+    margin-bottom: 20px;
+
+    .el-form-item__content {
+      width: 100%;
+      display: block;
+      line-height: 1;
+    }
+
+    .el-form-item__error {
+      position: static;
+      display: block;
+      margin-top: 5px;
+      padding-left: 2px;
+      font-size: 12px;
+      color: #ef4444;
+    }
+  }
+}
+
+.field-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.field-label {
   font-size: 13px;
-  margin-top: 6px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 7px;
+  display: block;
 }
 
-// --- Form Styles (重點修改區塊) ---
-.input-group {
-  position: relative;
+.field-box {
   display: flex;
   align-items: center;
-  width: 100%; // 確保寬度佔滿容器
-  box-sizing: border-box; // 確保 Padding 不影響寬度計算
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  background: #f8fafc;  // 白卡內輸入框略深，視覺上「凹入」感
+  border: 1px solid $border;
+  border-radius: $radius-md;
   padding: 0 14px;
-  transition: all 0.3s ease;
-  height: 48px;
+  height: 46px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
-  &.is-focused {
-    background: rgba(30, 41, 59, 0.9);
+  &.focused {
     border-color: $primary;
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.10);
 
-    .prefix-icon, .suffix-icon {
-      color: $primary;
-      text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
-    }
-  }
-
-  .prefix-icon {
-    font-size: 18px;
-    color: #64748b;
-    margin-right: 12px;
-    flex-shrink: 0; // 防止擠壓
-    transition: color 0.3s;
-    display: flex;
-    align-items: center;
-  }
-
-  .suffix-icon {
-    font-size: 20px; // [修改] 加大圖示
-    color: #64748b;
-    cursor: pointer;
-    padding: 4px; // 增加可點擊範圍
-    margin-left: 8px;
-    transition: all 0.3s;
-    flex-shrink: 0; // 防止擠壓
-    display: flex;
-    align-items: center;
-
-    &:hover {
-      color: #fff;
-      transform: scale(1.1); // [新增] 懸浮放大效果
-    }
-  }
-
-  // 強制 Element Plus 輸入框填滿剩餘空間
-  :deep(.el-input) {
-    flex: 1;
-    width: 100%;
-  }
-
-  :deep(.el-input__wrapper) {
-    background: transparent !important;
-    border: none;
-    box-shadow: none !important;
-    padding: 0;
-    width: 100%;
-  }
-
-  :deep(.el-input__inner) {
-    background: transparent;
-    border: none;
-    height: 100%;
-    color: #fff !important;
-    font-size: 15px;
-    padding: 0;
-    width: 100%;
-
-    &::placeholder {
-      color: #475569;
-    }
+    .f-icon { color: $primary; }
   }
 }
 
-// --- Captcha ---
+.f-icon {
+  font-size: 16px;
+  color: $text-3;
+  margin-right: 10px;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.f-toggle {
+  font-size: 17px;
+  color: $text-3;
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 4px;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+
+  &:hover { color: $text-2; }
+}
+
+// 輸入框透明覆蓋
+:deep(.field-box .el-input) { flex: 1; }
+:deep(.field-box .el-input__wrapper) {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none;
+  padding: 0;
+}
+:deep(.field-box .el-input__inner) {
+  font-size: 14px;
+  color: $text-1;
+  height: 44px;
+
+  &::placeholder {
+    color: $text-3;
+    font-weight: 400;
+  }
+}
+
+// 驗證碼列
 .captcha-row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 
-  .captcha-input {
-    flex: 1;
-  }
+  .captcha-box { flex: 1; }
 
-  .captcha-img-wrapper {
+  .captcha-img {
     position: relative;
-    width: 120px;
-    height: 48px;
-    border-radius: 12px;
+    width: 116px;
+    height: 46px;
+    border-radius: $radius-md;
     overflow: hidden;
     cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    flex-shrink: 0; // 確保圖片寬度固定
+    flex-shrink: 0;
+    border: 1px solid $border;
 
     img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      opacity: 0.8;
-      transition: opacity 0.3s;
+      display: block;
+      transition: opacity 0.2s ease;
     }
 
-    .captcha-overlay {
+    .captcha-mask {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.4);
+      inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: rgba(0, 0, 0, 0.32);
       opacity: 0;
-      transition: opacity 0.3s;
+      transition: opacity 0.2s ease;
 
-      i {
-        color: #fff;
-        font-size: 20px;
-      }
+      :deep(.el-icon) { color: #fff; font-size: 18px; }
     }
 
     &:hover {
-      img {
-        opacity: 0.4;
-      }
-
-      .captcha-overlay {
-        opacity: 1;
-      }
+      img { opacity: 0.45; }
+      .captcha-mask { opacity: 1; }
     }
   }
 }
 
-// --- Options ---
-.form-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+// 記住我
+.form-opts {
   margin-bottom: 24px;
-  padding: 0 4px;
 
   :deep(.el-checkbox__label) {
-    color: #94a3b8;
     font-size: 13px;
+    color: $text-2;
   }
-
   :deep(.el-checkbox__inner) {
-    background: transparent;
-    border-color: #475569;
+    border-radius: 5px;
+    border-color: rgba(0, 0, 0, 0.15);
   }
-
   :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
     background: $primary;
     border-color: $primary;
   }
 }
 
-// --- Submit Button ---
-.submit-btn {
+// 登入按鈕 — 漸層 + 多層光暈，讓最重要的操作有相應的視覺重量
+.submit-btn.el-button {
   width: 100%;
   height: 48px;
-  border-radius: 12px;
+  border-radius: $radius-md;
   border: none;
-  background: linear-gradient(135deg, $primary 0%, $accent 100%);
+  background: linear-gradient(135deg, #409EFF 0%, #3b7dd8 100%);
   color: #fff;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 2px;
-  transition: all 0.3s;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow:
+    0 4px 20px rgba(64, 158, 255, 0.38),
+    0 1px 4px  rgba(64, 158, 255, 0.20);
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
-    background: linear-gradient(135deg, color.mix(white, $primary, 5%) 0%, color.mix(white, $accent, 5%) 100%);
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #5aabff 0%, #409EFF 100%);
+    box-shadow:
+      0 6px 28px rgba(64, 158, 255, 0.52),
+      0 2px 8px  rgba(64, 158, 255, 0.30);
+    transform: translateY(-1px);
   }
 
   &:active {
     transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.28);
   }
 
-  i {
-    margin-left: 8px;
-  }
+  .btn-icon { font-size: 14px; }
 }
 
+// 立即申請
 .register-hint {
   text-align: center;
   margin-top: 20px;
-  color: #64748b;
-  font-size: 14px;
+  font-size: 13px;
+  color: $text-3;
 
   a {
     color: $primary;
     text-decoration: none;
-    font-weight: 600;
-    margin-left: 5px;
-
-    &:hover {
-      text-decoration: underline;
-    }
+    font-weight: 500;
+    margin-left: 4px;
+    &:hover { text-decoration: underline; }
   }
 }
 
-// --- Footer ---
-.copyright {
-  position: absolute;
-  bottom: 20px;
-  width: 100%;
+// 版權
+.form-copy {
+  margin-top: 52px;
+  font-size: 11px;
+  color: $text-3;
   text-align: center;
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 12px;
-  letter-spacing: 1px;
+  letter-spacing: 0.01em;
 }
 
-// --- Mobile Adjustments ---
+// ─────────────────────────────────────────────
+// RWD
+// ─────────────────────────────────────────────
+@media (max-width: 1024px) {
+  .brand-panel { flex: 0 0 360px; padding: 48px 40px; }
+  .hero-greeting { font-size: 28px; }
+}
+
 @media (max-width: 768px) {
-  .login-container {
-    padding: 15px;
+  .login-page { flex-direction: column; }
+
+  .brand-panel {
+    flex: 0 0 auto;
+    padding: 24px 28px;
+    flex-direction: row;
+    align-items: center;
+    min-height: 80px;
+
+    &::before { display: none; }
   }
-  .login-card {
-    padding: 30px 20px;
+
+  .dot-grid, .ring { display: none; }
+
+  .brand-content {
+    flex-direction: row;
+    align-items: center;
+    height: auto;
+    gap: 16px;
   }
-  .parallax-layer, .mouse-glow {
-    display: none;
-  }
-  .login-page {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  }
+
+  .brand-mark     { margin-bottom: 0; }
+  .brand-rule     { display: none; }
+  .brand-hero     { flex: 1; text-align: right; }
+  .hero-greeting  { font-size: 16px; margin: 0; font-weight: 600; }
+  .hero-date      { display: none; }
+  .brand-foot     { display: none; }
+
+  .form-panel { padding: 24px 20px; align-items: flex-start; }
+  .form-inner { max-width: 100%; padding: 36px 28px 32px; }
+}
+
+@media (max-width: 480px) {
+  .brand-panel { padding: 20px 20px; }
+  .brand-icon  { width: 36px; height: 36px; }
+  .brand-name  { font-size: 15px; }
+  .form-panel  { padding: 20px 16px; }
+  .form-inner  { padding: 28px 20px 24px; border-radius: 16px; }
+  .form-title  { font-size: 22px; }
 }
 </style>

@@ -44,6 +44,16 @@ const getLogoTextColor = computed(() => {
   }
   return sideTheme.value === 'theme-dark' ? '#fff' : variables.menuLightText
 })
+
+// 漸層分隔線色彩
+const getSeparatorGradient = computed(() => {
+  if (settingsStore.isDark) {
+    return 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent)'
+  }
+  return sideTheme.value === 'theme-dark'
+    ? 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)'
+    : 'linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.06), transparent)'
+})
 </script>
 
 <style lang="scss" scoped>
@@ -65,32 +75,60 @@ const getLogoTextColor = computed(() => {
   text-align: center;
   overflow: hidden;
 
+  /* 漸層分隔線 */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 16%;
+    right: 16%;
+    height: 1px;
+    background: v-bind(getSeparatorGradient);
+    transition: opacity 0.3s ease;
+  }
+
   & .sidebar-logo-link {
     height: 100%;
     width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 
     & .sidebar-logo {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       vertical-align: middle;
-      margin-right: 12px;
+      transition: transform 0.3s ease;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+    }
+
+    &:hover .sidebar-logo {
+      transform: scale(1.06);
     }
 
     & .sidebar-title {
       display: inline-block;
       margin: 0;
       color: v-bind(getLogoTextColor);
-      font-weight: 600;
+      font-weight: 700;
       line-height: 50px;
-      font-size: 14px;
-      font-family: Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
+      font-size: 15px;
+      font-family: 'Inter', 'Avenir', 'Helvetica Neue', Arial, Helvetica, sans-serif;
       vertical-align: middle;
+      letter-spacing: 0.02em;
     }
   }
 
   &.collapse {
     .sidebar-logo {
       margin-right: 0px;
+    }
+
+    /* 收合時分隔線延伸 */
+    &::after {
+      left: 20%;
+      right: 20%;
     }
   }
 }

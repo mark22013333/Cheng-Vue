@@ -86,7 +86,7 @@
   color: #123765;
   font-size: 36px;
   line-height: 1.2;
-  font-family: 'Noto Serif TC', serif;
+  font-family: 'Noto Serif TC', 'Noto Sans Symbols 2', system-ui, serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 .summary {

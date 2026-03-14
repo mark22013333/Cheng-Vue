@@ -1,156 +1,90 @@
 <template>
   <div class="app-container">
-    <el-row :gutter="10">
+    <el-row :gutter="16">
       <el-col :span="8">
-        <el-card style="height: calc(100vh - 125px)">
-          <template #header>
-            <Collection style="width: 1em; height: 1em; vertical-align: middle;" /> <span style="vertical-align: middle;">暫存列表</span>
-            <el-button
-              style="float: right; padding: 3px 0"
-              link
-              type="primary"
-              icon="Refresh"
-              @click="refreshCacheNames()"
-            ></el-button>
-          </template>
-          <el-table
-            v-loading="loading"
-            :data="cacheNames"
-            :height="tableHeight"
-            highlight-current-row
-            @row-click="getCacheKeys"
-            style="width: 100%"
-          >
-            <el-table-column
-              label="序號"
-              width="60"
-              type="index"
-            ></el-table-column>
-
-            <el-table-column
-              label="暫存名稱"
-              align="center"
-              prop="cacheName"
-              :show-overflow-tooltip="true"
-              :formatter="nameFormatter"
-            ></el-table-column>
-
-            <el-table-column
-              label="備註"
-              align="center"
-              prop="remark"
-              :show-overflow-tooltip="true"
-            />
-            <el-table-column
-              label="操作"
-              width="60"
-              align="center"
-              class-name="small-padding fixed-width"
-              fixed="right"
+        <div class="monitor-panel">
+          <div class="monitor-panel__header">
+            <div class="monitor-panel__title">
+              <Collection style="width: 16px; height: 16px;" />
+              <span>暫存列表</span>
+            </div>
+            <el-button link type="primary" icon="Refresh" @click="refreshCacheNames()" />
+          </div>
+          <div class="monitor-panel__body" style="padding: 0;">
+            <el-table
+              v-loading="loading"
+              :data="cacheNames"
+              :height="tableHeight"
+              highlight-current-row
+              @row-click="getCacheKeys"
+              class="custom-table panel-table"
             >
-              <template #default="scope">
-                <el-button
-                  link
-                  type="primary"
-                  icon="Delete"
-                  @click="handleClearCacheName(scope.row)"
-                ></el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
+              <el-table-column label="序號" width="60" type="index" />
+              <el-table-column label="暫存名稱" align="center" prop="cacheName" :show-overflow-tooltip="true" :formatter="nameFormatter" />
+              <el-table-column label="備註" align="center" prop="remark" :show-overflow-tooltip="true" />
+              <el-table-column label="操作" width="60" align="center" class-name="small-padding fixed-width" fixed="right">
+                <template #default="scope">
+                  <el-button link type="primary" icon="Delete" @click="handleClearCacheName(scope.row)" />
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
       </el-col>
 
       <el-col :span="8">
-        <el-card style="height: calc(100vh - 125px)">
-          <template #header>
-            <Key style="width: 1em; height: 1em; vertical-align: middle;" /> <span style="vertical-align: middle;">鍵名列表</span>
-            <el-button
-              style="float: right; padding: 3px 0"
-              link
-              type="primary"
-              icon="Refresh"
-              @click="refreshCacheKeys()"
-            ></el-button>
-          </template>
-          <el-table
-            v-loading="subLoading"
-            :data="cacheKeys"
-            :height="tableHeight"
-            highlight-current-row
-            @row-click="handleCacheValue"
-            style="width: 100%"
-          >
-            <el-table-column
-              label="序號"
-              width="60"
-              type="index"
-            ></el-table-column>
-            <el-table-column
-              label="暫存鍵名"
-              align="center"
-              :show-overflow-tooltip="true"
-              :formatter="keyFormatter"
+        <div class="monitor-panel">
+          <div class="monitor-panel__header">
+            <div class="monitor-panel__title">
+              <Key style="width: 16px; height: 16px;" />
+              <span>鍵名列表</span>
+            </div>
+            <el-button link type="primary" icon="Refresh" @click="refreshCacheKeys()" />
+          </div>
+          <div class="monitor-panel__body" style="padding: 0;">
+            <el-table
+              v-loading="subLoading"
+              :data="cacheKeys"
+              :height="tableHeight"
+              highlight-current-row
+              @row-click="handleCacheValue"
+              class="custom-table panel-table"
             >
-            </el-table-column>
-            <el-table-column
-              label="操作"
-              width="60"
-              align="center"
-              class-name="small-padding fixed-width"
-              fixed="right"
-            >
-              <template #default="scope">
-                <el-button
-                  link
-                  type="primary"
-                  icon="Delete"
-                  @click="handleClearCacheKey(scope.row)"
-                ></el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
+              <el-table-column label="序號" width="60" type="index" />
+              <el-table-column label="暫存鍵名" align="center" :show-overflow-tooltip="true" :formatter="keyFormatter" />
+              <el-table-column label="操作" width="60" align="center" class-name="small-padding fixed-width" fixed="right">
+                <template #default="scope">
+                  <el-button link type="primary" icon="Delete" @click="handleClearCacheKey(scope.row)" />
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
       </el-col>
 
       <el-col :span="8">
-        <el-card :bordered="false" style="height: calc(100vh - 125px)">
-          <template #header>
-            <Document style="width: 1em; height: 1em; vertical-align: middle;" /> <span style="vertical-align: middle;">暫存内容</span>
-            <el-button
-              style="float: right; padding: 3px 0"
-              link
-              type="primary"
-              icon="Refresh"
-              @click="handleClearCacheAll()"
-              >清理全部</el-button
-            >
-          </template>
-          <el-form :model="cacheForm">
-            <el-row :gutter="32">
-              <el-col :offset="1" :span="22">
-                <el-form-item label="暫存名稱:" prop="cacheName">
-                  <el-input v-model="cacheForm.cacheName" :readOnly="true" />
-                </el-form-item>
-              </el-col>
-              <el-col :offset="1" :span="22">
-                <el-form-item label="暫存鍵名:" prop="cacheKey">
-                  <el-input v-model="cacheForm.cacheKey" :readOnly="true" />
-                </el-form-item>
-              </el-col>
-              <el-col :offset="1" :span="22">
-                <el-form-item label="暫存内容:" prop="cacheValue">
-                  <el-input
-                    v-model="cacheForm.cacheValue"
-                    type="textarea"
-                    :rows="8"
-                    :readOnly="true"
-                  />
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </el-form>
-        </el-card>
+        <div class="monitor-panel">
+          <div class="monitor-panel__header">
+            <div class="monitor-panel__title">
+              <Document style="width: 16px; height: 16px;" />
+              <span>暫存内容</span>
+            </div>
+            <el-button link type="primary" icon="Refresh" @click="handleClearCacheAll()">清理全部</el-button>
+          </div>
+          <div class="monitor-panel__body">
+            <el-form :model="cacheForm" label-position="top">
+              <el-form-item label="暫存名稱" prop="cacheName">
+                <el-input v-model="cacheForm.cacheName" :readOnly="true" />
+              </el-form-item>
+              <el-form-item label="暫存鍵名" prop="cacheKey">
+                <el-input v-model="cacheForm.cacheKey" :readOnly="true" />
+              </el-form-item>
+              <el-form-item label="暫存内容" prop="cacheValue">
+                <el-input v-model="cacheForm.cacheValue" type="textarea" :rows="8" :readOnly="true" />
+              </el-form-item>
+            </el-form>
+          </div>
+        </div>
       </el-col>
     </el-row>
   </div>
@@ -167,7 +101,7 @@ const cacheForm = ref({})
 const loading = ref(true)
 const subLoading = ref(false)
 const nowCacheName = ref("")
-const tableHeight = ref(window.innerHeight - 200)
+const tableHeight = ref(window.innerHeight - 240)
 
 /** 查詢暫存名稱列表 */
 function getCacheNames() {
@@ -246,3 +180,55 @@ function handleClearCacheAll() {
 
 getCacheNames()
 </script>
+
+<style lang="scss" scoped>
+.monitor-panel {
+  background: var(--el-bg-color, #ffffff);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  height: calc(100vh - 125px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  &__body {
+    flex: 1;
+    overflow: auto;
+    padding: 16px 20px;
+  }
+}
+
+/* 面板內嵌表格移除外層邊框和圓角 */
+:deep(.panel-table) {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html.dark .monitor-panel {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+
+  .monitor-panel__header {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+  }
+}
+</style>

@@ -127,13 +127,41 @@ html.dark {
   --splitpanes-default-bg: #141414;
 
   /* 側邊欄選單覆蓋 */
-   .sidebar-container {
+  .sidebar-container {
+    border-right-color: rgba(255, 255, 255, 0.06);
+
     .el-menu-item, .menu-title {
       color: var(--el-text-color-regular);
     }
+
+    /* 暗色活躍態強化 */
+    .el-menu-item.is-active {
+      background: rgba(64, 158, 255, 0.15) !important;
+    }
+
+    /* 暗色懸停態 */
+    .el-menu-item:not(.is-active):hover,
+    .el-sub-menu__title:hover,
+    .sub-menu-title-noDropdown:hover {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
     & .theme-dark .nest-menu .el-sub-menu>.el-sub-menu__title,
     & .theme-dark .el-sub-menu .el-menu-item {
       background-color: var(--el-bg-color) !important;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+      }
+    }
+
+    /* 暗色捲軸 */
+    .el-scrollbar__thumb {
+      background-color: rgba(255, 255, 255, 0.08);
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+      }
     }
   }
 

@@ -107,7 +107,7 @@
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
 
-      <el-table ref="operlogRef" v-loading="loading" :data="operlogList" @selection-change="handleSelectionChange" :default-sort="defaultSort" @sort-change="handleSortChange">
+      <el-table ref="operlogRef" v-loading="loading" :data="operlogList" @selection-change="handleSelectionChange" :default-sort="defaultSort" @sort-change="handleSortChange" class="custom-table">
          <el-table-column type="selection" width="50" align="center" />
          <el-table-column label="日誌編號" align="center" prop="operId" />
          <el-table-column label="系統模組" align="center" prop="title" :show-overflow-tooltip="true" />

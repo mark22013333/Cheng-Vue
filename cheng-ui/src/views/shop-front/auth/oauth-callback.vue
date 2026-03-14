@@ -121,7 +121,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+Symbols+2&family=Noto+Color+Emoji&display=swap');
 
 .oauth-callback-page {
   display: flex;
@@ -129,7 +129,7 @@ onMounted(async () => {
   align-items: center;
   min-height: 50vh;
   padding: 40px 24px;
-  font-family: 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans TC', 'Noto Sans Symbols 2', system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 .callback-shell {
@@ -149,7 +149,7 @@ onMounted(async () => {
 .callback-card h2 {
   margin: 20px 0 8px;
   font-size: 24px;
-  font-family: 'Noto Serif TC', serif;
+  font-family: 'Noto Serif TC', 'Noto Sans Symbols 2', system-ui, serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   color: #3D2B1F;
 }
 

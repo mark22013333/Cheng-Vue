@@ -138,6 +138,22 @@
                   <div class="header-badge">{{ activeCategoryConfigs.length }} 項參數</div>
                </div>
 
+               <!-- 第三方登入提示區 -->
+               <div v-if="activeCategory === 'shop-oauth'" class="oauth-hint">
+                  <el-alert type="info" :closable="false" show-icon>
+                     <template #title>
+                        <span>LINE 登入的 Channel ID / Channel Secret 需於 LINE 頻道管理頁面設定，此處僅控制啟用狀態與基本參數。</span>
+                     </template>
+                     <template #default>
+                        <div class="oauth-hint-actions">
+                           <el-button type="primary" size="small" @click="$router.push('/cadm/marketing/line/config')">
+                              <el-icon><Setting /></el-icon>前往 LINE 頻道設定
+                           </el-button>
+                        </div>
+                     </template>
+                  </el-alert>
+               </div>
+
                <el-table :data="activeCategoryConfigs" stripe class="config-table">
                   <el-table-column label="參數名稱" prop="configName" min-width="160" show-overflow-tooltip />
                   <el-table-column label="參數鍵名" prop="configKey" min-width="240" show-overflow-tooltip>
@@ -224,7 +240,7 @@ import { listConfig, getConfig, delConfig, addConfig, updateConfig, refreshCache
 import {
   Search, Plus, Download, Refresh, Edit, Delete, Close,
   Monitor, Lock, Discount, Van, CreditCard, Box,
-  Wallet, Location, Key, Message, Connection, More, Top, Bottom
+  Wallet, Location, Key, Message, Connection, More, Top, Bottom, Setting
 } from '@element-plus/icons-vue'
 
 const { proxy } = getCurrentInstance()
@@ -289,7 +305,7 @@ const CATEGORIES = [
   },
   {
     key: 'shop-oauth', label: '第三方登入', icon: markRaw(Connection),
-    desc: '第三方登入 OAuth 設定（LINE、Google 等）',
+    desc: '第三方登入 OAuth 啟用開關與基本參數，LINE 頻道詳細設定請至「LINE 頻道管理」頁面',
     match: (k) => k.startsWith('shop.oauth.')
   },
   {
@@ -463,7 +479,7 @@ const TAG_TYPES = {
   'sys-ui': '', 'sys-security': 'warning', 'shop-promo': 'danger',
   'shop-shipping': 'success', 'shop-ecpay': '', 'shop-ecpay-logistics': 'info',
   'shop-payment': 'warning', 'shop-logistics': 'success', 'shop-password': 'warning', 'shop-pwd-reset': 'danger',
-  'shop-mail': 'info', 'other': 'info'
+  'shop-mail': 'info', 'shop-oauth': '', 'other': 'info'
 }
 
 function getCategoryTag(configKey) {
@@ -758,6 +774,7 @@ getList()
 .category-item.active .category-icon.shop-password { background: #e6a23c; }
 .category-item.active .category-icon.shop-pwd-reset { background: #f56c6c; }
 .category-item.active .category-icon.shop-mail { background: #909399; }
+.category-item.active .category-icon.shop-oauth { background: #409eff; }
 .category-item.active .category-icon.other { background: #c0c4cc; }
 
 .category-label {
@@ -888,6 +905,7 @@ getList()
 .header-icon.shop-password { background: linear-gradient(135deg, #e6a23c, #ebb563); }
 .header-icon.shop-pwd-reset { background: linear-gradient(135deg, #f56c6c, #f89898); }
 .header-icon.shop-mail { background: linear-gradient(135deg, #909399, #a6a9ad); }
+.header-icon.shop-oauth { background: linear-gradient(135deg, #409eff, #53a8ff); }
 .header-icon.other { background: linear-gradient(135deg, #c0c4cc, #d3d5d9); }
 
 .header-info h3 {
@@ -951,6 +969,24 @@ getList()
   align-items: center;
   justify-content: center;
   min-height: 200px;
+}
+
+/* ====== 第三方登入提示 ====== */
+.oauth-hint {
+  margin-bottom: 16px;
+}
+
+.oauth-hint :deep(.el-alert) {
+  border-radius: 8px;
+}
+
+.oauth-hint :deep(.el-alert__title) {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.oauth-hint-actions {
+  margin-top: 8px;
 }
 
 /* ====== 搜尋結果 ====== */

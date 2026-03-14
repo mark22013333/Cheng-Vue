@@ -272,13 +272,13 @@ async function handleSave() {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+Symbols+2&family=Noto+Color+Emoji&display=swap');
 
 .profile-page {
   max-width: 640px;
   margin: 0 auto;
   padding: 8px 0 32px;
-  font-family: 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans TC', 'Noto Sans Symbols 2', system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 /* ====== 頭像英雄區 ====== */
@@ -360,7 +360,7 @@ async function handleSave() {
 
 .profile-name {
   margin: 16px 0 2px;
-  font-family: 'Noto Serif TC', serif;
+  font-family: 'Noto Serif TC', 'Noto Sans Symbols 2', system-ui, serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   font-size: 22px;
   font-weight: 600;
   color: #3D2B1F;
@@ -512,7 +512,7 @@ async function handleSave() {
   border-radius: 10px;
   background: #fff;
   cursor: pointer;
-  font-family: 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans TC', 'Noto Sans Symbols 2', system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   font-size: 13.5px;
   font-weight: 500;
   color: #7A6B5D;
@@ -553,7 +553,7 @@ async function handleSave() {
   background: linear-gradient(135deg, #4A6B7C 0%, #5A8A9A 100%);
   font-size: 15px;
   font-weight: 700;
-  font-family: 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans TC', 'Noto Sans Symbols 2', system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   letter-spacing: 0.5px;
   box-shadow: 0 6px 20px rgba(74, 107, 124, 0.25);
   transition: all 0.3s ease;

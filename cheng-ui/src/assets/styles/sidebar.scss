@@ -24,8 +24,9 @@
     left: 0;
     z-index: 1001;
     overflow: hidden;
-    -webkit-box-shadow: 2px 0 6px rgba(0,21,41,.35);
-    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+    /* 柔和邊框取代粗重陰影 */
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: none;
 
     // reset element-ui css
     .horizontal-collapse-transition {
@@ -62,12 +63,15 @@
 
     .svg-icon {
       margin-right: 16px;
+      transition: transform 0.2s ease;
     }
 
     .el-menu {
       border: none;
       height: 100%;
       width: 100% !important;
+      /* 內縮間距 — 讓選單項目與容器邊緣有呼吸空間 */
+      padding: 6px 8px;
     }
 
     .el-menu-item, .menu-title {
@@ -80,11 +84,53 @@
       display: inline-block !important;
     }
 
-    // menu hover
+    /* ====== 圓角選單項目 ====== */
+    .el-menu-item,
+    .sub-menu-title-noDropdown {
+      margin: 2px 0;
+      border-radius: 10px;
+      transition: background-color 0.2s ease, color 0.15s ease;
+      position: relative;
+    }
+
+    .el-sub-menu__title {
+      margin: 2px 0;
+      border-radius: 10px;
+      transition: background-color 0.2s ease;
+    }
+
+    /* ====== 懸停態 ====== */
     .sub-menu-title-noDropdown,
     .el-sub-menu__title {
       &:hover {
-        background-color: rgba(0, 0, 0, 0.06) !important;
+        background-color: rgba(64, 158, 255, 0.06) !important;
+      }
+    }
+
+    .el-menu-item:not(.is-active):hover {
+      background-color: rgba(64, 158, 255, 0.06) !important;
+    }
+
+    /* ====== 活躍態 — 光暈膠囊指示器 ====== */
+    .el-menu-item.is-active {
+      background: rgba(64, 158, 255, 0.1) !important;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 18px;
+        border-radius: 3px;
+        background: var(--current-color, #409EFF);
+        box-shadow: 0 0 8px rgba(64, 158, 255, 0.4);
+        transition: height 0.2s ease;
+      }
+
+      .svg-icon {
+        transform: scale(1.08);
       }
     }
 
@@ -95,18 +141,32 @@
     & .nest-menu .el-sub-menu>.el-sub-menu__title,
     & .el-sub-menu .el-menu-item {
       min-width: vars.$base-sidebar-width !important;
+      border-radius: 10px;
+      margin: 2px 0;
 
       &:hover {
-        background-color: rgba(0, 0, 0, 0.06) !important;
+        background-color: rgba(64, 158, 255, 0.06) !important;
       }
     }
 
     & .theme-dark .nest-menu .el-sub-menu>.el-sub-menu__title,
     & .theme-dark .el-sub-menu .el-menu-item {
       background-color: vars.$base-sub-menu-background;
+      border-radius: 10px;
 
       &:hover {
         background-color: vars.$base-sub-menu-hover !important;
+      }
+    }
+
+    /* ====== 自訂捲軸 ====== */
+    .el-scrollbar__thumb {
+      background-color: rgba(144, 147, 153, 0.15);
+      border-radius: 4px;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: rgba(144, 147, 153, 0.3);
       }
     }
   }
@@ -114,6 +174,21 @@
   .hideSidebar {
     .sidebar-container {
       width: 54px !important;
+
+      /* 收合態: 減少間距 */
+      .el-menu {
+        padding: 6px 4px;
+      }
+
+      /* 收合態: 隱藏光暈指示器（空間不足） */
+      .el-menu-item.is-active::before {
+        display: none;
+      }
+
+      /* 收合態: 保留圓角活躍背景 */
+      .el-menu-item.is-active {
+        background: rgba(64, 158, 255, 0.12) !important;
+      }
     }
 
     .main-container {
@@ -209,7 +284,7 @@
   }
 }
 
-// when menu collapsed
+// when menu collapsed — popup menus
 .el-menu--vertical {
   &>.el-menu {
     .svg-icon {
@@ -219,9 +294,11 @@
 
   .nest-menu .el-sub-menu>.el-sub-menu__title,
   .el-menu-item {
+    border-radius: 8px;
+    margin: 2px 0;
+
     &:hover {
-      // you can use $sub-menuHover
-      background-color: rgba(0, 0, 0, 0.06) !important;
+      background-color: rgba(64, 158, 255, 0.06) !important;
     }
   }
 
@@ -229,6 +306,9 @@
   >.el-menu--popup {
     max-height: 100vh;
     overflow-y: auto;
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 3px 6px rgba(0, 0, 0, 0.04);
 
     &::-webkit-scrollbar-track-piece {
       background: #d3dce6;

@@ -101,13 +101,13 @@
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
 
-      <el-table v-loading="loading" :data="typeList" @selection-change="handleSelectionChange">
+      <el-table v-loading="loading" :data="typeList" @selection-change="handleSelectionChange" class="custom-table">
          <el-table-column type="selection" width="55" align="center" />
          <el-table-column label="字典編號" align="center" prop="dictId" />
          <el-table-column label="字典名稱" align="center" prop="dictName" :show-overflow-tooltip="true"/>
          <el-table-column label="字典類型" align="center" :show-overflow-tooltip="true">
             <template #default="scope">
-               <router-link :to="'/system/dict-data/index/' + scope.row.dictId" class="link-type">
+               <router-link :to="'/cadm/system/dict-data/index/' + scope.row.dictId" class="link-type">
                   <span>{{ scope.row.dictType }}</span>
                </router-link>
             </template>

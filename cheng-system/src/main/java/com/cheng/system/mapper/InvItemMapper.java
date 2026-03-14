@@ -31,6 +31,14 @@ public interface InvItemMapper {
     InvItem selectInvItemByItemCode(String itemCode);
 
     /**
+     * 根據物品名稱精確查詢物品資訊（用於匯入重複判斷）
+     *
+     * @param itemName 物品名稱
+     * @return 物品資訊
+     */
+    InvItem selectInvItemByItemName(String itemName);
+
+    /**
      * 根據條碼查詢物品資訊
      *
      * @param barcode 條碼

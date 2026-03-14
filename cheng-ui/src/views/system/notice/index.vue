@@ -68,7 +68,7 @@
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
 
-      <el-table v-loading="loading" :data="noticeList" @selection-change="handleSelectionChange">
+      <el-table v-loading="loading" :data="noticeList" @selection-change="handleSelectionChange" class="custom-table">
          <el-table-column type="selection" width="55" align="center" />
          <el-table-column label="序號" align="center" prop="noticeId" width="100" />
          <el-table-column

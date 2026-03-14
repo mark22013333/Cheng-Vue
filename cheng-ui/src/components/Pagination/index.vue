@@ -47,7 +47,7 @@ const props = defineProps({
   },
   background: {
     type: Boolean,
-    default: true
+    default: false
   },
   autoScroll: {
     type: Boolean,
@@ -97,7 +97,7 @@ function handleCurrentChange(val) {
 
 <style scoped>
 .pagination-container {
-  background: #fff;
+  background: transparent;
 }
 .pagination-container.hidden {
   display: none;

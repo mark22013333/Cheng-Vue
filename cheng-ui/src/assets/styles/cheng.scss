@@ -95,20 +95,467 @@
   padding: 10px 20px 0;
 }
 
+/** ====== 基礎表格 ====== */
 .el-table {
   .el-table__header-wrapper, .el-table__fixed-header-wrapper {
     th {
       word-break: break-word;
-      background-color: #f8f8f9 !important;
-      color: #515a6e;
-      height: 40px !important;
+      background-color: #f8fafc !important;
+      color: #64748b;
+      height: 42px !important;
       font-size: 13px;
+      font-weight: 600;
     }
   }
 
   .el-table__body-wrapper {
     .el-button [class*="el-icon-"] + span {
       margin-left: 1px;
+    }
+  }
+}
+
+/** ====== 精緻表格 (.custom-table) ====== */
+.custom-table {
+  --t-header-bg: #f8fafc;
+  --t-header-text: #64748b;
+  --t-border: rgba(0, 0, 0, 0.06);
+  --t-border-soft: rgba(0, 0, 0, 0.03);
+  --t-hover: rgba(64, 158, 255, 0.04);
+  --t-stripe: rgba(0, 0, 0, 0.018);
+  --t-radius: 12px;
+  --t-row-height: 52px;
+  /* 固定欄位不透明背景（防止 sticky 穿透） */
+  --t-row-bg: #ffffff;
+  --t-hover-solid: #f8fbff;       /* rgba(64,158,255,0.04) 在白底的不透明等價色 */
+  --t-current-solid: #f4f9ff;     /* rgba(64,158,255,0.06) 在白底的不透明等價色 */
+
+  border-radius: var(--t-radius) !important;
+  overflow: hidden;
+  border: 1px solid var(--t-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  /* 移除 el-table 預設底部邊框線 */
+  &::before { display: none !important; }
+  .el-table__inner-wrapper::before { display: none !important; }
+  .el-table__border-left-patch { display: none !important; }
+
+  /* 表頭 */
+  .el-table__header-wrapper, .el-table__fixed-header-wrapper {
+    th.el-table__cell {
+      background: var(--t-header-bg) !important;
+      color: var(--t-header-text);
+      height: 44px !important;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      border-bottom: 1px solid var(--t-border) !important;
+
+      .cell {
+        font-weight: 600;
+        line-height: 1.4;
+      }
+    }
+  }
+
+  /* 資料列 */
+  .el-table__body {
+    tr.el-table__row {
+      transition: background-color 0.15s ease;
+
+      td.el-table__cell {
+        height: var(--t-row-height);
+        border-bottom: 1px solid var(--t-border-soft);
+        font-size: 14px;
+
+        .cell {
+          line-height: 1.5;
+        }
+      }
+
+      /* 懸停 — 半透明藍 tint（與側邊欄統一） */
+      &:hover > td.el-table__cell {
+        background: var(--t-hover) !important;
+      }
+
+      /* 最後一列不顯示底線 */
+      &:last-child td.el-table__cell {
+        border-bottom: transparent;
+      }
+    }
+  }
+
+  /* 固定欄位：不透明背景 + 微陰影分隔（解決 sticky 穿透問題） */
+  .el-table__body tr.el-table__row {
+    td.el-table-fixed-column--right,
+    td.el-table-fixed-column--left {
+      background-color: var(--t-row-bg) !important;
+      transition: background-color 0.15s ease;
+    }
+
+    &:hover > td.el-table-fixed-column--right,
+    &:hover > td.el-table-fixed-column--left {
+      background-color: var(--t-hover-solid) !important;
+    }
+  }
+
+  .el-table-fixed-column--right::before,
+  .el-table-fixed-column--left::before {
+    box-shadow: none;
+  }
+
+  /* 固定欄位左側微分隔線 */
+  td.el-table-fixed-column--right:first-of-type,
+  th.el-table-fixed-column--right:first-of-type {
+    box-shadow: -2px 0 4px rgba(0, 0, 0, 0.04);
+  }
+
+  .el-table__fixed-right-patch {
+    background: var(--t-header-bg) !important;
+  }
+
+  /* 空資料態 */
+  .el-table__empty-block {
+    min-height: 120px;
+
+    .el-table__empty-text {
+      color: var(--t-header-text);
+      font-size: 14px;
+    }
+  }
+
+  /* 選取態列背景 */
+  .el-table__body tr.current-row > td.el-table__cell {
+    background: rgba(64, 158, 255, 0.06) !important;
+  }
+
+  /* 選取態固定欄位（不透明） */
+  .el-table__body tr.current-row {
+    > td.el-table-fixed-column--right,
+    > td.el-table-fixed-column--left {
+      background-color: var(--t-current-solid) !important;
+    }
+  }
+
+  /* 操作欄按鈕 */
+  .el-table__body {
+    .el-button.is-link {
+      font-size: 13px;
+      padding: 4px 6px;
+    }
+  }
+}
+
+/** 暗黑模式表格 */
+html.dark .custom-table {
+  --t-header-bg: rgba(255, 255, 255, 0.03);
+  --t-header-text: #a0a0a0;
+  --t-border: rgba(255, 255, 255, 0.08);
+  --t-border-soft: rgba(255, 255, 255, 0.04);
+  --t-hover: rgba(255, 255, 255, 0.04);
+  --t-stripe: rgba(255, 255, 255, 0.02);
+  /* 暗色固定欄位不透明背景 */
+  --t-row-bg: var(--el-bg-color, #141414);
+  --t-hover-solid: #1d1d1d;       /* rgba(255,255,255,0.04) 在暗底的不透明等價色 */
+  --t-current-solid: #1a2030;     /* rgba(64,158,255,0.06) 在暗底的不透明等價色 */
+
+  box-shadow: none;
+  border-color: var(--t-border);
+
+  .el-table__fixed-right-patch {
+    background: var(--t-header-bg) !important;
+  }
+
+  /* 暗色固定欄位分隔線 */
+  td.el-table-fixed-column--right:first-of-type,
+  th.el-table-fixed-column--right:first-of-type {
+    box-shadow: -2px 0 4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/** ====== 搜尋表單 RWD ====== */
+@media (max-width: 992px) {
+  .app-container {
+    .el-form--inline .el-form-item {
+      margin-right: 12px;
+    }
+
+    .el-form--inline .el-form-item .el-input,
+    .el-form--inline .el-form-item .el-select {
+      width: 200px !important;
+    }
+
+    .el-form--inline .el-form-item .el-date-editor {
+      width: 220px !important;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    padding: 12px !important;
+
+    /* 搜尋表單堆疊 */
+    .el-form--inline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+
+      .el-form-item {
+        width: 100%;
+        margin-right: 0 !important;
+
+        .el-input,
+        .el-select,
+        .el-date-editor {
+          width: 100% !important;
+        }
+      }
+
+      /* 搜尋/重置按鈕列 */
+      .el-form-item:last-child {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+
+        .el-button {
+          flex: 1;
+        }
+      }
+    }
+
+    /* 操作按鈕列換行 */
+    .mb8 > .el-col {
+      margin-bottom: 6px !important;
+    }
+
+    /* 表格在小螢幕的調整 */
+    .custom-table {
+      --t-radius: 8px;
+      --t-row-height: 46px;
+
+      .el-table__header-wrapper th.el-table__cell {
+        height: 40px !important;
+        font-size: 12px;
+      }
+
+      .el-table__body tr.el-table__row td.el-table__cell {
+        font-size: 13px;
+
+        .cell {
+          padding-left: 8px !important;
+          padding-right: 8px !important;
+        }
+      }
+
+      /* 操作欄按鈕縮小 */
+      .el-table__body .el-button.is-link {
+        font-size: 12px;
+        padding: 2px 4px;
+      }
+
+      .el-dropdown .el-button.is-link {
+        font-size: 12px;
+      }
+    }
+  }
+
+  /* Splitpanes 水平模式調整 */
+  .splitpanes--horizontal > .splitpanes__splitter {
+    min-height: 6px;
+  }
+
+  /* 分頁器精簡（已有部分在上方） */
+  .pagination-container {
+    margin-top: 12px;
+
+    .el-pagination {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
+}
+
+/* 平板微調 */
+@media (min-width: 769px) and (max-width: 1200px) {
+  .app-container {
+    .custom-table {
+      .el-table__header-wrapper th.el-table__cell {
+        height: 42px !important;
+      }
+    }
+  }
+}
+
+/** ====== 側面板樹狀結構（部門樹 / 分類樹） ====== */
+.splitpanes.default-theme {
+  /* 分隔條精緻化 */
+  .splitpanes__splitter {
+    background: transparent !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    min-width: 1px !important;
+    width: 1px !important;
+
+    &::before, &::after {
+      display: none !important;
+    }
+  }
+}
+
+html.dark .splitpanes.default-theme .splitpanes__splitter {
+  border-left-color: rgba(255, 255, 255, 0.06);
+}
+
+/* 樹面板容器 */
+.splitpanes__pane > .el-col {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  > .head-container {
+    padding: 0 12px;
+
+    &:first-child {
+      padding-top: 16px;
+      padding-bottom: 4px;
+
+      /* 搜尋框精緻化 */
+      .el-input {
+        .el-input__wrapper {
+          border-radius: 10px;
+          box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08) inset;
+          transition: box-shadow 0.2s ease;
+
+          &:hover {
+            box-shadow: 0 0 0 1px rgba(64, 158, 255, 0.3) inset;
+          }
+
+          &.is-focus {
+            box-shadow: 0 0 0 1px var(--el-color-primary) inset, 0 0 0 3px rgba(64, 158, 255, 0.1);
+          }
+        }
+      }
+    }
+
+    &:last-child {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 12px;
+    }
+  }
+}
+
+/* 樹節點精緻化 */
+.splitpanes__pane .el-tree {
+  --tree-node-radius: 8px;
+  --tree-node-height: 34px;
+  background: transparent !important;
+
+  .el-tree-node__content {
+    height: var(--tree-node-height);
+    border-radius: var(--tree-node-radius);
+    margin: 1px 0;
+    padding-right: 8px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background-color: rgba(64, 158, 255, 0.06) !important;
+    }
+  }
+
+  /* 展開的父節點 */
+  .el-tree-node.is-expanded > .el-tree-node__content {
+    font-weight: 500;
+  }
+
+  /* 選取態 — 與側邊欄活躍態同語言 */
+  .el-tree-node.is-current > .el-tree-node__content {
+    background-color: rgba(64, 158, 255, 0.1) !important;
+    color: var(--el-color-primary);
+    font-weight: 600;
+    position: relative;
+
+    /* 左側光暈指示器（與側邊欄呼應） */
+    &::before {
+      content: '';
+      position: absolute;
+      left: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 16px;
+      border-radius: 3px;
+      background: var(--el-color-primary, #409EFF);
+      box-shadow: 0 0 6px rgba(64, 158, 255, 0.3);
+    }
+  }
+
+  /* 節點文字 */
+  .el-tree-node__label {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  /* 展開箭頭柔化 */
+  .el-tree-node__expand-icon {
+    font-size: 13px;
+    color: #9ca3af;
+    transition: transform 0.2s ease, color 0.15s ease;
+
+    &.expanded {
+      color: var(--el-color-primary);
+    }
+
+    &.is-leaf {
+      color: transparent;
+    }
+  }
+
+  /* 自訂捲軸 */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(144, 147, 153, 0.2);
+    border-radius: 4px;
+  }
+}
+
+/* 暗黑模式樹 */
+html.dark .splitpanes__pane .el-tree {
+  .el-tree-node__content:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .el-tree-node.is-current > .el-tree-node__content {
+    background-color: rgba(64, 158, 255, 0.15) !important;
+  }
+
+  .el-tree-node__expand-icon {
+    color: #666;
+
+    &.expanded {
+      color: var(--el-color-primary);
+    }
+  }
+}
+
+/* 樹面板 RWD */
+@media (max-width: 768px) {
+  .splitpanes__pane > .el-col > .head-container {
+    padding: 0 8px;
+
+    &:first-child {
+      padding-top: 10px;
+    }
+  }
+
+  .splitpanes__pane .el-tree {
+    --tree-node-height: 32px;
+
+    .el-tree-node__label {
+      font-size: 12px;
     }
   }
 }
@@ -122,12 +569,167 @@
   padding-bottom: 5px
 }
 
-/** 表格版面 **/
+/** ====== 分頁器 ====== */
 .pagination-container {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   margin-top: 20px;
   background-color: transparent !important;
+
+  .el-pagination {
+    gap: 2px;
+    align-items: center;
+
+    /* 共 N 項 */
+    .el-pagination__total {
+      font-size: 13px;
+      color: #64748b;
+      height: 32px;
+      line-height: 32px;
+      margin-right: 4px;
+    }
+
+    /* 上 / 下一頁按鈕 */
+    .btn-prev,
+    .btn-next {
+      background: transparent !important;
+      border: 1px solid rgba(0, 0, 0, 0.08) !important;
+      border-radius: 8px !important;
+      width: 32px !important;
+      height: 32px !important;
+      min-width: 32px !important;
+      color: #64748b;
+      transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+
+      &:hover:not(:disabled) {
+        border-color: rgba(64, 158, 255, 0.4) !important;
+        color: var(--el-color-primary);
+        background: rgba(64, 158, 255, 0.04) !important;
+      }
+
+      &:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+    }
+
+    /* 頁碼按鈕列 */
+    .el-pager {
+      display: flex;
+      gap: 2px;
+
+      li {
+        background: transparent !important;
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        border-radius: 8px !important;
+        min-width: 32px !important;
+        height: 32px !important;
+        line-height: 30px !important;
+        font-size: 13px;
+        font-weight: 500;
+        color: #64748b;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+
+        &:hover:not(.is-active):not(.btn-quicknext):not(.btn-quickprev) {
+          background: rgba(64, 158, 255, 0.06) !important;
+          border-color: rgba(64, 158, 255, 0.3) !important;
+          color: var(--el-color-primary);
+        }
+
+        &.is-active {
+          background: var(--el-color-primary) !important;
+          border-color: var(--el-color-primary) !important;
+          color: #fff !important;
+          font-weight: 600;
+        }
+
+        /* 省略號 */
+        &.btn-quicknext,
+        &.btn-quickprev {
+          border-color: transparent !important;
+          background: transparent !important;
+          color: #9ca3af;
+
+          &:hover {
+            border-color: transparent !important;
+            background: transparent !important;
+            color: var(--el-color-primary);
+          }
+        }
+      }
+    }
+
+    /* 每頁筆數 select */
+    .el-pagination__sizes {
+      height: 32px;
+      margin: 0 4px;
+
+      .el-select {
+        .el-input {
+          height: 32px;
+
+          .el-input__wrapper {
+            height: 32px;
+            border-radius: 8px;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08) inset !important;
+            padding: 0 8px;
+            transition: box-shadow 0.15s ease;
+
+            &:hover {
+              box-shadow: 0 0 0 1px rgba(64, 158, 255, 0.3) inset !important;
+            }
+
+            &.is-focus {
+              box-shadow: 0 0 0 1px var(--el-color-primary) inset !important;
+            }
+          }
+
+          .el-input__inner {
+            font-size: 13px;
+            color: #374151;
+            height: 32px;
+          }
+        }
+      }
+    }
+
+    /* 跳頁 */
+    .el-pagination__jump {
+      font-size: 13px;
+      color: #64748b;
+      height: 32px;
+      line-height: 32px;
+      margin-left: 4px;
+
+      .el-input {
+        height: 32px;
+        width: 48px;
+        margin: 0 4px;
+
+        .el-input__wrapper {
+          height: 32px;
+          border-radius: 8px;
+          box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08) inset !important;
+          padding: 0 8px;
+          transition: box-shadow 0.15s ease;
+
+          &:hover {
+            box-shadow: 0 0 0 1px rgba(64, 158, 255, 0.3) inset !important;
+          }
+
+          &.is-focus {
+            box-shadow: 0 0 0 1px var(--el-color-primary) inset !important;
+          }
+        }
+
+        .el-input__inner {
+          font-size: 13px;
+          text-align: center;
+        }
+      }
+    }
+  }
 }
 
 /* 彈窗中的分頁器 */
@@ -141,10 +743,75 @@
   }
 }
 
+/* 暗黑模式分頁器 */
+html.dark .pagination-container {
+  .el-pagination {
+    .el-pagination__total,
+    .el-pagination__jump {
+      color: #a0a0a0;
+    }
+
+    .btn-prev,
+    .btn-next {
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #a0a0a0;
+
+      &:hover:not(:disabled) {
+        border-color: rgba(64, 158, 255, 0.5) !important;
+        background: rgba(64, 158, 255, 0.08) !important;
+        color: var(--el-color-primary);
+      }
+    }
+
+    .el-pager li {
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #a0a0a0;
+
+      &:hover:not(.is-active):not(.btn-quicknext):not(.btn-quickprev) {
+        background: rgba(64, 158, 255, 0.1) !important;
+        border-color: rgba(64, 158, 255, 0.4) !important;
+        color: var(--el-color-primary);
+      }
+
+      &.is-active {
+        background: var(--el-color-primary) !important;
+        border-color: var(--el-color-primary) !important;
+        color: #fff !important;
+      }
+
+      &.btn-quicknext,
+      &.btn-quickprev {
+        color: #666;
+      }
+    }
+
+    .el-pagination__sizes .el-select .el-input .el-input__wrapper {
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+
+      &:hover {
+        box-shadow: 0 0 0 1px rgba(64, 158, 255, 0.4) inset !important;
+      }
+    }
+
+    .el-pagination__jump .el-input .el-input__wrapper {
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+
+      &:hover {
+        box-shadow: 0 0 0 1px rgba(64, 158, 255, 0.4) inset !important;
+      }
+    }
+  }
+}
+
 /* 移動端适配 */
 @media (max-width: 768px) {
   .pagination-container {
+    margin-top: 12px;
+
     .el-pagination {
+      flex-wrap: wrap;
+      justify-content: center;
+
       > .el-pagination__jump {
         display: none !important;
       }

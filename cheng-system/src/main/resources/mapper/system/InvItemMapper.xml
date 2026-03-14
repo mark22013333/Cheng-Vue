@@ -61,6 +61,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where i.item_code = #{itemCode}
     </select>
 
+    <select id="selectInvItemByItemName" parameterType="String" resultMap="InvItemResult">
+        <include refid="selectInvItemVo"/>
+        where i.item_name = #{itemName}
+        limit 1
+    </select>
+
     <select id="selectInvItemByBarcode" parameterType="String" resultMap="InvItemResult">
         <include refid="selectInvItemVo"/>
         where i.barcode = #{barcode}

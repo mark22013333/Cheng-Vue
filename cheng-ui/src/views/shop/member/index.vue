@@ -85,7 +85,8 @@
             v-model="scope.row.status"
             active-value="ACTIVE"
             inactive-value="DISABLED"
-            @change="handleStatusChange(scope.row)"
+            :disabled="scope.row.status === 'FROZEN'"
+            :before-change="() => handleBeforeStatusChange(scope.row)"
             v-hasPermi="[SHOP_MEMBER_EDIT]"
           />
         </template>
@@ -296,14 +297,16 @@ function handleSelectionChange(selection) {
   multiple.value = !selection.length
 }
 
-function handleStatusChange(row) {
-  const text = row.status === 'ACTIVE' ? '啟用' : '停用'
-  proxy.$modal.confirm('確認要「' + text + '」會員「' + row.nickname + '」嗎？').then(() => {
-    return updateMemberStatus(row.memberId, row.status)
+function handleBeforeStatusChange(row) {
+  const newStatus = row.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE'
+  const text = newStatus === 'ACTIVE' ? '啟用' : '停用'
+  return proxy.$modal.confirm('確認要「' + text + '」會員「' + row.nickname + '」嗎？').then(() => {
+    return updateMemberStatus(row.memberId, newStatus)
   }).then(() => {
     proxy.$modal.msgSuccess(text + '成功')
+    return true
   }).catch(() => {
-    row.status = row.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE'
+    return Promise.reject()
   })
 }
 
