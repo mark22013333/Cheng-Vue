@@ -126,3 +126,13 @@ export function listPaymentMethods() {
     method: 'get'
   })
 }
+
+/**
+ * 查詢公告欄內容（公開 API）
+ */
+export function getAnnouncement() {
+  return request({
+    url: '/shop/front/announcement',
+    method: 'get'
+  })
+}

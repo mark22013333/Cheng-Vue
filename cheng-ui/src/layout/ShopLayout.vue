@@ -1,12 +1,28 @@
 <template>
   <div class="shop-layout">
-    <!-- 頂部公告欄 -->
-    <div v-if="showAnnouncement" class="announcement-bar">
-      <div class="announcement-content">
-        <span>全館滿 $999 免運費 | 新會員首單享 9 折優惠</span>
+    <!-- 頂部公告欄（滑動跑馬燈） -->
+    <div v-if="showAnnouncement && announcements.length" class="announcement-bar">
+      <div class="announcement-marquee">
+        <div class="announcement-track">
+          <template v-for="n in 10" :key="n">
+            <template v-for="(item, i) in announcements" :key="`${n}-${i}`">
+              <a
+                v-if="item.linkType && item.linkType !== 'NONE'"
+                class="announcement-item announcement-link"
+                :href="getAnnouncementHref(item)"
+                @click.prevent="handleAnnouncementClick(item)"
+              >
+                {{ item.text }}
+                <svg class="announcement-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+              <span v-else class="announcement-item">{{ item.text }}</span>
+            </template>
+            <span class="announcement-sep">✦</span>
+          </template>
+        </div>
       </div>
-      <button class="announcement-close" @click="closeAnnouncement">
-        <el-icon :size="14"><Close /></el-icon>
+      <button class="announcement-close" @click="showAnnouncement = false" aria-label="關閉公告">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
 
@@ -64,7 +80,7 @@
               <el-icon><Search /></el-icon>
             </el-button>
           </div>
-          <div class="cart-icon" @click="goCart">
+          <div id="shop-cart-icon" class="cart-icon" @click="goCart">
             <el-badge :value="cartCount" :hidden="cartCount === 0">
               <el-icon :size="22"><ShoppingCart /></el-icon>
             </el-badge>
@@ -118,7 +134,7 @@
     </header>
 
     <!-- 主要內容區 -->
-    <main class="shop-main">
+    <main class="shop-main" :class="{ 'is-fullwidth': isHomePage }">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -171,13 +187,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ShoppingCart, Brush, Search, User, Close, ArrowDown } from '@element-plus/icons-vue'
+import { ShoppingCart, Brush, Search, User, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useMallThemeStore, PRESET_THEMES } from '@/store/modules/mallTheme'
 import { useCartStore } from '@/store/modules/cart'
 import { getMemberToken } from '@/utils/memberAuth'
 import useMemberStore from '@/store/modules/member'
-import { listCategories } from '@/api/shop/front'
+import { listCategories, getAnnouncement } from '@/api/shop/front'
 
 const router = useRouter()
 const route = useRoute()
@@ -187,8 +203,12 @@ const memberStore = useMemberStore()
 const searchKeyword = ref('')
 const showThemePicker = ref(false)
 const showAnnouncement = ref(true)
+const announcements = ref([])
 const showCategoryDropdown = ref(false)
 const categories = ref([])
+
+// 首頁偵測：滿版佈局
+const isHomePage = computed(() => route.path === '/')
 
 // 購物車數量（從 store 取得）
 const cartCount = computed(() => cartStore.totalQuantity)
@@ -231,8 +251,22 @@ function goOrders() {
   router.push('/member/orders')
 }
 
-function closeAnnouncement() {
-  showAnnouncement.value = false
+/** 公告連結點擊 */
+function getAnnouncementHref(item) {
+  if (item.linkType === 'PRODUCT') return `/product/${item.linkValue}`
+  if (item.linkType === 'ARTICLE') return `/article/${item.linkValue}`
+  if (item.linkType === 'CATEGORY') return `/products?categoryId=${item.linkValue}`
+  if (item.linkType === 'URL') return item.linkValue
+  return '#'
+}
+
+function handleAnnouncementClick(item) {
+  const href = getAnnouncementHref(item)
+  if (item.linkType === 'URL' && href.startsWith('http')) {
+    window.open(href, '_blank')
+  } else {
+    router.push(href)
+  }
 }
 
 async function handleLogout() {
@@ -272,10 +306,37 @@ async function loadCategories() {
   }
 }
 
+/** 每項格式: { text, linkType, linkValue } */
+const FALLBACK_ANNOUNCEMENTS = [
+  { text: '全館滿 $999 免運費', linkType: 'NONE', linkValue: '' },
+  { text: '新會員首單享 9 折優惠', linkType: 'NONE', linkValue: '' }
+]
+
+async function loadAnnouncements() {
+  try {
+    const res = await getAnnouncement()
+    const data = res?.data
+    let parsed = []
+    if (typeof data === 'string' && data.startsWith('[')) {
+      parsed = JSON.parse(data)
+    } else if (Array.isArray(data)) {
+      parsed = data
+    }
+    // 相容舊格式（純字串陣列）→ 轉換為物件格式
+    if (parsed.length > 0 && typeof parsed[0] === 'string') {
+      parsed = parsed.map(t => ({ text: t, linkType: 'NONE', linkValue: '' }))
+    }
+    announcements.value = parsed.length > 0 ? parsed : FALLBACK_ANNOUNCEMENTS
+  } catch {
+    announcements.value = FALLBACK_ANNOUNCEMENTS
+  }
+}
+
 onMounted(() => {
   themeStore.init()
   cartStore.init()
   loadCategories()
+  loadAnnouncements()
   // 僅在 store 缺少會員資料時才呼叫（登入後 store 已有完整資料，不需重複取得）
   if (getMemberToken() && !memberStore.id) {
     memberStore.getProfile().catch((err) => {
@@ -293,39 +354,96 @@ onMounted(() => {
   background-color: var(--mall-body-bg, #FAF8F5);
 }
 
-/* === 公告欄 === */
+/* === 公告欄（滑動跑馬燈） === */
 .announcement-bar {
   background: var(--mall-primary, #4A6B7C);
   color: white;
-  text-align: center;
-  padding: 8px 40px;
+  padding: 9px 0;
   font-size: 13px;
   letter-spacing: 0.5px;
   position: relative;
   z-index: 1001;
-}
-
-.announcement-content {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.announcement-close {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  padding: 4px;
   display: flex;
   align-items: center;
 }
 
-.announcement-close:hover {
+.announcement-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 12px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
   color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.announcement-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.announcement-marquee {
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+  mask-image: linear-gradient(to right, transparent, black 2%, black 98%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 2%, black 98%, transparent);
+}
+
+.announcement-track {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  width: max-content;
+  animation: announcementScroll 30s linear infinite;
+}
+
+.announcement-bar:hover .announcement-track {
+  animation-play-state: paused;
+}
+
+@keyframes announcementScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-10%); }
+}
+
+.announcement-item {
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.announcement-link {
+  color: white;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.announcement-link:hover {
+  opacity: 0.85;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.announcement-arrow {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.announcement-sep {
+  flex-shrink: 0;
+  opacity: 0.5;
+  font-size: 10px;
 }
 
 /* === Header === */
@@ -689,6 +807,12 @@ onMounted(() => {
   padding: 24px 20px;
 }
 
+/* 首頁滿版佈局（兩側保留微量呼吸空間） */
+.shop-main.is-fullwidth {
+  max-width: 100%;
+  padding: 0 clamp(16px, 2vw, 40px);
+}
+
 /* === Footer === */
 .shop-footer {
   background: var(--mall-footer-bg, #3D3D3D);
@@ -808,6 +932,20 @@ onMounted(() => {
   color: #95a5a6;
 }
 
+/* === 購物車彈跳動畫（商品飛入後觸發） === */
+:global(.cart-bounce) {
+  animation: cartBounce 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) !important;
+}
+
+@keyframes cartBounce {
+  0%   { transform: scale(1); }
+  20%  { transform: scale(1.3); }
+  40%  { transform: scale(0.9); }
+  60%  { transform: scale(1.15); }
+  80%  { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
 /* === 過渡動畫 === */
 .fade-enter-active,
 .fade-leave-active {
@@ -836,7 +974,7 @@ onMounted(() => {
 
   .announcement-bar {
     font-size: 12px;
-    padding: 6px 32px;
+    padding: 6px 0;
   }
 }
 </style>
