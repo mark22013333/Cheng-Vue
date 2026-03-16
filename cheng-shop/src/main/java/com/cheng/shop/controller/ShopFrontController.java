@@ -15,6 +15,7 @@ import com.cheng.shop.service.IShopArticleService;
 import com.cheng.shop.service.IShopBannerService;
 import com.cheng.shop.service.IShopCategoryService;
 import com.cheng.shop.service.IShopGiftService;
+import com.cheng.shop.service.IShopPageBlockService;
 import com.cheng.shop.service.IShopProductService;
 import com.cheng.shop.service.IShopProductSkuService;
 import com.cheng.shop.service.ShopPriceService;
@@ -23,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import com.cheng.shop.enums.PaymentMethod;
+
+import com.cheng.shop.domain.ShopPageBlock;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -48,6 +51,7 @@ public class ShopFrontController extends BaseController {
     private final IShopCategoryService categoryService;
     private final IShopBannerService bannerService;
     private final IShopGiftService giftService;
+    private final IShopPageBlockService blockService;
     private final ShopPriceService priceService;
     private final ShopConfigService shopConfig;
 
@@ -221,5 +225,22 @@ public class ShopFrontController extends BaseController {
                 ))
                 .toList();
         return success(result);
+    }
+
+    /**
+     * 查詢公告欄內容（前台公開 API）
+     * <p>
+     * 從 shop_page_block 取得 pageKey=GLOBAL, blockKey=ANNOUNCEMENT_BAR 的啟用區塊，
+     * content 欄位儲存 JSON 陣列格式的公告文字，例如：
+     * ["全館滿 $999 免運費", "新會員首單享 9 折優惠"]
+     * </p>
+     */
+    @GetMapping("/announcement")
+    public AjaxResult getAnnouncement() {
+        ShopPageBlock block = blockService.selectBlockByPageAndKey("GLOBAL", "ANNOUNCEMENT_BAR");
+        if (block == null || !"ENABLED".equals(block.getStatus())) {
+            return success(Collections.emptyList());
+        }
+        return success(block.getContent());
     }
 }

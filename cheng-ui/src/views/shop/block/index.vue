@@ -4,6 +4,7 @@
     <el-form :model="queryParams" ref="queryFormRef" :inline="true" v-show="showSearch" label-width="80px">
       <el-form-item label="頁面" prop="pageKey">
         <el-select v-model="queryParams.pageKey" placeholder="請選擇" clearable style="width: 150px">
+          <el-option label="全站通用" value="GLOBAL" />
           <el-option label="首頁" value="HOME" />
           <el-option label="關於我們" value="ABOUT" />
           <el-option label="聯絡資訊" value="CONTACT" />
@@ -154,9 +155,111 @@
 
         <!-- 根據類型顯示不同的內容編輯器 -->
         <el-form-item label="內容" prop="content">
+          <!-- 公告欄專用編輯器 -->
+          <div v-if="isAnnouncementBlock" style="width: 100%">
+            <div class="announcement-editor">
+              <div
+                v-for="(item, idx) in announcementItems"
+                :key="idx"
+                class="announcement-editor-row"
+              >
+                <el-input
+                  v-model="item.text"
+                  placeholder="公告文字"
+                  style="flex: 1"
+                  @change="syncAnnouncementToContent"
+                />
+                <el-select
+                  v-model="item.linkType"
+                  placeholder="連結類型"
+                  style="width: 130px"
+                  @change="syncAnnouncementToContent"
+                >
+                  <el-option label="無連結" value="NONE" />
+                  <el-option label="商品" value="PRODUCT" />
+                  <el-option label="文章" value="ARTICLE" />
+                  <el-option label="商品分類" value="CATEGORY" />
+                  <el-option label="自訂網址" value="URL" />
+                </el-select>
+                <!-- 商品選擇器 -->
+                <el-select
+                  v-if="item.linkType === 'PRODUCT'"
+                  v-model="item.linkValue"
+                  filterable
+                  remote
+                  :remote-method="(q) => searchProducts(q)"
+                  :loading="linkSearchLoading"
+                  placeholder="搜尋商品名稱"
+                  style="width: 240px"
+                  @change="onLinkSelected(item, 'PRODUCT', $event)"
+                >
+                  <el-option
+                    v-for="p in productOptions"
+                    :key="p.productId"
+                    :label="p.title"
+                    :value="String(p.productId)"
+                  />
+                </el-select>
+                <!-- 文章選擇器 -->
+                <el-select
+                  v-else-if="item.linkType === 'ARTICLE'"
+                  v-model="item.linkValue"
+                  filterable
+                  remote
+                  :remote-method="(q) => searchArticles(q)"
+                  :loading="linkSearchLoading"
+                  placeholder="搜尋文章標題"
+                  style="width: 240px"
+                  @change="onLinkSelected(item, 'ARTICLE', $event)"
+                >
+                  <el-option
+                    v-for="a in articleOptions"
+                    :key="a.articleId"
+                    :label="a.title"
+                    :value="String(a.articleId)"
+                  />
+                </el-select>
+                <!-- 分類選擇器 -->
+                <el-select
+                  v-else-if="item.linkType === 'CATEGORY'"
+                  v-model="item.linkValue"
+                  filterable
+                  placeholder="選擇分類"
+                  style="width: 240px"
+                  @change="syncAnnouncementToContent"
+                >
+                  <el-option
+                    v-for="c in categoryOptions"
+                    :key="c.categoryId"
+                    :label="c.name"
+                    :value="String(c.categoryId)"
+                  />
+                </el-select>
+                <!-- 自訂網址 -->
+                <el-input
+                  v-else-if="item.linkType === 'URL'"
+                  v-model="item.linkValue"
+                  placeholder="網址（如 /products?isHot=true）"
+                  style="width: 240px"
+                  @change="syncAnnouncementToContent"
+                />
+                <el-button
+                  type="danger"
+                  :icon="Delete"
+                  circle
+                  size="small"
+                  @click="removeAnnouncementItem(idx)"
+                  :disabled="announcementItems.length <= 1"
+                />
+              </div>
+            </div>
+            <el-button type="primary" plain size="small" :icon="Plus" @click="addAnnouncementItem" style="margin-top: 8px">
+              新增公告項目
+            </el-button>
+          </div>
           <!-- 文字類型 -->
           <el-input
-            v-if="form.blockType === 'TEXT'"
+            v-else-if="form.blockType === 'TEXT'"
             v-model="form.content"
             type="textarea"
             :rows="5"
@@ -205,8 +308,12 @@ import {
   SHOP_BLOCK_EDIT,
   SHOP_BLOCK_REMOVE
 } from '@/constants/permissions'
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { Delete, Plus } from '@element-plus/icons-vue'
 import { listBlock, getBlock, addBlock, updateBlock, delBlock } from '@/api/shop/block'
+import { listProduct } from '@/api/shop/product'
+import { listArticle } from '@/api/shop/article'
+import { listCategory } from '@/api/shop/category'
 
 const { proxy } = getCurrentInstance()
 
@@ -231,6 +338,81 @@ const queryParams = reactive({
 
 const form = ref({})
 
+/* ── 公告欄專用編輯器 ── */
+const announcementItems = ref([])
+const isAnnouncementBlock = computed(() => form.value.blockKey === 'ANNOUNCEMENT_BAR')
+
+function parseAnnouncementContent(content) {
+  try {
+    const arr = typeof content === 'string' ? JSON.parse(content) : content
+    if (!Array.isArray(arr) || arr.length === 0) return [newAnnouncementItem()]
+    // 相容純字串陣列
+    return arr.map(item =>
+      typeof item === 'string'
+        ? { text: item, linkType: 'NONE', linkValue: '' }
+        : { text: item.text || '', linkType: item.linkType || 'NONE', linkValue: item.linkValue || '' }
+    )
+  } catch {
+    return [newAnnouncementItem()]
+  }
+}
+
+function newAnnouncementItem() {
+  return { text: '', linkType: 'NONE', linkValue: '' }
+}
+
+function addAnnouncementItem() {
+  announcementItems.value.push(newAnnouncementItem())
+  syncAnnouncementToContent()
+}
+
+function removeAnnouncementItem(idx) {
+  announcementItems.value.splice(idx, 1)
+  syncAnnouncementToContent()
+}
+
+function syncAnnouncementToContent() {
+  form.value.content = JSON.stringify(announcementItems.value)
+}
+
+/* ── 連結選擇器：遠端搜尋 ── */
+const linkSearchLoading = ref(false)
+const productOptions = ref([])
+const articleOptions = ref([])
+const categoryOptions = ref([])
+
+async function searchProducts(query) {
+  if (!query) return
+  linkSearchLoading.value = true
+  try {
+    const res = await listProduct({ title: query, pageNum: 1, pageSize: 20 })
+    productOptions.value = res.rows || []
+  } catch { productOptions.value = [] }
+  finally { linkSearchLoading.value = false }
+}
+
+async function searchArticles(query) {
+  if (!query) return
+  linkSearchLoading.value = true
+  try {
+    const res = await listArticle({ title: query, pageNum: 1, pageSize: 20 })
+    articleOptions.value = res.rows || []
+  } catch { articleOptions.value = [] }
+  finally { linkSearchLoading.value = false }
+}
+
+async function loadCategoryOptions() {
+  try {
+    const res = await listCategory({ pageNum: 1, pageSize: 100 })
+    categoryOptions.value = res.rows || []
+  } catch { categoryOptions.value = [] }
+}
+
+function onLinkSelected(item, type, value) {
+  item.linkValue = value
+  syncAnnouncementToContent()
+}
+
 const rules = {
   pageKey: [{ required: true, message: '請選擇頁面', trigger: 'change' }],
   blockKey: [
@@ -249,6 +431,7 @@ const blockTypeMap = {
 }
 
 const pageKeyMap = {
+  GLOBAL: '全站通用',
   HOME: '首頁',
   ABOUT: '關於我們',
   CONTACT: '聯絡資訊'
@@ -308,11 +491,36 @@ function handleAdd() {
 
 function handleUpdate(row) {
   reset()
-  getBlock(row.blockId).then(response => {
+  getBlock(row.blockId).then(async response => {
     form.value = response.data
+    // 公告欄：解析 content JSON 到專用陣列
+    if (form.value.blockKey === 'ANNOUNCEMENT_BAR') {
+      announcementItems.value = parseAnnouncementContent(form.value.content)
+      // 預載選項，讓已選的值能正確顯示名稱
+      await loadCategoryOptions()
+      await preloadSelectedOptions()
+    }
     open.value = true
     title.value = '修改區塊'
   })
+}
+
+/** 預載已選取的商品/文章，讓 el-select 能顯示名稱而非 ID */
+async function preloadSelectedOptions() {
+  const productIds = announcementItems.value.filter(i => i.linkType === 'PRODUCT' && i.linkValue).map(i => i.linkValue)
+  const articleIds = announcementItems.value.filter(i => i.linkType === 'ARTICLE' && i.linkValue).map(i => i.linkValue)
+  if (productIds.length) {
+    try {
+      const res = await listProduct({ pageNum: 1, pageSize: 50 })
+      productOptions.value = res.rows || []
+    } catch { /* ignore */ }
+  }
+  if (articleIds.length) {
+    try {
+      const res = await listArticle({ pageNum: 1, pageSize: 50 })
+      articleOptions.value = res.rows || []
+    } catch { /* ignore */ }
+  }
 }
 
 function handleDelete(row) {
@@ -362,6 +570,21 @@ function reset() {
     sort: 0,
     status: 'ENABLED'
   }
+  announcementItems.value = [newAnnouncementItem()]
   blockFormRef.value?.resetFields()
 }
 </script>
+
+<style scoped>
+.announcement-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.announcement-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+</style>

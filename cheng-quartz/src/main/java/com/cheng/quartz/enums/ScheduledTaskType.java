@@ -61,8 +61,8 @@ public enum ScheduledTaskType {
             List.of(
                     new TaskParameter("crawlerType", "STRING", true, "爬蟲類型", "CA102"),
                     new TaskParameter("mode", "STRING", true, "執行模式", "full-sync"),
-                    new TaskParameter("batchSize", "INTEGER", false, "批次大小", "1000"),
-                    new TaskParameter("timeout", "LONG", false, "逾時時間(ms)", "120000")
+                    new TaskParameter("batchSize", "NUMBER", false, "批次大小", "1000"),
+                    new TaskParameter("timeout", "NUMBER", false, "逾時時間(ms)", "120000")
             ),
             "0 0 2 * * ?",
             "爬蟲任務",
@@ -96,8 +96,8 @@ public enum ScheduledTaskType {
                     new TaskParameter("mode", "STRING", true, "執行模式", "full-sync"),
                     new TaskParameter("startDate", "STRING", true, "開始日期", "2025-03-01"),
                     new TaskParameter("endDate", "STRING", true, "結束日期", "2025-03-28"),
-                    new TaskParameter("batchSize", "INTEGER", false, "批次大小", "1000"),
-                    new TaskParameter("timeout", "LONG", false, "逾時時間(ms)", "120000")
+                    new TaskParameter("batchSize", "NUMBER", false, "批次大小", "1000"),
+                    new TaskParameter("timeout", "NUMBER", false, "逾時時間(ms)", "120000")
             ),
             "0 0 2 * * ?",
             "爬蟲任務",
@@ -215,7 +215,7 @@ public enum ScheduledTaskType {
         private String name;
 
         /**
-         * 參數類型（STRING, INTEGER, LONG, BOOLEAN 等）
+         * 參數類型（對應 TaskParamType 枚舉：STRING, NUMBER, BOOLEAN, SELECT, DATE 等）
          */
         private String type;
 

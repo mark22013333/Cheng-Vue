@@ -18,7 +18,7 @@
     <div class="product-main" v-if="product">
       <!-- 商品圖片區 -->
       <div class="product-gallery">
-        <div class="main-image">
+        <div ref="mainImageRef" class="main-image">
           <el-image
             :src="getImageUrl(currentImage)"
             fit="contain"
@@ -159,10 +159,13 @@ import { useCartStore } from '@/store/modules/cart'
 import { getMemberToken } from '@/utils/memberAuth'
 import { formatCurrency } from '@/utils/cheng'
 import ProductCard from '@/views/shop-front/components/ProductCard.vue'
+import { useFlyToCart } from '@/composables/useFlyToCart'
 
 const route = useRoute()
 const router = useRouter()
 const cartStore = useCartStore()
+const { flyToCart } = useFlyToCart()
+const mainImageRef = ref(null)
 
 const loading = ref(false)
 const product = ref(null)
@@ -396,6 +399,10 @@ async function handleAddToCart() {
   }
 
   try {
+    // 觸發飛入購物車動畫
+    if (mainImageRef.value) {
+      flyToCart(getImageUrl(product.value.mainImage), mainImageRef.value)
+    }
     await cartStore.addToCart(sku.skuId, quantity.value, skuInfo)
     ElMessage.success('已加入購物車')
   } catch (error) {
