@@ -157,6 +157,15 @@ export function reserveItem(data) {
   })
 }
 
+// 取消預約
+export function cancelReserveItem(itemId) {
+  return request({
+    url: '/inventory/management/cancel-reserve',
+    method: 'post',
+    params: { itemId }
+  })
+}
+
 // 建立完整匯出任務（Excel + 圖片）
 export function createExportTask(query) {
   return request({

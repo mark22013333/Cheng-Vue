@@ -148,12 +148,27 @@ public interface InvStockMapper {
      */
     @Update("update inv_stock " +
             "set reserved_qty = case " +
-            "    when reserved_qty + #{quantity} < 0 then 0 " +
-            "    else reserved_qty + #{quantity} " +
+            "    when IFNULL(reserved_qty, 0) + #{quantity} < 0 then 0 " +
+            "    else IFNULL(reserved_qty, 0) + #{quantity} " +
             "end, " +
             "    update_time   = now() " +
             "where item_id = #{itemId}")
     int updateReservedQty(@Param("itemId") Long itemId, @Param("quantity") Integer quantity);
+
+    /**
+     * 取消預約：減少 reserved_qty 並恢復 available_qty
+     *
+     * @param itemId   物品ID
+     * @param quantity 要恢復的數量（正數）
+     * @return 結果
+     */
+    @Update("update inv_stock " +
+            "set reserved_qty = IFNULL(reserved_qty, 0) - #{quantity}, " +
+            "    available_qty = available_qty + #{quantity}, " +
+            "    update_time   = now() " +
+            "where item_id = #{itemId} " +
+            "  and IFNULL(reserved_qty, 0) >= #{quantity}")
+    int cancelReserve(@Param("itemId") Long itemId, @Param("quantity") Integer quantity);
 
     /**
      * 刪除庫存

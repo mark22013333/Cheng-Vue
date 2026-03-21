@@ -128,8 +128,25 @@ public class SocialLoginService {
             // 更新 Token
             updateSocialTokens(existingSocial, tokenResponse, profile);
         } else {
-            // 未綁定 → 自動建立新會員
-            member = createMemberFromOAuth(profile, provider);
+            // 未綁定 → 先用 email 查找現有會員，找到則自動綁定，否則建立新會員
+            if (profile.getEmail() != null && !profile.getEmail().isBlank()) {
+                member = memberService.selectMemberByEmail(profile.getEmail());
+            } else {
+                member = null;
+            }
+
+            if (member != null) {
+                // Email 已存在 → 自動綁定到現有會員
+                MemberStatus memberStatus = member.getStatusEnum();
+                if (memberStatus == null || !memberStatus.canLogin()) {
+                    throw new ServiceException("此帳號已停用或凍結");
+                }
+                log.info("透過 {} Email 匹配到現有會員：memberId={}, email={}",
+                        provider.getCode(), member.getMemberId(), profile.getEmail());
+            } else {
+                // 完全新用戶 → 建立新會員
+                member = createMemberFromOAuth(profile, provider);
+            }
 
             // 建立綁定記錄
             createSocialBinding(member.getMemberId(), provider, profile, tokenResponse);

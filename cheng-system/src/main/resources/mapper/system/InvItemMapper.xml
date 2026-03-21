@@ -154,7 +154,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             i.purchase_price, i.current_price, i.supplier, i.min_stock, i.max_stock,
             i.location, i.description, i.image_url, i.status, i.remark, i.version,
             s.stock_id, s.total_quantity, s.available_qty, s.borrowed_qty,
-            s.reserved_qty, s.damaged_qty, s.lost_qty, s.last_in_time, s.last_out_time,
+            IFNULL(s.reserved_qty, 0) as reserved_qty, s.damaged_qty, s.lost_qty, s.last_in_time, s.last_out_time,
             s.update_time as stock_update_time
         from inv_item i
         left join inv_category c on i.category_id = c.category_id
@@ -345,17 +345,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </delete>
 
-    <!-- 預約物品（使用樂觀鎖） -->
+    <!-- 預約物品：WHERE 已保證 available_qty 足夠，直接更新 -->
     <update id="reserveItem">
-        UPDATE inv_stock 
-        SET available_qty = CASE 
-                WHEN available_qty >= #{quantity} THEN available_qty - #{quantity}
-                ELSE available_qty
-            END,
-            reserved_qty = CASE 
-                WHEN available_qty >= #{quantity} THEN reserved_qty + #{quantity}
-                ELSE reserved_qty
-            END,
+        UPDATE inv_stock
+        SET available_qty = available_qty - #{quantity},
+            reserved_qty = IFNULL(reserved_qty, 0) + #{quantity},
             update_time = NOW()
         WHERE item_id = #{itemId}
           AND available_qty >= #{quantity}

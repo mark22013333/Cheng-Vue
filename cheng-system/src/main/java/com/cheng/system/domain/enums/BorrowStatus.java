@@ -39,7 +39,12 @@ public enum BorrowStatus {
     /**
      * 逾期
      */
-    OVERDUE("5", "逾期");
+    OVERDUE("5", "逾期"),
+
+    /**
+     * 借用人自行取消
+     */
+    CANCELLED("6", "自行取消");
 
     private final String code;
     private final String description;
@@ -117,6 +122,7 @@ public enum BorrowStatus {
             case RETURNED -> "#67C23A";     // 已歸還 - 綠色
             case PARTIAL_RETURNED -> "#F56C6C"; // 部分歸還 - 紅色
             case OVERDUE -> "#F56C6C";      // 逾期 - 紅色
+            case CANCELLED -> "#909399";    // 自行取消 - 灰色
         };
     }
 }

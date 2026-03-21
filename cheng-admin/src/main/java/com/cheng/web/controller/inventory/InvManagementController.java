@@ -405,6 +405,22 @@ public class InvManagementController extends BaseController {
     }
 
     /**
+     * 取消預約（依 itemId 自動找到當前用戶的待審核預約）
+     */
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Inventory.Management.RESERVE + "')")
+    @Log(title = "取消預約", businessType = BusinessType.UPDATE)
+    @PostMapping("/cancel-reserve")
+    public AjaxResult cancelReservation(@RequestParam Long itemId) {
+        try {
+            com.cheng.system.domain.vo.ReserveResult result = invItemService.cancelReservationByItemId(itemId);
+            return success(result);
+        } catch (Exception e) {
+            log.error("取消預約失敗", e);
+            return error(e.getMessage());
+        }
+    }
+
+    /**
      * 訂閱預約廣播（SSE）
      * 使用 SseManager 訂閱頻道
      */

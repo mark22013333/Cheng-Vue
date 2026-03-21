@@ -14,7 +14,11 @@ import com.cheng.common.utils.file.ImageExportUtil;
 import com.cheng.common.utils.file.ImageImportUtil;
 import com.cheng.common.utils.poi.ExcelUtil;
 import com.cheng.common.utils.uuid.IdUtils;
+import com.cheng.common.constant.PermConstants;
 import com.cheng.common.event.ReservationEvent;
+import com.cheng.system.domain.SysNotice;
+import com.cheng.system.service.ISysNoticeService;
+import com.cheng.system.service.ISysUserService;
 import com.cheng.system.domain.InvItem;
 import com.cheng.system.domain.InvItemTagRelation;
 import com.cheng.system.domain.InvStock;
@@ -29,6 +33,8 @@ import com.cheng.system.domain.vo.ReserveResult;
 import com.cheng.system.domain.vo.ReserveRequest;
 import com.cheng.system.dto.ImportTaskResult;
 import com.cheng.system.domain.enums.BorrowStatus;
+import com.cheng.system.domain.enums.ReserveStatus;
+import com.cheng.system.domain.enums.StockRecordType;
 import com.cheng.system.dto.InvItemWithStockDTO;
 import com.cheng.system.mapper.*;
 import com.cheng.system.service.IInvItemService;
@@ -82,6 +88,8 @@ public class InvItemServiceImpl implements IInvItemService {
     private final IInvBorrowService invBorrowService;
     private final Validator validator;
     private final ApplicationEventPublisher eventPublisher;
+    private final ISysUserService sysUserService;
+    private final ISysNoticeService sysNoticeService;
 
     /**
      * 靜態 Map 供 Controller 傳遞 SseManager 實例
@@ -319,7 +327,7 @@ public class InvItemServiceImpl implements IInvItemService {
             if (initialStock > 0) {
                 InvStockRecord record = new InvStockRecord();
                 record.setItemId(invItem.getItemId());
-                record.setRecordType("0"); // 入庫
+                record.setRecordType(StockRecordType.IN.getCode());
                 record.setQuantity(initialStock);
                 record.setBeforeQty(0);
                 record.setAfterQty(initialStock);
@@ -1323,7 +1331,7 @@ public class InvItemServiceImpl implements IInvItemService {
 
             // 檢查是否包含自己未審核的預約
             boolean hasOwnPendingReservation = existingReservations.stream()
-                    .anyMatch(r -> r.getBorrowerId().equals(userId) && r.getReserveStatus() == 1);
+                    .anyMatch(r -> r.getBorrowerId().equals(userId) && r.getReserveStatus() == ReserveStatus.PENDING.getCode());
 
             if (hasOwnPendingReservation) {
                 throw new ServiceException("您已經預約了此物品在該時間段，請勿重複預約");
@@ -1404,7 +1412,7 @@ public class InvItemServiceImpl implements IInvItemService {
             borrow.setQuantity(request.getBorrowQty());
             borrow.setBorrowTime(DateUtils.getNowDate());  // 借出時間（預約建立時間）
             borrow.setStatus(BorrowStatus.PENDING.getCode());  // 0=待審核（預約需要審核）
-            borrow.setReserveStatus(1); // 1=待審核預約
+            borrow.setReserveStatus(ReserveStatus.PENDING.getCode());
             borrow.setReserveStartDate(request.getStartDate());
             borrow.setReserveEndDate(request.getEndDate());
             borrow.setPurpose("已預約");  // 借用目的：標記為預約
@@ -1462,69 +1470,150 @@ public class InvItemServiceImpl implements IInvItemService {
 
     @Override
     public boolean restoreReservedQuantity(Long itemId, Integer quantity) {
-        try {
-            if (itemId == null || quantity == null || quantity <= 0) {
-                log.warn("恢復預約數量參數無效 - itemId: {}, quantity: {}", itemId, quantity);
-                return false;
-            }
-
-            // 檢查物品是否存在
-            InvItem item = invItemMapper.selectInvItemByItemId(itemId);
-            if (item == null) {
-                log.warn("物品不存在，無法恢復預約數量 - itemId: {}", itemId);
-                return false;
-            }
-
-            // 檢查庫存記錄是否存在
-            InvStock stock = invStockMapper.selectInvStockByItemId(itemId);
-            if (stock == null) {
-                log.warn("庫存記錄不存在，無法恢復預約數量 - itemId: {}", itemId);
-                return false;
-            }
-
-            // 檢查當前預約數量是否足夠減少
-            if (stock.getReservedQty() < quantity) {
-                log.warn("當前預約數量不足，無法恢復 - itemId: {}, currentReserved: {}, restoreQuantity: {}",
-                        itemId, stock.getReservedQty(), quantity);
-                return false;
-            }
-
-            // 更新庫存：減少預約數量
-            int result = invStockMapper.updateReservedQty(itemId, -quantity);
-
-            if (result > 0) {
-                // 記錄庫存變動
-                InvStockRecord record = new InvStockRecord();
-                record.setItemId(itemId);
-                record.setItemName(item.getItemName());
-                record.setItemCode(item.getItemCode());
-                record.setRecordType("RESTORE_RESERVED");
-                record.setQuantity(quantity);
-                record.setBeforeQty(stock.getTotalQuantity());
-                record.setAfterQty(stock.getTotalQuantity());
-                record.setOperatorId(-1L); // 系統操作
-                record.setOperatorName("system");
-                record.setDeptId(-1L);
-                record.setDeptName("系統");
-                record.setRecordTime(new Date());
-                record.setReason("預約取消，恢復預約數量");
-                record.setCreateBy("system");
-                record.setCreateTime(new Date());
-
-                invStockRecordMapper.insertInvStockRecord(record);
-
-                log.info("成功恢復物品預約數量 - itemId: {}, itemName: {}, quantity: {}",
-                        itemId, item.getItemName(), quantity);
-                return true;
-            } else {
-                log.error("恢復預約數量失敗，資料庫更新影響0行 - itemId: {}, quantity: {}", itemId, quantity);
-                return false;
-            }
-
-        } catch (Exception e) {
-            log.error("恢復預約數量異常 - itemId: {}, quantity: {}", itemId, quantity, e);
+        if (itemId == null || quantity == null || quantity <= 0) {
+            log.warn("恢復預約數量參數無效 - itemId: {}, quantity: {}", itemId, quantity);
             return false;
         }
+
+        // cancelReserve 的 WHERE 條件已保證 reserved_qty >= quantity，失敗時回傳 0
+        int result = invStockMapper.cancelReserve(itemId, quantity);
+
+        if (result > 0) {
+            // 記錄庫存變動
+            InvItem item = invItemMapper.selectInvItemByItemId(itemId);
+            InvStockRecord record = new InvStockRecord();
+            record.setItemId(itemId);
+            record.setItemName(item != null ? item.getItemName() : "");
+            record.setItemCode(item != null ? item.getItemCode() : "");
+            record.setRecordType(StockRecordType.RESTORE_RESERVE.getCode());
+            record.setQuantity(quantity);
+            record.setBeforeQty(0);
+            record.setAfterQty(0);
+            record.setOperatorId(-1L);
+            record.setOperatorName("system");
+            record.setDeptId(-1L);
+            record.setDeptName("系統");
+            record.setRecordTime(new Date());
+            record.setReason("預約取消，恢復預約數量");
+            record.setCreateBy("system");
+            record.setCreateTime(new Date());
+
+            invStockRecordMapper.insertInvStockRecord(record);
+
+            log.info("成功恢復物品預約數量 - itemId: {}, quantity: {}", itemId, quantity);
+            return true;
+        } else {
+            log.error("恢復預約數量失敗，資料庫更新影響0行 - itemId: {}, quantity: {}", itemId, quantity);
+            return false;
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ReserveResult cancelReservationByItemId(Long itemId) {
+        Long currentUserId = SecurityUtils.getUserId();
+        List<InvBorrow> pendingList = invBorrowMapper.selectPendingReservationsByUser(currentUserId, itemId);
+        if (pendingList == null || pendingList.isEmpty()) {
+            throw new ServiceException("您沒有該物品的待審核預約");
+        }
+        // 直接傳入已查詢的 borrow 物件，避免重複查詢
+        return doCancelReservation(pendingList.get(0));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ReserveResult cancelReservation(Long borrowId) {
+        InvBorrow borrow = invBorrowMapper.selectInvBorrowByBorrowId(borrowId);
+        if (borrow == null) {
+            throw new ServiceException("預約記錄不存在");
+        }
+        return doCancelReservation(borrow);
+    }
+
+    private ReserveResult doCancelReservation(InvBorrow borrow) {
+        Long borrowId = borrow.getBorrowId();
+        log.info("開始取消預約 - borrowId: {}", borrowId);
+
+        if (borrow.getReserveStatus() == null || borrow.getReserveStatus() != ReserveStatus.PENDING.getCode()) {
+            throw new ServiceException("僅待審核的預約可以取消");
+        }
+
+        Long currentUserId = SecurityUtils.getUserId();
+        if (!currentUserId.toString().equals(borrow.getCreateBy())) {
+            throw new ServiceException("只能取消自己的預約");
+        }
+
+        borrow.setReserveStatus(ReserveStatus.CANCELLED.getCode());
+        borrow.setStatus(BorrowStatus.CANCELLED.getCode());
+        borrow.setUpdateBy(currentUserId.toString());
+        borrow.setUpdateTime(DateUtils.getNowDate());
+        invBorrowMapper.updateInvBorrow(borrow);
+
+        // 5. 恢復庫存（失敗時回滾整筆交易）
+        if (!restoreReservedQuantity(borrow.getItemId(), borrow.getQuantity())) {
+            throw new ServiceException("恢復庫存失敗，請重新整理後重試");
+        }
+
+        // 6. 查詢最新庫存資訊
+        InvItemWithStockDTO currentItem = invItemMapper.selectItemWithStockByItemId(borrow.getItemId());
+        int availableQty = currentItem != null ? currentItem.getAvailableQty() : 0;
+        int reservedQty = currentItem != null ? currentItem.getReservedQty() : 0;
+
+        // 7. 發布取消事件
+        ReservationEvent event = new ReservationEvent(
+                "cancelled",
+                borrow.getItemId(),
+                currentUserId,
+                borrowId,
+                "預約已取消",
+                DateUtils.getNowDate(),
+                availableQty,
+                reservedQty,
+                null
+        );
+        eventPublisher.publishEvent(event);
+
+        // 8. 建立通知給審核權限使用者
+        try {
+            List<Long> approverUserIds = sysUserService.selectUserIdsByPermission(
+                    PermConstants.Inventory.Borrow.APPROVE);
+
+            if (approverUserIds != null && !approverUserIds.isEmpty()) {
+                String cancellerName = SecurityUtils.getLoginUser().getUser().getNickName();
+                String noticeTitle = String.format("%s 預約已取消 - %s", borrow.getItemName(), cancellerName);
+
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                String startDate = borrow.getReserveStartDate() != null ? sdf.format(borrow.getReserveStartDate()) : "未指定";
+                String endDate = borrow.getReserveEndDate() != null ? sdf.format(borrow.getReserveEndDate()) : "未指定";
+
+                String noticeContent = String.format(
+                        "物品名稱：%s\n預約數量：%d\n預約日期：%s ~ %s\n取消人：%s",
+                        borrow.getItemName(), borrow.getQuantity(), startDate, endDate, cancellerName);
+
+                for (Long approverUserId : approverUserIds) {
+                    SysNotice notice = new SysNotice();
+                    notice.setNoticeTitle(noticeTitle);
+                    notice.setNoticeType("1");
+                    notice.setNoticeContent(noticeContent);
+                    notice.setStatus("0");
+                    notice.setCreateBy(SecurityUtils.getUsername());
+                    notice.setRemark("userId:" + approverUserId);
+                    sysNoticeService.insertNotice(notice);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("建立取消預約通知失敗，不影響取消流程 - borrowId: {}, error: {}", borrowId, e.getMessage());
+        }
+
+        log.info("預約取消成功 - borrowId: {}, itemId: {}", borrowId, borrow.getItemId());
+
+        return ReserveResult.builder()
+                .success(true)
+                .message("預約已成功取消")
+                .borrowId(borrowId)
+                .availableQty(availableQty)
+                .reservedQty(reservedQty)
+                .build();
     }
 
     /**
