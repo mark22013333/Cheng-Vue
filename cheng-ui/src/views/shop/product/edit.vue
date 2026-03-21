@@ -419,6 +419,8 @@ function loadProduct() {
         // 已經是逗號分隔格式或其他格式，不需要轉換
       }
     }
+    // 移除 skuList 避免隨 form 送到後端，SKU 由獨立的 batchSaveSku 管理
+    delete data.skuList
     form.value = data
     loadSkuList()
   })
