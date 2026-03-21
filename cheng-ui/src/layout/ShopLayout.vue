@@ -978,3 +978,272 @@ onMounted(() => {
   }
 }
 </style>
+
+<!-- 商城提示框全域樣式覆寫（不可 scoped，因 ElMessage/ElMessageBox 掛載在 body） -->
+<style>
+/* ============================================================
+   ElMessage — 商城友善提示條
+   從冷硬的系統通知 → 溫暖的店員輕語
+   ============================================================ */
+
+/* 只在商城頁面生效：ShopLayout 存在時覆寫 */
+.shop-layout ~ .el-message,
+body:has(.shop-layout) .el-message {
+  --shop-msg-radius: 14px;
+  --shop-msg-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  border-radius: var(--shop-msg-radius) !important;
+  border: none !important;
+  box-shadow: var(--shop-msg-shadow) !important;
+  padding: 14px 22px !important;
+  min-width: 180px !important;
+  gap: 10px !important;
+  top: 28px !important;
+  font-size: 14px !important;
+  animation: shopMsgSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* 成功 — 溫暖的薄荷綠 */
+body:has(.shop-layout) .el-message--success {
+  background: linear-gradient(135deg, #ecfdf5, #f0fdf4) !important;
+  color: #166534 !important;
+}
+
+body:has(.shop-layout) .el-message--success .el-message__icon {
+  color: #22c55e !important;
+  font-size: 20px !important;
+}
+
+body:has(.shop-layout) .el-message--success .el-message__content {
+  color: #166534 !important;
+  font-weight: 500 !important;
+}
+
+/* 警告 — 柔和的暖琥珀 */
+body:has(.shop-layout) .el-message--warning {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7) !important;
+  color: #92400e !important;
+}
+
+body:has(.shop-layout) .el-message--warning .el-message__icon {
+  color: #f59e0b !important;
+  font-size: 20px !important;
+}
+
+body:has(.shop-layout) .el-message--warning .el-message__content {
+  color: #92400e !important;
+  font-weight: 500 !important;
+}
+
+/* 錯誤 — 溫柔的玫瑰紅（非刺眼的警報紅） */
+body:has(.shop-layout) .el-message--error {
+  background: linear-gradient(135deg, #fff1f2, #ffe4e6) !important;
+  color: #9f1239 !important;
+}
+
+body:has(.shop-layout) .el-message--error .el-message__icon {
+  color: #f43f5e !important;
+  font-size: 20px !important;
+}
+
+body:has(.shop-layout) .el-message--error .el-message__content {
+  color: #9f1239 !important;
+  font-weight: 500 !important;
+}
+
+/* 資訊 — 柔和的天空藍 */
+body:has(.shop-layout) .el-message--info {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe) !important;
+  color: #1e40af !important;
+}
+
+body:has(.shop-layout) .el-message--info .el-message__icon {
+  color: #3b82f6 !important;
+  font-size: 20px !important;
+}
+
+body:has(.shop-layout) .el-message--info .el-message__content {
+  color: #1e40af !important;
+  font-weight: 500 !important;
+}
+
+/* 關閉按鈕 */
+body:has(.shop-layout) .el-message .el-message__closeBtn {
+  font-size: 14px !important;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+
+body:has(.shop-layout) .el-message .el-message__closeBtn:hover {
+  opacity: 0.8;
+}
+
+@keyframes shopMsgSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ============================================================
+   ElMessageBox — 商城友善確認對話框
+   從冷硬的系統確認 → 溫暖的對話
+   ============================================================ */
+body:has(.shop-layout) .el-overlay-message-box .el-message-box {
+  --shop-dialog-radius: 20px;
+
+  border-radius: var(--shop-dialog-radius) !important;
+  border: none !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+  padding: 32px 28px 24px !important;
+  max-width: 380px !important;
+  animation: shopDialogIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* 遮罩層 */
+body:has(.shop-layout) .el-overlay-message-box {
+  background: rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
+/* 標題 */
+body:has(.shop-layout) .el-message-box__header {
+  padding: 0 0 16px 0 !important;
+}
+
+body:has(.shop-layout) .el-message-box__title {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* 隱藏預設 icon 容器 — 去掉冷硬的系統感 */
+body:has(.shop-layout) .el-message-box__status {
+  display: none !important;
+}
+
+/* 內容文字 */
+body:has(.shop-layout) .el-message-box__content {
+  padding: 0 0 24px 0 !important;
+}
+
+body:has(.shop-layout) .el-message-box__message p {
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+  color: #4b5563 !important;
+}
+
+/* 按鈕區 */
+body:has(.shop-layout) .el-message-box__btns {
+  padding: 0 !important;
+  display: flex !important;
+  gap: 10px !important;
+}
+
+/* 取消按鈕 — 輕柔的灰色外框 */
+body:has(.shop-layout) .el-message-box__btns .el-button--default {
+  flex: 1 !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  border: 1.5px solid #e5e7eb !important;
+  background: white !important;
+  color: #6b7280 !important;
+  transition: all 0.2s !important;
+}
+
+body:has(.shop-layout) .el-message-box__btns .el-button--default:hover {
+  border-color: #d1d5db !important;
+  background: #f9fafb !important;
+  color: #374151 !important;
+}
+
+/* 確認按鈕 — 商城主色調 */
+body:has(.shop-layout) .el-message-box__btns .el-button--primary {
+  flex: 1 !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  border: none !important;
+  background: var(--mall-primary, #4A6B7C) !important;
+  color: white !important;
+  letter-spacing: 0.5px !important;
+  transition: all 0.2s !important;
+}
+
+body:has(.shop-layout) .el-message-box__btns .el-button--primary:hover {
+  filter: brightness(0.9) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(74, 107, 124, 0.3) !important;
+}
+
+/* 關閉按鈕 */
+body:has(.shop-layout) .el-message-box__headerbtn {
+  top: 20px !important;
+  right: 20px !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  transition: background 0.2s !important;
+}
+
+body:has(.shop-layout) .el-message-box__headerbtn:hover {
+  background: #f3f4f6 !important;
+}
+
+body:has(.shop-layout) .el-message-box__headerbtn .el-message-box__close {
+  color: #9ca3af !important;
+  font-size: 14px !important;
+}
+
+@keyframes shopDialogIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* === RWD：手機版提示框微調 === */
+@media (max-width: 768px) {
+  body:has(.shop-layout) .el-message {
+    min-width: auto !important;
+    max-width: calc(100vw - 32px) !important;
+    padding: 12px 18px !important;
+    font-size: 13px !important;
+    border-radius: 12px !important;
+  }
+
+  body:has(.shop-layout) .el-overlay-message-box .el-message-box {
+    max-width: calc(100vw - 40px) !important;
+    padding: 24px 20px 20px !important;
+    border-radius: 16px !important;
+    margin: 0 20px !important;
+  }
+
+  body:has(.shop-layout) .el-message-box__title {
+    font-size: 16px !important;
+  }
+
+  body:has(.shop-layout) .el-message-box__message p {
+    font-size: 14px !important;
+  }
+
+  body:has(.shop-layout) .el-message-box__btns .el-button--default,
+  body:has(.shop-layout) .el-message-box__btns .el-button--primary {
+    height: 42px !important;
+    border-radius: 10px !important;
+  }
+}
+</style>

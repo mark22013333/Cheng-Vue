@@ -1,7 +1,7 @@
 <template>
   <div class="product-detail-page" v-loading="loading">
     <!-- 麵包屑導覽列 -->
-    <div class="breadcrumb-section" v-if="product">
+    <nav class="breadcrumb-section" v-if="product">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item :to="{ path: '/' }">首頁</el-breadcrumb-item>
         <el-breadcrumb-item
@@ -13,30 +13,59 @@
         </el-breadcrumb-item>
         <el-breadcrumb-item>{{ product.title }}</el-breadcrumb-item>
       </el-breadcrumb>
-    </div>
+    </nav>
 
     <div class="product-main" v-if="product">
       <!-- 商品圖片區 -->
       <div class="product-gallery">
-        <div ref="mainImageRef" class="main-image">
-          <el-image
-            :src="getImageUrl(currentImage)"
-            fit="contain"
-            :preview-src-list="previewImages"
+        <!-- 手機版：輪播切換 -->
+        <div class="gallery-carousel">
+          <el-carousel
+            :autoplay="false"
             :initial-index="currentImageIndex"
-            preview-teleported
-            hide-on-click-modal
-          />
-        </div>
-        <div class="thumbnail-list" v-if="allImages.length > 1">
-          <div
-            v-for="(img, index) in allImages"
-            :key="index"
-            class="thumbnail"
-            :class="{ active: currentImage === img }"
-            @click="currentImage = img"
+            indicator-position="outside"
+            height=""
+            @change="onCarouselChange"
+            ref="carouselRef"
           >
-            <img :src="getImageUrl(img)" />
+            <el-carousel-item v-for="(img, index) in allImages" :key="index">
+              <div class="carousel-image-wrapper">
+                <el-image
+                  :src="getImageUrl(img)"
+                  fit="contain"
+                  :preview-src-list="previewImages"
+                  :initial-index="index"
+                  preview-teleported
+                  hide-on-click-modal
+                />
+              </div>
+            </el-carousel-item>
+          </el-carousel>
+          <div class="image-counter">{{ currentImageIndex + 1 }} / {{ allImages.length }}</div>
+        </div>
+
+        <!-- 桌面版：主圖 + 縮圖列 -->
+        <div class="gallery-desktop">
+          <div ref="mainImageRef" class="main-image">
+            <el-image
+              :src="getImageUrl(currentImage)"
+              fit="contain"
+              :preview-src-list="previewImages"
+              :initial-index="currentImageIndex"
+              preview-teleported
+              hide-on-click-modal
+            />
+          </div>
+          <div class="thumbnail-list" v-if="allImages.length > 1">
+            <div
+              v-for="(img, index) in allImages"
+              :key="index"
+              class="thumbnail"
+              :class="{ active: currentImage === img }"
+              @click="currentImage = img"
+            >
+              <img :src="getImageUrl(img)" :alt="`商品圖 ${index + 1}`" />
+            </div>
           </div>
         </div>
       </div>
@@ -48,7 +77,8 @@
 
         <div class="price-section">
           <div class="price-row">
-            <span class="current-price">{{ fmtCurrency(currentPrice) }}</span>
+            <span class="price-symbol">NT$</span>
+            <span class="current-price">{{ formatPriceNumber(currentPrice) }}</span>
             <span
               v-if="currentOriginalPrice && Number(currentOriginalPrice) > Number(currentPrice)"
               class="original-price"
@@ -61,13 +91,22 @@
 
         <div v-if="showSaleCountdown" class="sale-countdown">
           <el-icon><Timer /></el-icon>
-          <span>特惠倒數：{{ saleCountdownText }}</span>
+          <span>限時特惠</span>
+          <div class="countdown-blocks">
+            <span class="countdown-num" v-for="(part, i) in countdownParts" :key="i">{{ part }}</span>
+          </div>
         </div>
 
         <div class="meta-section">
-          <span>銷量 {{ product.salesCount || 0 }}</span>
-          <span class="meta-divider"></span>
-          <span>瀏覽 {{ product.viewCount || 0 }}</span>
+          <div class="meta-item">
+            <span class="meta-value">{{ product.salesCount || 0 }}</span>
+            <span class="meta-label">已售</span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-item">
+            <span class="meta-value">{{ product.viewCount || 0 }}</span>
+            <span class="meta-label">瀏覽</span>
+          </div>
         </div>
 
         <!-- SKU 選擇 -->
@@ -107,8 +146,8 @@
           </div>
         </div>
 
-        <!-- 操作按鈕 -->
-        <div class="action-buttons">
+        <!-- 桌面版操作按鈕 -->
+        <div class="action-buttons desktop-actions">
           <button class="btn-cart" @click="handleAddToCart">
             <el-icon><ShoppingCart /></el-icon>
             加入購物車
@@ -122,12 +161,19 @@
 
     <!-- 商品詳情 -->
     <div class="product-description" v-if="product">
-      <el-tabs v-model="activeTab" class="detail-tabs">
-        <el-tab-pane label="商品詳情" name="detail">
-          <div class="description-content" v-html="product.description"></div>
-          <el-empty v-if="!product.description" description="暫無商品詳情" />
-        </el-tab-pane>
-      </el-tabs>
+      <div class="tab-header">
+        <button
+          class="tab-btn"
+          :class="{ active: activeTab === 'detail' }"
+          @click="activeTab = 'detail'"
+        >
+          商品詳情
+        </button>
+      </div>
+      <div class="tab-content" v-show="activeTab === 'detail'">
+        <div class="description-content" v-html="product.description"></div>
+        <el-empty v-if="!product.description" description="暫無商品詳情" />
+      </div>
     </div>
 
     <!-- 推薦商品 -->
@@ -143,9 +189,30 @@
           @click="goProductDetail(item.productId)"
         />
       </div>
+      <!-- 手機版水平捲動推薦 -->
+      <div class="recommend-scroll">
+        <ProductCard
+          v-for="item in recommendProducts"
+          :key="'m-' + item.productId"
+          :product="item"
+          class="recommend-scroll-card"
+          @click="goProductDetail(item.productId)"
+        />
+      </div>
     </div>
 
     <el-empty v-if="!loading && !product" description="商品不存在或已下架" />
+
+    <!-- 手機版底部固定購買列 -->
+    <div class="mobile-bottom-bar" v-if="product">
+      <button class="mobile-btn-cart" @click="handleAddToCart">
+        <el-icon><ShoppingCart /></el-icon>
+        <span>購物車</span>
+      </button>
+      <button class="mobile-btn-buy" @click="handleBuyNow">
+        立即購買
+      </button>
+    </div>
   </div>
 </template>
 
@@ -166,6 +233,7 @@ const router = useRouter()
 const cartStore = useCartStore()
 const { flyToCart } = useFlyToCart()
 const mainImageRef = ref(null)
+const carouselRef = ref(null)
 
 const loading = ref(false)
 const product = ref(null)
@@ -240,6 +308,11 @@ const hasActiveSalePrice = computed(() => {
 
 function fmtCurrency(value) {
   return formatCurrency(value)
+}
+
+function formatPriceNumber(value) {
+  const num = Number(value || 0)
+  return num.toLocaleString('zh-TW')
 }
 
 const currentPrice = computed(() => {
@@ -321,6 +394,22 @@ function formatCountdown(ms) {
 
 const saleCountdownText = computed(() => formatCountdown(saleRemainingMs.value))
 
+const countdownParts = computed(() => {
+  const ms = saleRemainingMs.value
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  const parts = []
+  if (days > 0) parts.push(`${days}天`)
+  parts.push(String(hours).padStart(2, '0'))
+  parts.push(String(minutes).padStart(2, '0'))
+  parts.push(String(seconds).padStart(2, '0'))
+  return parts
+})
+
 function stopCountdown() {
   if (countdownTimer) {
     clearInterval(countdownTimer)
@@ -365,6 +454,12 @@ const currentImageIndex = computed(() => {
   const index = allImages.value.indexOf(currentImage.value)
   return index >= 0 ? index : 0
 })
+
+function onCarouselChange(index) {
+  if (allImages.value[index]) {
+    currentImage.value = allImages.value[index]
+  }
+}
 
 function getImageUrl(url) {
   if (!url) return 'https://via.placeholder.com/600x600?text=No+Image'
@@ -522,11 +617,12 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding-bottom: 24px;
 }
 
 /* === 麵包屑 === */
 .breadcrumb-section {
-  padding: 12px 0;
+  padding: 8px 0;
 }
 
 .breadcrumb-section :deep(.el-breadcrumb__item) {
@@ -545,7 +641,7 @@ onUnmounted(() => {
 /* === 商品主區域 === */
 .product-main {
   background: var(--mall-card-bg, white);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 32px;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -561,9 +657,68 @@ onUnmounted(() => {
   gap: 12px;
 }
 
+/* 手機版輪播 — 桌面隱藏 */
+.gallery-carousel {
+  display: none;
+  position: relative;
+}
+
+.gallery-carousel :deep(.el-carousel) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.gallery-carousel :deep(.el-carousel__container) {
+  height: 0 !important;
+  padding-bottom: 100%;
+}
+
+.gallery-carousel :deep(.el-carousel__item) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.carousel-image-wrapper {
+  width: 100%;
+  height: 100%;
+  background: #f8f6f3;
+}
+
+.carousel-image-wrapper :deep(.el-image) {
+  width: 100%;
+  height: 100%;
+}
+
+.image-counter {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.gallery-carousel :deep(.el-carousel__indicators--outside) {
+  display: none;
+}
+
+/* 桌面版圖片 */
+.gallery-desktop {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .main-image {
   aspect-ratio: 1;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
   background: #f8f6f3;
 }
@@ -577,17 +732,22 @@ onUnmounted(() => {
   display: flex;
   gap: 8px;
   overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.thumbnail-list::-webkit-scrollbar {
+  display: none;
 }
 
 .thumbnail {
   width: 72px;
   height: 72px;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
   border: 2px solid transparent;
   flex-shrink: 0;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
 }
 
 .thumbnail:hover {
@@ -596,6 +756,7 @@ onUnmounted(() => {
 
 .thumbnail.active {
   border-color: var(--mall-primary, #4A6B7C);
+  box-shadow: 0 0 0 1px var(--mall-primary, #4A6B7C);
 }
 
 .thumbnail img {
@@ -608,7 +769,7 @@ onUnmounted(() => {
 .product-info {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .product-title {
@@ -617,21 +778,21 @@ onUnmounted(() => {
   color: var(--mall-text-primary, #303133);
   margin: 0;
   line-height: 1.4;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
 .product-subtitle {
   font-size: 14px;
   color: var(--mall-text-muted, #909399);
-  margin: 0;
+  margin: -8px 0 0 0;
   line-height: 1.6;
 }
 
 /* === 價格 === */
 .price-section {
-  background: var(--mall-body-bg, #FAF8F5);
-  padding: 18px 20px;
-  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(165, 99, 92, 0.06), rgba(165, 99, 92, 0.02));
+  padding: 20px 24px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -641,55 +802,100 @@ onUnmounted(() => {
 .price-row {
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  gap: 4px;
 }
 
-.current-price {
-  font-size: 28px;
+.price-symbol {
+  font-size: 16px;
   font-weight: 700;
   color: var(--mall-accent, #A5635C);
 }
 
+.current-price {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--mall-accent, #A5635C);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
 .original-price {
-  font-size: 15px;
+  font-size: 14px;
   color: #c0c4cc;
   text-decoration: line-through;
+  margin-left: 8px;
 }
 
 .discount-tag {
-  display: inline-block;
-  padding: 3px 10px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
   font-size: 12px;
-  color: var(--mall-accent, #A5635C);
-  background: rgba(165, 99, 92, 0.1);
-  border: 1px solid rgba(165, 99, 92, 0.2);
-  border-radius: 4px;
+  color: white;
+  background: var(--mall-accent, #A5635C);
+  border-radius: 6px;
   font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .sale-countdown {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 13px;
   color: var(--mall-accent, #A5635C);
-  padding: 8px 12px;
+  padding: 10px 16px;
   background: rgba(165, 99, 92, 0.06);
-  border-radius: 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(165, 99, 92, 0.12);
+}
+
+.countdown-blocks {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.countdown-num {
+  background: var(--mall-accent, #A5635C);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+  text-align: center;
 }
 
 /* === 統計 === */
 .meta-section {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.meta-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mall-text-primary, #303133);
+}
+
+.meta-label {
   font-size: 13px;
   color: var(--mall-text-muted, #909399);
 }
 
 .meta-divider {
   width: 1px;
-  height: 12px;
+  height: 16px;
   background: var(--mall-border-color, #E8E4DF);
 }
 
@@ -697,8 +903,8 @@ onUnmounted(() => {
 .section-label {
   font-size: 14px;
   color: var(--mall-text-secondary, #606266);
-  margin-bottom: 10px;
-  font-weight: 500;
+  margin-bottom: 12px;
+  font-weight: 600;
 }
 
 .sku-section {
@@ -708,23 +914,25 @@ onUnmounted(() => {
 .sku-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .sku-btn {
-  padding: 8px 20px;
-  border: 1px solid var(--mall-border-color, #E8E4DF);
-  border-radius: 6px;
+  padding: 10px 24px;
+  border: 1.5px solid var(--mall-border-color, #E8E4DF);
+  border-radius: 8px;
   background: white;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--mall-text-primary, #303133);
   transition: all 0.2s;
+  min-height: 44px;
 }
 
 .sku-btn:hover:not(.disabled) {
   border-color: var(--mall-primary, #4A6B7C);
   color: var(--mall-primary, #4A6B7C);
+  background: rgba(74, 107, 124, 0.04);
 }
 
 .sku-btn.active {
@@ -734,7 +942,7 @@ onUnmounted(() => {
 }
 
 .sku-btn.disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   background: #f5f5f5;
 }
@@ -749,7 +957,7 @@ onUnmounted(() => {
 .quantity-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .stock-info {
@@ -757,27 +965,27 @@ onUnmounted(() => {
   color: var(--mall-text-muted, #909399);
 }
 
-/* === 操作按鈕 === */
-.action-buttons {
+/* === 操作按鈕（桌面） === */
+.desktop-actions {
   display: flex;
   gap: 12px;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .btn-cart,
 .btn-buy {
   flex: 1;
-  height: 48px;
+  height: 52px;
   border: none;
-  border-radius: 8px;
-  font-size: 15px;
+  border-radius: 12px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.3s;
+  transition: all 0.25s ease;
   letter-spacing: 1px;
 }
 
@@ -787,8 +995,9 @@ onUnmounted(() => {
 }
 
 .btn-cart:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--mall-primary, #4A6B7C) 85%, black);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(74, 107, 124, 0.3);
 }
 
 .btn-buy {
@@ -797,47 +1006,67 @@ onUnmounted(() => {
 }
 
 .btn-buy:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--mall-accent, #A5635C) 85%, black);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(165, 99, 92, 0.3);
 }
 
 /* === 商品詳情 Tab === */
 .product-description {
   background: var(--mall-card-bg, white);
-  border-radius: 12px;
-  padding: 28px;
+  border-radius: 16px;
+  overflow: hidden;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-.detail-tabs :deep(.el-tabs__header) {
-  margin-bottom: 24px;
+.tab-header {
+  display: flex;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 0 28px;
 }
 
-.detail-tabs :deep(.el-tabs__item) {
+.tab-btn {
+  padding: 16px 4px;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--mall-text-secondary, #606266);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.detail-tabs :deep(.el-tabs__item.is-active) {
+.tab-btn.active {
   color: var(--mall-primary, #4A6B7C);
+  border-bottom-color: var(--mall-primary, #4A6B7C);
 }
 
-.detail-tabs :deep(.el-tabs__active-bar) {
-  background-color: var(--mall-primary, #4A6B7C);
+.tab-content {
+  padding: 28px;
 }
 
 .description-content {
   line-height: 1.8;
   color: var(--mall-text-secondary, #606266);
   font-size: 14px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .description-content :deep(img) {
   max-width: 100%;
   height: auto;
-  border-radius: 4px;
+  border-radius: 8px;
+  display: block;
+  margin: 12px auto;
+}
+
+.description-content :deep(table) {
+  max-width: 100%;
+  overflow-x: auto;
+  display: block;
 }
 
 /* === 推薦商品 === */
@@ -851,7 +1080,7 @@ onUnmounted(() => {
 
 .recommend-title {
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--mall-text-primary, #303133);
   margin: 0;
   position: relative;
@@ -875,31 +1104,269 @@ onUnmounted(() => {
   gap: 20px;
 }
 
-/* === RWD === */
-@media (max-width: 900px) {
+/* 手機版水平捲動推薦 — 桌面隱藏 */
+.recommend-scroll {
+  display: none;
+}
+
+/* === 手機版底部固定購買列 — 桌面隱藏 === */
+.mobile-bottom-bar {
+  display: none;
+}
+
+/* =================================================================
+   RWD 響應式設計
+   ================================================================= */
+
+/* --- 平板 (≤ 1024px) --- */
+@media (max-width: 1024px) {
   .product-main {
-    grid-template-columns: 1fr;
-    padding: 20px;
-    gap: 24px;
+    gap: 32px;
+    padding: 24px;
   }
 
   .recommend-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
   }
 }
 
-@media (max-width: 500px) {
+/* --- 手機版 (≤ 768px) --- */
+@media (max-width: 768px) {
+  .product-detail-page {
+    gap: 16px;
+    padding-bottom: 80px; /* 為底部購買列留空間 */
+  }
+
+  /* 麵包屑：單行截斷 */
+  .breadcrumb-section {
+    padding: 4px 0;
+    overflow: hidden;
+  }
+
+  .breadcrumb-section :deep(.el-breadcrumb) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  .breadcrumb-section :deep(.el-breadcrumb__item) {
+    font-size: 12px;
+    display: inline;
+  }
+
+  /* 主區域：單欄全寬 */
+  .product-main {
+    grid-template-columns: 1fr;
+    padding: 0;
+    gap: 0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  /* 圖片：切換為輪播 */
+  .gallery-desktop {
+    display: none;
+  }
+
+  .gallery-carousel {
+    display: block;
+  }
+
+  .product-gallery {
+    gap: 0;
+  }
+
+  /* 商品資訊 */
+  .product-info {
+    padding: 20px 16px;
+    gap: 16px;
+  }
+
   .product-title {
+    font-size: 18px;
+    line-height: 1.5;
+  }
+
+  .product-subtitle {
+    margin-top: -4px;
+    font-size: 13px;
+  }
+
+  /* 價格區 */
+  .price-section {
+    padding: 14px 16px;
+    border-radius: 10px;
+  }
+
+  .current-price {
+    font-size: 28px;
+  }
+
+  /* 倒數計時 */
+  .sale-countdown {
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .countdown-blocks {
+    margin-left: 0;
+    flex-basis: 100%;
+    margin-top: 6px;
+  }
+
+  /* 統計 */
+  .meta-section {
+    gap: 16px;
+  }
+
+  .meta-value {
+    font-size: 14px;
+  }
+
+  /* SKU */
+  .sku-grid {
+    gap: 8px;
+  }
+
+  .sku-btn {
+    padding: 10px 18px;
+    font-size: 13px;
+    min-height: 44px;
+  }
+
+  /* 桌面版操作按鈕：隱藏 */
+  .desktop-actions {
+    display: none;
+  }
+
+  /* 手機底部固定購買列：顯示 */
+  .mobile-bottom-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--mall-card-bg, white);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+    padding: 8px 12px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    gap: 10px;
+  }
+
+  .mobile-btn-cart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 64px;
+    flex-shrink: 0;
+    background: none;
+    border: 1.5px solid var(--mall-primary, #4A6B7C);
+    border-radius: 10px;
+    color: var(--mall-primary, #4A6B7C);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px;
+  }
+
+  .mobile-btn-cart :deep(.el-icon) {
     font-size: 20px;
+  }
+
+  .mobile-btn-buy {
+    flex: 1;
+    height: 48px;
+    border: none;
+    border-radius: 10px;
+    background: var(--mall-accent, #A5635C);
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: background 0.2s;
+  }
+
+  .mobile-btn-buy:active {
+    background: color-mix(in srgb, var(--mall-accent, #A5635C) 80%, black);
+  }
+
+  /* 商品詳情 */
+  .product-description {
+    border-radius: 12px;
+  }
+
+  .tab-header {
+    padding: 0 16px;
+  }
+
+  .tab-btn {
+    padding: 14px 4px;
+    font-size: 14px;
+  }
+
+  .tab-content {
+    padding: 16px;
+  }
+
+  .description-content {
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  /* 推薦商品：水平捲動 */
+  .recommend-grid {
+    display: none;
+  }
+
+  .recommend-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .recommend-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .recommend-scroll-card {
+    flex: 0 0 160px;
+    scroll-snap-align: start;
+  }
+}
+
+/* --- 超小螢幕 (≤ 375px) --- */
+@media (max-width: 375px) {
+  .product-title {
+    font-size: 16px;
   }
 
   .current-price {
     font-size: 24px;
   }
 
-  .action-buttons {
-    flex-direction: column;
+  .price-symbol {
+    font-size: 14px;
+  }
+
+  .sku-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .recommend-scroll-card {
+    flex: 0 0 140px;
   }
 }
 </style>
