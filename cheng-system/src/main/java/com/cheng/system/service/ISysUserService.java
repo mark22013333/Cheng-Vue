@@ -215,4 +215,12 @@ public interface ISysUserService
      * @return 結果
      */
     public String importUser(List<SysUser> userList, Boolean isUpdateSupport, String operName);
+
+    /**
+     * 根據權限字串查詢擁有該權限的使用者ID列表
+     *
+     * @param perms 權限字串
+     * @return 使用者ID列表
+     */
+    List<Long> selectUserIdsByPermission(String perms);
 }

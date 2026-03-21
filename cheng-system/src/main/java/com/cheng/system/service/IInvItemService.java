@@ -182,6 +182,22 @@ public interface IInvItemService {
     ReserveResult reserveItem(ReserveRequest request, Long userId);
 
     /**
+     * 取消預約
+     *
+     * @param borrowId 借出單ID
+     * @return 取消結果（包含 availableQty、reservedQty）
+     */
+    ReserveResult cancelReservation(Long borrowId);
+
+    /**
+     * 依物品ID取消當前用戶的待審核預約
+     *
+     * @param itemId 物品ID
+     * @return 取消結果
+     */
+    ReserveResult cancelReservationByItemId(Long itemId);
+
+    /**
      * 恢復物品的預約數量
      * <p>
      * 當預約被取消時，需要將預約數量從庫存的 reserved_qty 中減去

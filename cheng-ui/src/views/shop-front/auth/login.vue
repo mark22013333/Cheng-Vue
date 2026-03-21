@@ -79,6 +79,15 @@
                 </svg>
                 <span>LINE 登入</span>
               </el-button>
+              <el-button class="social-btn google-btn" @click="handleGoogleLogin">
+                <svg viewBox="0 0 24 24" width="18" height="18">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span>Google 登入</span>
+              </el-button>
             </div>
           </el-form>
         </div>
@@ -144,7 +153,7 @@ import { encrypt, decrypt } from '@/utils/jsencrypt'
 import Cookies from 'js-cookie'
 import useMemberStore from '@/store/modules/member'
 import { useCartStore } from '@/store/modules/cart'
-import { getOAuthAuthorizeUrl } from '@/api/shop/auth'
+import { useSocialLogin } from '@/composables/useSocialLogin'
 
 const router = useRouter()
 const route = useRoute()
@@ -171,6 +180,8 @@ const redirect = computed(() => {
   }
   return r || '/'
 })
+
+const { handleGoogleLogin, handleLineLogin } = useSocialLogin(redirect)
 
 const loginForm = ref({
   username: '',
@@ -232,32 +243,6 @@ async function handleLogin() {
     // 登入失敗，不需額外處理
   } finally {
     loading.value = false
-  }
-}
-
-async function handleLineLogin() {
-  try {
-    // 組裝 OAuth 回調 URI（前端 /oauth/callback 頁面）
-    const redirectUri = `${window.location.origin}/oauth/callback`
-
-    // 暫存必要資訊到 sessionStorage（供 oauth-callback.vue 使用）
-    sessionStorage.setItem('oauth_provider', 'LINE')
-    sessionStorage.setItem('oauth_redirect', redirect.value)
-    sessionStorage.setItem('oauth_redirect_uri', redirectUri)
-
-    // 呼叫後端取得 LINE 授權 URL
-    const res = await getOAuthAuthorizeUrl('LINE', redirectUri)
-    const authorizeUrl = res.data || res.authorizeUrl || res
-
-    if (!authorizeUrl) {
-      ElMessage.error('無法取得授權連結，請稍後再試')
-      return
-    }
-
-    // 跳轉到 LINE 授權頁面
-    window.location.href = authorizeUrl
-  } catch (error) {
-    ElMessage.error(error?.msg || '取得 LINE 登入連結失敗')
   }
 }
 
@@ -478,6 +463,7 @@ onMounted(() => {
 
 .social-login {
   display: flex;
+  gap: 10px;
 }
 
 .social-btn {
@@ -500,6 +486,18 @@ onMounted(() => {
 .line-btn:hover {
   background: #00ae00;
   border-color: #00ae00;
+  transform: translateY(-1px);
+}
+
+.google-btn {
+  background: #ffffff;
+  border-color: #E0D5C8;
+  color: #5A4A3C;
+}
+
+.google-btn:hover {
+  background: #f8f8f8;
+  border-color: #C4A98A;
   transform: translateY(-1px);
 }
 

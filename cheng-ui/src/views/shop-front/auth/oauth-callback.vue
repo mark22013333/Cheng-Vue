@@ -111,7 +111,9 @@ onMounted(async () => {
 
     // 延遲跳轉讓使用者看到成功畫面
     setTimeout(() => {
-      router.replace(redirectPath)
+      router.replace(redirectPath).catch(() => {
+        window.location.href = redirectPath
+      })
     }, 800)
   } catch (error) {
     status.value = 'error'

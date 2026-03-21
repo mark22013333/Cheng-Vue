@@ -40,7 +40,12 @@ public enum StockRecordType {
     /**
      * 損壞
      */
-    DAMAGE("6", "損壞");
+    DAMAGE("6", "損壞"),
+
+    /**
+     * 恢復預約
+     */
+    RESTORE_RESERVE("7", "恢復預約");
 
     private final String code;
     private final String description;
@@ -126,7 +131,8 @@ public enum StockRecordType {
             case BORROW -> "#E6A23C";   // 借出 - 橙色
             case RETURN -> "#409EFF";   // 歸還 - 藍色
             case CHECK -> "#909399";    // 盤點 - 灰色
-            case DAMAGE -> "#F56C6C";   // 損壞 - 紅色
+            case DAMAGE -> "#F56C6C";          // 損壞 - 紅色
+            case RESTORE_RESERVE -> "#67C23A"; // 恢復預約 - 綠色
         };
     }
 

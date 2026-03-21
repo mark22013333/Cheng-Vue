@@ -505,4 +505,15 @@ public class SysUserServiceImpl implements ISysUserService {
         }
         return successMsg.toString();
     }
+
+    /**
+     * 根據權限字串查詢擁有該權限的使用者ID列表
+     *
+     * @param perms 權限字串
+     * @return 使用者ID列表
+     */
+    @Override
+    public List<Long> selectUserIdsByPermission(String perms) {
+        return userMapper.selectUserIdsByPermission(perms);
+    }
 }

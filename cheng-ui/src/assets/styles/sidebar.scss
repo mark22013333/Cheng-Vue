@@ -140,7 +140,7 @@
 
     & .nest-menu .el-sub-menu>.el-sub-menu__title,
     & .el-sub-menu .el-menu-item {
-      min-width: vars.$base-sidebar-width !important;
+      min-width: 0 !important;
       border-radius: 10px;
       margin: 2px 0;
 

@@ -144,4 +144,12 @@ public interface SysUserMapper {
      * @return 結果
      */
     SysUser checkEmailUnique(String email);
+
+    /**
+     * 根據權限字串查詢擁有該權限的使用者ID列表
+     *
+     * @param perms 權限字串
+     * @return 使用者ID列表
+     */
+    List<Long> selectUserIdsByPermission(@Param("perms") String perms);
 }

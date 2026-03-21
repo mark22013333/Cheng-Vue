@@ -33,6 +33,7 @@
           <el-option label="已歸還" value="3"/>
           <el-option label="部分歸還" value="4"/>
           <el-option label="逾期" value="5"/>
+          <el-option label="自行取消" value="6"/>
         </el-select>
       </el-form-item>
       <el-form-item label="借出時間">
@@ -927,7 +928,8 @@ export default {
         '2': 'danger',   // 審核拒絕
         '3': 'success',  // 已歸還
         '4': 'warning',  // 部分歸還
-        '5': 'danger'    // 逾期
+        '5': 'danger',   // 逾期
+        '6': 'info'      // 自行取消
       };
       return statusMap[status] || 'info';
     },
@@ -939,7 +941,8 @@ export default {
         '2': '審核拒絕',
         '3': '已歸還',
         '4': '部分歸還',
-        '5': '逾期'
+        '5': '逾期',
+        '6': '自行取消'
       };
       return statusMap[status] || '未知';
     }

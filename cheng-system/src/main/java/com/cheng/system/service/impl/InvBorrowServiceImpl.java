@@ -8,6 +8,7 @@ import com.cheng.system.domain.InvReturn;
 import com.cheng.system.domain.InvStock;
 import com.cheng.system.domain.enums.BorrowStatus;
 import com.cheng.system.domain.enums.ItemCondition;
+import com.cheng.system.domain.enums.ReserveStatus;
 import com.cheng.common.enums.YesNo;
 import com.cheng.system.mapper.InvBorrowMapper;
 import com.cheng.system.mapper.InvItemMapper;
@@ -137,7 +138,7 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
         }
 
         // 🚨 安全檢查：禁止修改預約狀態的記錄
-        if (oldBorrow.getReserveStatus() != null && oldBorrow.getReserveStatus() == 1) {
+        if (oldBorrow.getReserveStatus() != null && oldBorrow.getReserveStatus() == ReserveStatus.PENDING.getCode()) {
             throw new RuntimeException("預約記錄不允許修改，請先取消預約或等待審核");
         }
 
@@ -383,14 +384,14 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
                         stock.getAvailableQty(), stock.getReservedQty(), stock.getBorrowedQty());
                 
                 // 判斷是否為預約記錄（reserve_status = 1 代表待審核預約）
-                if (borrow.getReserveStatus() != null && borrow.getReserveStatus() == 1) {
+                if (borrow.getReserveStatus() != null && borrow.getReserveStatus() == ReserveStatus.PENDING.getCode()) {
                     log.info("處理預約記錄 - 從 reserved_qty 轉移到 borrowed_qty");
                     // 預約記錄：庫存已在預約時扣除，只需從 reserved_qty 轉移到 borrowed_qty
                     stock.setReservedQty(stock.getReservedQty() - borrow.getQuantity());
                     stock.setBorrowedQty(stock.getBorrowedQty() + borrow.getQuantity());
                     
                     // 更新預約狀態為已通過
-                    borrow.setReserveStatus(2); // 2=預約通過
+                    borrow.setReserveStatus(ReserveStatus.APPROVED.getCode());
                 } else {
                     // 一般借出記錄：檢查庫存並扣減
                     if (!checkItemAvailable(borrow.getItemId(), borrow.getQuantity())) {
@@ -411,7 +412,7 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
             // 審核拒絕
             if (stock != null) {
                 // 判斷是否為預約記錄
-                if (borrow.getReserveStatus() != null && borrow.getReserveStatus() == 1) {
+                if (borrow.getReserveStatus() != null && borrow.getReserveStatus() == ReserveStatus.PENDING.getCode()) {
                     // 預約記錄被拒絕：歸還預留的庫存
                     stock.setReservedQty(stock.getReservedQty() - borrow.getQuantity());
                     stock.setAvailableQty(stock.getAvailableQty() + borrow.getQuantity());
@@ -419,7 +420,7 @@ public class InvBorrowServiceImpl implements IInvBorrowService {
                     invStockMapper.updateInvStock(stock);
                     
                     // 更新預約狀態為已拒絕
-                    borrow.setReserveStatus(3); // 3=預約拒絕
+                    borrow.setReserveStatus(ReserveStatus.REJECTED.getCode());
                 }
                 // 一般借出記錄被拒絕：不需要恢復庫存（因為還沒扣減）
             }

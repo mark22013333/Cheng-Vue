@@ -281,6 +281,10 @@
                          v-hasPermi="[INVENTORY_MANAGEMENT_RESERVE]"
                          :disabled="scope.row.availableQty <= 0">預約
               </el-button>
+              <el-button link type="danger" icon="Close" @click="handleCancelReserve(scope.row)"
+                         v-hasPermi="[INVENTORY_MANAGEMENT_RESERVE]"
+                         v-if="scope.row.reservedQty > 0">取消預約
+              </el-button>
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
                          v-hasPermi="[INVENTORY_MANAGEMENT_EDIT]">修改
               </el-button>
@@ -788,6 +792,7 @@ import {
   createImportTask,
   downloadTemplate,
   reserveItem,
+  cancelReserveItem,
   createExportTask
 } from "@/api/inventory/management"
 import {listCategory} from "@/api/inventory/category"
@@ -2002,6 +2007,15 @@ export default {
       this.reserveForm.endDate = endDate;
 
       this.reserveDialogVisible = true;
+    },
+    /** 取消預約按鈕操作 */
+    handleCancelReserve(row) {
+      this.$modal.confirm('確定要取消「' + row.itemName + '」的預約嗎？取消後庫存將恢復。').then(() => {
+        return cancelReserveItem(row.itemId)
+      }).then(() => {
+        this.$modal.msgSuccess("預約已取消");
+        this.getList();
+      }).catch(() => {})
     },
     /** 重置預約表單 */
     resetReserveForm() {
