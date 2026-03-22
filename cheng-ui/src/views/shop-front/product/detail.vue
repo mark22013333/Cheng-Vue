@@ -227,11 +227,13 @@ import { getMemberToken } from '@/utils/memberAuth'
 import { formatCurrency } from '@/utils/cheng'
 import ProductCard from '@/views/shop-front/components/ProductCard.vue'
 import { useFlyToCart } from '@/composables/useFlyToCart'
+import { useMarketingTracker } from '@/composables/useMarketingTracker'
 
 const route = useRoute()
 const router = useRouter()
 const cartStore = useCartStore()
 const { flyToCart } = useFlyToCart()
+const { trackProductView } = useMarketingTracker()
 const mainImageRef = ref(null)
 const carouselRef = ref(null)
 
@@ -572,6 +574,7 @@ async function loadProduct() {
     product.value = res.data
     currentImage.value = res.data?.mainImage || ''
     saleExpiredReloaded = false
+    trackProductView(res.data?.productId, res.data?.title)
 
     const skuRes = await getProductSkus(productId)
     skuList.value = skuRes.data || []

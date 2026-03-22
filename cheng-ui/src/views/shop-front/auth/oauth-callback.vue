@@ -45,6 +45,8 @@ import { handleOAuthCallback } from '@/api/shop/auth'
 import { setMemberToken } from '@/utils/memberAuth'
 import useMemberStore from '@/store/modules/member'
 import { useCartStore } from '@/store/modules/cart'
+import { mergeGuestTracking } from '@/api/shop/marketing'
+import Cookies from 'js-cookie'
 
 const router = useRouter()
 const route = useRoute()
@@ -104,6 +106,13 @@ onMounted(async () => {
       await cartStore.mergeGuestCartOnLogin()
     } catch (e) {
       console.error('合併購物車失敗', e)
+    }
+
+    // 合併訪客追蹤記錄（fire-and-forget）
+    const guestTrackingId = Cookies.get('guest_tracking_id')
+    if (guestTrackingId) {
+      mergeGuestTracking(guestTrackingId).catch(() => {})
+      Cookies.remove('guest_tracking_id', { path: '/' })
     }
 
     status.value = 'success'
