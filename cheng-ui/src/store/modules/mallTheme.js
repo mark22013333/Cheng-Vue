@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useConsentStore } from '@/store/modules/consent'
 
 /**
  * 預設主題配色
@@ -159,6 +160,9 @@ export const useMallThemeStore = defineStore('mallTheme', {
     },
 
     saveToStorage() {
+      const consentStore = useConsentStore()
+      if (!consentStore.isAllowed('functional')) return
+
       const data = {
         currentTheme: this.currentTheme,
         customTheme: this.customTheme
@@ -167,15 +171,18 @@ export const useMallThemeStore = defineStore('mallTheme', {
     },
 
     loadFromStorage() {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY)
-        if (saved) {
-          const data = JSON.parse(saved)
-          this.currentTheme = data.currentTheme || 'natural'
-          this.customTheme = data.customTheme || null
+      const consentStore = useConsentStore()
+      if (consentStore.isAllowed('functional')) {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY)
+          if (saved) {
+            const data = JSON.parse(saved)
+            this.currentTheme = data.currentTheme || 'natural'
+            this.customTheme = data.customTheme || null
+          }
+        } catch (e) {
+          console.error('載入主題失敗', e)
         }
-      } catch (e) {
-        console.error('載入主題失敗', e)
       }
       this.applyTheme()
     },

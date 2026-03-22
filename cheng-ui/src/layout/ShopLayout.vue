@@ -43,7 +43,7 @@
             @mouseleave="showCategoryDropdown = false"
           >
             <span>商品分類</span>
-            <el-icon :size="12" class="caret-icon"><ArrowDown /></el-icon>
+            <svg class="caret-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
             <transition name="dropdown-fade">
               <div v-show="showCategoryDropdown" class="category-dropdown">
                 <div class="category-dropdown-inner">
@@ -69,49 +69,54 @@
 
         <div class="header-right">
           <div class="search-box">
-            <el-input
+            <svg class="search-box-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input
               v-model="searchKeyword"
+              class="search-native-input"
               placeholder="搜尋商品..."
               @keyup.enter="handleSearch"
-              style="width: 200px"
-              class="search-input"
             />
-            <el-button class="search-btn" circle @click="handleSearch">
-              <el-icon><Search /></el-icon>
-            </el-button>
           </div>
-          <div id="shop-cart-icon" class="cart-icon" @click="goCart">
-            <el-badge :value="cartCount" :hidden="cartCount === 0">
-              <el-icon :size="22"><ShoppingCart /></el-icon>
-            </el-badge>
-          </div>
+          <button id="shop-cart-icon" class="header-icon-btn cart-btn" @click="goCart" aria-label="購物車">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            <span v-if="cartCount > 0" class="cart-badge">{{ cartCount > 99 ? '99+' : cartCount }}</span>
+          </button>
 
           <!-- 登入/使用者入口 -->
           <div v-if="isLoggedIn" class="user-menu">
             <el-dropdown trigger="click">
               <div class="user-avatar" :class="{ 'has-avatar': memberAvatar }">
                 <img v-if="memberAvatar" :src="memberAvatar" alt="頭像" class="avatar-img" />
-                <el-icon v-else :size="20"><User /></el-icon>
+                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item @click="goMember">會員中心</el-dropdown-item>
-                  <el-dropdown-item @click="goOrders">我的訂單</el-dropdown-item>
-                  <el-dropdown-item divided @click="handleLogout">登出</el-dropdown-item>
+                  <el-dropdown-item @click="goMember">
+                    <el-icon><User /></el-icon>
+                    會員中心
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="goOrders">
+                    <el-icon><Document /></el-icon>
+                    我的訂單
+                  </el-dropdown-item>
+                  <el-dropdown-item divided @click="handleLogout">
+                    <el-icon><SwitchButton /></el-icon>
+                    登出
+                  </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
           </div>
           <div v-else class="auth-buttons">
-            <el-button text class="login-btn" @click="goLogin">登入</el-button>
-            <el-button type="primary" round size="small" @click="goRegister">註冊</el-button>
+            <button class="auth-login-btn" @click="goLogin">登入</button>
+            <button class="auth-register-btn" @click="goRegister">註冊</button>
           </div>
 
           <el-popover :visible="showThemePicker" placement="bottom" :width="320" trigger="click">
             <template #reference>
-              <div class="theme-toggle" @click="showThemePicker = !showThemePicker">
-                <el-icon :size="20"><Brush /></el-icon>
-              </div>
+              <button class="header-icon-btn theme-toggle" @click="showThemePicker = !showThemePicker" aria-label="主題">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+              </button>
             </template>
             <div class="theme-picker">
               <div class="theme-picker-title">選擇主題</div>
@@ -129,9 +134,83 @@
               </div>
             </div>
           </el-popover>
+
+          <!-- 漢堡選單（手機） -->
+          <button class="mobile-menu-btn" @click="showMobileMenu = true" aria-label="選單">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+          </button>
         </div>
       </div>
     </header>
+
+    <!-- 手機側滑選單 -->
+    <transition name="drawer-fade">
+      <div v-if="showMobileMenu" class="mobile-overlay" @click="showMobileMenu = false"></div>
+    </transition>
+    <transition name="drawer-slide">
+      <nav v-if="showMobileMenu" class="mobile-drawer">
+        <div class="drawer-header">
+          <div class="drawer-logo">
+            <img src="@/assets/logo/logo.png" alt="Logo" class="drawer-logo-img" />
+            <span>CoolApps</span>
+          </div>
+          <button class="drawer-close" @click="showMobileMenu = false" aria-label="關閉">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="drawer-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input v-model="searchKeyword" placeholder="搜尋商品..." @keyup.enter="handleSearch(); showMobileMenu = false" />
+        </div>
+        <div class="drawer-nav">
+          <router-link to="/" class="drawer-nav-item" @click="showMobileMenu = false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+            首頁
+          </router-link>
+          <router-link to="/products" class="drawer-nav-item" @click="showMobileMenu = false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+            全部商品
+          </router-link>
+          <router-link to="/articles" class="drawer-nav-item" @click="showMobileMenu = false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8"/></svg>
+            文章專區
+          </router-link>
+          <router-link to="/cart" class="drawer-nav-item" @click="showMobileMenu = false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            購物車
+            <span v-if="cartCount > 0" class="drawer-badge">{{ cartCount }}</span>
+          </router-link>
+        </div>
+        <div v-if="categories.length" class="drawer-categories">
+          <div class="drawer-section-label">商品分類</div>
+          <div class="drawer-category-list">
+            <router-link
+              v-for="cat in categories"
+              :key="cat.categoryId"
+              :to="{ path: '/products', query: { categoryId: cat.categoryId } }"
+              class="drawer-category-chip"
+              @click="showMobileMenu = false"
+            >{{ cat.name }}</router-link>
+          </div>
+        </div>
+        <div class="drawer-footer">
+          <template v-if="isLoggedIn">
+            <button class="drawer-member-btn" @click="goMember(); showMobileMenu = false">
+              <div class="drawer-avatar" :class="{ 'has-avatar': memberAvatar }">
+                <img v-if="memberAvatar" :src="memberAvatar" alt="" />
+                <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              會員中心
+            </button>
+            <button class="drawer-logout-btn" @click="handleLogout(); showMobileMenu = false">登出</button>
+          </template>
+          <template v-else>
+            <button class="drawer-login-btn" @click="goLogin(); showMobileMenu = false">登入帳號</button>
+            <button class="drawer-register-btn" @click="goRegister(); showMobileMenu = false">免費註冊</button>
+          </template>
+        </div>
+      </nav>
+    </transition>
 
     <!-- 主要內容區 -->
     <main class="shop-main" :class="{ 'is-fullwidth': isHomePage }">
@@ -181,18 +260,23 @@
         <p>&copy; 2025 CoolApps. All rights reserved.</p>
       </div>
     </footer>
+
+    <!-- Cookie 同意提示 -->
+    <CookieConsent />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ShoppingCart, Brush, Search, User, ArrowDown } from '@element-plus/icons-vue'
+import { User, Document, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useMallThemeStore, PRESET_THEMES } from '@/store/modules/mallTheme'
 import { useCartStore } from '@/store/modules/cart'
 import { getMemberToken } from '@/utils/memberAuth'
 import useMemberStore from '@/store/modules/member'
+import CookieConsent from '@/components/CookieConsent/index.vue'
+import { useMarketingTracker } from '@/composables/useMarketingTracker'
 import { listCategories, getAnnouncement } from '@/api/shop/front'
 
 const router = useRouter()
@@ -200,12 +284,17 @@ const route = useRoute()
 const themeStore = useMallThemeStore()
 const cartStore = useCartStore()
 const memberStore = useMemberStore()
+const { trackSearch } = useMarketingTracker()
 const searchKeyword = ref('')
 const showThemePicker = ref(false)
 const showAnnouncement = ref(true)
 const announcements = ref([])
 const showCategoryDropdown = ref(false)
+const showMobileMenu = ref(false)
 const categories = ref([])
+
+// 路由變化時關閉手機選單
+watch(() => route.path, () => { showMobileMenu.value = false })
 
 // 首頁偵測：滿版佈局
 const isHomePage = computed(() => route.path === '/')
@@ -287,6 +376,7 @@ async function handleLogout() {
 
 function handleSearch() {
   if (searchKeyword.value.trim()) {
+    trackSearch(searchKeyword.value.trim())
     router.push({ path: '/products', query: { title: searchKeyword.value.trim() } })
     searchKeyword.value = ''
   }
@@ -450,12 +540,12 @@ onMounted(() => {
 .shop-header {
   background: var(--mall-header-bg, #FFFFFF);
   color: var(--mall-header-text, #303133);
-  padding: 0 20px;
+  padding: 0 24px;
   position: sticky;
   top: 0;
   z-index: 1000;
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
-  border-bottom: 1px solid var(--mall-border-color, #E8E4DF);
+  border-bottom: 1px solid var(--mall-border-color, #EDE8E2);
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .light-header .logo-img {
@@ -469,10 +559,10 @@ onMounted(() => {
 .header-container {
   max-width: 1400px;
   margin: 0 auto;
-  height: 68px;
+  height: 64px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 32px;
 }
 
 .logo {
@@ -480,18 +570,20 @@ onMounted(() => {
   align-items: center;
   cursor: pointer;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .logo-img {
-  height: 36px;
+  height: 32px;
   transition: filter 0.3s;
 }
 
 .logo-text {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   color: var(--mall-header-text, #303133);
+  font-family: 'Inter', 'Avenir', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .shop-header:not(.light-header) .logo-text {
@@ -501,8 +593,10 @@ onMounted(() => {
 /* === 導航 === */
 .nav-menu {
   display: flex;
-  gap: 36px;
+  gap: 4px;
   align-items: center;
+  flex: 1;
+  justify-content: center;
 }
 
 .nav-item {
@@ -510,44 +604,36 @@ onMounted(() => {
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  padding: 8px 0;
+  padding: 7px 16px;
+  border-radius: 8px;
   position: relative;
-  transition: color 0.3s;
-  letter-spacing: 0.5px;
+  transition: color 0.2s, background 0.2s;
+  letter-spacing: 0.3px;
 }
 
 .shop-header:not(.light-header) .nav-item {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.nav-item::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--mall-primary, #4A6B7C);
-  transition: width 0.3s;
+.nav-item:hover {
+  color: var(--mall-primary, #4A6B7C);
+  background: rgba(74, 107, 124, 0.07);
 }
 
-.shop-header:not(.light-header) .nav-item::after {
-  background: white;
-}
-
-.nav-item:hover::after,
-.nav-item.router-link-active::after {
-  width: 100%;
-}
-
-.nav-item:hover,
 .nav-item.router-link-active {
   color: var(--mall-primary, #4A6B7C);
+  background: rgba(74, 107, 124, 0.1);
+  font-weight: 600;
 }
 
-.shop-header:not(.light-header) .nav-item:hover,
+.shop-header:not(.light-header) .nav-item:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .shop-header:not(.light-header) .nav-item.router-link-active {
   color: white;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* === 分類下拉 === */
@@ -555,11 +641,12 @@ onMounted(() => {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .caret-icon {
-  transition: transform 0.3s;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
 }
 
 .category-nav:hover .caret-icon {
@@ -568,19 +655,18 @@ onMounted(() => {
 
 .category-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
-  padding-top: 12px;
   z-index: 100;
 }
 
 .category-dropdown-inner {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  border: 1px solid #f0ebe6;
-  padding: 12px;
+  background: var(--mall-card-bg, #FFFFFF);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--mall-border-color, #EDE8E2);
+  padding: 10px;
   min-width: 240px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -591,7 +677,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   padding: 10px 14px;
-  border-radius: 6px;
+  border-radius: 10px;
   text-decoration: none;
   transition: background 0.2s;
 }
@@ -603,12 +689,12 @@ onMounted(() => {
 .category-link-name {
   font-size: 14px;
   font-weight: 500;
-  color: #303133;
+  color: var(--mall-header-text, #303133);
 }
 
 .category-link-count {
   font-size: 12px;
-  color: #909399;
+  color: #9A8B7D;
   margin-top: 2px;
 }
 
@@ -616,7 +702,7 @@ onMounted(() => {
   grid-column: 1 / -1;
   text-align: center;
   padding: 20px;
-  color: #909399;
+  color: #9A8B7D;
   font-size: 13px;
 }
 
@@ -635,117 +721,558 @@ onMounted(() => {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
+/* 搜尋列 */
 .search-box {
   display: flex;
   align-items: center;
-  gap: 6px;
+  background: var(--mall-body-bg, #F5F2EF);
+  border: 1px solid var(--mall-border-color, #EDE8E2);
+  border-radius: 24px;
+  padding: 0 14px;
+  height: 36px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.light-header .search-box :deep(.search-input .el-input__wrapper) {
-  background: #f5f2ef;
-  border-radius: 20px;
-  box-shadow: none;
-  border: 1px solid #e8e4df;
+.search-box:focus-within {
+  border-color: var(--mall-primary, #4A6B7C);
+  box-shadow: 0 0 0 3px rgba(74, 107, 124, 0.1);
 }
 
-.shop-header:not(.light-header) .search-box :deep(.search-input .el-input__wrapper) {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
+.shop-header:not(.light-header) .search-box {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
-.light-header .search-btn {
-  background: #f5f2ef !important;
-  border: 1px solid #e8e4df !important;
-  color: #606266 !important;
+.shop-header:not(.light-header) .search-box:focus-within {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
 }
 
-.shop-header:not(.light-header) .search-btn {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border: none !important;
-  color: #606266 !important;
+.search-box-icon {
+  color: #9A8B7D;
+  flex-shrink: 0;
+  margin-right: 8px;
 }
 
-.search-btn {
-  transition: all 0.3s;
+.shop-header:not(.light-header) .search-box-icon {
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.search-btn:hover {
-  transform: scale(1.05);
+.search-native-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: var(--mall-header-text, #303133);
+  width: 160px;
+  font-family: inherit;
 }
 
-.cart-icon,
-.theme-toggle,
-.user-avatar {
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  transition: all 0.3s;
+.search-native-input::placeholder {
+  color: #B5A99A;
+}
+
+.shop-header:not(.light-header) .search-native-input {
+  color: white;
+}
+
+.shop-header:not(.light-header) .search-native-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Icon 按鈕 */
+.header-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
   color: var(--mall-header-text, #303133);
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+  position: relative;
+  flex-shrink: 0;
 }
 
-.shop-header:not(.light-header) .cart-icon,
-.shop-header:not(.light-header) .theme-toggle,
+.header-icon-btn:hover {
+  background: rgba(74, 107, 124, 0.07);
+  transform: translateY(-1px);
+}
+
+.shop-header:not(.light-header) .header-icon-btn {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.shop-header:not(.light-header) .header-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 購物車徽章 */
+.cart-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  background: var(--mall-accent, #A5635C);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* 使用者頭像 */
+.user-avatar {
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: var(--mall-header-text, #303133);
+  background: rgba(0, 0, 0, 0.04);
+}
+
 .shop-header:not(.light-header) .user-avatar {
   color: white;
   background: rgba(255, 255, 255, 0.1);
 }
 
-.light-header .cart-icon,
-.light-header .theme-toggle,
-.light-header .user-avatar {
-  background: rgba(0, 0, 0, 0.04);
-}
-
-.cart-icon:hover,
-.theme-toggle:hover,
 .user-avatar:hover {
   background: rgba(0, 0, 0, 0.08);
   transform: scale(1.05);
 }
 
-.shop-header:not(.light-header) .cart-icon:hover,
-.shop-header:not(.light-header) .theme-toggle:hover,
 .shop-header:not(.light-header) .user-avatar:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .user-avatar.has-avatar {
   padding: 0;
   overflow: hidden;
+  background: transparent;
 }
 
 .user-avatar .avatar-img {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
   display: block;
 }
 
+/* Auth 按鈕 */
 .auth-buttons {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.light-header .login-btn {
-  color: var(--mall-primary, #4A6B7C) !important;
-  font-weight: 500;
+.auth-login-btn {
+  background: none;
+  border: none;
+  color: var(--mall-primary, #4A6B7C);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  font-family: inherit;
 }
 
-.shop-header:not(.light-header) .login-btn {
-  color: white !important;
-  font-weight: 500;
+.auth-login-btn:hover {
+  background: rgba(74, 107, 124, 0.07);
 }
 
-.login-btn:hover {
-  opacity: 0.8;
+.shop-header:not(.light-header) .auth-login-btn {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.shop-header:not(.light-header) .auth-login-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.auth-register-btn {
+  background: var(--mall-primary, #4A6B7C);
+  color: white;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: filter 0.2s, transform 0.15s;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+}
+
+.auth-register-btn:hover {
+  filter: brightness(0.92);
+  transform: translateY(-1px);
+}
+
+/* 漢堡選單按鈕（手機） */
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--mall-header-text, #303133);
+  transition: background 0.2s;
+}
+
+.mobile-menu-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.shop-header:not(.light-header) .mobile-menu-btn {
+  color: white;
+}
+
+.shop-header:not(.light-header) .mobile-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* === 手機側滑抽屜 === */
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 2000;
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(320px, 85vw);
+  background: var(--mall-card-bg, #FDFCFA);
+  z-index: 2001;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--mall-border-color, #EDE8E2);
+}
+
+.drawer-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-logo-img {
+  height: 28px;
+}
+
+.drawer-logo span {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--mall-header-text, #3D2B1F);
+}
+
+.drawer-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #9A8B7D;
+  transition: background 0.2s, color 0.2s;
+}
+
+.drawer-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #3D2B1F;
+}
+
+.drawer-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 20px;
+  padding: 0 14px;
+  height: 42px;
+  background: var(--mall-body-bg, #F5F2EF);
+  border: 1px solid var(--mall-border-color, #EDE8E2);
+  border-radius: 12px;
+  transition: border-color 0.2s;
+}
+
+.drawer-search:focus-within {
+  border-color: var(--mall-primary, #4A6B7C);
+}
+
+.drawer-search svg {
+  color: #9A8B7D;
+  flex-shrink: 0;
+}
+
+.drawer-search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: var(--mall-header-text, #3D2B1F);
+  flex: 1;
+  font-family: inherit;
+}
+
+.drawer-search input::placeholder {
+  color: #B5A99A;
+}
+
+.drawer-nav {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drawer-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--mall-header-text, #3D2B1F);
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.drawer-nav-item svg {
+  color: #9A8B7D;
+  flex-shrink: 0;
+}
+
+.drawer-nav-item:hover,
+.drawer-nav-item.router-link-active {
+  background: rgba(74, 107, 124, 0.07);
+}
+
+.drawer-nav-item.router-link-active {
+  color: var(--mall-primary, #4A6B7C);
+  font-weight: 600;
+}
+
+.drawer-nav-item.router-link-active svg {
+  color: var(--mall-primary, #4A6B7C);
+}
+
+.drawer-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  background: var(--mall-accent, #A5635C);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+}
+
+.drawer-categories {
+  padding: 8px 20px 12px;
+}
+
+.drawer-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #9A8B7D;
+  margin-bottom: 10px;
+}
+
+.drawer-category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.drawer-category-chip {
+  padding: 6px 14px;
+  background: var(--mall-body-bg, #F5F2EF);
+  border: 1px solid var(--mall-border-color, #EDE8E2);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--mall-header-text, #3D2B1F);
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.drawer-category-chip:hover {
+  background: rgba(74, 107, 124, 0.07);
+  border-color: var(--mall-primary, #4A6B7C);
+  color: var(--mall-primary, #4A6B7C);
+}
+
+.drawer-footer {
+  margin-top: auto;
+  padding: 16px 20px 24px;
+  border-top: 1px solid var(--mall-border-color, #EDE8E2);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drawer-member-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--mall-border-color, #EDE8E2);
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--mall-header-text, #3D2B1F);
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+  font-family: inherit;
+}
+
+.drawer-member-btn:hover {
+  background: rgba(74, 107, 124, 0.05);
+}
+
+.drawer-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(74, 107, 124, 0.08);
+  color: #9A8B7D;
+  overflow: hidden;
+}
+
+.drawer-avatar.has-avatar {
+  background: transparent;
+}
+
+.drawer-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.drawer-logout-btn {
+  background: transparent;
+  border: 1px solid rgba(165, 99, 92, 0.2);
+  color: #A5635C;
+  padding: 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: inherit;
+}
+
+.drawer-logout-btn:hover {
+  background: rgba(165, 99, 92, 0.06);
+}
+
+.drawer-login-btn {
+  background: var(--mall-primary, #4A6B7C);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s;
+  font-family: inherit;
+}
+
+.drawer-login-btn:hover {
+  filter: brightness(0.92);
+}
+
+.drawer-register-btn {
+  background: transparent;
+  border: 1px solid var(--mall-border-color, #EDE8E2);
+  color: var(--mall-header-text, #3D2B1F);
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: inherit;
+}
+
+.drawer-register-btn:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* 抽屜過渡動畫 */
+.drawer-fade-enter-active,
+.drawer-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.drawer-fade-enter-from,
+.drawer-fade-leave-to {
+  opacity: 0;
+}
+
+.drawer-slide-enter-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drawer-slide-leave-active {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.drawer-slide-enter-from,
+.drawer-slide-leave-to {
+  transform: translateX(100%);
 }
 
 /* === 主題選擇器 === */
@@ -958,13 +1485,61 @@ onMounted(() => {
 }
 
 /* === RWD === */
+@media (max-width: 1024px) {
+  .search-native-input {
+    width: 120px;
+  }
+
+  .nav-menu {
+    gap: 2px;
+  }
+
+  .nav-item {
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 768px) {
+  .shop-header {
+    padding: 0 16px;
+  }
+
+  .header-container {
+    height: 56px;
+    gap: 8px;
+  }
+
+  .logo-text {
+    font-size: 16px;
+  }
+
+  .logo-img {
+    height: 28px;
+  }
+
   .nav-menu {
     display: none;
   }
 
   .search-box {
     display: none;
+  }
+
+  .theme-toggle {
+    display: none !important;
+  }
+
+  .auth-buttons {
+    display: none;
+  }
+
+  .user-menu {
+    display: none;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
   }
 
   .footer-container {
@@ -975,6 +1550,12 @@ onMounted(() => {
   .announcement-bar {
     font-size: 12px;
     padding: 6px 0;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn {
+    display: none !important;
   }
 }
 </style>
@@ -1212,6 +1793,89 @@ body:has(.shop-layout) .el-message-box__headerbtn .el-message-box__close {
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+/* ============================================================
+   ElDropdown — 商城頭像下拉選單
+   從冷硬的系統下拉 → 溫暖的個人選單卡片
+   ============================================================ */
+body:has(.shop-layout) .el-dropdown__popper.el-popper {
+  --el-dropdown-menuItem-hover-fill: rgba(74, 107, 124, 0.06);
+  --el-dropdown-menuItem-hover-color: #3D2B1F;
+
+  border: 1px solid #EDE8E2 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  padding: 8px !important;
+  min-width: 180px !important;
+  overflow: hidden !important;
+  animation: shopDropdownIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* 隱藏 popper 箭頭 */
+body:has(.shop-layout) .el-dropdown__popper .el-popper__arrow {
+  display: none !important;
+}
+
+/* 選單項目 */
+body:has(.shop-layout) .el-dropdown-menu__item {
+  padding: 11px 16px !important;
+  border-radius: 10px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #5A4A3E !important;
+  transition: all 0.2s ease !important;
+  line-height: 1.5 !important;
+  margin: 2px 0 !important;
+}
+
+body:has(.shop-layout) .el-dropdown-menu__item:hover,
+body:has(.shop-layout) .el-dropdown-menu__item:focus {
+  background: rgba(74, 107, 124, 0.06) !important;
+  color: #4A6B7C !important;
+}
+
+/* 分隔線 — 用溫暖的邊框取代冷灰 */
+body:has(.shop-layout) .el-dropdown-menu__item--divided {
+  border-top-color: #F0EBE5 !important;
+  margin-top: 6px !important;
+  padding-top: 13px !important;
+}
+
+/* 選單 icon */
+body:has(.shop-layout) .el-dropdown-menu__item .el-icon {
+  margin-right: 8px !important;
+  font-size: 16px !important;
+  color: #9A8B7D !important;
+  transition: color 0.2s ease !important;
+}
+
+body:has(.shop-layout) .el-dropdown-menu__item:hover .el-icon,
+body:has(.shop-layout) .el-dropdown-menu__item:focus .el-icon {
+  color: #4A6B7C !important;
+}
+
+/* 登出項目 — 溫暖的退出感 */
+body:has(.shop-layout) .el-dropdown-menu__item--divided:hover,
+body:has(.shop-layout) .el-dropdown-menu__item--divided:focus {
+  background: rgba(165, 99, 92, 0.06) !important;
+  color: #A5635C !important;
+}
+
+body:has(.shop-layout) .el-dropdown-menu__item--divided:hover .el-icon,
+body:has(.shop-layout) .el-dropdown-menu__item--divided:focus .el-icon {
+  color: #A5635C !important;
+}
+
+@keyframes shopDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

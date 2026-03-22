@@ -12,6 +12,7 @@ import {
   mergeGuestCart as mergeGuestCartApi
 } from '@/api/shop/cart'
 import { getMemberToken } from '@/utils/memberAuth'
+import { useConsentStore } from '@/store/modules/consent'
 import { getProduct, getProductSkus } from '@/api/shop/front'
 
 const GUEST_CART_KEY = 'guest_cart'
@@ -394,6 +395,9 @@ export const useCartStore = defineStore('cart', {
      * 載入訪客購物車
      */
     loadGuestCart() {
+      const consentStore = useConsentStore()
+      if (!consentStore.isAllowed('functional')) return
+
       try {
         const saved = localStorage.getItem(GUEST_CART_KEY)
         if (saved) {
@@ -411,6 +415,9 @@ export const useCartStore = defineStore('cart', {
      * 儲存訪客購物車
      */
     saveGuestCart() {
+      const consentStore = useConsentStore()
+      if (!consentStore.isAllowed('functional')) return
+
       try {
         const data = { items: this.items }
         localStorage.setItem(GUEST_CART_KEY, JSON.stringify(data))

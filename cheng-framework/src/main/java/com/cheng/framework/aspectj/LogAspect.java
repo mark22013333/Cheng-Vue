@@ -86,8 +86,13 @@ public class LogAspect {
 
     protected void handleLog(final JoinPoint joinPoint, Log controllerLog, final Exception e, Object jsonResult) {
         try {
-            // 取得目前的使用者
-            LoginUser loginUser = SecurityUtils.getLoginUser();
+            // 取得目前的使用者（商城會員端點可能非 LoginUser，安全取得避免中斷日誌記錄）
+            LoginUser loginUser = null;
+            try {
+                loginUser = SecurityUtils.getLoginUser();
+            } catch (Exception ignored) {
+                // 非後台管理員（如商城會員），跳過使用者資訊
+            }
 
             // *========資料庫日誌=========*//
             SysOperLog operLog = new SysOperLog();

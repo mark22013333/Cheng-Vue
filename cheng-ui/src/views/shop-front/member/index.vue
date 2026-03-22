@@ -40,50 +40,85 @@
 
         <!-- 預設首頁內容 -->
         <div v-if="isIndexPage" class="member-dashboard">
-          <div class="dash-header">
-            <h2>會員中心</h2>
-            <p>歡迎回來，{{ userName }}</p>
+          <!-- 歡迎區 -->
+          <div class="welcome-hero">
+            <div class="welcome-text">
+              <p class="welcome-greeting">{{ greetingText }}</p>
+              <h2 class="welcome-name">{{ userName }}</h2>
+              <p class="welcome-sub">很高興見到你，看看今天有什麼新鮮事</p>
+            </div>
+            <div class="welcome-deco">
+              <span class="deco-circle c1" />
+              <span class="deco-circle c2" />
+              <span class="deco-circle c3" />
+            </div>
           </div>
 
           <!-- 訂單統計 -->
+          <div class="section-label">
+            <span class="section-dot" />
+            訂單概況
+          </div>
           <div class="stats-cards">
-            <div
+            <button
               v-for="stat in statCards"
               :key="stat.key"
               class="stat-card"
+              :class="stat.key"
               @click="goTo('orders', stat.key)"
             >
-              <div class="stat-icon" :class="stat.key">
-                <el-icon><component :is="stat.icon" /></el-icon>
+              <div class="stat-icon-wrap">
+                <el-icon :size="22"><component :is="stat.icon" /></el-icon>
               </div>
               <div class="stat-info">
                 <div class="stat-value">{{ orderStats[stat.key] }}</div>
                 <div class="stat-label">{{ stat.label }}</div>
               </div>
-            </div>
+            </button>
           </div>
 
           <!-- 快捷入口 -->
-          <div class="quick-actions">
-            <h3>快捷功能</h3>
-            <div class="action-grid">
-              <div class="action-item" @click="goTo('address')">
-                <el-icon><Location /></el-icon>
-                <span>管理地址</span>
+          <div class="section-label">
+            <span class="section-dot" />
+            快捷功能
+          </div>
+          <div class="action-grid">
+            <button class="action-item" @click="goTo('address')">
+              <div class="action-icon">
+                <el-icon :size="22"><Location /></el-icon>
               </div>
-              <div class="action-item" @click="goTo('profile')">
-                <el-icon><User /></el-icon>
-                <span>個人資料</span>
+              <span class="action-text">管理地址</span>
+              <span class="action-arrow">
+                <el-icon :size="12"><ArrowRight /></el-icon>
+              </span>
+            </button>
+            <button class="action-item" @click="goTo('profile')">
+              <div class="action-icon">
+                <el-icon :size="22"><User /></el-icon>
               </div>
-              <div class="action-item" @click="$router.push('/cart')">
-                <el-icon><ShoppingCart /></el-icon>
-                <span>購物車</span>
+              <span class="action-text">個人資料</span>
+              <span class="action-arrow">
+                <el-icon :size="12"><ArrowRight /></el-icon>
+              </span>
+            </button>
+            <button class="action-item" @click="$router.push('/cart')">
+              <div class="action-icon">
+                <el-icon :size="22"><ShoppingCart /></el-icon>
               </div>
-              <div class="action-item" @click="$router.push('/products')">
-                <el-icon><Goods /></el-icon>
-                <span>繼續購物</span>
+              <span class="action-text">購物車</span>
+              <span class="action-arrow">
+                <el-icon :size="12"><ArrowRight /></el-icon>
+              </span>
+            </button>
+            <button class="action-item" @click="$router.push('/products')">
+              <div class="action-icon">
+                <el-icon :size="22"><Goods /></el-icon>
               </div>
-            </div>
+              <span class="action-text">繼續購物</span>
+              <span class="action-arrow">
+                <el-icon :size="12"><ArrowRight /></el-icon>
+              </span>
+            </button>
           </div>
         </div>
       </main>
@@ -115,6 +150,16 @@ const memberStore = useMemberStore()
 
 const userName = computed(() => memberStore.nickname || '會員')
 const userAvatar = computed(() => memberStore.avatar || '')
+
+// 時間感知問候
+const greetingText = computed(() => {
+  const hour = new Date().getHours()
+  if (hour < 6) return '夜深了'
+  if (hour < 12) return '早安'
+  if (hour < 14) return '午安'
+  if (hour < 18) return '午後好'
+  return '晚安'
+})
 
 const menuItems = [
   { key: 'orders', label: '我的訂單', icon: markRaw(Document) },
@@ -344,30 +389,112 @@ onMounted(() => {
 }
 
 /* ====== Dashboard ====== */
-.dash-header {
+
+/* 歡迎區 */
+.welcome-hero {
+  position: relative;
+  padding: 28px 30px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(74, 107, 124, 0.06) 0%, rgba(196, 168, 130, 0.06) 50%, rgba(165, 99, 92, 0.04) 100%);
+  border: 1px solid rgba(74, 107, 124, 0.08);
   margin-bottom: 28px;
+  overflow: hidden;
 }
 
-.dash-header h2 {
-  margin: 0;
-  font-family: 'Noto Serif TC', 'Noto Sans Symbols 2', system-ui, serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  font-size: 22px;
-  font-weight: 600;
-  color: #3D2B1F;
+.welcome-text {
+  position: relative;
+  z-index: 1;
 }
 
-.dash-header p {
-  margin: 4px 0 0;
+.welcome-greeting {
+  margin: 0 0 2px;
   font-size: 13px;
-  color: #A09585;
+  font-weight: 500;
+  color: #9A8B7D;
+  letter-spacing: 0.3px;
+}
+
+.welcome-name {
+  margin: 0 0 6px;
+  font-family: 'Noto Serif TC', 'Noto Sans Symbols 2', system-ui, serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #3D2B1F;
+  line-height: 1.3;
+}
+
+.welcome-sub {
+  margin: 0;
+  font-size: 13.5px;
+  color: #9A8B7D;
+}
+
+/* 裝飾圓 */
+.welcome-deco {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 200px;
+  pointer-events: none;
+}
+
+.deco-circle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.15;
+}
+
+.deco-circle.c1 {
+  width: 120px;
+  height: 120px;
+  right: -20px;
+  top: -30px;
+  background: #4A6B7C;
+}
+
+.deco-circle.c2 {
+  width: 80px;
+  height: 80px;
+  right: 40px;
+  bottom: -20px;
+  background: #C4A882;
+}
+
+.deco-circle.c3 {
+  width: 50px;
+  height: 50px;
+  right: 80px;
+  top: 10px;
+  background: #A5635C;
+}
+
+/* 區塊標籤 */
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #9A8B7D;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 14px;
+}
+
+.section-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #C4A882;
 }
 
 /* 統計卡片 */
 .stats-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 32px;
+  gap: 12px;
+  margin-bottom: 28px;
 }
 
 .stat-card {
@@ -380,6 +507,8 @@ onMounted(() => {
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-align: left;
+  font-family: inherit;
 }
 
 .stat-card:hover {
@@ -388,33 +517,32 @@ onMounted(() => {
   transform: translateY(-2px);
 }
 
-.stat-icon {
+.stat-icon-wrap {
   width: 44px;
   height: 44px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
   flex-shrink: 0;
 }
 
-.stat-icon.pending {
+.stat-card.pending .stat-icon-wrap {
   background: #FEF3F0;
   color: #D4594B;
 }
 
-.stat-icon.paid {
+.stat-card.paid .stat-icon-wrap {
   background: #FEF6EC;
   color: #C4882E;
 }
 
-.stat-icon.shipped {
+.stat-card.shipped .stat-icon-wrap {
   background: #EFF6FC;
   color: #4A6B7C;
 }
 
-.stat-icon.completed {
+.stat-card.completed .stat-icon-wrap {
   background: #F0F7EB;
   color: #5F9E3C;
 }
@@ -424,6 +552,7 @@ onMounted(() => {
   font-weight: 700;
   color: #3D2B1F;
   line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
@@ -432,49 +561,70 @@ onMounted(() => {
   margin-top: 2px;
 }
 
-/* 快捷功能 */
-.quick-actions h3 {
-  margin: 0 0 14px;
-  font-size: 15px;
-  font-weight: 700;
-  color: #3D2B1F;
-}
-
+/* 快捷功能 — 水平列表 */
 .action-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .action-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 22px 14px;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 18px;
   background: #FDFCFA;
   border: 1px solid #F0EBE5;
   border-radius: 14px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  color: #7A6B5D;
+  transition: all 0.25s ease;
+  font-family: inherit;
+  text-align: left;
 }
 
 .action-item:hover {
-  border-color: #4A6B7C;
-  color: #4A6B7C;
-  background: rgba(74, 107, 124, 0.03);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(74, 107, 124, 0.08);
+  border-color: rgba(74, 107, 124, 0.25);
+  background: rgba(74, 107, 124, 0.02);
+  box-shadow: 0 2px 12px rgba(74, 107, 124, 0.06);
 }
 
-.action-item .el-icon {
-  font-size: 26px;
+.action-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #F5F0EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9A8B7D;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
 }
 
-.action-item span {
-  font-size: 13px;
+.action-item:hover .action-icon {
+  background: linear-gradient(135deg, #4A6B7C, #5A8A9A);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(74, 107, 124, 0.2);
+}
+
+.action-text {
+  flex: 1;
+  font-size: 14px;
   font-weight: 500;
+  color: #5A4A3E;
+}
+
+.action-arrow {
+  color: #C4B5A6;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all 0.25s ease;
+}
+
+.action-item:hover .action-arrow {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* ====== RWD ====== */
@@ -522,9 +672,38 @@ onMounted(() => {
     border-radius: 16px;
   }
 
-  .stats-cards,
-  .action-grid {
+  .welcome-hero {
+    padding: 22px 20px;
+    border-radius: 14px;
+  }
+
+  .welcome-name {
+    font-size: 20px;
+  }
+
+  .welcome-deco {
+    display: none;
+  }
+
+  .stats-cards {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-card {
+    padding: 14px 12px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .action-grid {
+    gap: 4px;
+  }
+
+  .action-item {
+    padding: 12px 14px;
+    border-radius: 12px;
   }
 }
 </style>
