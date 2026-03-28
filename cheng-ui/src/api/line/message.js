@@ -124,6 +124,24 @@ export function exportMessage(query) {
   })
 }
 
+// 查詢發送記錄列表
+export function listMessageLog(query) {
+  return request({
+    url: '/line/message/log/list',
+    method: 'get',
+    params: query
+  })
+}
+
+// 新增發送記錄
+export function addMessageLog(data) {
+  return request({
+    url: '/line/message/log',
+    method: 'post',
+    data: data
+  })
+}
+
 // 取得訊息統計資料
 export function getMessageStats(query) {
   return request({
