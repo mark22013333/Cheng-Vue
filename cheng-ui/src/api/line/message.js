@@ -10,7 +10,7 @@ export function listMessage(query) {
 }
 
 // 查詢推播訊息記錄列表（別名，供訊息編輯器頁面使用）
-export function listMessageLog(query) {
+export function listMessageForEditor(query) {
   return request({
     url: '/line/message/list',
     method: 'get',
