@@ -64,6 +64,9 @@ logging:
 # 專案相關設定 - VM環境
 cheng:
   profile: /opt/cool-apps/uploadFile
+  import:
+    # 商品匯入 CSV 相對檔名的基準目錄（URL 來源不受影響）
+    base-path: /opt/cool-apps/import
 
 # 爬蟲設定 - 本地環境（使用 WebDriverManager 自動管理 ChromeDriver）
 crawler:

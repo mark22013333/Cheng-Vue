@@ -45,17 +45,27 @@ public class ProductImportServiceImpl {
     @Value("${cheng.profile}")
     private String uploadPath;
 
+    /**
+     * CSV 來源為相對檔名時使用的基準目錄；HTTP(S) URL 來源不受此影響。
+     */
+    @Value("${cheng.import.base-path:}")
+    private String importBasePath;
+
     private static final String CAR_CATEGORY_NAME = "汽車類";
     private final Map<String, Long> categoryCache = new HashMap<>();
 
-    public String executeImport(String csvPath) {
+    /**
+     * @param csvSource CSV 來源：HTTP(S) URL（Google Sheets 發布連結）或相對於
+     *                  {@code cheng.import.base-path} 的檔名
+     */
+    public String executeImport(String csvSource) {
         String batchId = UUID.randomUUID().toString().substring(0, 8);
-        log.info("========== 開始商品匯入，批次: {}，CSV: {} ==========", batchId, csvPath);
+        log.info("========== 開始商品匯入，批次: {}，來源: {} ==========", batchId, csvSource);
 
         int success = 0, skipped = 0, failed = 0;
 
         try {
-            List<ProductCsvRow> rows = ProductCsvReader.read(csvPath);
+            List<ProductCsvRow> rows = ProductCsvReader.read(csvSource, importBasePath);
             log.info("CSV 讀取完成，共 {} 筆", rows.size());
 
             Long carCategoryId = findCarCategoryId();
