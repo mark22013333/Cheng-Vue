@@ -1,8 +1,10 @@
 package com.cheng.shop.domain;
 
 import com.cheng.common.core.domain.BaseEntity;
+import com.cheng.common.utils.EnumUtils;
 import com.cheng.shop.enums.ProductStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -129,6 +131,11 @@ public class ShopProduct extends BaseEntity {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date saleEndDate;
 
+    /**
+     * 價格是否自動同步 SKU 最低價
+     */
+    private Boolean priceAutoSync;
+
     // ============ 計算欄位（非 DB 持久化） ============
 
     /**
@@ -152,15 +159,22 @@ public class ShopProduct extends BaseEntity {
     private List<ShopProductSku> skuList;
 
     /**
-     * 取得狀態列舉
+     * 取得狀態列舉（僅供 Java 業務邏輯使用，不參與 JSON 序列化）
+     *
+     * <p>為避免舊資料中存在不合法 status 值（例如 "1"）導致整個列表
+     * 序列化失敗，此處改用寬鬆版 {@link EnumUtils#fromCode}，未知代碼
+     * 回傳 {@code null} 而非拋出例外。呼叫端若需嚴格驗證，請自行使用
+     * {@link ProductStatus#fromCode(String)}。</p>
      */
+    @JsonIgnore
     public ProductStatus getStatusEnum() {
-        return status != null ? ProductStatus.fromCode(status) : null;
+        return status != null ? EnumUtils.fromCode(ProductStatus.class, status) : null;
     }
 
     /**
      * 設定狀態列舉
      */
+    @JsonIgnore
     public void setStatusEnum(ProductStatus statusEnum) {
         this.status = statusEnum != null ? statusEnum.getCode() : null;
     }

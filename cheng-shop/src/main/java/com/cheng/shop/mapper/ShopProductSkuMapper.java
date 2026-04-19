@@ -97,6 +97,14 @@ public interface ShopProductSkuMapper {
     int increaseStock(@Param("skuId") Long skuId, @Param("quantity") int quantity);
 
     /**
+     * 根據條碼查詢SKU
+     *
+     * @param barcode 國際條碼
+     * @return SKU
+     */
+    ShopProductSku selectSkuByBarcode(String barcode);
+
+    /**
      * 檢查SKU編碼是否唯一
      *
      * @param skuCode SKU編碼

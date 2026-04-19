@@ -27,11 +27,12 @@
         <result property="originalPrice" column="original_price"/>
         <result property="salePrice"    column="sale_price"/>
         <result property="saleEndDate"  column="sale_end_date"/>
+        <result property="priceAutoSync" column="price_auto_sync"/>
     </resultMap>
 
     <sql id="selectProductVo">
         select p.product_id, p.category_id, p.title, p.sub_title, p.main_image, p.slider_images, p.video_url,
-               p.description, p.price, p.original_price, p.sale_price, p.sale_end_date,
+               p.description, p.price, p.original_price, p.sale_price, p.sale_end_date, p.price_auto_sync,
                p.sales_count, p.view_count, p.is_hot, p.is_new, p.is_recommend, p.sort_order,
                p.status, p.create_by, p.create_time, p.update_by, p.update_time,
                c.name as category_name
@@ -112,6 +113,7 @@
             <if test="originalPrice != null">original_price,</if>
             <if test="salePrice != null">sale_price,</if>
             <if test="saleEndDate != null">sale_end_date,</if>
+            <if test="priceAutoSync != null">price_auto_sync,</if>
             <if test="salesCount != null">sales_count,</if>
             <if test="viewCount != null">view_count,</if>
             <if test="isHot != null">is_hot,</if>
@@ -134,6 +136,7 @@
             <if test="originalPrice != null">#{originalPrice},</if>
             <if test="salePrice != null">#{salePrice},</if>
             <if test="saleEndDate != null">#{saleEndDate},</if>
+            <if test="priceAutoSync != null">#{priceAutoSync},</if>
             <if test="salesCount != null">#{salesCount},</if>
             <if test="viewCount != null">#{viewCount},</if>
             <if test="isHot != null">#{isHot},</if>
@@ -158,8 +161,9 @@
             <if test="description != null">description = #{description},</if>
             <if test="price != null">price = #{price},</if>
             <if test="originalPrice != null">original_price = #{originalPrice},</if>
-            <if test="salePrice != null">sale_price = #{salePrice},</if>
-            <if test="saleEndDate != null">sale_end_date = #{saleEndDate},</if>
+            sale_price = #{salePrice},
+            sale_end_date = #{saleEndDate},
+            <if test="priceAutoSync != null">price_auto_sync = #{priceAutoSync},</if>
             <if test="isHot != null">is_hot = #{isHot},</if>
             <if test="isNew != null">is_new = #{isNew},</if>
             <if test="isRecommend != null">is_recommend = #{isRecommend},</if>
@@ -198,6 +202,15 @@
             <if test="flagName == 'is_recommend'">is_recommend = #{flagValue},</if>
             update_time = now()
         </set>
+        where product_id in
+        <foreach item="id" collection="productIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="batchUpdateStatus">
+        update shop_product
+        set status = #{status}, update_time = now()
         where product_id in
         <foreach item="id" collection="productIds" open="(" separator="," close=")">
             #{id}

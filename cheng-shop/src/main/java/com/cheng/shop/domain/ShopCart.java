@@ -91,12 +91,17 @@ public class ShopCart implements Serializable {
     private BigDecimal skuSalePrice;
 
     /**
-     * 商品特惠價（關聯查詢）
+     * SKU 特價結束時間（關聯查詢）
+     */
+    private Date skuSaleEndDate;
+
+    /**
+     * 商品特惠價（關聯查詢，derived — 保留向前相容）
      */
     private BigDecimal productSalePrice;
 
     /**
-     * 商品特價結束時間（關聯查詢）
+     * 商品特價結束時間（關聯查詢，derived — 保留向前相容）
      */
     private Date productSaleEndDate;
 
@@ -104,4 +109,9 @@ public class ShopCart implements Serializable {
      * 庫存數量
      */
     private Integer stockQuantity;
+
+    /**
+     * 折扣後實際單價（由結帳服務於 preview 時計算填入，非 DB 欄位）
+     */
+    private BigDecimal finalPrice;
 }

@@ -113,36 +113,37 @@ public class ShopPriceService {
     /**
      * 計算 SKU 最終售價
      * <p>
-     * SKU 有自己的 salePrice 時優先使用，否則跟隨商品的特價邏輯
+     * SKU 有自己的 salePrice 且未過期時優先使用，否則套用全站折扣。
+     * 不再 fallback 到商品層特惠價（product.salePrice 已改為 derived 欄位）。
      */
-    public PriceResult calculateSkuPrice(ShopProductSku sku, ShopProduct product) {
-        // SKU 有獨立特惠價
+    public PriceResult calculateSkuPrice(ShopProductSku sku) {
         if (sku.getSalePrice() != null && sku.getSalePrice().compareTo(BigDecimal.ZERO) > 0) {
-            Date saleEndDate = product != null ? product.getSaleEndDate() : null;
-            boolean notExpired = saleEndDate == null || saleEndDate.after(new Date());
-            if (notExpired) {
+            boolean notExpired = sku.getSaleEndDate() == null || sku.getSaleEndDate().after(new Date());
+            if (notExpired && sku.getPrice() != null) {
                 BigDecimal savings = sku.getPrice().subtract(sku.getSalePrice());
-                String label = "特價 -$" + savings.stripTrailingZeros().toPlainString();
-                return PriceResult.of(sku.getSalePrice(), label, sku.getPrice());
+                if (savings.compareTo(BigDecimal.ZERO) > 0) {
+                    String label = "特價 -$" + savings.stripTrailingZeros().toPlainString();
+                    return PriceResult.of(sku.getSalePrice(), label, sku.getPrice());
+                }
+                return PriceResult.noDiscount(sku.getPrice());
             }
         }
 
-        // 否則使用全站折扣
+        // 無有效特惠價，套用全站折扣
         return calculatePrice(sku.getPrice(), null, null);
     }
 
     /**
      * 批量填充 SKU 列表的最終售價和折扣標籤
-     *
-     * @param skus    SKU 列表
-     * @param product 所屬商品（用於取得 saleEndDate）
+     * <p>
+     * 每個 SKU 自帶 salePrice + saleEndDate，不再依賴商品層。
      */
-    public void enrichSkuPrices(List<ShopProductSku> skus, ShopProduct product) {
+    public void enrichSkuPrices(List<ShopProductSku> skus) {
         if (skus == null || skus.isEmpty()) {
             return;
         }
         for (ShopProductSku sku : skus) {
-            PriceResult result = calculateSkuPrice(sku, product);
+            PriceResult result = calculateSkuPrice(sku);
             sku.setFinalPrice(result.getFinalPrice());
             sku.setDiscountLabel(result.getDiscountLabel());
             sku.setOriginalDisplayPrice(result.getOriginalDisplayPrice());
