@@ -109,6 +109,9 @@ logging:
 # 專案相關設定 - 本地環境
 cheng:
   profile: /Users/cheng/uploadPath
+  import:
+    # 商品匯入 CSV 相對檔名的基準目錄（URL 來源不受影響）
+    base-path: /Users/cheng/IdeaProjects/R/Cheng-Vue/cheng-admin/src/main/resources/import
 
 # 爬蟲設定 - 本地環境（使用 WebDriverManager 自動管理 ChromeDriver）
 crawler:
