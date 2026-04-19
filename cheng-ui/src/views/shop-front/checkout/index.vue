@@ -36,9 +36,12 @@
               <div class="product-name">{{ item.productName }}</div>
               <div class="product-sku" v-if="item.skuName">規格：{{ item.skuName }}</div>
             </div>
-            <div class="product-price">${{ formatPrice(item.price) }}</div>
+            <div class="product-price">
+              <span>${{ formatPrice(item.finalPrice ?? item.price) }}</span>
+              <span v-if="item.finalPrice != null && Number(item.finalPrice) < Number(item.price)" class="price-origin">${{ formatPrice(item.price) }}</span>
+            </div>
             <div class="product-quantity">x{{ item.quantity }}</div>
-            <div class="product-subtotal">${{ formatPrice(item.price * item.quantity) }}</div>
+            <div class="product-subtotal">${{ formatPrice((item.finalPrice ?? item.price) * item.quantity) }}</div>
           </div>
         </div>
       </div>
@@ -399,7 +402,8 @@ const calculatedShippingFee = computed(() => {
 
 // 計算屬性：總應付金額
 const totalPayableAmount = computed(() => {
-  return (checkoutData.productAmount || 0) + calculatedShippingFee.value - (checkoutData.discountAmount || 0)
+  // productAmount 已是折扣後金額；discountAmount 僅供「您省下 $X」資訊顯示，不可再扣
+  return (checkoutData.productAmount || 0) + calculatedShippingFee.value
 })
 
 // 計算屬性：過濾付款方式（超商取貨不支援貨到付款）
@@ -1036,6 +1040,13 @@ async function handleSubmit() {
   color: #606266;
   width: 80px;
   text-align: center;
+}
+
+.product-price .price-origin {
+  display: block;
+  font-size: 12px;
+  color: #909399;
+  text-decoration: line-through;
 }
 
 .product-subtotal {

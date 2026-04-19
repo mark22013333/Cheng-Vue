@@ -280,39 +280,89 @@ async function handleConfirm(order) {
 }
 
 .order-card {
-  background: #fafafa;
-  border-radius: 12px;
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #ebeef5;
+  border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 240ms ease;
+  cursor: default;
+  will-change: transform;
+}
+
+.order-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #409eff, #66b1ff);
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+
+.order-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 36px -18px rgba(15, 23, 42, 0.22),
+    0 6px 14px -8px rgba(15, 23, 42, 0.12);
+  border-color: #d6e4ff;
+}
+
+.order-card:hover::before {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .order-card,
+  .order-card::before {
+    transition: none;
+  }
+  .order-card:hover {
+    transform: none;
+  }
 }
 
 .order-header {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px 20px;
-  background: #f0f2f5;
+  padding: 14px 22px;
+  background: linear-gradient(180deg, #f7f9fc 0%, #f0f3f8 100%);
+  border-bottom: 1px solid #ebeef5;
 }
 
 .order-no {
-  font-size: 14px;
-  color: #303133;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  letter-spacing: 0.2px;
 }
 
 .order-time {
   font-size: 12px;
-  color: #909399;
+  color: #94a3b8;
   flex: 1;
 }
 
 .order-items {
-  padding: 16px 20px;
+  padding: 18px 22px;
 }
 
 .order-item {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 8px 0;
+  padding: 10px 0;
+  transition: background-color 200ms ease;
+  border-radius: 8px;
+}
+
+.order-card:hover .item-image {
+  transform: scale(1.04);
 }
 
 .order-item + .order-item {
@@ -320,10 +370,13 @@ async function handleConfirm(order) {
 }
 
 .item-image {
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+  background: #f8fafc;
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .item-info {
@@ -351,8 +404,9 @@ async function handleConfirm(order) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-top: 1px solid #ebeef5;
+  padding: 16px 22px;
+  border-top: 1px dashed #e5e7eb;
+  background: #fbfcfe;
 }
 
 .order-total {
