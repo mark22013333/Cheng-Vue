@@ -6,7 +6,7 @@
 
 | 項目 | 指令/位置 |
 |------|----------|
-| 啟動後端 | `mvn spring-boot:run -Dspring-boot.run.profiles=local -Djasypt.encryptor.password=diDsd]3FsGO@4dido` |
+| 啟動後端 | `mvn spring-boot:run -Dspring-boot.run.profiles=local -Djasypt.encryptor.password="$JASYPT_ENCRYPTOR_PASSWORD"` |
 | 啟動前端 | `cd cheng-ui && pnpm run dev` |
 | 執行測試 | `mvn -T 1C -DskipITs=false test` |
 | 快速建置 | `mvn -q -DskipTests -pl cheng-admin -am package` |
@@ -75,13 +75,14 @@ pnpm run build
 
 ### Jasypt 加密
 
-所有環境必須提供密碼：
-```bash
-# JVM 參數
--Djasypt.encryptor.password=diDsd]3FsGO@4dido
+所有環境必須提供密碼。實際密碼請從 1Password / 團隊共享位置取得，切勿硬編在程式或文件中：
 
-# 環境變數
-export JASYPT_ENCRYPTOR_PASSWORD=diDsd]3FsGO@4dido
+```bash
+# 方式 1：匯入到環境變數（推薦）
+export JASYPT_ENCRYPTOR_PASSWORD="<your-jasypt-password>"
+
+# 方式 2：以 JVM 參數傳入（從環境變數引用，避免落在歷史紀錄）
+-Djasypt.encryptor.password="$JASYPT_ENCRYPTOR_PASSWORD"
 ```
 
 ### Spring Profiles
