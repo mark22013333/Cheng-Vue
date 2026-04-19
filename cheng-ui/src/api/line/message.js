@@ -151,6 +151,32 @@ export function getMessageStats(query) {
   })
 }
 
+// 標籤推播預覽（預計人數）
+export function previewTagTargets(params) {
+  return request({
+    url: '/line/message/tag/preview',
+    method: 'get',
+    params: params
+  })
+}
+
+// 推播進度查詢
+export function getSendProgress(taskId) {
+  return request({
+    url: '/line/message/send/progress/' + taskId,
+    method: 'get'
+  })
+}
+
+// 查詢推播明細（逐人狀態）
+export function listPushDetail(query) {
+  return request({
+    url: '/line/message/push/detail/list',
+    method: 'get',
+    params: query
+  })
+}
+
 // 驗證 Flex Message JSON 格式
 export function validateFlexMessage(data) {
   return request({
