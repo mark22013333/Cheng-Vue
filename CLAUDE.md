@@ -167,6 +167,22 @@ Service：拋出 BusinessException
 
 ---
 
+## 業務規則交叉引用
+
+### SKU 售價 / 成本合理性防呆
+
+規格文件：`openspec/changes/archive/2026-04-14-sku-price-sanity-guard/specs/sku-price-sanity-guard/spec.md`
+
+| 規則 | 前端 | 後端 |
+|------|------|------|
+| cost > price 硬阻擋 | `useProductForm.js` validateSkuList() | `ShopProductServiceImpl.validateAndEnrichSkuPricing()` |
+| price=0 軟確認（dirty tracking） | `useProductForm.js` saveProduct() + ElMessageBox | 不阻擋，由前端把關 |
+| price=null 自動推算 | `priceSafeguard.js` recommendedPriceFromCost() | `ShopProductServiceImpl` 以 cost × MARKUP_RATIO 填入 |
+| 共用常數 MARKUP_RATIO=1.2 | `priceSafeguard.js` | `ShopPriceConstants.java` |
+| 匯入 Dialog 防呆 | `InventoryImportDialog.vue` costBlockerCount | — |
+
+---
+
 ## Design System
 
 Always read `DESIGN.md` before making any visual or UI decisions.
