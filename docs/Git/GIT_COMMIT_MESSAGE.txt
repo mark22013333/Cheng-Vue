@@ -1,0 +1,92 @@
+feat: 實作手機版非同步 ISBN 掃描功能
+
+## 主要功能
+
+### 1. 後端非同步爬取系統（新增 5 個檔案）
+- CrawlTaskDTO.java - 爬取任務 DTO，包含 PENDING/PROCESSING/COMPLETED/FAILED 狀態
+- ICrawlTaskService.java - 爬取任務服務介面，提供任務建立、查詢、執行方法
+- CrawlTaskServiceImpl.java - 使用 @Async 非同步執行爬取，ConcurrentHashMap 儲存任務狀態（最多 100 個任務，30 分鐘自動清理）
+- AsyncConfig.java - 異步執行器配置（核心 3、最大 5 執行緒，佇列容量 20）
+- InvCrawlTaskController.java - REST API 端點（建立任務、查詢狀態、批次查詢）
+
+### 2. 前端掃描功能改造（新增 1 個檔案 + 修改 1 個檔案）
+- cheng-ui/src/api/inventory/crawlTask.js - 新增爬取任務 API（createCrawlTask、getTaskStatus、getActiveTasks、getBatchTaskStatus）
+- cheng-ui/src/components/FloatingScanButton/index.vue - 改造浮動掃描按鈕：
+  - 非同步掃描：掃描後不關閉相機，立即提示「已加入佇列」
+  - 任務管理：右上角紅色標記顯示進行中任務數量
+  - 輪詢機制：每 2 秒查詢任務狀態，完成後彈出通知
+  - 拖動功能：按住可移動位置，儲存到 localStorage
+  - 新手導航：首次登入顯示操作引導（灰暗遮罩 + 高亮按鈕 + 動畫箭頭）
+
+### 3. 圖片下載降級優化（修改 2 個方法）
+- IsbnCrawlerServiceImpl.java - downloadCoverImageWithCookies() 新增 bookTitle 參數，FlareSolver 失敗時改用 books.com.tw 搜尋書名下載封面
+- IsbnCrawlerServiceImpl.java - 新增 searchAndDownloadFromBooksComTw() 和 extractRealImageUrl() 方法，智能匹配書名提取真實圖片 URL
+
+## 檔案變更清單
+
+### 後端（cheng-crawler + cheng-admin）
+- cheng-crawler/src/main/java/com/cheng/crawler/dto/CrawlTaskDTO.java - 新增任務 DTO
+- cheng-crawler/src/main/java/com/cheng/crawler/service/ICrawlTaskService.java - 新增服務介面
+- cheng-crawler/src/main/java/com/cheng/crawler/service/impl/CrawlTaskServiceImpl.java - 新增服務實作
+- cheng-crawler/src/main/java/com/cheng/crawler/config/AsyncConfig.java - 新增異步配置
+- cheng-admin/src/main/java/com/cheng/web/controller/inventory/InvCrawlTaskController.java - 新增 Controller
+- cheng-crawler/src/main/java/com/cheng/crawler/service/impl/IsbnCrawlerServiceImpl.java - 修改圖片下載邏輯
+
+### 前端（cheng-ui）
+- cheng-ui/src/api/inventory/crawlTask.js - 新增 API 封裝
+- cheng-ui/src/components/FloatingScanButton/index.vue - 大幅改造（+230 行）
+
+### 文件
+- ASYNC_SCAN_FEATURE_SUMMARY.md - 功能總結文件
+- BOOKS_COM_TW_FALLBACK.md - books.com.tw 降級方案說明
+- IMAGE_DOWNLOAD_RETRY_IMPROVEMENT.md - 圖片下載重試機制說明
+- NCL_ISBN_INTEGRATION.md - 更新國家圖書館整合文件
+- REFACTOR_ISBN_CRAWLER.md - 更新 ISBN 爬蟲重構文件
+
+## 技術亮點
+
+### 1. 非同步任務架構
+```
+掃描 ISBN → 建立任務（返回 taskId） → 立即返回
+                ↓
+         後端 @Async 執行爬取
+                ↓
+         前端輪詢查詢狀態（2 秒間隔）
+                ↓
+         完成後彈出通知
+```
+
+### 2. 連續掃描體驗
+- 掃描後相機不關閉，可連續掃描多個 ISBN
+- 每個任務獨立處理，互不干擾
+- 任務數量即時顯示，進度一目了然
+
+### 3. 智能降級方案
+```
+FlareSolver 失敗
+    ↓
+books.com.tw 搜尋書名
+    ↓
+智能匹配 alt 屬性
+    ↓
+提取真實圖片 URL
+    ↓
+下載成功
+```
+
+### 4. 拖動 + 新手導航
+- 拖動功能：觸控事件處理 + 邊界限制 + 位置記憶
+- 新手導航：灰暗遮罩 + 高亮動畫 + 箭頭指引 + 提示文字
+
+## 測試驗證
+✅ mvn clean compile - BUILD SUCCESS
+✅ 後端 API 端點正常
+✅ 前端 Vue 元件語法正確
+✅ CSS 動畫流暢
+✅ LocalStorage 儲存正常
+
+## 效能改進
+- 使用者體驗：掃描後立即反饋，無需等待 10+ 秒
+- 系統吞吐量：支援最多 5 個並行爬取任務
+- 任務管理：自動清理 30 分鐘前的過期任務
+- 記憶體優化：ConcurrentHashMap 最多儲存 100 個任務

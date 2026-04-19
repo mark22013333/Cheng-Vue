@@ -1,0 +1,83 @@
+📌 重點摘要
+資料庫模型：採行「商品架 (Store Product)」與「庫存品 (Inventory Item)」分離制，透過關聯表介接。
+會員系統：建立獨立的 shop_member 表，與後台 sys_user 區隔，並設計 shop_member_social 支援多種第三方登入。
+高併發庫存：採用 Redis Lua Script 進行原子性扣減 (Atomic Decrement)，確保「訂單成立」與「庫存扣除」的一致性。
+模組一：資料模型規格 (Data Model - MySQL)
+庫存管理的 inv_item 不能直接拿來當前台商品賣。庫存關注的是「成本、儲位、條碼」，而電商關注的是「標題、SEO、圖片輪播、影片」。
+我建議新增一個 cheng-shop 模組，並建立以下資料表來與現有的 cheng-system (庫存) 進行 "Soft Link" (軟連結)：
+1.1 商品上架結構 (Storefront Catalog)
+這部分解決「圖文介紹、影片」的需求。
+shop_product (上架商品主表)
+id: 商品 ID (前台用)
+title: 行銷標題 (例如: "極致光澤水鍍膜 - 買一送一")
+sub_title: 副標題/促銷語
+description_html: 富文本介紹 (包含圖片、嵌入影片 HTML)
+slider_images: JSON 字串 ["url1", "url2"] (輪播圖)
+status: 上架/下架/預覽
+sales_count: 虛擬銷量 (行銷用)
+category_id: 對應前台分類 (非後台庫存分類)
+shop_product_sku (銷售規格表 - 關鍵橋樑)
+id: SKU ID
+product_id: 關聯 shop_product
+sku_name: 規格名稱 (如: "500ml 檸檬味")
+price: 銷售價 (Selling Price)
+original_price: 原價 (顯示劃線價用)
+inv_item_id: 關聯到庫存系統的 inv_item.id (這就是連接點！)
+邏輯：前台賣的是 shop_product_sku，扣庫存時去扣對應的 inv_item_id。這樣你可以把「三個庫存品 A, B, C」組合成一個「洗車豪華組」來賣。
+1.2 會員結構 (Membership)
+既然有 LINE/Google 登入，且後台是 Spring Security，建議不要混用 sys_user (那是給員工用的)。
+shop_member (前台會員表)
+id: 會員 ID
+nickname: 顯示名稱
+email: 電子信箱 (可為空，若只用 LINE 登入)
+mobile: 手機號 (物流聯絡必填)
+password: 加密密碼 (若支援帳密登入)
+avatar: 大頭貼
+points: 會員點數
+shop_member_social (第三方登入綁定表)
+id
+member_id: 關聯 shop_member
+provider: GOOGLE | LINE
+provider_id: 第三方給的唯一 ID (LINE UserID / Google OpenID)
+access_token: (選填，若需要後續調用 API)
+邏輯：登入時先查此表，有則登入，無則引導註冊/綁定。
+模組二：高併發庫存扣減規格 (Inventory Strategy)
+鑑於你提到「併發扣減」很重要，且我們使用 Redis + MySQL。
+策略：Redis 預扣 (Pre-Deduct) + 非同步同步 (Async Sync)
+商品預熱 (Warm-up)：
+商家在後台「上架」或「更新庫存」時，將該 inv_item_id 的可用數量寫入 Redis。
+Key: shop:stock:{inv_item_id} -> Value: 100
+下單扣減 (Lua Script)：
+當使用者點擊「結帳」時，後端執行一段 Redis Lua Script。
+Lua 邏輯：
+Lua
+-- KEYS[1]: shop:stock:{id}
+-- ARGV[1]: buy_count
+local current = tonumber(redis.call('get', KEYS[1]))
+if current and current >= tonumber(ARGV[1]) then
+    redis.call('decrby', KEYS[1], ARGV[1])
+    return 1 -- 成功
+else
+    return 0 -- 庫存不足
+end
+優點：Redis 單執行緒特性保證了這段操作是原子性的 (Atomic)，絕對不會超賣。
+資料庫落盤 (Persistence)：
+Redis 扣減成功後，建立訂單 (Order) 狀態為 PENDING。
+方法 A (簡單版)：直接在同一個 Transaction 內扣減 MySQL inv_stock (利用 UPDATE ... SET qty = qty - x WHERE qty >= x)。若 MySQL 失敗則回補 Redis。
+方法 B (高效版)：發送訊息到 MQ (或利用 Spring Event / Redis Stream)，非同步去扣減 MySQL。這適合秒殺場景。
+建議：初期量體不大，先用 方法 A (Redis 作為快速檢查閘門 + MySQL 樂觀鎖扣減)，既安全又不用維護 MQ。
+模組三：第三方登入整合 (Authentication)
+你目前的 cheng-line 模組看來主要是做 LINE Bot (Messaging API) 的。要做 LINE Login (OIDC)，流程稍微不同。
+Spec 流程：
+前端 (Vue3)：
+放置「使用 LINE 登入」按鈕。
+點擊後導向後端 API: /auth/social/line/login。
+後端 (Spring Boot)：
+建構 LINE Login URL (帶上 client_id, redirect_uri, state) 並 Redirect 使用者。
+使用者在 LINE 同意後，Callback 回後端 /auth/social/line/callback?code=...。
+後端拿 code 換 id_token。
+解析 id_token 取得 sub (UserID)、name、picture。
+查詢/註冊邏輯：
+查 shop_member_social 有無此 sub？
+有 -> 產生 JWT Token (登入成功)。
+無 -> 自動建立 shop_member (用 LINE 資料填充)，寫入 shop_member_social -> 產生 JWT Token。

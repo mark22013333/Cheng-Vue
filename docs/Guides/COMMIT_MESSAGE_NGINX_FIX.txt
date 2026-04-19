@@ -1,0 +1,56 @@
+fix: 修正 Docker Nginx 配置導致的 SPA 路由 401 錯誤
+
+## 問題描述
+在 Zeabur (Docker Image) 環境中，重新整理 /monitor/** 和 /system/** 
+路徑的頁面會出現 401 錯誤，但 VM (Tomcat + Nginx) 環境正常。
+
+## 根本原因
+cheng-ui/nginx.conf 中存在錯誤的正則匹配規則：
+```nginx
+location ~ ^/(system|monitor|common|profile)/ {
+  proxy_pass http://coolapps-api.zeabur.internal:8080$request_uri;
+}
+```
+
+此規則會誤判前端路由（如 /monitor/online）為後端 API 請求，
+導致 Nginx 代理到後端，而後端沒有這些前端路由端點，返回 401。
+
+## 修改內容
+cheng-ui/nginx.conf - 移除錯誤的容錯機制（第 97-117 行）
+
+移除以下內容：
+- location ~ ^/(system|monitor|common|profile)/ 規則
+- location ~ ^/(login|logout|getInfo|...) 規則
+
+改為簡單註解，讓 location / 的 try_files 正確處理 SPA fallback。
+
+## 修復效果
+- ✅ 重新整理 /monitor/online 不再出現 401 錯誤
+- ✅ 重新整理 /monitor/druid 不再出現 401 錯誤
+- ✅ 重新整理 /system/user 不再出現 401 錯誤
+- ✅ 重新整理 /system/role 不再出現 401 錯誤
+- ✅ 所有 API 請求（/prod-api/**）功能正常
+- ✅ 靜態資源載入正常
+
+## 技術說明
+Vue Router 使用 History 模式時，所有前端路由都應該返回 index.html，
+由 Vue Router 接管路由處理。正確的 Nginx 配置應該是：
+
+```nginx
+location /prod-api/ {
+  proxy_pass http://backend:8080/;  # 後端 API
+}
+
+location / {
+  try_files $uri $uri/ /index.html;  # SPA fallback
+}
+```
+
+## 相關文件
+- docs/BugFix/NGINX_SPA_ROUTING_FIX.md - 詳細問題分析
+- docs/Deployment/ZEABUR_DEPLOYMENT_CHECKLIST.md - 部署檢查清單
+
+## 測試環境
+- Zeabur Docker 部署環境
+- 前端：Vue 2.6.12 + Vue Router 3.4.9
+- Nginx：1.27-alpine
