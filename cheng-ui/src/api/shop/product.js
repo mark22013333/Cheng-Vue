@@ -59,6 +59,24 @@ export function offSaleProduct(productId) {
   })
 }
 
+// 批次上架商品
+export function batchOnSaleProduct(productIds) {
+  return request({
+    url: '/shop/product/batchOnSale',
+    method: 'put',
+    data: productIds
+  })
+}
+
+// 批次下架商品
+export function batchOffSaleProduct(productIds) {
+  return request({
+    url: '/shop/product/batchOffSale',
+    method: 'put',
+    data: productIds
+  })
+}
+
 // 批量更新商品標記（熱門/新品/推薦）
 export function updateProductFlag(data) {
   return request({
