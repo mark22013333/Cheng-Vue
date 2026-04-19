@@ -55,6 +55,12 @@
             <artifactId>cheng-system</artifactId>
         </dependency>
 
+        <!-- LINE 模組（排程推播任務使用） -->
+        <dependency>
+            <groupId>com.cheng</groupId>
+            <artifactId>cheng-line</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>
