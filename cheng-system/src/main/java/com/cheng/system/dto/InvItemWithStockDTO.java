@@ -410,4 +410,9 @@ public class InvItemWithStockDTO implements Serializable {
      * 標籤名稱（查詢條件用，模糊搜尋）
      */
     private String tagName;
+
+    /**
+     * 通用關鍵字（同時模糊比對 item_name / item_code / barcode）
+     */
+    private String keyword;
 }
