@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.line.mapper.LinePushDetailMapper">
+
+    <resultMap type="com.cheng.line.domain.LinePushDetail" id="LinePushDetailResult">
+        <id property="detailId" column="detail_id"/>
+        <result property="messageId" column="message_id"/>
+        <result property="lineUserId" column="line_user_id"/>
+        <result property="lineDisplayName" column="line_display_name"/>
+        <result property="statusCode" column="status"/>
+        <result property="retryCount" column="retry_count"/>
+        <result property="errorMessage" column="error_message"/>
+        <result property="sendTime" column="send_time"/>
+    </resultMap>
+
+    <sql id="selectLinePushDetailVo">
+        select detail_id,
+               message_id,
+               line_user_id,
+               line_display_name,
+               status,
+               retry_count,
+               error_message,
+               send_time
+        from line_push_detail
+    </sql>
+
+    <insert id="insertDetail" parameterType="com.cheng.line.domain.LinePushDetail" useGeneratedKeys="true"
+            keyProperty="detailId">
+        insert into line_push_detail
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="messageId != null">message_id,</if>
+            <if test="lineUserId != null and lineUserId != ''">line_user_id,</if>
+            <if test="lineDisplayName != null">line_display_name,</if>
+            <if test="status != null">status,</if>
+            <if test="retryCount != null">retry_count,</if>
+            <if test="errorMessage != null">error_message,</if>
+            <if test="sendTime != null">send_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="messageId != null">#{messageId},</if>
+            <if test="lineUserId != null and lineUserId != ''">#{lineUserId},</if>
+            <if test="lineDisplayName != null">#{lineDisplayName},</if>
+            <if test="status != null">#{status},</if>
+            <if test="retryCount != null">#{retryCount},</if>
+            <if test="errorMessage != null">#{errorMessage},</if>
+            <if test="sendTime != null">#{sendTime},</if>
+        </trim>
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List">
+        insert into line_push_detail (message_id, line_user_id, line_display_name, status, retry_count)
+        values
+        <foreach item="item" collection="details" separator=",">
+            (#{item.messageId}, #{item.lineUserId}, #{item.lineDisplayName}, #{item.statusCode}, #{item.retryCount})
+        </foreach>
+    </insert>
+
+    <select id="selectByMessageId" parameterType="Long" resultMap="LinePushDetailResult">
+        <include refid="selectLinePushDetailVo"/>
+        where message_id = #{messageId}
+        order by detail_id asc
+    </select>
+
+    <select id="countByMessageIdAndStatus" resultType="int">
+        select count(1)
+        from line_push_detail
+        where message_id = #{messageId}
+          and status = #{status}
+    </select>
+
+    <update id="updateStatus" parameterType="com.cheng.line.domain.LinePushDetail">
+        update line_push_detail
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="status != null">status = #{statusCode},</if>
+            <if test="retryCount != null">retry_count = #{retryCount},</if>
+            <if test="errorMessage != null">error_message = #{errorMessage},</if>
+            <if test="sendTime != null">send_time = #{sendTime},</if>
+        </trim>
+        where detail_id = #{detailId}
+    </update>
+
+</mapper>

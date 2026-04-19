@@ -1,0 +1,49 @@
+fix: 修正 Zeabur 部署後圖片顯示為 undefined 的問題
+
+## 修正內容
+
+### 核心問題修正
+- **src/utils/image.js** - 新增統一的圖片路徑處理工具，防禦性處理 undefined
+- **src/store/modules/user.js** - 修正使用者頭像路徑邏輯，避免對 /profile 開頭的路徑重複加前綴
+- **src/components/ImageUpload/index.vue** - 防禦性處理 VUE_APP_BASE_API，避免 undefined
+
+### 業務頁面修正
+- **src/views/inventory/management/index.vue** - 使用統一的 getImageUrl 工具函數
+- **src/views/inventory/scan/index.vue** - 使用統一的 getImageUrl 工具函數
+
+### Docker 建置修正
+- **cheng-ui/.dockerignore** - 修正排除規則，保留 .env.production 檔案供建置使用
+- **build-frontend.sh** - 加入 --progress=plain 參數，顯示詳細建置日誌
+
+## 問題原因
+
+1. `process.env.VUE_APP_BASE_API` 在某些情況下為 `undefined`
+2. 後端返回的路徑已經是 `/profile/xxx` 格式，前端重複加前綴導致錯誤
+3. `.dockerignore` 排除了所有 `.env*` 檔案，導致 `.env.production` 未包含在建置中
+
+## 解決方案
+
+1. 建立統一的圖片路徑處理函數 `getImageUrl()`
+2. 所有環境變數使用時加入預設值：`process.env.VUE_APP_BASE_API || ''`
+3. 判斷路徑格式，避免重複加前綴
+4. 修正 `.dockerignore`，只排除本地開發用的 .env 檔案
+
+## 測試驗證
+
+- ✅ 使用者頭像正常顯示
+- ✅ 庫存管理物品圖片正常顯示
+- ✅ 掃描頁面物品圖片正常顯示
+- ✅ 圖片路徑不包含 `undefined`
+- ✅ Docker 建置包含 `.env.production`
+
+## 部署資訊
+
+- Docker 映像：`android106/coolapps-frontend:latest`
+- 版本標籤：`v1.2.3-20251013-1313`
+- 平台：linux/amd64
+
+## 相關文件
+
+- docs/IMAGE_PATH_FIX_SUMMARY.md - 技術修正詳細說明
+- docs/DEPLOYMENT_CHECKLIST.md - 部署檢查清單
+- docs/修正完成總結.md - 完整修正總結

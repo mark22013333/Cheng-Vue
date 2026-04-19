@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cheng.crawler.mapper.CrawlImportLogMapper">
+
+    <resultMap type="com.cheng.crawler.domain.CrawlImportLog" id="CrawlImportLogResult">
+        <id     property="logId"        column="log_id"/>
+        <result property="batchId"      column="batch_id"/>
+        <result property="barcode"      column="barcode"/>
+        <result property="productName"  column="product_name"/>
+        <result property="status"       column="status"/>
+        <result property="productId"    column="product_id"/>
+        <result property="detailUrl"    column="detail_url"/>
+        <result property="errorMessage" column="error_message"/>
+        <result property="createTime"   column="create_time"/>
+    </resultMap>
+
+    <insert id="insertLog" parameterType="com.cheng.crawler.domain.CrawlImportLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into crawl_import_log (batch_id, barcode, product_name, status, product_id, detail_url, error_message, create_time)
+        values (#{batchId}, #{barcode}, #{productName}, #{status}, #{productId}, #{detailUrl}, #{errorMessage}, #{createTime})
+    </insert>
+
+    <select id="selectLogsByBatchId" parameterType="String" resultMap="CrawlImportLogResult">
+        select * from crawl_import_log where batch_id = #{batchId} order by log_id
+    </select>
+
+</mapper>

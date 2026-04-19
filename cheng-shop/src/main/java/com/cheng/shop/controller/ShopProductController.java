@@ -155,6 +155,26 @@ public class ShopProductController extends BaseController {
     }
 
     /**
+     * 批次上架商品
+     */
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.EDIT + "')")
+    @Log(title = "商品管理", businessType = BusinessType.UPDATE)
+    @PutMapping("/batchOnSale")
+    public AjaxResult batchOnSale(@RequestBody Long[] productIds) {
+        return toAjax(productService.batchUpdateStatus(productIds, "ON_SALE"));
+    }
+
+    /**
+     * 批次下架商品
+     */
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.EDIT + "')")
+    @Log(title = "商品管理", businessType = BusinessType.UPDATE)
+    @PutMapping("/batchOffSale")
+    public AjaxResult batchOffSale(@RequestBody Long[] productIds) {
+        return toAjax(productService.batchUpdateStatus(productIds, "OFF_SALE"));
+    }
+
+    /**
      * 批量更新商品標記（熱門/新品/推薦）
      */
     @PreAuthorize("@ss.hasPermi('" + PermConstants.Shop.Product.EDIT + "')")

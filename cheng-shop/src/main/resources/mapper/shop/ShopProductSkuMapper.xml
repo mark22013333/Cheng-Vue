@@ -6,11 +6,13 @@
         <id     property="skuId"        column="sku_id"/>
         <result property="productId"    column="product_id"/>
         <result property="skuCode"      column="sku_code"/>
+        <result property="barcode"      column="barcode"/>
         <result property="skuName"      column="sku_name"/>
         <result property="skuImage"     column="sku_image"/>
         <result property="price"        column="price"/>
         <result property="originalPrice" column="original_price"/>
         <result property="salePrice"    column="sale_price"/>
+        <result property="saleEndDate"  column="sale_end_date"/>
         <result property="costPrice"    column="cost_price"/>
         <result property="stockQuantity" column="stock_quantity"/>
         <result property="salesCount"   column="sales_count"/>
@@ -26,8 +28,8 @@
     </resultMap>
 
     <sql id="selectSkuVo">
-        select s.sku_id, s.product_id, s.sku_code, s.sku_name, s.sku_image, s.price, s.original_price, s.sale_price,
-               s.cost_price, s.stock_quantity, s.sales_count, s.sort_order, s.inv_item_id, s.status,
+        select s.sku_id, s.product_id, s.sku_code, s.barcode, s.sku_name, s.sku_image, s.price, s.original_price, s.sale_price,
+               s.sale_end_date, s.cost_price, s.stock_quantity, s.sales_count, s.sort_order, s.inv_item_id, s.status,
                s.create_by, s.create_time, s.update_by, s.update_time,
                i.item_name as inv_item_name, i.item_code as inv_item_code
         from shop_product_sku s
@@ -55,11 +57,13 @@
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="productId != null">product_id,</if>
             <if test="skuCode != null and skuCode != ''">sku_code,</if>
+            <if test="barcode != null and barcode != ''">barcode,</if>
             <if test="skuName != null">sku_name,</if>
             <if test="skuImage != null">sku_image,</if>
             <if test="price != null">price,</if>
             <if test="originalPrice != null">original_price,</if>
             <if test="salePrice != null">sale_price,</if>
+            <if test="saleEndDate != null">sale_end_date,</if>
             <if test="costPrice != null">cost_price,</if>
             <if test="stockQuantity != null">stock_quantity,</if>
             <if test="salesCount != null">sales_count,</if>
@@ -72,11 +76,13 @@
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="productId != null">#{productId},</if>
             <if test="skuCode != null and skuCode != ''">#{skuCode},</if>
+            <if test="barcode != null and barcode != ''">#{barcode},</if>
             <if test="skuName != null">#{skuName},</if>
             <if test="skuImage != null">#{skuImage},</if>
             <if test="price != null">#{price},</if>
             <if test="originalPrice != null">#{originalPrice},</if>
             <if test="salePrice != null">#{salePrice},</if>
+            <if test="saleEndDate != null">#{saleEndDate},</if>
             <if test="costPrice != null">#{costPrice},</if>
             <if test="stockQuantity != null">#{stockQuantity},</if>
             <if test="salesCount != null">#{salesCount},</if>
@@ -89,12 +95,12 @@
     </insert>
 
     <insert id="batchInsertSku" parameterType="java.util.List">
-        insert into shop_product_sku (product_id, sku_code, sku_name, sku_image, price,
-            original_price, sale_price, cost_price, stock_quantity, sales_count, sort_order, inv_item_id, status, create_by, create_time)
+        insert into shop_product_sku (product_id, sku_code, barcode, sku_name, sku_image, price,
+            original_price, sale_price, sale_end_date, cost_price, stock_quantity, sales_count, sort_order, inv_item_id, status, create_by, create_time)
         values
         <foreach collection="list" item="item" separator=",">
-            (#{item.productId}, #{item.skuCode}, #{item.skuName}, #{item.skuImage},
-             #{item.price}, #{item.originalPrice}, #{item.salePrice}, #{item.costPrice}, #{item.stockQuantity}, #{item.salesCount},
+            (#{item.productId}, #{item.skuCode}, #{item.barcode}, #{item.skuName}, #{item.skuImage},
+             #{item.price}, #{item.originalPrice}, #{item.salePrice}, #{item.saleEndDate}, #{item.costPrice}, #{item.stockQuantity}, #{item.salesCount},
              #{item.sortOrder}, #{item.invItemId}, #{item.status}, #{item.createBy}, now())
         </foreach>
     </insert>
@@ -103,11 +109,13 @@
         update shop_product_sku
         <trim prefix="SET" suffixOverrides=",">
             <if test="skuCode != null and skuCode != ''">sku_code = #{skuCode},</if>
+            <if test="barcode != null and barcode != ''">barcode = #{barcode},</if>
             <if test="skuName != null">sku_name = #{skuName},</if>
             <if test="skuImage != null">sku_image = #{skuImage},</if>
             <if test="price != null">price = #{price},</if>
             <if test="originalPrice != null">original_price = #{originalPrice},</if>
             <if test="salePrice != null">sale_price = #{salePrice},</if>
+            <if test="saleEndDate != null">sale_end_date = #{saleEndDate},</if>
             <if test="costPrice != null">cost_price = #{costPrice},</if>
             <if test="stockQuantity != null">stock_quantity = #{stockQuantity},</if>
             <if test="salesCount != null">sales_count = #{salesCount},</if>
@@ -139,6 +147,12 @@
         set stock_quantity = stock_quantity + #{quantity}
         where sku_id = #{skuId}
     </update>
+
+    <select id="selectSkuByBarcode" parameterType="String" resultMap="ShopProductSkuResult">
+        <include refid="selectSkuVo"/>
+        where s.barcode = #{barcode}
+        limit 1
+    </select>
 
     <select id="checkSkuCodeUnique" resultType="int">
         select count(*) from shop_product_sku

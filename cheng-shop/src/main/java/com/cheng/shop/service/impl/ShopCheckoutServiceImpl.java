@@ -9,6 +9,7 @@ import com.cheng.shop.domain.ShopMember;
 import com.cheng.shop.domain.ShopMemberAddress;
 import com.cheng.shop.domain.ShopOrder;
 import com.cheng.shop.domain.ShopOrderItem;
+import com.cheng.shop.domain.ShopProductSku;
 import com.cheng.shop.domain.dto.CheckoutSubmitRequest;
 import com.cheng.shop.domain.vo.CheckoutPreviewVO;
 import com.cheng.shop.domain.vo.CheckoutResultVO;
@@ -95,6 +96,8 @@ public class ShopCheckoutServiceImpl implements IShopCheckoutService {
             totalQuantity += item.getQuantity();
             // 計算 SKU 折扣價
             BigDecimal finalUnitPrice = calculateCartItemPrice(item);
+            // 將折扣後單價回填到 cart item，供前端明細顯示使用
+            item.setFinalPrice(finalUnitPrice);
             BigDecimal itemTotal = finalUnitPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
             productAmount = productAmount.add(itemTotal);
 
@@ -109,8 +112,9 @@ public class ShopCheckoutServiceImpl implements IShopCheckoutService {
         // 計算運費（從系統設定讀取）
         BigDecimal shippingFee = calculateShippingFee(productAmount, address);
 
-        // 應付金額
-        BigDecimal payableAmount = productAmount.add(shippingFee).subtract(discountAmount);
+        // 應付金額：productAmount 已是折扣後金額，僅需加運費
+        // discountAmount 僅作為「您省下 $X」資訊回傳，不可再從 productAmount 扣一次
+        BigDecimal payableAmount = productAmount.add(shippingFee);
 
         // 查詢可用禮物
         List<ShopGift> availableGifts = Collections.emptyList();
@@ -307,31 +311,17 @@ public class ShopCheckoutServiceImpl implements IShopCheckoutService {
 
     /**
      * 計算購物車項目的最終單價（含折扣）
+     * <p>
+     * 委託 ShopPriceService.calculateSkuPrice()，統一 SKU 級優先的定價邏輯。
+     * 不再 fallback 到商品層特惠價（product.salePrice 已改為 derived 欄位）。
      */
     private BigDecimal calculateCartItemPrice(ShopCart cartItem) {
-        // SKU 有獨立特惠價時優先使用
-        if (cartItem.getSkuSalePrice() != null && cartItem.getSkuSalePrice().compareTo(BigDecimal.ZERO) > 0) {
-            boolean notExpired = cartItem.getProductSaleEndDate() == null
-                    || cartItem.getProductSaleEndDate().after(new java.util.Date());
-            if (notExpired) {
-                return cartItem.getSkuSalePrice();
-            }
-        }
+        ShopProductSku virtualSku = new ShopProductSku();
+        virtualSku.setPrice(cartItem.getPrice());
+        virtualSku.setSalePrice(cartItem.getSkuSalePrice());
+        virtualSku.setSaleEndDate(cartItem.getSkuSaleEndDate());
 
-        // 商品有特惠價時，按比例套用到 SKU
-        if (cartItem.getProductSalePrice() != null && cartItem.getProductSalePrice().compareTo(BigDecimal.ZERO) > 0) {
-            boolean notExpired = cartItem.getProductSaleEndDate() == null
-                    || cartItem.getProductSaleEndDate().after(new java.util.Date());
-            if (notExpired) {
-                // 使用 ShopPriceService 計算（走商品特價路徑）
-                PriceResult result = priceService.calculatePrice(
-                        cartItem.getPrice(), cartItem.getProductSalePrice(), cartItem.getProductSaleEndDate());
-                return result.getFinalPrice();
-            }
-        }
-
-        // 否則使用全站折扣
-        PriceResult result = priceService.calculatePrice(cartItem.getPrice(), null, null);
+        PriceResult result = priceService.calculateSkuPrice(virtualSku);
         return result.getFinalPrice();
     }
 

@@ -10,7 +10,7 @@ export function listMessage(query) {
 }
 
 // 查詢推播訊息記錄列表（別名，供訊息編輯器頁面使用）
-export function listMessageLog(query) {
+export function listMessageForEditor(query) {
   return request({
     url: '/line/message/list',
     method: 'get',
@@ -124,10 +124,54 @@ export function exportMessage(query) {
   })
 }
 
+// 查詢發送記錄列表
+export function listMessageLog(query) {
+  return request({
+    url: '/line/message/log/list',
+    method: 'get',
+    params: query
+  })
+}
+
+// 新增發送記錄
+export function addMessageLog(data) {
+  return request({
+    url: '/line/message/log',
+    method: 'post',
+    data: data
+  })
+}
+
 // 取得訊息統計資料
 export function getMessageStats(query) {
   return request({
     url: '/line/message/stats',
+    method: 'get',
+    params: query
+  })
+}
+
+// 標籤推播預覽（預計人數）
+export function previewTagTargets(params) {
+  return request({
+    url: '/line/message/tag/preview',
+    method: 'get',
+    params: params
+  })
+}
+
+// 推播進度查詢
+export function getSendProgress(taskId) {
+  return request({
+    url: '/line/message/send/progress/' + taskId,
+    method: 'get'
+  })
+}
+
+// 查詢推播明細（逐人狀態）
+export function listPushDetail(query) {
+  return request({
+    url: '/line/message/push/detail/list',
     method: 'get',
     params: query
   })

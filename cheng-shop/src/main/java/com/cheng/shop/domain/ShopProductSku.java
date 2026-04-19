@@ -2,11 +2,13 @@ package com.cheng.shop.domain;
 
 import com.cheng.common.core.domain.BaseEntity;
 import com.cheng.shop.enums.CommonStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * 商品SKU實體
@@ -36,6 +38,11 @@ public class ShopProductSku extends BaseEntity {
     private String skuCode;
 
     /**
+     * 國際條碼（EAN）
+     */
+    private String barcode;
+
+    /**
      * 規格名稱
      */
     private String skuName;
@@ -59,6 +66,12 @@ public class ShopProductSku extends BaseEntity {
      * 特惠價（優先於全站折扣）
      */
     private BigDecimal salePrice;
+
+    /**
+     * 特價結束時間（NULL 表示長期）
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date saleEndDate;
 
     /**
      * 成本價

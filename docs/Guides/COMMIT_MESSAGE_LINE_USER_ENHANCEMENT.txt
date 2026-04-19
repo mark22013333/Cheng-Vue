@@ -1,0 +1,116 @@
+feat: 完善 LINE 使用者管理功能 - 新增 UNFOLLOWED 狀態與自動解綁機制
+
+## 修改檔案與內容
+
+### 後端修改
+
+1. **FollowStatus.java** - 新增 UNFOLLOWED 狀態支援
+   - 新增 UNFOLLOWED("UNFOLLOWED", "未關注") 枚舉值
+   - 新增 @JsonValue 註解確保 JSON 序列化使用 code
+   - 支援三種關注狀態：未關注、關注中、已封鎖
+
+2. **BindStatus.java** - 新增 JSON 序列化註解
+   - 新增 @JsonValue 註解確保前後端資料一致性
+   - 覆寫 getCode() 方法以符合規範
+
+3. **LineUserServiceImpl.java** - 優化事件處理邏輯
+   - insertLineUser(): 修正預設 followStatus 從 BLOCKED 改為 UNFOLLOWED
+   - handleUnfollowEvent(): 新增自動解除綁定機制
+     * 設定 followStatus = BLOCKED
+     * 記錄 unfollowTime 和 blockTime
+     * ⭐ 統一將 bindStatus 改為 UNBOUND
+     * 清空 sysUserId 並記錄 unbindTime
+     * 新增日誌記錄「使用者取消關注，已自動解除綁定」
+   - 新增 @Transactional(rollbackFor = Exception.class) 確保事務完整性
+
+4. **LineConfigController.java** - 新增專用 API
+   - 新增 GET /line/config/enabled 端點
+   - 只回傳 status=1（啟用）的頻道列表
+   - 用於前端下拉選單，避免查詢到停用頻道
+
+### 前端修改
+
+5. **ImportDialog.vue** - 修正欄位名稱與 API 呼叫
+   - 修正 :key="config.id" → :key="config.configId"
+   - 修正 :value="config.id" → :value="config.configId"
+   - 改用新 API：this.$axios.get('/line/config/enabled')
+   - 移除 filter 邏輯，直接使用後端過濾結果
+
+### 資料庫遷移
+
+**無需資料庫遷移** ✅
+- sys_line_user.follow_status 欄位已是 VARCHAR 類型
+- 新增 UNFOLLOWED 僅為程式碼層面的 Enum 擴充
+- 不涉及資料表結構變更
+
+## 功能說明
+
+### 1. 關注狀態完整支援
+- **UNFOLLOWED**: 新使用者預設狀態或曾經取消關注
+- **FOLLOWING**: 使用者加入好友（follow 事件）
+- **BLOCKED**: 使用者取消關注或封鎖（unfollow 事件）
+
+### 2. 自動解除綁定機制
+當使用者取消關注時（unfollow 事件）：
+- 自動將 bindStatus 改為 UNBOUND
+- 清空 sysUserId（解除與系統使用者的關聯）
+- 記錄 unbindTime 和 blockTime
+- 確保使用者資料一致性
+
+### 3. 匯入功能增強
+- 下拉選單只顯示啟用的 LINE 頻道
+- 欄位對應正確（configId）
+- 使用專用 API 提升效能
+
+## 狀態轉換流程
+
+```
+新建立使用者 → UNFOLLOWED (未關注)
+       ↓
+  follow 事件
+       ↓
+    FOLLOWING (關注中)
+       ↓
+  unfollow 事件
+       ↓
+    BLOCKED (已封鎖) + 自動解除綁定
+```
+
+## 測試項目
+
+### 必須測試
+1. ✅ follow 事件：自動建立使用者並設定 FOLLOWING 狀態
+2. ✅ unfollow 事件：自動設定 BLOCKED 並解除綁定
+3. ✅ 匯入對話框：頻道下拉選單正確顯示啟用頻道
+4. ✅ 前端列表：三種狀態正確顯示（未關注/關注中/已封鎖）
+
+### 建議測試
+- 後端 API：GET /line/config/enabled 只回傳啟用頻道
+- 資料一致性：unfollow 後 bindStatus 應為 UNBOUND
+- JSON 序列化：前端接收到的應為 "FOLLOWING" 而非 enum name
+
+## 相關規範
+
+- 遵循 RULE_02 (Enum 使用規範)：使用 @JsonValue 確保序列化正確
+- 遵循 RULE_06 (事務管理規範)：unfollow 事件加上 @Transactional
+- 遵循 RULE_07 (日誌規範)：新增關鍵操作日誌記錄
+
+## 注意事項
+
+1. **資料庫欄位已支援 UNFOLLOWED**，無需執行 ALTER TABLE
+2. **現有資料不受影響**，BLOCKED 狀態資料維持原樣
+3. **新使用者預設為 UNFOLLOWED**，符合實際業務邏輯
+4. **解除綁定是自動的**，無需手動操作
+
+## 影響範圍
+
+- LINE 使用者管理模組
+- Webhook 事件處理
+- 前端匯入功能
+- 後端 API 新增
+
+## 建議後續優化
+
+1. 考慮新增「重新綁定」功能（使用者 unfollow 後再 follow）
+2. 新增狀態變更歷史記錄表（可選）
+3. 前端新增狀態篩選統計圖表

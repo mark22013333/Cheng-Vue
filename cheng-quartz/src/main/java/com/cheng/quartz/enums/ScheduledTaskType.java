@@ -102,12 +102,43 @@ public enum ScheduledTaskType {
             "0 0 2 * * ?",
             "爬蟲任務",
             "完整配置爬蟲任務"
-    );
+    ),
 
-    // 未來可以加入其他任務類型
-    // DATA_SYNC_TASK(...),
-    // REPORT_GENERATION_TASK(...),
-    // BACKUP_TASK(...);
+    // ==================== 資料處理任務 ====================
+
+    PRODUCT_IMPORT(
+            "product_import",
+            "CSV 商品匯入",
+            "從 CSV 檔案批次匯入商品資料至商品系統",
+            "productImportTask",
+            "run",
+            List.of(
+                    new TaskParameter("csvPath", "STRING", true, "CSV 檔案路徑",
+                            "/Users/cheng/IdeaProjects/R/Cheng-Vue/cheng-admin/src/main/resources/import/prostaff-products.csv")
+            ),
+            null,
+            "資料處理",
+            "CSV 商品匯入任務"
+    ),
+
+    // ==================== LINE 推播任務 ====================
+
+    LINE_TAG_PUSH(
+            "line_tag_push",
+            "LINE 標籤推播",
+            "根據標籤或標籤群組篩選目標使用者，執行逐人 LINE 推播",
+            "lineScheduledPushTask",
+            "execute",
+            List.of(
+                    new TaskParameter("configId", "NUMBER", true, "LINE 頻道 ID", "1"),
+                    new TaskParameter("templateId", "NUMBER", true, "訊息範本 ID", "5"),
+                    new TaskParameter("tagIds", "STRING", false, "標籤 ID（逗號分隔）", "1,2,3"),
+                    new TaskParameter("tagGroupIds", "STRING", false, "標籤群組 ID（逗號分隔）", "1")
+            ),
+            "0 0 9 ? * MON",
+            "LINE 推播",
+            "LINE 標籤推播任務"
+    );
 
     /**
      * 任務代碼（唯一識別）

@@ -118,6 +118,15 @@ public interface IShopProductService {
     int updateProductFlag(Long[] productIds, String flagName, boolean flagValue);
 
     /**
+     * 批次更新商品狀態
+     *
+     * @param productIds 商品ID陣列
+     * @param status     目標狀態（ON_SALE / OFF_SALE）
+     * @return 影響行數
+     */
+    int batchUpdateStatus(Long[] productIds, String status);
+
+    /**
      * 增加商品銷量
      *
      * @param productId 商品ID

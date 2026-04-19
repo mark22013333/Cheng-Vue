@@ -77,6 +77,12 @@
             <artifactId>cheng-line</artifactId>
         </dependency>
 
+        <!-- Cheng Crawler（商品匯入爬蟲） -->
+        <dependency>
+            <groupId>com.cheng</groupId>
+            <artifactId>cheng-crawler</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>

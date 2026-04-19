@@ -172,6 +172,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </if>
         <where>
             i.del_flag = '0'
+            <if test="keyword != null and keyword != ''">
+                and (i.item_name like concat('%', #{keyword}, '%')
+                     or i.item_code like concat('%', #{keyword}, '%')
+                     or i.barcode like concat('%', #{keyword}, '%'))
+            </if>
             <if test="itemCode != null and itemCode != ''"> and i.item_code like concat('%', #{itemCode}, '%')</if>
             <if test="itemName != null and itemName != ''"> and i.item_name like concat('%', #{itemName}, '%')</if>
             <if test="categoryId != null"> and i.category_id = #{categoryId}</if>

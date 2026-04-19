@@ -55,3 +55,29 @@ cheng-ui/node_modules/.cache/
 /cheng.deploy/frontend-dist
 /cheng.deploy/temp
 /cheng.deploy/docs
+.gstack/
+
+######################################################################
+# Local tooling / AI assistant configs (do not commit)
+
+.ai/
+.claude/
+.forgeview/
+.gemini/
+.interface-design/
+.playwright-mcp/
+.specify/
+.vscode/
+.windsurf/
+auto memory/
+
+# Root-level QA/dev screenshots
+/*.png
+
+# 第三方主題 / 參考原始碼（不進版控）
+docs/flatsome/
+docs/Choice Code/
+
+
+# Added by ggshield
+.cache_ggshield

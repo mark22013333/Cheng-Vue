@@ -1,0 +1,108 @@
+# Zeabur 部署架構參考
+# 此檔案僅供參考，實際部署時需在 Zeabur 控制台分別建立服務
+
+version: '3.8'
+
+services:
+  # ========== 後端服務 ==========
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend-tomcat
+    environment:
+      # Spring Profile
+      - SPRING_PROFILES_ACTIVE=prod
+      
+      # 資料庫連線（使用 Zeabur MySQL）
+      - SPRING_DATASOURCE_URL=${DATABASE_URL}
+      - SPRING_DATASOURCE_USERNAME=${DATABASE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DATABASE_PASSWORD}
+      
+      # Redis 連線（使用 Zeabur Redis）
+      - SPRING_REDIS_HOST=${REDIS_HOST}
+      - SPRING_REDIS_PORT=${REDIS_PORT}
+      - SPRING_REDIS_PASSWORD=${REDIS_PASSWORD}
+      
+      # FlareSolver 連線（內部服務）
+      - FLARESOLVER_URL=http://flaresolver:8191/v1
+      
+      # LINE Bot 設定
+      - LINE_WEBHOOK_BASE_URL=${LINE_WEBHOOK_BASE_URL}
+      
+      # JWT 加密密碼
+      - JASYPT_ENCRYPTOR_PASSWORD=${JASYPT_ENCRYPTOR_PASSWORD}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - flaresolver
+    networks:
+      - cool-apps-network
+  
+  # ========== FlareSolver 服務 ==========
+  # 專門處理 Cloudflare 驗證的獨立服務
+  flaresolver:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolver
+    environment:
+      # 日誌等級（info / debug）
+      - LOG_LEVEL=info
+      
+      # 是否記錄 HTML 內容（正式環境建議關閉）
+      - LOG_HTML=false
+      
+      # 驗證碼處理器（none / hcaptcha / recaptcha）
+      - CAPTCHA_SOLVER=none
+      
+      # 時區
+      - TZ=Asia/Taipei
+      
+      # 最大逾時時間（毫秒）
+      - HEADLESS=true
+    ports:
+      - "8191:8191"
+    restart: unless-stopped
+    networks:
+      - cool-apps-network
+    # 資源限制（根據實際需求調整）
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+networks:
+  cool-apps-network:
+    driver: bridge
+
+# ========== Zeabur 部署步驟 ==========
+# 
+# 1. 在 Zeabur 控制台建立「FlareSolver」服務：
+#    - 服務名稱：flaresolver
+#    - 映像來源：ghcr.io/flaresolverr/flaresolverr:latest
+#    - 環境變數：
+#      * LOG_LEVEL=info
+#      * LOG_HTML=false
+#      * CAPTCHA_SOLVER=none
+#      * TZ=Asia/Taipei
+#      * HEADLESS=true
+#    - 記憶體配置：512 MB
+#    - Port：8191
+#
+# 2. 在 Zeabur 控制台建立/更新「後端」服務：
+#    - 服務名稱：backend
+#    - 建置來源：GitHub 自動建置（Dockerfile.backend-tomcat）
+#    - 環境變數新增：
+#      * FLARESOLVER_URL=http://flaresolver:8191/v1
+#    - 確保與 flaresolver 在同一個專案（可使用內部網路）
+#
+# 3. 設定內部網路通訊：
+#    - Zeabur 會自動處理同專案內服務的內部 DNS
+#    - 後端可以透過服務名稱 http://flaresolver:8191 連接
+#
+# 4. 驗證部署：
+#    - 後端日誌：查看 "FlareSolver 服務 URL 已設定為" 訊息
+#    - FlareSolver 日誌：查看 "FlareSolverr is listening on" 訊息
+#    - 測試 ISBN 掃描功能，確認可以繞過 Cloudflare 驗證

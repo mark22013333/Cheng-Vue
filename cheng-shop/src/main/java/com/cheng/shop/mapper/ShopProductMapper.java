@@ -112,4 +112,13 @@ public interface ShopProductMapper {
      * @return 影響行數
      */
     int updateProductFlag(@Param("productIds") Long[] productIds, @Param("flagName") String flagName, @Param("flagValue") boolean flagValue);
+
+    /**
+     * 批次更新商品狀態
+     *
+     * @param productIds 商品ID陣列
+     * @param status     目標狀態
+     * @return 影響行數
+     */
+    int batchUpdateStatus(@Param("productIds") Long[] productIds, @Param("status") String status);
 }

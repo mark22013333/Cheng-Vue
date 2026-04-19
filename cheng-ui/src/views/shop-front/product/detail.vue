@@ -287,7 +287,13 @@ function parseDateTimeString(value) {
   }
 }
 
-const saleEndTs = computed(() => parseDateTimeString(product.value?.saleEndDate))
+const saleEndTs = computed(() => {
+  // SKU 層 saleEndDate 優先
+  if (selectedSku.value?.saleEndDate) {
+    return parseDateTimeString(selectedSku.value.saleEndDate)
+  }
+  return parseDateTimeString(product.value?.saleEndDate)
+})
 
 const saleRemainingMs = computed(() => {
   if (!saleEndTs.value) return 0
@@ -298,7 +304,7 @@ const effectiveSalePrice = computed(() => {
   if (selectedSku.value?.salePrice != null) {
     return Number(selectedSku.value.salePrice || 0)
   }
-  return Number(product.value?.salePrice || 0)
+  return 0
 })
 
 const hasActiveSalePrice = computed(() => {
@@ -374,7 +380,7 @@ const currentDiscountLabel = computed(() => {
 })
 
 const showSaleCountdown = computed(() => {
-  return hasActiveSalePrice.value && !!product.value?.saleEndDate && Number(effectiveSalePrice.value || 0) > 0
+  return hasActiveSalePrice.value && !!saleEndTs.value && Number(effectiveSalePrice.value || 0) > 0
 })
 
 function formatCountdown(ms) {

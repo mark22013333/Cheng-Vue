@@ -112,6 +112,20 @@ const adminDynamicRoutes = [
     ]
   },
   {
+    path: '/cadm/shop/product-create',
+    component: layoutModules.Layout,
+    hidden: true,
+    permissions: [SHOP_PRODUCT_ADD],
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/shop/product/create'),
+        name: 'ShopProductCreate',
+        meta: { title: '新增商品', activeMenu: '/cadm/shop/product' }
+      }
+    ]
+  },
+  {
     path: '/cadm/shop/product-edit',
     component: layoutModules.Layout,
     hidden: true,
