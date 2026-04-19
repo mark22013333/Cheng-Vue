@@ -74,3 +74,7 @@ auto memory/
 # Root-level QA/dev screenshots
 /*.png
 
+# 第三方主題 / 參考原始碼（不進版控）
+docs/flatsome/
+docs/Choice Code/
+
