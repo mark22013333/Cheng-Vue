@@ -1,6 +1,7 @@
 package com.cheng.line.service;
 
 import com.cheng.line.dto.SendMessageDTO;
+import com.cheng.line.dto.SendProgressDTO;
 
 /**
  * LINE 訊息發送服務（擴充版）
@@ -90,4 +91,19 @@ public interface ILineMessageSendService {
      * @return 訊息記錄ID
      */
     Long sendTemplateMessage(SendMessageDTO dto);
+
+    /**
+     * 查詢推播任務進度
+     *
+     * @param taskId 任務 ID
+     * @return 進度資訊，不存在時回傳 null
+     */
+    SendProgressDTO getProgress(String taskId);
+
+    /**
+     * 取得目前進行中的非同步推播任務數量
+     *
+     * @return 進行中任務數
+     */
+    int getActiveTaskCount();
 }

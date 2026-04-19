@@ -6,13 +6,17 @@ import com.cheng.common.core.controller.BaseController;
 import com.cheng.common.core.domain.AjaxResult;
 import com.cheng.common.enums.BusinessType;
 import com.cheng.line.dto.SendMessageDTO;
+import com.cheng.line.dto.SendProgressDTO;
+import com.cheng.line.dto.TagPreviewDTO;
 import com.cheng.line.service.ILineMessageSendService;
+import com.cheng.line.service.ILineTagResolveService;
 import com.cheng.line.util.FlexMessageParser;
 import jakarta.annotation.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,6 +29,7 @@ import java.util.Map;
 public class LineMessageSendController extends BaseController {
 
     private @Resource ILineMessageSendService lineMessageSendService;
+    private @Resource ILineTagResolveService lineTagResolveService;
     private @Resource FlexMessageParser flexMessageParser;
 
     /**
@@ -170,5 +175,30 @@ public class LineMessageSendController extends BaseController {
         String content = params.get("content");
         String formatted = flexMessageParser.formatJson(content);
         return success(formatted);
+    }
+
+    /**
+     * 查詢推播任務進度
+     */
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Message.SEND + "')")
+    @GetMapping("/progress/{taskId}")
+    public AjaxResult getProgress(@PathVariable String taskId) {
+        SendProgressDTO progress = lineMessageSendService.getProgress(taskId);
+        if (progress == null) {
+            return AjaxResult.error(404, "任務不存在或已過期");
+        }
+        return AjaxResult.success(progress);
+    }
+
+    /**
+     * 標籤推播預覽（預計發送人數）
+     */
+    @PreAuthorize("@ss.hasPermi('" + PermConstants.Line.Message.SEND + "')")
+    @GetMapping("/tag/preview")
+    public AjaxResult tagPreview(
+            @RequestParam(required = false) List<Long> tagIds,
+            @RequestParam(required = false) List<Long> tagGroupIds) {
+        TagPreviewDTO preview = lineTagResolveService.previewCount(tagIds, tagGroupIds);
+        return AjaxResult.success(preview);
     }
 }

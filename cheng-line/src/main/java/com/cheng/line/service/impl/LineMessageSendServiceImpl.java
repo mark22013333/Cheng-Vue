@@ -7,17 +7,22 @@ import com.cheng.line.client.LineClientFactory;
 import com.cheng.line.domain.LineConfig;
 import com.cheng.line.domain.LineMessageLog;
 import com.cheng.line.domain.LineMessageTemplate;
+import com.cheng.line.domain.LinePushDetail;
 import com.cheng.line.dto.SendMessageDTO;
+import com.cheng.line.dto.SendProgressDTO;
 import com.cheng.line.enums.ContentType;
 import com.cheng.line.enums.MessageType;
+import com.cheng.line.enums.PushDetailStatus;
 import com.cheng.line.enums.QuickReplyActionType;
 import com.cheng.line.enums.SendStatus;
 import com.cheng.line.enums.TargetType;
 import com.cheng.line.mapper.LineMessageLogMapper;
+import com.cheng.line.mapper.LinePushDetailMapper;
 import com.cheng.line.mapper.LineUserMapper;
 import com.cheng.line.service.ILineConfigService;
 import com.cheng.line.service.ILineMessageSendService;
 import com.cheng.line.service.ILineMessageTemplateService;
+import com.cheng.line.service.ILineTagResolveService;
 import com.cheng.line.service.ILineUserService;
 import com.cheng.line.util.FlexMessageParser;
 import com.cheng.line.util.TemplateVariableEngine;
@@ -26,12 +31,17 @@ import com.linecorp.bot.messaging.client.MessagingApiClient;
 import com.linecorp.bot.messaging.model.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * LINE 訊息發送服務實作（擴充版）
@@ -43,13 +53,28 @@ import java.util.concurrent.ExecutionException;
 public class LineMessageSendServiceImpl implements ILineMessageSendService {
 
     private @Resource LineMessageLogMapper lineMessageLogMapper;
+    private @Resource LinePushDetailMapper linePushDetailMapper;
     private @Resource LineUserMapper lineUserMapper;
     private @Resource ILineConfigService lineConfigService;
     private @Resource ILineUserService lineUserService;
     private @Resource ILineMessageTemplateService templateService;
+    private @Resource ILineTagResolveService lineTagResolveService;
     private @Resource LineClientFactory lineClientFactory;
     private @Resource FlexMessageParser flexMessageParser;
     private @Resource TemplateVariableEngine variableEngine;
+    private @Resource ScheduledExecutorService scheduledExecutorService;
+
+    /** 最大同時進行的非同步推播任務數 */
+    private static final int MAX_CONCURRENT_TASKS = 3;
+
+    /** 進度清除延遲（分鐘） */
+    private static final int PROGRESS_CLEANUP_DELAY_MINUTES = 30;
+
+    /** 推播進度追蹤 Map */
+    private final ConcurrentHashMap<String, SendProgressDTO> progressMap = new ConcurrentHashMap<>();
+
+    /** 進行中的非同步推播任務計數器 */
+    private final AtomicInteger activeTaskCount = new AtomicInteger(0);
 
     @Override
     @Transactional
@@ -683,6 +708,11 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
         LineMessageLog messageLog = createMessageLog(dto, config, messageType, contentType, targetType, message);
         lineMessageLogMapper.insertLineMessageLog(messageLog);
 
+        // TAG 模式：非同步逐人推播
+        if (targetType == TargetType.TAG) {
+            return doSendTag(dto, message, messageLog, config);
+        }
+
         try {
             MessagingApiClient client = lineClientFactory.getClient(config.getChannelAccessToken());
             messageLog.setSendStatus(SendStatus.SENDING);
@@ -718,6 +748,275 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
             lineMessageLogMapper.updateLineMessageLog(messageLog);
             throw new ServiceException("發送訊息失敗：" + e.getMessage());
         }
+    }
+
+    /**
+     * TAG 模式：非同步逐人推播
+     * 立即回傳 messageId，背景以 @Async 執行逐人發送
+     */
+    private Long doSendTag(SendMessageDTO dto, Message message, LineMessageLog messageLog, LineConfig config) {
+        // 並發限制檢查
+        if (activeTaskCount.get() >= MAX_CONCURRENT_TASKS) {
+            messageLog.setSendStatus(SendStatus.FAILED);
+            messageLog.setErrorMessage("推播任務已滿，請稍後再試");
+            lineMessageLogMapper.updateLineMessageLog(messageLog);
+            throw new ServiceException("推播任務已滿，請稍後再試");
+        }
+
+        // 解析目標使用者
+        Set<String> targetUserIds = lineTagResolveService.resolveTargets(
+                dto.getTargetTagIds(), dto.getTargetTagGroupIds());
+        if (targetUserIds.isEmpty()) {
+            messageLog.setSendStatus(SendStatus.SUCCESS);
+            messageLog.setSuccessCount(0);
+            messageLog.setFailCount(0);
+            messageLog.setTargetCount(0);
+            messageLog.setSendTime(new Date());
+            lineMessageLogMapper.updateLineMessageLog(messageLog);
+            return messageLog.getMessageId();
+        }
+
+        // 更新實際目標數
+        messageLog.setTargetCount(targetUserIds.size());
+        messageLog.setSendStatus(SendStatus.SENDING);
+        lineMessageLogMapper.updateLineMessageLog(messageLog);
+
+        // 建立任務 ID 並初始化進度
+        String taskId = UUID.randomUUID().toString();
+        SendProgressDTO progress = new SendProgressDTO();
+        progress.setTaskId(taskId);
+        progress.setStatus("SENDING");
+        progress.setTotal(targetUserIds.size());
+        progress.setSent(0);
+        progress.setSuccess(0);
+        progress.setFailed(0);
+        progress.setStartTime(new Date());
+        progress.setMessageId(messageLog.getMessageId());
+        progressMap.put(taskId, progress);
+
+        // 非同步執行逐人發送
+        doSendAsync(config.getChannelAccessToken(), targetUserIds, message,
+                messageLog.getMessageId(), taskId);
+
+        // 將 taskId 暫存到 messageLog 的 lineRequestId 欄位
+        messageLog.setLineRequestId(taskId);
+        lineMessageLogMapper.updateLineMessageLog(messageLog);
+
+        return messageLog.getMessageId();
+    }
+
+    /**
+     * 非同步逐人推播執行
+     */
+    @Async("threadPoolTaskExecutor")
+    public void doSendAsync(String channelAccessToken, Set<String> userIds, Message message,
+                            Long messageId, String taskId) {
+        activeTaskCount.incrementAndGet();
+        try {
+            MessagingApiClient client = lineClientFactory.getClient(channelAccessToken);
+            sendPushToEach(client, userIds, message, messageId, taskId);
+        } catch (Exception e) {
+            log.error("非同步標籤推播執行失敗：taskId={}, messageId={}", taskId, messageId, e);
+            SendProgressDTO progress = progressMap.get(taskId);
+            if (progress != null) {
+                progress.setStatus("ERROR");
+            }
+            // 更新 MessageLog 為失敗
+            LineMessageLog failLog = new LineMessageLog();
+            failLog.setMessageId(messageId);
+            failLog.setSendStatus(SendStatus.FAILED);
+            failLog.setErrorMessage("非同步執行失敗：" + e.getMessage());
+            lineMessageLogMapper.updateLineMessageLog(failLog);
+        } finally {
+            activeTaskCount.decrementAndGet();
+            // 排程清除進度資料
+            scheduledExecutorService.schedule(
+                    () -> progressMap.remove(taskId),
+                    PROGRESS_CLEANUP_DELAY_MINUTES, TimeUnit.MINUTES);
+        }
+    }
+
+    /**
+     * 逐人推播發送引擎
+     */
+    private void sendPushToEach(MessagingApiClient client, Set<String> userIds,
+                                Message message, Long messageId, String taskId) {
+        int total = userIds.size();
+        AtomicInteger sent = new AtomicInteger(0);
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failCount = new AtomicInteger(0);
+        long startMillis = System.currentTimeMillis();
+
+        for (String userId : userIds) {
+            boolean success = pushWithRetry(client, userId, message, messageId);
+            sent.incrementAndGet();
+            if (success) {
+                successCount.incrementAndGet();
+            } else {
+                failCount.incrementAndGet();
+            }
+
+            // 更新進度
+            updateProgress(taskId, total, sent.get(), successCount.get(), failCount.get(), startMillis);
+        }
+
+        // 更新 LineMessageLog 聚合統計
+        updateMessageLogStats(messageId, successCount.get(), failCount.get());
+
+        // 標記任務完成
+        SendProgressDTO progress = progressMap.get(taskId);
+        if (progress != null) {
+            progress.setStatus("DONE");
+            progress.setEstimatedRemainingSeconds(0);
+        }
+
+        log.info("標籤推播完成：messageId={}, total={}, success={}, failed={}",
+                messageId, total, successCount.get(), failCount.get());
+    }
+
+    /** 最大重試次數 */
+    private static final int MAX_RETRY_COUNT = 3;
+
+    /**
+     * 帶重試的推播發送
+     * 最多重試 3 次，指數退避 1s/2s/4s
+     * 封鎖錯誤不重試
+     *
+     * @return 是否成功
+     */
+    private boolean pushWithRetry(MessagingApiClient client, String userId,
+                                  Message message, Long messageId) {
+        LinePushDetail detail = new LinePushDetail();
+        detail.setMessageId(messageId);
+        detail.setLineUserId(userId);
+        detail.setStatus(PushDetailStatus.PENDING);
+        detail.setRetryCount(0);
+
+        // 嘗試取得使用者顯示名稱
+        var lineUser = lineUserMapper.selectLineUserByLineUserId(userId);
+        if (lineUser != null) {
+            detail.setLineDisplayName(lineUser.getLineDisplayName());
+        }
+        linePushDetailMapper.insertDetail(detail);
+
+        String lastError = null;
+        for (int attempt = 0; attempt <= MAX_RETRY_COUNT; attempt++) {
+            try {
+                PushMessageRequest request = new PushMessageRequest(
+                        userId,
+                        Collections.singletonList(message),
+                        false,
+                        null
+                );
+                client.pushMessage(UUID.randomUUID(), request).get();
+
+                // 成功
+                detail.setStatus(PushDetailStatus.SUCCESS);
+                detail.setRetryCount(attempt);
+                detail.setSendTime(new Date());
+                linePushDetailMapper.updateStatus(detail);
+
+                // 更新使用者訊息統計
+                lineUserService.incrementMessageCount(userId, true);
+                return true;
+
+            } catch (Exception e) {
+                lastError = extractErrorMessage(e);
+
+                // 檢查是否為封鎖錯誤
+                if (isBlockedError(e)) {
+                    detail.setStatus(PushDetailStatus.BLOCKED);
+                    detail.setRetryCount(attempt);
+                    detail.setErrorMessage(lastError);
+                    detail.setSendTime(new Date());
+                    linePushDetailMapper.updateStatus(detail);
+                    log.info("使用者已封鎖：userId={}", userId);
+                    return false;
+                }
+
+                // 非封鎖錯誤且未達最大重試次數，等待後重試
+                if (attempt < MAX_RETRY_COUNT) {
+                    long waitMs = (long) Math.pow(2, attempt) * 1000L; // 1s, 2s, 4s
+                    try {
+                        Thread.sleep(waitMs);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 所有重試都失敗
+        detail.setStatus(PushDetailStatus.FAILED);
+        detail.setRetryCount(MAX_RETRY_COUNT);
+        detail.setErrorMessage(lastError);
+        detail.setSendTime(new Date());
+        linePushDetailMapper.updateStatus(detail);
+        log.warn("推播失敗（已重試 {} 次）：userId={}, error={}", MAX_RETRY_COUNT, userId, lastError);
+        return false;
+    }
+
+    /**
+     * 判斷是否為使用者封鎖錯誤
+     */
+    private boolean isBlockedError(Exception e) {
+        String msg = extractErrorMessage(e).toLowerCase();
+        return msg.contains("block") || msg.contains("can't send messages")
+                || msg.contains("cannot send messages");
+    }
+
+    /**
+     * 提取錯誤訊息
+     */
+    private String extractErrorMessage(Exception e) {
+        if (e.getCause() != null) {
+            return e.getCause().getMessage() != null ? e.getCause().getMessage() : e.getMessage();
+        }
+        return e.getMessage() != null ? e.getMessage() : "未知錯誤";
+    }
+
+    /**
+     * 更新推播進度
+     */
+    private void updateProgress(String taskId, int total, int sent, int success, int failed, long startMillis) {
+        SendProgressDTO progress = progressMap.get(taskId);
+        if (progress == null) {
+            return;
+        }
+        progress.setSent(sent);
+        progress.setSuccess(success);
+        progress.setFailed(failed);
+
+        // 計算預估剩餘秒數
+        if (sent > 0) {
+            long elapsed = System.currentTimeMillis() - startMillis;
+            double avgPerUser = (double) elapsed / sent;
+            int remaining = total - sent;
+            progress.setEstimatedRemainingSeconds((int) (avgPerUser * remaining / 1000));
+        }
+    }
+
+    /**
+     * 更新 LineMessageLog 聚合統計
+     */
+    private void updateMessageLogStats(Long messageId, int successCount, int failCount) {
+        LineMessageLog updateLog = new LineMessageLog();
+        updateLog.setMessageId(messageId);
+        updateLog.setSuccessCount(successCount);
+        updateLog.setFailCount(failCount);
+        updateLog.setSendStatus(SendStatus.SUCCESS);
+        lineMessageLogMapper.updateLineMessageLog(updateLog);
+    }
+
+    @Override
+    public SendProgressDTO getProgress(String taskId) {
+        return progressMap.get(taskId);
+    }
+
+    @Override
+    public int getActiveTaskCount() {
+        return activeTaskCount.get();
     }
 
     private void sendPush(MessagingApiClient client, String userId, Message message, Boolean notificationDisabled)
@@ -811,6 +1110,16 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
                 log.setTargetUserIds(JacksonUtil.encodeToJson(dto.getTargetLineUserIds()));
                 log.setTargetCount(dto.getTargetLineUserIds().size());
             }
+            case TAG -> {
+                // TAG 模式下先解析目標人數
+                Set<String> targets = lineTagResolveService.resolveTargets(
+                        dto.getTargetTagIds(), dto.getTargetTagGroupIds());
+                log.setTargetCount(targets.size());
+                // 記錄第一個 tagId（相容既有 targetTagId 欄位）
+                if (dto.getTargetTagIds() != null && !dto.getTargetTagIds().isEmpty()) {
+                    log.setTargetTagId(dto.getTargetTagIds().getFirst());
+                }
+            }
             case ALL -> log.setTargetCount(lineUserMapper.countFollowingUsers());
         }
 
@@ -819,8 +1128,16 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
 
     /**
      * 判斷目標類型
+     * TAG 推播：當 DTO 帶有 targetTagIds 或 targetTagGroupIds 時
      */
     private TargetType determineTargetType(SendMessageDTO dto) {
+        // 優先檢測標籤推播
+        boolean hasTagIds = dto.getTargetTagIds() != null && !dto.getTargetTagIds().isEmpty();
+        boolean hasTagGroupIds = dto.getTargetTagGroupIds() != null && !dto.getTargetTagGroupIds().isEmpty();
+        if (hasTagIds || hasTagGroupIds) {
+            return TargetType.TAG;
+        }
+
         MessageType messageType = MessageType.fromCode(dto.getMessageType());
         return switch (messageType) {
             case PUSH, REPLY -> TargetType.SINGLE;
@@ -898,6 +1215,13 @@ public class LineMessageSendServiceImpl implements ILineMessageSendService {
         }
         if (StringUtils.isEmpty(dto.getMessageType())) {
             throw new ServiceException("訊息類型不能為空");
+        }
+
+        // TAG 推播時，messageType 設為 PUSH（逐人推播）
+        boolean hasTagIds = dto.getTargetTagIds() != null && !dto.getTargetTagIds().isEmpty();
+        boolean hasTagGroupIds = dto.getTargetTagGroupIds() != null && !dto.getTargetTagGroupIds().isEmpty();
+        if (hasTagIds || hasTagGroupIds) {
+            return; // TAG 模式不需要驗證 targetLineUserId 等欄位
         }
 
         MessageType messageType = MessageType.fromCode(dto.getMessageType());

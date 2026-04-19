@@ -208,6 +208,18 @@ public class SendMessageDTO {
      */
     private String templateAltText;
 
+    // ========== TAG 推播 ==========
+
+    /**
+     * 目標標籤 ID 列表（標籤推播時使用）
+     */
+    private List<Long> targetTagIds;
+
+    /**
+     * 目標標籤群組 ID 列表（標籤推播時使用）
+     */
+    private List<Long> targetTagGroupIds;
+
     /**
      * Emoji DTO
      */
