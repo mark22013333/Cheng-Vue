@@ -14,13 +14,13 @@ import java.lang.reflect.Method;
  * <p>
  * 透過 Quartz 後台觸發 CSV 商品匯入
  * <p>
- * <b>Quartz 設定（範本模式）：</b>
+ * <b>Quartz 設定（預設，內建 classpath 檔案）：</b>
  * <pre>
- * 調用目標字串: productImportTask.run('{"csvPath":"/path/to/file.csv"}')
+ * 調用目標字串: productImportTask.run('classpath:import/prostaff-products.csv')
  * </pre>
- * <b>Quartz 設定（純路徑模式）：</b>
+ * <b>Quartz 設定（相對檔名，需設定 cheng.import.base-path）：</b>
  * <pre>
- * 調用目標字串: productImportTask.run('/path/to/file.csv')
+ * 調用目標字串: productImportTask.run('prostaff-products.csv')
  * </pre>
  *
  * @author cheng

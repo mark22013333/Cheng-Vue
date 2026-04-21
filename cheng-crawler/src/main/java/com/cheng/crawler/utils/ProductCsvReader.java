@@ -9,6 +9,8 @@ import okhttp3.ResponseBody;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -24,8 +26,10 @@ import java.util.regex.Pattern;
  * Google Sheets CSV 讀取器
  * 欄位順序：狀態, 條碼編號, 品名, 規格, 品號, 定價一, 零售價, 九折價
  *
- * <p>來源（source）支援兩種格式：</p>
+ * <p>來源（source）支援三種格式：</p>
  * <ul>
+ *     <li><b>{@code classpath:xxx}</b>：從 classpath 載入內建資源（例：
+ *         {@code classpath:import/prostaff-products.csv}），不受 {@code basePath} 影響。</li>
  *     <li><b>HTTP(S) URL</b>：從遠端下載（建議使用 Google Sheets 發布 CSV 連結，
  *         例：{@code https://docs.google.com/spreadsheets/d/xxx/export?format=csv}）</li>
  *     <li><b>相對檔名</b>：組合 {@code basePath}（由設定檔 {@code cheng.import.base-path}
@@ -40,6 +44,8 @@ public class ProductCsvReader {
     private static final long HTTP_CONNECT_TIMEOUT_SECONDS = 10L;
     private static final long HTTP_READ_TIMEOUT_SECONDS = 30L;
 
+    private static final String CLASSPATH_PREFIX = "classpath:";
+
     /** 比對 Google Sheets URL 並取出試算表 ID 與後續路徑。 */
     private static final Pattern GOOGLE_SHEETS_URL =
             Pattern.compile("^https?://docs\\.google\\.com/spreadsheets/d/([a-zA-Z0-9_-]+)(.*)$");
@@ -53,7 +59,7 @@ public class ProductCsvReader {
     /**
      * 讀取 CSV 來源，僅保留「正常品」。
      *
-     * @param source   CSV 來源：HTTP(S) URL 或相對檔名
+     * @param source   CSV 來源：{@code classpath:xxx}、HTTP(S) URL 或相對檔名
      * @param basePath 相對檔名時使用的基準目錄（來自 {@code cheng.import.base-path}）
      * @return 商品列表
      * @throws IOException 來源不存在、下載失敗或內容為空
@@ -63,6 +69,22 @@ public class ProductCsvReader {
             throw new IOException("CSV 來源不可為空");
         }
         String trimmed = source.trim();
+
+        if (isClasspathSource(trimmed)) {
+            String resourcePath = trimmed.substring(CLASSPATH_PREFIX.length()).trim();
+            if (resourcePath.isEmpty()) {
+                throw new IOException("classpath 來源缺少資源路徑: " + trimmed);
+            }
+            log.info("由 classpath 讀取 CSV: {}", resourcePath);
+            try (InputStream in = ProductCsvReader.class.getClassLoader().getResourceAsStream(resourcePath)) {
+                if (in == null) {
+                    throw new IOException("Classpath 資源不存在: " + resourcePath);
+                }
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+                    return parseCsv(reader);
+                }
+            }
+        }
 
         if (isHttpUrl(trimmed)) {
             String downloadUrl = normalizeGoogleSheetsUrl(trimmed);
@@ -88,6 +110,10 @@ public class ProductCsvReader {
 
     private static boolean isHttpUrl(String source) {
         return source.startsWith("http://") || source.startsWith("https://");
+    }
+
+    private static boolean isClasspathSource(String source) {
+        return source.startsWith(CLASSPATH_PREFIX);
     }
 
     /**

@@ -109,16 +109,16 @@ public enum ScheduledTaskType {
     PRODUCT_IMPORT(
             "product_import",
             "CSV 商品匯入",
-            "從 CSV 批次匯入商品。支援 Google Sheets 連結（編輯 URL 會自動轉成 CSV 匯出連結，試算表需設為「知道連結的人皆可檢視」）或相對檔名（會組合 cheng.import.base-path）",
+            "從內建 CSV 批次匯入商品。預設讀取 classpath:import/prostaff-products.csv；亦支援相對檔名（組合 cheng.import.base-path）或 classpath: 其他路徑",
             "productImportTask",
             "run",
             List.of(
-                    new TaskParameter("csvPath", "STRING", true, "CSV 來源（URL 或相對檔名）",
-                            "https://docs.google.com/spreadsheets/d/1RgU82zg4dLbKrBDAu70C-WgG5_nv9Kvj6FH83FjIuAo/edit?gid=0#gid=0")
+                    new TaskParameter("csvPath", "STRING", true, "CSV 來源（classpath 或相對檔名）",
+                            "classpath:import/prostaff-products.csv")
             ),
             null,
             "資料處理",
-            "CSV 商品匯入任務（建議填 Google Sheets 連結；相對檔名則從 cheng.import.base-path 讀取）"
+            "CSV 商品匯入任務（預設使用內建 classpath:import/prostaff-products.csv）"
     ),
 
     // ==================== LINE 推播任務 ====================
