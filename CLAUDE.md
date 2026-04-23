@@ -182,6 +182,19 @@ Service：拋出 BusinessException
 | 共用常數 MARKUP_RATIO=1.2 | `priceSafeguard.js` | `ShopPriceConstants.java` |
 | 匯入 Dialog 防呆 | `InventoryImportDialog.vue` costBlockerCount | — |
 
+### 綠界物流型態（B2C / C2C）
+
+由 sys_config 參數 `shop.ecpay.logistics.sub_type_mode` 控制，預設 `C2C`。
+
+| 模式 | 超商代碼 | 宅配 | 適用場景 |
+|------|----------|------|----------|
+| `B2C` | `UNIMART` / `FAMI` / `HILIFE` | `TCAT`（黑貓） | 大宗寄貨、出貨量大，將商品寄放物流中心 |
+| `C2C` | `UNIMARTC2C` / `FAMIC2C` / `HILIFEC2C` | （不支援） | 出貨量小、賣家自行至超商寄件 |
+
+- 切換模式：直接 `UPDATE sys_config SET config_value='B2C' WHERE config_key='shop.ecpay.logistics.sub_type_mode'`，無須重新部署。
+- C2C 模式下 `GET /shop/logistics/methods` 自動過濾 `HOME_DELIVERY`，前端不需感知 mode。
+- 程式內一律透過 `LogisticsSubTypeMode` enum + `ShippingMethod.getEcpayLogisticsSubType(mode)` 取得代碼；不要散寫 magic string。
+
 ---
 
 ## Design System
