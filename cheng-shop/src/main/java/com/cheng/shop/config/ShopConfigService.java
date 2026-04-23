@@ -1,6 +1,7 @@
 package com.cheng.shop.config;
 
 import com.cheng.common.exception.ServiceException;
+import com.cheng.shop.enums.LogisticsSubTypeMode;
 import com.cheng.system.service.ISysConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -226,6 +227,22 @@ public class ShopConfigService {
      */
     public String getEcpayLogisticsServerReplyUrl() {
         return getRequiredString(ShopConfigKey.ECPAY_LOGISTICS_SERVER_REPLY_URL);
+    }
+
+    /**
+     * 取得綠界物流型態（B2C / C2C）。
+     * <p>
+     * 缺失或非法值自動 fallback 至 {@link LogisticsSubTypeMode#DEFAULT}（C2C）。
+     */
+    public LogisticsSubTypeMode getEcpayLogisticsSubTypeMode() {
+        return LogisticsSubTypeMode.fromConfigValue(getString(ShopConfigKey.ECPAY_LOGISTICS_SUB_TYPE_MODE));
+    }
+
+    /**
+     * 是否為 ECPay 物流 C2C 模式。
+     */
+    public boolean isEcpayLogisticsC2cMode() {
+        return getEcpayLogisticsSubTypeMode() == LogisticsSubTypeMode.C2C;
     }
 
     // ==================== 物流運費便捷方法 ====================

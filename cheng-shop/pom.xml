@@ -83,6 +83,13 @@
             <artifactId>cheng-crawler</artifactId>
         </dependency>
 
+        <!-- 測試框架：JUnit 5 + Mockito + AssertJ（由 spring-boot-starter-test 一併帶入） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
 </project>
