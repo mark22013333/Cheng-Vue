@@ -4,6 +4,7 @@ import com.cheng.common.exception.ServiceException;
 import com.cheng.shop.config.ShopConfigService;
 import com.cheng.shop.domain.ShopCvsStoreTemp;
 import com.cheng.shop.domain.ShopOrder;
+import com.cheng.shop.enums.LogisticsSubTypeMode;
 import com.cheng.shop.enums.OrderStatus;
 import com.cheng.shop.enums.ShipStatus;
 import com.cheng.shop.enums.ShippingMethod;
@@ -38,6 +39,7 @@ public class ShopLogisticsServiceImpl implements IShopLogisticsService {
     @Override
     public List<ShippingMethodVO> getAvailableMethods(BigDecimal productAmount) {
         String methodsConfig = shopConfig.getLogisticsMethods();
+        LogisticsSubTypeMode mode = shopConfig.getEcpayLogisticsSubTypeMode();
 
         BigDecimal homeDeliveryFee = shopConfig.getHomeDeliveryFee();
         BigDecimal homeDeliveryFreeThreshold = shopConfig.getHomeDeliveryFreeThreshold();
@@ -55,6 +57,16 @@ public class ShopLogisticsServiceImpl implements IShopLogisticsService {
 
             try {
                 ShippingMethod method = ShippingMethod.fromCode(code);
+
+                // 依當前物流型態過濾：當此物流方式於目前 mode 無對應綠界代碼時跳過
+                // （例如 C2C 模式下 HOME_DELIVERY 無對應代碼，不可透過綠界出貨）。
+                // STORE_PICKUP 不透過綠界，保留不過濾。
+                if (method != ShippingMethod.STORE_PICKUP
+                        && method.getEcpayLogisticsSubType(mode) == null) {
+                    log.debug("物流方式 {} 於當前型態 {} 不支援，過濾移除", method, mode);
+                    continue;
+                }
+
                 BigDecimal fee;
                 BigDecimal freeThreshold;
 
@@ -93,7 +105,11 @@ public class ShopLogisticsServiceImpl implements IShopLogisticsService {
             throw new ServiceException("物流方式不支援電子地圖：" + shippingMethod);
         }
 
-        String logisticsSubType = method.getEcpayLogisticsSubType();
+        LogisticsSubTypeMode mode = shopConfig.getEcpayLogisticsSubTypeMode();
+        String logisticsSubType = method.getEcpayLogisticsSubType(mode);
+        if (logisticsSubType == null) {
+            throw new ServiceException("目前物流型態（" + mode + "）不支援 " + method.getDescription());
+        }
         String callbackBaseUrl = shopConfig.getLogisticsCallbackBaseUrl();
 
         String serverReplyUrl = callbackBaseUrl.endsWith("/")
