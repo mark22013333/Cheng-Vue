@@ -3,6 +3,7 @@ package com.cheng.shop.logistics;
 import com.cheng.common.utils.uuid.IdUtils;
 import com.cheng.shop.config.ShopConfigService;
 import com.cheng.shop.domain.ShopOrder;
+import com.cheng.shop.enums.LogisticsSubTypeMode;
 import com.cheng.shop.enums.ShippingMethod;
 import com.cheng.shop.payment.EcpaySignatureUtils;
 import lombok.RequiredArgsConstructor;
@@ -104,6 +105,13 @@ public class EcpayLogisticsGateway {
             return LogisticsResult.fail("物流方式未設定");
         }
 
+        LogisticsSubTypeMode mode = shopConfig.getEcpayLogisticsSubTypeMode();
+        String logisticsSubType = shippingMethod.getEcpayLogisticsSubType(mode);
+        if (logisticsSubType == null) {
+            log.warn("目前物流型態（{}）不支援 {}；orderNo={}", mode, shippingMethod.getDescription(), order.getOrderNo());
+            return LogisticsResult.fail("目前物流型態（" + mode + "）不支援 " + shippingMethod.getDescription());
+        }
+
         boolean isCvs = shippingMethod.isCvs();
 
         // 物流狀態回調 URL（ECPay API 必填）
@@ -114,7 +122,7 @@ public class EcpayLogisticsGateway {
         params.put("MerchantTradeNo", generateLogisticsTradeNo());
         params.put("MerchantTradeDate", formatTradeDate());
         params.put("LogisticsType", shippingMethod.getEcpayLogisticsType());
-        params.put("LogisticsSubType", shippingMethod.getEcpayLogisticsSubType());
+        params.put("LogisticsSubType", logisticsSubType);
         params.put("GoodsAmount", String.valueOf(order.getTotalAmount().intValue()));
         params.put("GoodsName", truncate(buildGoodsName(order), 50));
         params.put("SenderName", shopConfig.getSenderName());

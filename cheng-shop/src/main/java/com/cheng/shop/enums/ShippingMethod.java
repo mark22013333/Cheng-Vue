@@ -38,18 +38,45 @@ public enum ShippingMethod implements CodedEnum<String> {
     }
 
     /**
-     * 取得綠界 LogisticsSubType
+     * 取得綠界 LogisticsSubType 代碼。
+     * <p>
+     * 依 {@link LogisticsSubTypeMode} 決定代碼：
+     * <ul>
+     *   <li>B2C：CVS 送 UNIMART/FAMI/HILIFE，宅配送 TCAT</li>
+     *   <li>C2C：CVS 送 UNIMARTC2C/FAMIC2C/HILIFEC2C，宅配無對應代碼（回傳 null）</li>
+     * </ul>
+     * STORE_PICKUP 在兩種模式下皆非綠界物流方式，回傳 null。
      *
-     * @return 綠界物流子類型代碼，若非超商/宅配則返回 null
+     * @param mode 物流型態模式（不可為 null）
+     * @return 對應之 LogisticsSubType 字串；若該組合在當前模式下不支援則回傳 null
      */
-    public String getEcpayLogisticsSubType() {
-        return switch (this) {
-            case CVS_711 -> "UNIMART";
-            case CVS_FAMILY -> "FAMI";
-            case CVS_HILIFE -> "HILIFE";
-            case HOME_DELIVERY -> "TCAT";
-            default -> null;
+    public String getEcpayLogisticsSubType(LogisticsSubTypeMode mode) {
+        return switch (mode) {
+            case C2C -> switch (this) {
+                case CVS_711 -> "UNIMARTC2C";
+                case CVS_FAMILY -> "FAMIC2C";
+                case CVS_HILIFE -> "HILIFEC2C";
+                case HOME_DELIVERY, STORE_PICKUP -> null;
+            };
+            case B2C -> switch (this) {
+                case CVS_711 -> "UNIMART";
+                case CVS_FAMILY -> "FAMI";
+                case CVS_HILIFE -> "HILIFE";
+                case HOME_DELIVERY -> "TCAT";
+                case STORE_PICKUP -> null;
+            };
         };
+    }
+
+    /**
+     * 取得綠界 LogisticsSubType 代碼（無參版本，預設以 C2C 模式處理）。
+     *
+     * @deprecated 呼叫端應改用 {@link #getEcpayLogisticsSubType(LogisticsSubTypeMode)}，
+     * 並從 {@code ShopConfigService.getEcpayLogisticsSubTypeMode()} 讀取模式。保留此方法僅為向前相容。
+     */
+    @Deprecated
+    public String getEcpayLogisticsSubType() {
+        return getEcpayLogisticsSubType(LogisticsSubTypeMode.DEFAULT);
     }
 
     /**

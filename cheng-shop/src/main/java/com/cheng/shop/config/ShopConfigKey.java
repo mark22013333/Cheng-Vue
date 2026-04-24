@@ -66,6 +66,14 @@ public enum ShopConfigKey implements CodedEnum<String> {
      */
     ECPAY_LOGISTICS_SERVER_REPLY_URL("shop.ecpay.logistics.server_reply_url", "綠界物流狀態回調 URL", ""),
 
+    /**
+     * 綠界物流型態（B2C/C2C）
+     * <p>
+     * B2C=大宗寄貨（含宅配），C2C=門市寄取件（無宅配）。預設 C2C。
+     * 詳細代碼對映參見 {@link com.cheng.shop.enums.LogisticsSubTypeMode}。
+     */
+    ECPAY_LOGISTICS_SUB_TYPE_MODE("shop.ecpay.logistics.sub_type_mode", "綠界物流型態（B2C/C2C）", "C2C"),
+
     // ==================== 物流設定 ====================
 
     /**
